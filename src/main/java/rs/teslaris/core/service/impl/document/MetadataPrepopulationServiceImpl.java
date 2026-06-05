@@ -52,6 +52,15 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
     private final LanguageTagService languageTagService;
 
+    private static String normalizeBibtex(String bibtex) {
+        // Wrap invalid month values e.g. month=July -> month={July}
+        bibtex = bibtex.replaceAll(
+            "(?i)month\\s*=\\s*([A-Za-z]+)(\\s*[,}])",
+            "month={$1}$2"
+        );
+
+        return bibtex;
+    }
 
     @Override
     public PrepopulatedMetadataDTO fetchBibTexDataForDoi(String doi, Integer importPersonId) {
@@ -94,7 +103,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         var metadata = new PrepopulatedMetadataDTO();
 
         var parser = new BibTeXParser();
-        var database = parser.parse(new StringReader(bibtexContent));
+        var database = parser.parse(new StringReader(normalizeBibtex(bibtexContent)));
 
         database.getEntries().entrySet().stream().findFirst().ifPresent(entry -> {
             BibTeXEntry bibEntry = entry.getValue();

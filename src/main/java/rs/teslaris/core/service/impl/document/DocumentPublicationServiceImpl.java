@@ -63,6 +63,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PrintedPageable;
+import rs.teslaris.core.model.document.PublicationStatus;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -265,6 +266,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case ASSISTANT_STAFF -> "assistant_staff_ids";
             case ARGUER -> "arguer_ids";
             case OWNER -> "owner_ids";
+            case ASSOCIATED_EDITOR -> "associated_editor_ids";
+            case INVITED_EDITOR -> "invited_editor_ids";
         };
     }
 
@@ -710,6 +713,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 handleAuthorContribution(contribution, index, contributorName, personExists);
             case EDITOR -> handleGenericContribution(contribution, index::getEditorIds,
                 index::setEditorNames, contributorName, personExists);
+            case ASSOCIATED_EDITOR ->
+                handleGenericContribution(contribution, index::getAssociatedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
+            case INVITED_EDITOR ->
+                handleGenericContribution(contribution, index::getInvitedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
             case ADVISOR -> handleGenericContribution(contribution, index::getAdvisorIds,
                 index::setAdvisorNames, contributorName, personExists);
             case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
@@ -1060,6 +1071,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(
                 documentDTO.getChronologicalSpaceDescription()));
         document.setCity(multilingualContentService.getMultilingualContent(documentDTO.getCity()));
+        document.setEdition(
+            multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
         if (Objects.nonNull(documentDTO.getCountryId())) {
             document.setCountry(countryService.findOne(documentDTO.getCountryId()));
@@ -1069,6 +1082,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
+        document.setAuthorReprint(documentDTO.getAuthorReprint());
 
         if (!(documentDTO instanceof ThesisDTO)) {
             document.setPublicationStatus(documentDTO.getPublicationStatus());
@@ -1081,6 +1095,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         document.setDocumentDate(documentDTO.getDocumentDate());
+        if (!StringUtil.valueExists(document.getDocumentDate())) {
+            document.setPublicationStatus(PublicationStatus.IN_PRINT);
+        } else {
+            document.setPublicationStatus(PublicationStatus.PUBLISHED);
+        }
 
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);

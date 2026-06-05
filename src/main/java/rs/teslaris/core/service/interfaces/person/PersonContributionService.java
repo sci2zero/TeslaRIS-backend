@@ -8,6 +8,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.Document;
@@ -29,7 +30,7 @@ public interface PersonContributionService extends JPAService<PersonContribution
     void setPersonPublicationSeriesContributionsForBookSeries(PublicationSeries publicationSeries,
                                                               BookSeriesDTO bookSeriesDTO);
 
-    void setPersonEventContributionForEvent(Event event, EventDTO eventDTO);
+    void setPersonEventContributionForEvent(Event event, EventType eventType, EventDTO eventDTO);
 
     void deleteContribution(Integer contributionId);
 

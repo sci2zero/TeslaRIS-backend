@@ -28,9 +28,6 @@ public non-sealed class GeneticMaterial extends Document implements PublisherPub
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(name = "author_reprint")
-    private Boolean authorReprint = false;
-
 
     public GeneticMaterial() {
         super(DocumentPublicationType.GENETIC_MATERIAL);

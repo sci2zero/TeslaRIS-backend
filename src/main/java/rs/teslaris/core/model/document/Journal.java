@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -12,4 +13,12 @@ import org.hibernate.annotations.SQLRestriction;
 @Table(name = "journals")
 @SQLRestriction("deleted=false")
 public class Journal extends PublicationSeries {
+
+    @Column(name = "type", nullable = false)
+    private ArticleCollectionSeriesType type;
+
+
+    public Journal() {
+        this.type = ArticleCollectionSeriesType.JOURNAL;
+    }
 }

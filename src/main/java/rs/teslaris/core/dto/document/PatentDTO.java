@@ -16,6 +16,4 @@ public class PatentDTO extends DocumentDTO implements PublishableDTO {
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
-
-    private Boolean authorReprint;
 }

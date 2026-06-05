@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +53,7 @@ import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -80,6 +82,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -127,6 +130,7 @@ import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
+import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
@@ -271,6 +275,9 @@ public class MergeServiceTest {
 
     @Mock
     private PublicationSeriesLookupService publicationSeriesLookupService;
+
+    @Mock
+    private PerformanceRelatedOutputService performanceRelatedOutputService;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -1737,5 +1744,129 @@ public class MergeServiceTest {
         assertThat(merged.getOldIds()).containsExactly(208);
         verify(publisherService, atLeastOnce()).save(deletion);
         verify(publisherService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    public void shouldSaveMergedPerformanceRelatedOutputMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PerformanceRelatedOutputDTO();
+        var rightData = new PerformanceRelatedOutputDTO();
+
+        leftData.setDoi("10.1234/example");
+        leftData.setScopusId("2-s2.0-123456789");
+        leftData.setOpenAlexId("W123456789");
+        leftData.setWebOfScienceId("000123456700001");
+
+        rightData.setDoi("10.1234/example2");
+        rightData.setScopusId("2-s2.0-987654321");
+        rightData.setOpenAlexId("W987654321");
+        rightData.setWebOfScienceId("000987654300002");
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        mergeService.saveMergedPerformanceRelatedOutputMetadata(leftId, rightId, leftData,
+            rightData);
+
+        // then
+        verify(performanceRelatedOutputService, atLeastOnce()).editPerformanceRelatedOutput(leftId,
+            leftData);
+        verify(performanceRelatedOutputService).editPerformanceRelatedOutput(rightId, rightData);
+        verify(performanceRelatedOutputService, times(2)).editPerformanceRelatedOutput(leftId,
+            leftData);
+        verify(performanceRelatedOutputService, times(2)).indexPerformanceRelatedOutput(any());
+        verify(performanceRelatedOutputService, times(2)).findPerformanceRelatedOutputById(
+            anyInt());
+    }
+
+    @Test
+    public void shouldHandleNoAuthorsRemainingWhenSavingMergedPerformanceRelatedOutputMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PerformanceRelatedOutputDTO();
+        var rightData = new PerformanceRelatedOutputDTO();
+
+        leftData.setContributions(new ArrayList<>());
+        rightData.setContributions(new ArrayList<>());
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        mergeService.saveMergedPerformanceRelatedOutputMetadata(leftId, rightId, leftData,
+            rightData);
+
+        // then
+        verify(performanceRelatedOutputService, times(3)).editPerformanceRelatedOutput(anyInt(),
+            any());
+        verify(performanceRelatedOutputService, times(2)).indexPerformanceRelatedOutput(any());
+    }
+
+    @Test
+    public void shouldRestoreOriginalIdentifiersAfterMergingPerformanceRelatedOutput() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new PerformanceRelatedOutputDTO();
+        var rightData = new PerformanceRelatedOutputDTO();
+
+        String originalDoi = "10.1234/original";
+        String originalScopusId = "2-s2.0-original";
+        String originalOpenAlexId = "W-original";
+        String originalWebOfScienceId = "000-original";
+
+        leftData.setDoi(originalDoi);
+        leftData.setScopusId(originalScopusId);
+        leftData.setOpenAlexId(originalOpenAlexId);
+        leftData.setWebOfScienceId(originalWebOfScienceId);
+
+        var returnedOutput = new PerformanceRelatedOutput();
+        returnedOutput.setId(leftId);
+
+        when(performanceRelatedOutputService.findPerformanceRelatedOutputById(anyInt()))
+            .thenReturn(returnedOutput);
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        mergeService.saveMergedPerformanceRelatedOutputMetadata(leftId, rightId, leftData,
+            rightData);
+
+        // then
+        ArgumentCaptor<PerformanceRelatedOutputDTO> leftDataCaptor =
+            ArgumentCaptor.forClass(PerformanceRelatedOutputDTO.class);
+
+        verify(performanceRelatedOutputService, atLeastOnce())
+            .editPerformanceRelatedOutput(eq(leftId), leftDataCaptor.capture());
+
+        var allLeftDataCaptures = leftDataCaptor.getAllValues();
+
+        assertEquals(originalDoi, allLeftDataCaptures.get(1).getDoi());
+        assertEquals(originalScopusId, allLeftDataCaptures.get(1).getScopusId());
+        assertEquals(originalOpenAlexId, allLeftDataCaptures.get(1).getOpenAlexId());
+        assertEquals(originalWebOfScienceId, allLeftDataCaptures.get(1).getWebOfScienceId());
     }
 }

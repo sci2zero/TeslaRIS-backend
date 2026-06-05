@@ -331,5 +331,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setIssue(publicationDTO.getIssue());
 
         publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
+
+        publication.setSection(
+            multilingualContentService.getMultilingualContent(publicationDTO.getSection()));
     }
 }

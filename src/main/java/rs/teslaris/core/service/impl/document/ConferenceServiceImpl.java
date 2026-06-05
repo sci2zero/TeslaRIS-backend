@@ -150,7 +150,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
 
-        setEventCommonFields(conference, conferenceDTO);
+        setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO);
         setConferenceRelatedFields(conference, conferenceDTO);
 
         var savedConference = conferenceJPAService.save(conference);
@@ -186,7 +186,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         var conferenceToUpdate = findConferenceById(conferenceId);
 
         clearEventCommonFields(conferenceToUpdate);
-        setEventCommonFields(conferenceToUpdate, conferenceDTO);
+        setEventCommonFields(conferenceToUpdate, EventType.CONFERENCE, conferenceDTO);
         setConferenceRelatedFields(conferenceToUpdate, conferenceDTO);
 
         conferenceJPAService.save(conferenceToUpdate);

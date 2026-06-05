@@ -74,7 +74,7 @@ public class ClassificationPriorityMapping {
         List<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
-            case BEST_VALUE -> classifications.stream()
+            case BEST_VALUE, BEST_VALUE_BY_RESEARCH_AREA -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.a.getCode(), Integer.MAX_VALUE)));
@@ -89,7 +89,7 @@ public class ClassificationPriorityMapping {
         Set<Triple<Integer, String, Boolean>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
-            case BEST_VALUE -> classifications.stream()
+            case BEST_VALUE, BEST_VALUE_BY_RESEARCH_AREA -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.b, Integer.MAX_VALUE)));
@@ -308,6 +308,10 @@ public class ClassificationPriorityMapping {
         return assessmentConfig.defaultJournalAssessmentCode;
     }
 
+    public static String getCodeForUnclassifiedPublications() {
+        return assessmentConfig.unclassifiedPublicationsCode;
+    }
+
     public static AssessmentCodeSortingRule getAssessmentCodeStoringRule() {
         return assessmentConfig.assessmentCodeSortingRule;
     }
@@ -355,7 +359,8 @@ public class ClassificationPriorityMapping {
         @JsonProperty("monographCodeToPublicationMapping") Map<String, String> monographCodeToPublicationMapping,
         @JsonProperty("eventCodeToContributionMapping") Map<String, String> eventCodeToContributionMapping,
         @JsonProperty("assessmentCodeSortingRule") AssessmentCodeSortingRule assessmentCodeSortingRule,
-        @JsonProperty("defaultJournalAssessmentCode") String defaultJournalAssessmentCode
+        @JsonProperty("defaultJournalAssessmentCode") String defaultJournalAssessmentCode,
+        @JsonProperty("unclassifiedPublicationsCode") String unclassifiedPublicationsCode
     ) {
     }
 

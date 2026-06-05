@@ -42,7 +42,7 @@ public class BookSeriesControllerTest extends BaseTest {
         var contribution =
             new PersonPublicationSeriesContributionDTO(
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
-                LocalDate.now(), LocalDate.now());
+                LocalDate.now(), LocalDate.now(), false);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

@@ -37,5 +37,6 @@ public interface CommissionService extends JPAService<Commission> {
 
     List<Commission> findCommissionsByIds(List<Integer> commissionIds);
 
-    List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId);
+    List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId,
+                                                                  String researchArea);
 }

@@ -663,7 +663,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                     .filter(EntityAssessmentClassification::getManual)
                                     .findFirst()
                                     .or(() -> relatedClassifications.stream().findFirst());
-                            }
+                            }, null
                         ).ifPresent(classifications::add);
                     }
                 },
@@ -726,7 +726,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                     .orElse(null);
                                 return Objects.nonNull(assessmentClassification) ? Optional.of(
                                     assessmentClassification) : Optional.empty();
-                            }
+                            }, null
                         );
 
                         if (relatedAssessment.isPresent()) {
@@ -801,7 +801,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                 .filter(EntityAssessmentClassification::getManual)
                                 .findFirst()
                                 .or(() -> relatedClassifications.stream().findFirst());
-                        }
+                        }, researchArea
                     ).ifPresent(classifications::add);
                 }
             },
@@ -847,7 +847,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                 .orElse(null);
                             return Objects.nonNull(assessmentClassification) ? Optional.of(
                                 assessmentClassification) : Optional.empty();
-                        }
+                        }, researchArea
                     ).ifPresent(classifications::add);
                 }
             },
@@ -904,7 +904,8 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         ClassificationPriorityMapping
-            .getClassificationBasedOnCriteria(classifications, ResultCalculationMethod.BEST_VALUE)
+            .getClassificationBasedOnCriteria(classifications,
+                ResultCalculationMethod.BEST_VALUE_BY_RESEARCH_AREA)
             .ifPresent(classification -> processClassification(
                 classification, assessmentResponse, researchArea, authorCount, publicationType,
                 isExperimental, isTheoretical, isSimulation
@@ -1044,9 +1045,10 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> handleRelationAssessments(
         Commission commission,
-        Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
+        Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder,
+        String researchArea) {
         var commissionRelationProjections =
-            commissionService.findRelationsWithTargetIds(commission.getId());
+            commissionService.findRelationsWithTargetIds(commission.getId(), researchArea);
 
         for (var relationProjection : commissionRelationProjections) {
             var respectedClassification =

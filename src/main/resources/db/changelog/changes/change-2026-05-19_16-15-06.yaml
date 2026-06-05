@@ -1,0 +1,472 @@
+databaseChangeLog:
+- changeSet:
+    id: 1779207345847-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: approve_status
+            type: SMALLINT
+        - column:
+            name: are_files_valid
+            type: BOOLEAN
+        - column:
+            name: country_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: document_type
+            type: SMALLINT
+        - column:
+            name: event_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: is_archived
+            type: BOOLEAN
+        - column:
+            name: is_metadata_valid
+            type: BOOLEAN
+        - column:
+            name: open_access
+            type: BOOLEAN
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        - column:
+            name: performance_related_output_type
+            type: SMALLINT
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        - column:
+            name: publication_status
+            type: SMALLINT
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: document_date
+            type: VARCHAR(255)
+        - column:
+            name: doi
+            type: VARCHAR(255)
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        - column:
+            name: scopus_id
+            type: VARCHAR(255)
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: web_of_science_id
+            type: VARCHAR(255)
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        - column:
+            name: merged_ids
+            type: JSONB
+        - column:
+            name: old_ids
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1779207345847-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_distributor_pkey
+            name: distributor_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_distributor_pkey
+            name: performance_related_output_id
+            type: INTEGER
+        tableName: performance_related_outputs_distributor
+- changeSet:
+    id: 1779207345847-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_other_actors_pkey
+            name: other_actors_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_other_actors_pkey
+            name: performance_related_output_id
+            type: INTEGER
+        tableName: performance_related_outputs_other_actors
+- changeSet:
+    id: 1779207345847-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_producer_pkey
+            name: performance_related_output_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_producer_pkey
+            name: producer_id
+            type: INTEGER
+        tableName: performance_related_outputs_producer
+- changeSet:
+    id: 1779207345847-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_source_title_pkey
+            name: performance_related_output_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_source_title_pkey
+            name: source_title_id
+            type: INTEGER
+        tableName: performance_related_outputs_source_title
+- changeSet:
+    id: 1779207345847-6
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_contributions_affiliation_statement_id_key
+        tableName: person_contributions
+- changeSet:
+    id: 1779207345847-7
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_document_contribution_affiliation_statement_id_key
+        tableName: person_document_contribution
+- changeSet:
+    id: 1779207345847-8
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_event_contributions_affiliation_statement_id_key
+        tableName: person_event_contributions
+- changeSet:
+    id: 1779207345847-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_funding_call_contributions_affiliation_statement_id_key
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1779207345847-10
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_journal_contributions_affiliation_statement_id_key
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1779207345847-11
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: affiliation_statement_id
+        constraintName: person_project_contribution_affiliation_statement_id_key
+        tableName: person_project_contribution
+- changeSet:
+    id: 1779207345847-12
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: distributor_id
+        constraintName: performance_related_outputs_distributor_distributor_id_key
+        tableName: performance_related_outputs_distributor
+- changeSet:
+    id: 1779207345847-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: other_actors_id
+        constraintName: performance_related_outputs_other_actors_other_actors_id_key
+        tableName: performance_related_outputs_other_actors
+- changeSet:
+    id: 1779207345847-14
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: producer_id
+        constraintName: performance_related_outputs_producer_producer_id_key
+        tableName: performance_related_outputs_producer
+- changeSet:
+    id: 1779207345847-15
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: source_title_id
+        constraintName: performance_related_outputs_source_title_source_title_id_key
+        tableName: performance_related_outputs_source_title
+- changeSet:
+    id: 1779207345847-16
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_languages_pkey
+            name: languages_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: performance_related_outputs_languages_pkey
+            name: performance_related_output_id
+            type: INTEGER
+        tableName: performance_related_outputs_languages
+- changeSet:
+    id: 1779207345847-17
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: other_actors_id
+        baseTableName: performance_related_outputs_other_actors
+        constraintName: fk11frbty14o6gx9f0mekljv25a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1779207345847-18
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: producer_id
+        baseTableName: performance_related_outputs_producer
+        constraintName: fk1cyrjsmsr3l4ysyf6icuor0t8
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1779207345847-19
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: performance_related_outputs
+        constraintName: fk_dtqhq2y8lxypvgylpefum5vsp
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1779207345847-20
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: distributor_id
+        baseTableName: performance_related_outputs_distributor
+        constraintName: fkc30whfhg3k5g03kt3aaebkag6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1779207345847-21
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: source_title_id
+        baseTableName: performance_related_outputs_source_title
+        constraintName: fkcx0xqvvbo6mr74hiwlo3xrthe
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1779207345847-22
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: performance_related_output_id
+        baseTableName: performance_related_outputs_other_actors
+        constraintName: fkdgqmh5h3l282exh36v2jceiek
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: performance_related_outputs
+        validate: true
+- changeSet:
+    id: 1779207345847-23
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: languages_id
+        baseTableName: performance_related_outputs_languages
+        constraintName: fkjos373mj2kbd0j7vkhk0vxtv5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: language_tag
+        validate: true
+- changeSet:
+    id: 1779207345847-24
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: performance_related_output_id
+        baseTableName: performance_related_outputs_languages
+        constraintName: fkklmhkrym9f4kmmo282i503qxa
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: performance_related_outputs
+        validate: true
+- changeSet:
+    id: 1779207345847-25
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: performance_related_output_id
+        baseTableName: performance_related_outputs_source_title
+        constraintName: fknjles5xj2cdhqfy6q7by5u3ge
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: performance_related_outputs
+        validate: true
+- changeSet:
+    id: 1779207345847-26
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: performance_related_output_id
+        baseTableName: performance_related_outputs_producer
+        constraintName: fkqc5fw1k4lifhmi4qj6j35hpe0
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: performance_related_outputs
+        validate: true
+- changeSet:
+    id: 1779207345847-27
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: performance_related_output_id
+        baseTableName: performance_related_outputs_distributor
+        constraintName: fkthr0h99jaqf742r2j3r9omap2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: performance_related_outputs
+        validate: true
+

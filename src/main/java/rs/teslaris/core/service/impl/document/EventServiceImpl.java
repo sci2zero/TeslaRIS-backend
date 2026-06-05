@@ -101,7 +101,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
-    public void setEventCommonFields(Event event, EventDTO eventDTO) {
+    public void setEventCommonFields(Event event, EventType eventType, EventDTO eventDTO) {
         event.setName(multilingualContentService.getMultilingualContent(eventDTO.getName()));
         event.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(eventDTO.getNameAbbreviation()));
@@ -140,7 +140,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         IdentifierUtil.setUris(event.getUris(), eventDTO.getUris());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
-            personContributionService.setPersonEventContributionForEvent(event, eventDTO);
+            personContributionService.setPersonEventContributionForEvent(event, eventType,
+                eventDTO);
         }
 
         if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {

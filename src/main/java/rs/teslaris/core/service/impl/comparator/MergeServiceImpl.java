@@ -34,6 +34,7 @@ import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -85,6 +86,7 @@ import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
+import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
@@ -153,6 +155,8 @@ public class MergeServiceImpl implements MergeService {
     private final MaterialProductService materialProductService;
 
     private final GeneticMaterialService geneticMaterialService;
+
+    private final PerformanceRelatedOutputService performanceRelatedOutputService;
 
     private final DatasetService datasetService;
 
@@ -628,6 +632,19 @@ public class MergeServiceImpl implements MergeService {
                 dto.setInternalNumber(values[0]);
                 restoreCommonDocumentIdentifiers(dto, values);
             });
+    }
+
+    @Override
+    public void saveMergedPerformanceRelatedOutputMetadata(Integer leftId, Integer rightId,
+                                                           PerformanceRelatedOutputDTO leftData,
+                                                           PerformanceRelatedOutputDTO rightData) {
+        handleNoAuthorsRemaining(leftData, rightData);
+        updateAndRestoreMetadata(performanceRelatedOutputService::editPerformanceRelatedOutput,
+            performanceRelatedOutputService::indexPerformanceRelatedOutput,
+            performanceRelatedOutputService::findPerformanceRelatedOutputById,
+            leftId, rightId, leftData, rightData,
+            this::extractCommonDocumentIdentifiers,
+            this::restoreCommonDocumentIdentifiers);
     }
 
     @Override

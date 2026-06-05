@@ -41,9 +41,6 @@ public non-sealed class IntangibleProduct extends Document implements PublisherP
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(name = "author_reprint")
-    private Boolean authorReprint = false;
-
 
     public IntangibleProduct() {
         super(DocumentPublicationType.INTANGIBLE_PRODUCT);

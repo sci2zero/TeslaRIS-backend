@@ -56,6 +56,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> remark = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> edition = new HashSet<>();
+
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
     private Set<PersonDocumentContribution> contributors = new HashSet<>();
@@ -155,6 +158,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @JoinColumn(name = "country_id")
     private Country country;
 
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
+
 
     protected Document(DocumentPublicationType documentType) {
         this.documentType = documentType;
@@ -174,6 +180,7 @@ public abstract class Document extends BaseEntity implements Mergeable {
         this.isMetadataValid = other.isMetadataValid;
         this.areFilesValid = other.areFilesValid;
         this.isArchived = other.isArchived;
+        this.authorReprint = other.authorReprint;
 
         this.title = other.title.stream()
             .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
@@ -188,6 +195,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
             .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
             .collect(Collectors.toCollection(HashSet::new));
         this.keywords = other.keywords.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
+        this.edition = other.edition.stream()
             .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
             .collect(Collectors.toCollection(HashSet::new));
 

@@ -96,6 +96,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var reportType = ReportType.valueOf((String) data.get("reportType"));
 
+        var startYear = (Integer) data.get("startYear");
         var assessmentYear = (Integer) data.get("assessmentYear");
 
         var commissionIds = objectMapper.convertValue(
@@ -115,7 +116,7 @@ public class ScheduledAssessmentTasksRestorer {
         }
 
         reportingService.scheduleReportGeneration(
-            timeToRun, reportType, assessmentYear, commissionIds, locale,
+            timeToRun, reportType, startYear, assessmentYear, commissionIds, locale,
             topLevelInstitutionId, userId, metadata.getRecurrenceType()
         );
     }

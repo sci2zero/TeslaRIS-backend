@@ -20,6 +20,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -83,6 +84,9 @@ public abstract class Event extends BaseEntity implements Mergeable {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
+
+    @Column(name = "event_type")
+    private EventType eventType;
 
 
     public void addContribution(PersonEventContribution contribution) {

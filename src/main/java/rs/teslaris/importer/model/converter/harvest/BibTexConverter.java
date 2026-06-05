@@ -90,7 +90,7 @@ public class BibTexConverter {
         }
 
         document.setVolume(getFieldValue(bibEntry, BibTeXEntry.KEY_VOLUME).orElse(""));
-        document.setArticleNumber(getFieldValue(bibEntry, BibTeXEntry.KEY_NUMBER).orElse(""));
+        document.setIssue(getFieldValue(bibEntry, BibTeXEntry.KEY_NUMBER).orElse(""));
         setPageInfo(bibEntry, document);
         document.setDocumentDate(getFieldValue(bibEntry, BibTeXEntry.KEY_YEAR).orElse(""));
 

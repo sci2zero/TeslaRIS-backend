@@ -59,9 +59,10 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
-                                         Integer assessmentYear, List<Integer> commissionIds,
-                                         String locale, Integer topLevelInstitutionId,
-                                         Integer userId, RecurrenceType recurrence) {
+                                         Integer specifiedStartYear, Integer assessmentYear,
+                                         List<Integer> commissionIds, String locale,
+                                         Integer topLevelInstitutionId, Integer userId,
+                                         RecurrenceType recurrence) {
         checkCommissionAccessRights(commissionIds, userId);
 
         if (Objects.isNull(timeToRun)) {
@@ -89,7 +90,8 @@ public class ReportingServiceImpl implements ReportingService {
                 "-" + commissionName +
                 "-" + reportType + "-" + assessmentYear +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> generateReport(reportType, assessmentYear, commissionIds, locale,
+            () -> generateReport(reportType, specifiedStartYear, assessmentYear, commissionIds,
+                locale,
                 topLevelInstitutionId),
             userId, recurrence);
 
@@ -97,6 +99,7 @@ public class ReportingServiceImpl implements ReportingService {
             new ScheduledTaskMetadata(taskId, timeToRun,
                 ScheduledTaskType.REPORT_GENERATION, new HashMap<>() {{
                 put("reportType", reportType);
+                put("startYear", specifiedStartYear);
                 put("assessmentYear", assessmentYear);
                 put("commissionIds", commissionIds);
                 put("locale", locale);
@@ -106,13 +109,13 @@ public class ReportingServiceImpl implements ReportingService {
     }
 
     @Override
-    public void generateReport(ReportType reportType, Integer assessmentYear,
-                               List<Integer> commissionIds, String locale,
+    public void generateReport(ReportType reportType, Integer specifiedStartYear,
+                               Integer assessmentYear, List<Integer> commissionIds, String locale,
                                Integer topLevelInstitutionId) {
         assessmentYear = DateUtil.calculateYearFromProvidedValue(assessmentYear);
 
         String templateName = getTemplateName(reportType);
-        int startYear = getStartYear(reportType, assessmentYear);
+        int startYear = getStartYear(reportType, assessmentYear, specifiedStartYear);
 
         try {
             var document = ReportTemplateEngine.loadDocumentTemplate(templateName);
@@ -120,11 +123,13 @@ public class ReportingServiceImpl implements ReportingService {
                 fetchAssessmentResponses(reportType, commissionIds, startYear, assessmentYear,
                     topLevelInstitutionId);
 
-            if (reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY)) {
+            if (List.of(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY,
+                ReportType.TABLE_SCIENTIFIC_PRODUCTION).contains(reportType)) {
                 var columns =
                     AssessmentReportGenerator.constructDataForCommissionColumns(commissionIds,
                         locale);
-                ReportTemplateEngine.addColumnsToFirstRow(document, columns, 0);
+                ReportTemplateEngine.addColumnsToFirstRow(document, columns,
+                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ? 0 : 1);
             }
 
             processReportData(reportType, document, assessmentResponses, commissionIds, locale,
@@ -193,7 +198,7 @@ public class ReportingServiceImpl implements ReportingService {
         if (reportType.equals(ReportType.TABLE_64)) {
             for (int year = startYear; year <= assessmentYear; year++) {
                 var responses = personAssessmentClassificationService.assessResearchers(
-                    commissionIds.getFirst(), new ArrayList<>(), year, year, null);
+                    commissionIds.getFirst(), new ArrayList<>(), year, year, null, false);
                 if (!responses.isEmpty()) {
                     responses.getFirst().setToYear(assessmentYear);
                 }
@@ -203,10 +208,12 @@ public class ReportingServiceImpl implements ReportingService {
             commissionIds.forEach(commissionId -> assessmentResponses.addAll(
                 personAssessmentClassificationService.assessResearchers(
                     commissionId, new ArrayList<>(), startYear, assessmentYear,
-                    topLevelInstitutionId)));
+                    topLevelInstitutionId,
+                    reportType.equals(ReportType.TABLE_SCIENTIFIC_PRODUCTION))));
         } else {
             assessmentResponses.addAll(personAssessmentClassificationService.assessResearchers(
-                commissionIds.getFirst(), new ArrayList<>(), startYear, assessmentYear, null));
+                commissionIds.getFirst(), new ArrayList<>(), startYear, assessmentYear,
+                null, false));
         }
 
         return assessmentResponses;
@@ -215,25 +222,35 @@ public class ReportingServiceImpl implements ReportingService {
     private boolean isTopLevelInstitutionReport(ReportType reportType) {
         return reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION) ||
             reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED) ||
-            reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY);
+            reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ||
+            reportType.equals(ReportType.TABLE_SCIENTIFIC_PRODUCTION);
     }
 
     private void processReportData(ReportType reportType, XWPFDocument document,
                                    List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
                                    List<Integer> commissionIds, String locale,
                                    Integer topLevelInstitutionId) {
+        var tableIndex = 0;
+        Pair<Map<String, String>, List<List<String>>> reportData;
 
-        var reportData = generateReportData(reportType, assessmentResponses, commissionIds, locale,
+        if (reportType.equals(ReportType.TABLE_SCIENTIFIC_PRODUCTION)) {
+            reportData =
+                AssessmentReportGenerator.constructDataForTable63(assessmentResponses, locale);
+            ReportTemplateEngine.insertFields(document, reportData.a);
+            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, tableIndex++);
+        }
+
+        reportData = generateReportData(reportType, assessmentResponses, commissionIds, locale,
             topLevelInstitutionId);
         ReportTemplateEngine.insertFields(document, reportData.a);
-        ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+        ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, tableIndex);
 
         if (isTopLevelInstitutionReport(reportType)) {
             reportData = AssessmentReportGenerator.constructDataForTableForAllPublications(
                 assessmentResponses,
                 reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED),
                 topLevelInstitutionId);
-            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 1);
+            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, ++tableIndex);
         }
     }
 
@@ -262,14 +279,17 @@ public class ReportingServiceImpl implements ReportingService {
             case TABLE_TOP_LEVEL_INSTITUTION -> "tableInstitutionTemplate.docx";
             case TABLE_TOP_LEVEL_INSTITUTION_SUMMARY -> "tableInstitutionSummaryTemplate.docx";
             case TABLE_TOP_LEVEL_INSTITUTION_COLORED -> "tableInstitutionColoredTemplate.docx";
+            case TABLE_SCIENTIFIC_PRODUCTION -> "tableScientificProductionTemplate.docx";
         };
     }
 
-    private int getStartYear(ReportType reportType, int assessmentYear) {
+    private int getStartYear(ReportType reportType, int assessmentYear,
+                             Integer specifiedStartYear) {
         return switch (reportType) {
             case TABLE_67, TABLE_67_POSITIONS -> assessmentYear - 9;
             case TABLE_63, TABLE_TOP_LEVEL_INSTITUTION, TABLE_TOP_LEVEL_INSTITUTION_SUMMARY,
                  TABLE_TOP_LEVEL_INSTITUTION_COLORED -> assessmentYear;
+            case TABLE_SCIENTIFIC_PRODUCTION -> specifiedStartYear;
             case TABLE_64 -> assessmentYear - 2;
         };
     }
@@ -295,7 +315,7 @@ public class ReportingServiceImpl implements ReportingService {
                 AssessmentReportGenerator.constructDataForTableTopLevelInstitutionColored(
                     assessmentResponses,
                     locale, topLevelInstitutionId);
-            case TABLE_TOP_LEVEL_INSTITUTION_SUMMARY ->
+            case TABLE_TOP_LEVEL_INSTITUTION_SUMMARY, TABLE_SCIENTIFIC_PRODUCTION ->
                 AssessmentReportGenerator.constructDataForTableTopLevelInstitutionSummary(
                     assessmentResponses, commissionIds, locale);
         };

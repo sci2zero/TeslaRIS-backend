@@ -960,7 +960,7 @@ package document {
      Integer numberOfReviewsOrAssessment
      
      ' !!! only available if Event is a TRIAL and contributionType is WITNESS
-     Set<MultilingualContent> case
+     Set<MultilingualContent> caseName
      Set<MultilingualContent> locationJurisdiction  
   }
 

@@ -385,5 +385,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         if (Objects.nonNull(publication.getProceedings())) {
             publication.setDocumentDate(publication.getProceedings().getDocumentDate());
         }
+
+        publication.setSection(
+            multilingualContentService.getMultilingualContent(publicationDTO.getSection()));
     }
 }

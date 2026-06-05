@@ -108,7 +108,7 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     public Course createCourse(CourseDTO dto, Boolean index) {
         var course = new Course();
 
-        setEventCommonFields(course, dto);
+        setEventCommonFields(course, EventType.COURSE, dto);
         setCourseFields(course, dto);
 
         var saved = courseJPAService.save(course);
@@ -126,7 +126,7 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
         var course = findCourseById(id);
 
         clearEventCommonFields(course);
-        setEventCommonFields(course, dto);
+        setEventCommonFields(course, EventType.COURSE, dto);
         setCourseFields(course, dto);
 
         courseJPAService.save(course);

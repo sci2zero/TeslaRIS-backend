@@ -53,6 +53,7 @@ public class PersonContributionConverter {
                 contribution.setContributionType(c.getContributionType());
                 contribution.setDateFrom(c.getDateFrom());
                 contribution.setDateTo(c.getDateTo());
+                contribution.setIsMainContributor(c.getIsMainContributor());
 
                 contributionDTOs.add(contribution);
             });
@@ -68,6 +69,17 @@ public class PersonContributionConverter {
                 setCommonFields(contribution, c);
 
                 contribution.setEventContributionType(c.getContributionType());
+                contribution.setLectureHoursPerWeek(c.getLectureHoursPerWeek());
+                contribution.setTutorialHoursPerWeek(c.getTutorialHoursPerWeek());
+                contribution.setLabHoursPerWeek(c.getLabHoursPerWeek());
+                contribution.setOtherContactHoursPerWeek(c.getOtherContactHoursPerWeek());
+                contribution.setNumberOfReviewsOrAssessment(c.getNumberOfReviewsOrAssessment());
+                contribution.setCaseName(
+                    MultilingualContentConverter.getMultilingualContentDTO(c.getCaseName()));
+                contribution.setLocationJurisdiction(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        c.getLocationJurisdiction()));
+                contribution.setMainArguer(c.getMainArguer());
 
                 contributionDTOs.add(contribution);
             });

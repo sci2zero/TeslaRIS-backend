@@ -62,6 +62,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
@@ -116,6 +117,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
+
+    @Value("${default.locale}")
+    private String defaultLocale;
 
 
     @Override
@@ -177,6 +181,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
+            newEntry.getDissertationInformation()
+                .setInstitutionNameSortable(
+                    StringUtil.getStringContent(thesis.getOrganisationUnit().getName(),
+                        defaultLocale)
+                );
         }
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)

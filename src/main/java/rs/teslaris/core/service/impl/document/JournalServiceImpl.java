@@ -26,12 +26,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
-import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.document.ArticleCollectionSeriesType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -171,7 +171,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     @Transactional
-    public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
+    public Journal createJournal(JournalDTO journalDTO, Boolean index) {
         var journal = new Journal();
 
         clearPublicationSeriesCommonFields(journal);
@@ -206,7 +206,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     @Transactional
-    public void updateJournal(Integer journalId, PublicationSeriesDTO journalDTO) {
+    public void updateJournal(Integer journalId, JournalDTO journalDTO) {
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
@@ -274,7 +274,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         return null;
     }
 
-    private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
+    private void setJournalRelatedFields(Journal journal, JournalDTO journalDTO) {
+        if (Objects.isNull(journalDTO.getType())) {
+            throw new IllegalArgumentException("Journal type cannot be null");
+        }
+
+        journal.setType(journalDTO.getType());
+
         if (Objects.nonNull(journalDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
                 journalDTO);
@@ -404,6 +410,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         newJournal.setEissn(eIssn);
         newJournal.setPrintISSN(printIssn);
         newJournal.setLanguageIds(Set.of(defaultLanguage.getId()));
+        newJournal.setType(ArticleCollectionSeriesType.JOURNAL);
 
         return createJournal(newJournal, true);
     }

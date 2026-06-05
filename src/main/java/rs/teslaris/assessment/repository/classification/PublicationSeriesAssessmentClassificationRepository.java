@@ -102,7 +102,6 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         nativeQuery = true)
     List<Integer> findReasonIdsForDeletion(List<Integer> ids);
 
-
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM entity_assessment_classifications_classification_reason reason " +

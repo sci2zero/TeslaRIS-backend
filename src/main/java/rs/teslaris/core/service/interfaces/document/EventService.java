@@ -18,7 +18,7 @@ public interface EventService extends JPAService<Event> {
 
     Event findEventByOldId(Integer eventId);
 
-    void setEventCommonFields(Event event, EventDTO eventDTO);
+    void setEventCommonFields(Event event, EventType eventType, EventDTO eventDTO);
 
     void clearEventCommonFields(Event event);
 

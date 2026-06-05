@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,11 @@ public class ExhibitionControllerTest extends BaseTest {
         exhibitionDTO.setFee("10EUR");
 
         var contribution =
-            new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR);
+            new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR,
+                null, null, null,
+                null, null, null,
+                new ArrayList<>(), new ArrayList<>(), false
+            );
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);
