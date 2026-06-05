@@ -154,7 +154,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                                                          Integer institutionId,
                                                                          Pageable pageable) {
         return registryBookEntryRepository.getBookEntriesForPromotion(
-            promotionId, institutionId, pageable
+            promotionId,
+            Objects.isNull(institutionId) ? null :
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId),
+            pageable
         ).map(RegistryBookEntryConverter::toDTO);
     }
 

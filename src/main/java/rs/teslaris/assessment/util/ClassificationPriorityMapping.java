@@ -333,6 +333,10 @@ public class ClassificationPriorityMapping {
         var number = Integer.parseInt(matcher.group(1));
         var suffix = matcher.group(2);
 
+        if (assessmentConfig.unclassifiedPublicationsCode.equalsIgnoreCase(code)) {
+            return Double.MAX_VALUE;
+        }
+
         double score = number;
 
         if (Objects.nonNull(suffix)) {
@@ -344,6 +348,27 @@ public class ClassificationPriorityMapping {
         }
 
         return score;
+    }
+
+    public static Comparator<String> getClassificationCodeSorter() {
+        return (s1, s2) -> {
+            double score1 = ClassificationPriorityMapping.calculateSortingScore(s1);
+            double score2 = ClassificationPriorityMapping.calculateSortingScore(s2);
+
+            if (score1 != Double.MAX_VALUE && score2 != Double.MAX_VALUE) {
+                return Double.compare(score1, score2);
+            }
+
+            if (score1 == Double.MAX_VALUE && score2 == Double.MAX_VALUE) {
+                return s1.compareTo(s2);
+            }
+
+            if (score1 != Double.MAX_VALUE) {
+                return -1;
+            } else {
+                return 1;
+            }
+        };
     }
 
     private record AssessmentConfig(

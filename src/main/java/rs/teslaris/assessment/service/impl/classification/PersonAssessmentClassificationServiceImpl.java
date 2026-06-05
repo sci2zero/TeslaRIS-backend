@@ -749,15 +749,19 @@ public class PersonAssessmentClassificationServiceImpl
                     .findFirst();
         }
 
-        if (assessment.isEmpty() && processUnclassifiedPublications) {
-            assessmentResult.getPublicationsPerCategory()
-                .computeIfAbsent(ClassificationPriorityMapping.getCodeForUnclassifiedPublications(),
-                    k -> new ArrayList<>())
-                .add(new Triple<>(
-                    citationService.craftCitationInGivenStyle("apa", publication,
-                        LanguageAbbreviations.ENGLISH),
-                    0.0,
-                    publication.getDatabaseId()));
+        if (assessment.isEmpty()) {
+            if (processUnclassifiedPublications) {
+                assessmentResult.getPublicationsPerCategory()
+                    .computeIfAbsent(
+                        ClassificationPriorityMapping.getCodeForUnclassifiedPublications(),
+                        k -> new ArrayList<>())
+                    .add(new Triple<>(
+                        citationService.craftCitationInGivenStyle("apa", publication,
+                            LanguageAbbreviations.ENGLISH),
+                        0.0,
+                        publication.getDatabaseId()));
+            }
+
             return;
         }
 

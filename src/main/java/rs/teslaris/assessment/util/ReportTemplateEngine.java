@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -51,6 +52,7 @@ public class ReportTemplateEngine {
                                                                  List<List<String>> rowsData,
                                                                  Integer tableIndex) {
         var table = document.getTables().get(tableIndex);
+        setTableBorders(table);
 
         if (table.getRows().size() > 1) {
             table.removeRow(1);
@@ -88,6 +90,75 @@ public class ReportTemplateEngine {
                 }
             }
         }
+    }
+
+    private static void setTableBorders(XWPFTable table) {
+        var ctTbl = table.getCTTbl();
+
+        var tblPr = ctTbl.getTblPr();
+        if (tblPr == null) {
+            tblPr = ctTbl.addNewTblPr();
+        }
+
+        var tblBorders = tblPr.isSetTblBorders()
+            ? tblPr.getTblBorders()
+            : tblPr.addNewTblBorders();
+
+        var borderSize = java.math.BigInteger.valueOf(8);
+
+        // Top
+        var top = tblBorders.isSetTop()
+            ? tblBorders.getTop()
+            : tblBorders.addNewTop();
+        top.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        top.setSz(borderSize);
+
+        // Bottom
+        var bottom = tblBorders.isSetBottom()
+            ? tblBorders.getBottom()
+            : tblBorders.addNewBottom();
+        bottom.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        bottom.setSz(borderSize);
+
+        // Left
+        var left = tblBorders.isSetLeft()
+            ? tblBorders.getLeft()
+            : tblBorders.addNewLeft();
+        left.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        left.setSz(borderSize);
+
+        // Right
+        var right = tblBorders.isSetRight()
+            ? tblBorders.getRight()
+            : tblBorders.addNewRight();
+        right.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        right.setSz(borderSize);
+
+        // Internal horizontal lines
+        var insideH = tblBorders.isSetInsideH()
+            ? tblBorders.getInsideH()
+            : tblBorders.addNewInsideH();
+        insideH.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        insideH.setSz(borderSize);
+
+        // Internal vertical lines
+        var insideV = tblBorders.isSetInsideV()
+            ? tblBorders.getInsideV()
+            : tblBorders.addNewInsideV();
+        insideV.setVal(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE
+        );
+        insideV.setSz(borderSize);
     }
 
     private static synchronized void setText(XWPFTableCell cell, String text) {
