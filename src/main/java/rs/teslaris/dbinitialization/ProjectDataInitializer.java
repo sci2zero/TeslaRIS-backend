@@ -55,7 +55,7 @@ public class ProjectDataInitializer {
 
     private final ProjectDocumentRepository projectDocumentRepository;
 
-    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
+    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1, Thesis document1) {
         var currencyEuro = new Currency();
         currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
         currencyEuro.setCode("EUR");
@@ -183,14 +183,6 @@ public class ProjectDataInitializer {
         fundingApplication2.setFundingCall(fundingCall1);
 
         fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
-
-        var document1 = new Thesis();
-        document1.setId(101);
-        document1.setApproveStatus(ApproveStatus.APPROVED);
-        document1.setThesisType(ThesisType.PHD);
-        document1.setOrganisationUnit(funder1);
-        document1.setTitle(
-                Set.of(new MultiLingualContent(englishTag, "Dummy Document", 1)));
 
         var projectDocument1 = new ProjectDocument();
         projectDocument1.setProject(project1);
