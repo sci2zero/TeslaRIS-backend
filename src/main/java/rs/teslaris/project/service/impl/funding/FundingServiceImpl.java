@@ -166,7 +166,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             var project = projectService.findOne(fundingDTO.getProjectId());
             funding.setProject(project);
         } else {
-            throw new ReferenceConstraintException("Funding must be bound to a project.");
+            funding.setProject(null);
         }
 
         if (Objects.nonNull(fundingDTO.getFundingCallId())) {

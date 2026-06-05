@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.commontypes;
 
+import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,8 +15,9 @@ public interface IndexBulkUpdateService {
                                               String relatedSortFieldName,
                                               Integer idToRemove);
 
+
     void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
-                             String idField, Integer idToSet);
+                             String idField, @Nullable Integer idToSet);
 
     void setYearForAggregatedRecord(String fieldMappingName, Integer queryValue,
                                     Integer year);

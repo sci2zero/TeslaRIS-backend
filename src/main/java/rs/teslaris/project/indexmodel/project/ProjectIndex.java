@@ -11,6 +11,8 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -38,4 +40,10 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
+
+    @Field(type = FieldType.Date, name = "date_from")
+    private LocalDate dateFrom;
+
+    @Field(type = FieldType.Date, name = "date_to")
+    private LocalDate dateTo;
 }
