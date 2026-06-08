@@ -17,7 +17,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
         SELECT rbe
         FROM RegistryBookEntry rbe
         WHERE (:institutionIds IS NULL
-               OR rbe.registryBookInstitution.id IN :institutionIds)
+               OR rbe.promotion.institution.id IN :institutionIds)
           AND rbe.promotion.id = :promotionId
           AND rbe.promotion.finished = FALSE
         """)
