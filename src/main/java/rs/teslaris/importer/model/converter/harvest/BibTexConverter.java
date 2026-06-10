@@ -3,45 +3,34 @@ package rs.teslaris.importer.model.converter.harvest;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import org.apache.tika.language.detect.LanguageDetector;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.LaTeXParser;
 import org.jbibtex.LaTeXPrinter;
 import org.jbibtex.ParseException;
 import org.jbibtex.Value;
-import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 
-@Component
 public class BibTexConverter {
 
     private static final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
-    private static LanguageDetector languageDetector;
-
-
-    public BibTexConverter(LanguageDetector languageDetector) {
-        BibTexConverter.languageDetector = languageDetector;
-    }
 
     public static Optional<DocumentImport> toCommonImportModel(BibTeXEntry bibEntry) {
         String entryType = bibEntry.getType().getValue();
@@ -82,7 +71,7 @@ public class BibTexConverter {
 
         getFieldValue(bibEntry, BibTeXEntry.KEY_TITLE)
             .ifPresent(title ->
-                document.getTitle().add(createMultilingualContent(title))
+                document.getTitle().add(CommonHarvestUtility.createMultilingualContent(title))
             );
 
         if (!addPublishedIn(bibEntry, document, isArticle)) {
@@ -102,23 +91,27 @@ public class BibTexConverter {
                 if (bookTitle.get().contains(";")) {
                     var eventAndProceedings = bookTitle.get().split("; ");
                     event.getName().add(
-                        createMultilingualContent(sanitizeBibTexString(eventAndProceedings[0])));
+                        CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(eventAndProceedings[0])));
                     document.getPublishedIn()
-                        .add(createMultilingualContent(
+                        .add(CommonHarvestUtility.createMultilingualContent(
                             sanitizeBibTexString(eventAndProceedings[1])));
                 } else if (bookTitle.get().contains("Proceedings") ||
                     bookTitle.get().contains("proceedings")) {
                     document.getPublishedIn()
-                        .add(createMultilingualContent(sanitizeBibTexString(bookTitle.get())));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(bookTitle.get())));
                     String eventName = cleanProceedingsTitleToEvent(bookTitle.get());
                     event.getName()
-                        .add(createMultilingualContent(sanitizeBibTexString(eventName)));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(eventName)));
                 } else {
                     event.getName().add(
-                        createMultilingualContent(sanitizeBibTexString(bookTitle.get())));
+                        CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(bookTitle.get())));
                     document.getPublishedIn()
-                        .add(createMultilingualContent(
-                            "Proceedings of " + sanitizeBibTexString(bookTitle.get())
+                        .add(CommonHarvestUtility.createProceedingsName(
+                            sanitizeBibTexString(bookTitle.get())
                         ));
                 }
 
@@ -138,9 +131,9 @@ public class BibTexConverter {
 
                 document.getPublishedIn()
                     .add(
-                        createMultilingualContent("Proceedings of " + cleanName));
+                        CommonHarvestUtility.createProceedingsName(cleanName));
                 var event = new Event();
-                event.getName().add(createMultilingualContent(cleanName));
+                event.getName().add(CommonHarvestUtility.createMultilingualContent(cleanName));
                 document.setEvent(event);
             }
 
@@ -186,7 +179,8 @@ public class BibTexConverter {
         if (getFieldValue(bibEntry, BibTeXEntry.KEY_JOURNAL)
             .map(journal -> {
                 doc.getPublishedIn()
-                    .add(createMultilingualContent(sanitizeBibTexString(journal)));
+                    .add(CommonHarvestUtility.createMultilingualContent(
+                        sanitizeBibTexString(journal)));
                 return true;
             }).orElse(false)) {
             return true;
@@ -197,7 +191,8 @@ public class BibTexConverter {
                 .or(() -> getFieldValue(bibEntry, BibTeXEntry.KEY_ORGANIZATION))
                 .map(pubOrg -> {
                     doc.getPublishedIn()
-                        .add(createMultilingualContent(sanitizeBibTexString(pubOrg)));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(pubOrg)));
                     return true;
                 }).orElse(false);
         }
@@ -327,13 +322,14 @@ public class BibTexConverter {
 
         getFieldValue(bibEntry, "author_keywords")
             .ifPresent(keywords -> document.getKeywords().add(
-                    createMultilingualContent(keywords.replace("; ", "\n"))
+                    CommonHarvestUtility.createMultilingualContent(keywords.replace("; ", "\n"))
                 )
             );
 
         getFieldValue(bibEntry, "abstract")
             .ifPresent(description ->
-                document.getDescription().add(createMultilingualContent(description))
+                document.getDescription()
+                    .add(CommonHarvestUtility.createMultilingualContent(description))
             );
 
         getFieldValue(bibEntry, "uri").ifPresent(uri -> document.getUris().add(uri));
@@ -346,7 +342,7 @@ public class BibTexConverter {
                         var institution = new OrganisationUnit();
                         institution.setImportId(String.valueOf(i + 1));
                         institution.getName()
-                            .add(createMultilingualContent(affiliations[0]));
+                            .add(CommonHarvestUtility.createMultilingualContent(affiliations[0]));
                         contribution.getInstitutions().add(institution);
                     });
             } else if (affiliations.length == document.getContributions().size()) {
@@ -354,7 +350,8 @@ public class BibTexConverter {
                     (i, contribution) -> {
                         var institution = new OrganisationUnit();
                         institution.setImportId(String.valueOf(i + 1));
-                        institution.getName().add(createMultilingualContent(affiliations[i]));
+                        institution.getName()
+                            .add(CommonHarvestUtility.createMultilingualContent(affiliations[i]));
                         contribution.getInstitutions().add(institution);
                     });
             }
@@ -372,28 +369,5 @@ public class BibTexConverter {
             .replace("\\_", "_")
             .replace("\\$", "$")
             .replaceAll("\\{([^}]*)}", "$1");
-    }
-
-    private static String detectLanguage(String text) {
-        return languageDetector.detect(text).getLanguage().toUpperCase();
-    }
-
-    private static MultilingualContent createMultilingualContent(String text) {
-        var language = detectLanguage(text);
-        if (LanguageAbbreviations.CROATIAN.equals(language)) {
-            language = LanguageAbbreviations.SERBIAN;
-        }
-
-        if (!List.of(LanguageAbbreviations.SERBIAN,
-            LanguageAbbreviations.ENGLISH, LanguageAbbreviations.GERMAN,
-            LanguageAbbreviations.SPANISH, LanguageAbbreviations.PORTUGUESE,
-            LanguageAbbreviations.FRENCH, LanguageAbbreviations.HUNGARIAN,
-            LanguageAbbreviations.ITALIAN, LanguageAbbreviations.RUSSIAN).contains(language)) {
-            language = LanguageAbbreviations.ENGLISH;
-        }
-
-        return new MultilingualContent(
-            language, text, 1
-        );
     }
 }

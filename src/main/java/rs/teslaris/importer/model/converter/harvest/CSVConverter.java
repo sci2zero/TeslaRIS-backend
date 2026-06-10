@@ -12,11 +12,11 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 
 public class CSVConverter {
 
@@ -92,7 +92,7 @@ public class CSVConverter {
     }
 
     private static void populateBasicMetadata(DocumentImport document, String[] record) {
-        document.getTitle().add(new MultilingualContent("EN", record[4], 1));
+        document.getTitle().add(CommonHarvestUtility.createMultilingualContent(record[4]));
         document.setDocumentDate(record[5]);
         document.setIdentifier(record[20]);
         document.setVolume(record[6]);
@@ -106,15 +106,17 @@ public class CSVConverter {
         if ("Article".equals(type) && !record[16].isBlank()) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
             document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
-            document.getPublishedIn().add(new MultilingualContent("EN", record[16], 1));
+            document.getPublishedIn()
+                .add(CommonHarvestUtility.createMultilingualContent(record[16]));
         } else if ("Conference paper".equals(type) && !record[15].isBlank()) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
             document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
             document.getPublishedIn()
-                .add(new MultilingualContent("EN", "Proceedings of " + record[15], 1));
+                .add(
+                    CommonHarvestUtility.createProceedingsName(record[15]));
 
             var event = new Event();
-            event.getName().add(new MultilingualContent("EN", record[15], 1));
+            event.getName().add(CommonHarvestUtility.createMultilingualContent(record[15]));
             event.setConfId(record[19]);
 
             int year = Integer.parseInt(record[5]);
@@ -174,7 +176,7 @@ public class CSVConverter {
         var institution = new OrganisationUnit();
         institution.setImportId(String.valueOf(index));
         var name = affiliation.split(", ", 2)[1];
-        institution.getName().add(new MultilingualContent("EN", name, 1));
+        institution.getName().add(CommonHarvestUtility.createMultilingualContent(name));
         return institution;
     }
 
@@ -215,9 +217,13 @@ public class CSVConverter {
 
         document.setIsbn(record[18]);
 
-        document.getDescription().add(new MultilingualContent("EN", record[13], 1));
+        document.getDescription()
+            .add(CommonHarvestUtility.createMultilingualContent(record[13]));
         document.getKeywords()
-            .add(new MultilingualContent("EN", record[14].replace("; ", "\n"), 1));
+            .add(
+                CommonHarvestUtility.createMultilingualContent(
+                    record[14].replace("; ", "\n"))
+            );
     }
 
     private static String formatIssn(String raw) {

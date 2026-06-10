@@ -13,11 +13,11 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.openalex.OpenAlexImportUtility;
 
 public class OpenAlexConverter {
@@ -89,7 +89,7 @@ public class OpenAlexConverter {
             document.setDoi(record.doi().replace("https://doi.org/", ""));
         }
 
-        document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
+        document.getTitle().add(CommonHarvestUtility.createMultilingualContent(record.title()));
     }
 
     private static void handleJournalArticle(DocumentImport document,
@@ -101,7 +101,8 @@ public class OpenAlexConverter {
         document.setJournalPublicationType(
             record.type().equals("review") ? JournalPublicationType.REVIEW_ARTICLE :
                 JournalPublicationType.RESEARCH_ARTICLE);
-        document.getPublishedIn().add(new MultilingualContent("EN", source.displayName(), 1));
+        document.getPublishedIn()
+            .add(CommonHarvestUtility.createMultilingualContent(source.displayName()));
         document.setJournalOpenAlexId(sourceId);
 
         var issns = source.issn();
@@ -122,11 +123,12 @@ public class OpenAlexConverter {
         document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
         document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         document.getPublishedIn()
-            .add(new MultilingualContent("EN", "Proceedings of " + source.displayName(), 1));
+            .add(CommonHarvestUtility.createProceedingsName(source.displayName()));
 
         var event = new Event();
         event.setOpenAlexId(sourceId);
-        event.getName().add(new MultilingualContent("EN", source.displayName(), 1));
+        event.getName().add(
+            CommonHarvestUtility.createMultilingualContent(source.displayName()));
         event.setDateFrom(LocalDate.of(publicationYear, 1, 1));
         event.setDateTo(LocalDate.of(publicationYear, 12, 31));
 
@@ -148,7 +150,7 @@ public class OpenAlexConverter {
                 var organisationUnit = new OrganisationUnit();
                 organisationUnit.setImportId(cleanOpenAlexId(institution.id()));
                 organisationUnit.getName()
-                    .add(new MultilingualContent("EN", institution.displayName(), 1));
+                    .add(CommonHarvestUtility.createMultilingualContent(institution.displayName()));
                 if (Objects.nonNull(institution.ror())) {
                     organisationUnit.setRor(institution.ror().replace("https://ror.org/", ""));
                 }
@@ -166,7 +168,8 @@ public class OpenAlexConverter {
         var keywords = record.keywords().stream()
             .map(OpenAlexImportUtility.OpenAlexPublication.Keyword::displayName)
             .toList();
-        document.getKeywords().add(new MultilingualContent("EN", String.join("\n", keywords), 1));
+        document.getKeywords()
+            .add(CommonHarvestUtility.createMultilingualContent(String.join("\n", keywords)));
     }
 
     private static String cleanOpenAlexId(String url) {

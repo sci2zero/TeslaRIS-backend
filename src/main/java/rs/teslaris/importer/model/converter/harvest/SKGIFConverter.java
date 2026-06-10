@@ -23,6 +23,7 @@ import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.skgif.SKGIFImportUtility;
 
 @Slf4j
@@ -177,7 +178,7 @@ public class SKGIFConverter {
         }
 
         document.getPublishedIn()
-            .add(new MultilingualContent("EN", venue.getTitle(), 1));
+            .add(CommonHarvestUtility.createMultilingualContent(venue.getTitle()));
 
         if (venue.getIdentifiers().stream().anyMatch(id -> id.getScheme().equals("issn"))) {
             document.setPrintIssn(
@@ -252,7 +253,8 @@ public class SKGIFConverter {
                             var institution = new OrganisationUnit();
 
                             institution.getName()
-                                .add(new MultilingualContent("EN", organisation.getName(), 1));
+                                .add(CommonHarvestUtility.createMultilingualContent(
+                                    organisation.getName()));
 
                             if (Objects.nonNull(organisation.getIdentifiers())) {
                                 organisation.getIdentifiers().stream()

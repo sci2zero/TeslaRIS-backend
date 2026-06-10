@@ -11,10 +11,10 @@ import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 
 @Slf4j
 public class ScindeksConverter {
@@ -28,9 +28,11 @@ public class ScindeksConverter {
         document.getInternalIdentifiers().add(document.getIdentifier());
 
         document.getTitle()
-            .add(new MultilingualContent("EN", record.getTitle().getFirst().getValue(), 1));
+            .add(CommonHarvestUtility.createMultilingualContent(
+                record.getTitle().getFirst().getValue()));
         document.getDescription()
-            .add(new MultilingualContent("EN", record.getDescription().getFirst().getValue(), 1));
+            .add(CommonHarvestUtility.createMultilingualContent(
+                record.getDescription().getFirst().getValue()));
 
         if (record.getType().stream()
             .anyMatch(source -> source.equals("info:eu-repo/semantics/article"))) {
@@ -44,7 +46,7 @@ public class ScindeksConverter {
             }
 
             document.getPublishedIn()
-                .add(new MultilingualContent("EN", journalName.get(), 1));
+                .add(CommonHarvestUtility.createMultilingualContent(journalName.get()));
 
             record.getSource().stream().filter(name -> name.startsWith("ISSN:")).findFirst()
                 .ifPresent(issn -> {
@@ -88,7 +90,8 @@ public class ScindeksConverter {
         });
 
         var keywords = new ArrayList<>(record.getSubject());
-        document.getKeywords().add(new MultilingualContent("EN", Strings.join(keywords, '\n'), 1));
+        document.getKeywords()
+            .add(CommonHarvestUtility.createMultilingualContent(Strings.join(keywords, '\n')));
 
         return Optional.of(document);
     }

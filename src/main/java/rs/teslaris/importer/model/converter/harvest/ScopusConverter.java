@@ -13,11 +13,11 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
 public class ScopusConverter {
@@ -138,18 +138,20 @@ public class ScopusConverter {
 
         document.setDocumentDate(entry.coverDate().split("-")[0]);
 
-        document.getTitle().add(new MultilingualContent("EN", entry.title(), 1));
+        document.getTitle().add(CommonHarvestUtility.createMultilingualContent(entry.title()));
 
         if (Objects.nonNull(entry.description()) && !entry.description().isEmpty()) {
-            document.getDescription().add(new MultilingualContent("EN", entry.description(), 1));
+            document.getDescription()
+                .add(CommonHarvestUtility.createMultilingualContent(entry.description()));
         }
 
-        document.getPublishedIn().add(new MultilingualContent("EN", entry.publicationName(), 1));
+        document.getPublishedIn()
+            .add(CommonHarvestUtility.createMultilingualContent(entry.publicationName()));
 
         if (Objects.nonNull(entry.authKeywords())) {
             document.getKeywords()
-                .add(new MultilingualContent("EN",
-                    entry.authKeywords().replace("|", "\n").replace(" ", ""), 1));
+                .add(CommonHarvestUtility.createMultilingualContent(
+                    entry.authKeywords().replace("|", "\n").replace(" ", "")));
         }
 
         setContributionInformation(entry, document);
@@ -219,7 +221,8 @@ public class ScopusConverter {
                     institution.setScopusAfid(authorAfid.id());
                     institution.setImportId(authorAfid.id());
                     institution.getName()
-                        .add(new MultilingualContent("EN", authorAffiliation.get().affilName(), 1));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            authorAffiliation.get().affilName()));
                     contribution.getInstitutions().add(institution);
                 });
             }
@@ -240,24 +243,21 @@ public class ScopusConverter {
                 return;
             }
 
-            conference.getName().add(new MultilingualContent("EN",
+            conference.getName().add(CommonHarvestUtility.createMultilingualContent(
                 sourceRecord.additionalSrcinfo()
-                    .conferenceinfo().confevent().confname(), 1));
+                    .conferenceinfo().confevent().confname()));
 
-            conference.getState().add(new MultilingualContent("EN",
-                sourceRecord.additionalSrcinfo()
-                    .conferenceinfo().confevent().conflocation().country(), 1));
+            var conflocation = sourceRecord.additionalSrcinfo()
+                .conferenceinfo().confevent().conflocation();
+            conference.getState().add(CommonHarvestUtility.createMultilingualContent(
+                conflocation.country()));
 
-            conference.getPlace().add(new MultilingualContent("EN",
-                sourceRecord.additionalSrcinfo()
-                    .conferenceinfo().confevent().conflocation().city(), 1));
+            conference.getPlace().add(CommonHarvestUtility.createMultilingualContent(
+                conflocation.city()));
 
-            var dateFromObject =
-                sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate()
-                    .startdate();
-            var dateToObject =
-                sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate()
-                    .enddate();
+            var confdate = sourceRecord.additionalSrcinfo().conferenceinfo().confevent().confdate();
+            var dateFromObject = confdate.startdate();
+            var dateToObject = confdate.enddate();
 
             conference.setDateFrom(
                 LocalDate.of(Integer.parseInt(dateFromObject.year()),
