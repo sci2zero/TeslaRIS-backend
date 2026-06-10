@@ -38,13 +38,14 @@ public class ReportTemplateEngine {
 
     public static synchronized void addColumnsToFirstRow(XWPFDocument document,
                                                          List<String> columnsData,
-                                                         int tableIndex) {
+                                                         int tableIndex, String locale) {
         var table = document.getTables().get(tableIndex);
         var firstRow = table.getRow(0);
 
         for (String columnValue : columnsData) {
             var cell = firstRow.createCell();
-            cell.setText(columnValue);
+            cell.setText(columnValue + " (" + LocalizationUtil.getMessage(
+                "reporting.table63.NumberOfResults", new Object[] {}, locale) + ")");
         }
     }
 

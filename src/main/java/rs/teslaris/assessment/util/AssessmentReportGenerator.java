@@ -154,7 +154,17 @@ public class AssessmentReportGenerator {
             "{heading3}",
             LocalizationUtil.getMessage("reporting.scientificProduction.third",
                 new Object[] {fromYear, toYear},
-                locale)
+                locale),
+            "{col5}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col6}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, locale),
+            "{col7}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, locale),
+            "{col8}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, locale)
         );
     }
 

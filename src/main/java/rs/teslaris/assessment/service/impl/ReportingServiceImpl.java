@@ -129,7 +129,8 @@ public class ReportingServiceImpl implements ReportingService {
                     AssessmentReportGenerator.constructDataForCommissionColumns(commissionIds,
                         locale);
                 ReportTemplateEngine.addColumnsToFirstRow(document, columns,
-                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ? 0 : 1);
+                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ? 0 : 1,
+                    locale);
             }
 
             processReportData(reportType, document, assessmentResponses, commissionIds, locale,

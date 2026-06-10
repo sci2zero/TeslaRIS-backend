@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -56,14 +57,19 @@ public class PersonDocumentContribution extends PersonContribution {
         super(
             other.getPerson(),
             other.getContributionDescription().stream()
-                .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(),
+                .map(mt -> new MultiLingualContent(
+                    mt.getLanguage(),
+                    mt.getContent(),
                     mt.getPriority()))
                 .collect(Collectors.toCollection(HashSet::new)),
-            other.getAffiliationStatement(),
+            Objects.isNull(other.getAffiliationStatement())
+                ? new AffiliationStatement()
+                : new AffiliationStatement(other.getAffiliationStatement()),
             new HashSet<>(other.getInstitutions()),
             other.getOrderNumber(),
             other.getApproveStatus()
         );
+
         this.document = newDocument;
         this.contributionType = other.getContributionType();
         this.isMainContributor = other.getIsMainContributor();
