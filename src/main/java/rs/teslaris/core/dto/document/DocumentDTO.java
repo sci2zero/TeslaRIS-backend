@@ -41,7 +41,7 @@ public class DocumentDTO {
 
     @Valid
     @NotNull(message = "You have to provide contributions.")
-    private List<PersonDocumentContributionDTO> contributions;
+    private List<PersonDocumentContributionDTO> contributions = new ArrayList<>();
 
     @NotNull(message = "You have to provide a list of URIs.")
     private Set<String> uris;

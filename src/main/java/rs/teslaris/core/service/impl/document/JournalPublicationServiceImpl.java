@@ -224,10 +224,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         deleteProofsAndFileItems(publicationToDelete);
 
         journalPublicationJPAService.delete(journalPublicationId);
-        this.delete(journalPublicationId);
+        documentRepository.deleteDocumentContributions(journalPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(journalPublicationId));

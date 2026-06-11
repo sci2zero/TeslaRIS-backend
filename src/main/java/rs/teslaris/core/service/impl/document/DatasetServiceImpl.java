@@ -174,10 +174,12 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public void deleteDataset(Integer datasetId) {
         var datasetToDelete = datasetJPAService.findOne(datasetId);
 
+        updateIndexedPersonContributions(datasetToDelete);
+
         deleteProofsAndFileItems(datasetToDelete);
 
         datasetJPAService.delete(datasetId);
-        this.delete(datasetId);
+        documentRepository.deleteDocumentContributions(datasetId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(datasetId));

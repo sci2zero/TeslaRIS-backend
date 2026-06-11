@@ -275,14 +275,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Override
     @Transactional
     public void deleteMonograph(Integer monographId) {
-        monographJPAService.findOne(monographId);
+        var monographToDelete = monographJPAService.findOne(monographId);
 
         if (monographRepository.hasPublication(monographId)) {
             throw new MonographReferenceConstraintViolationException(
                 "Monograph with given ID is in use and cannot be deleted.");
         }
 
+        updateIndexedPersonContributions(monographToDelete);
+
         monographJPAService.delete(monographId);
+        documentRepository.deleteDocumentContributions(monographId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(monographId));

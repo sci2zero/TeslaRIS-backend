@@ -240,13 +240,15 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     @Transactional
     public void deleteProceedingsPublication(Integer proceedingsPublicationId) {
-//        var publicationToDelete =
-//            (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
+        var publicationToDelete =
+            proceedingPublicationJPAService.findOne(proceedingsPublicationId);
+        updateIndexedPersonContributions(publicationToDelete);
+
 //        TODO: check if this is needed because of soft delete
 //        deleteProofsAndFileItems(publicationToDelete);
 
         proceedingPublicationJPAService.delete(proceedingsPublicationId);
-        this.delete(proceedingsPublicationId);
+        documentRepository.deleteDocumentContributions(proceedingsPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(proceedingsPublicationId));

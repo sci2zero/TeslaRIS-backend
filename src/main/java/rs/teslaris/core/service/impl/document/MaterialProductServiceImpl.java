@@ -175,9 +175,12 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
     public void deleteMaterialProduct(Integer materialProductId) {
         var materialProductToDelete = materialProductJPAService.findOne(materialProductId);
 
+        updateIndexedPersonContributions(materialProductToDelete);
+
         deleteProofsAndFileItems(materialProductToDelete);
 
         materialProductJPAService.delete(materialProductId);
+        documentRepository.deleteDocumentContributions(materialProductId);
         save(materialProductToDelete);
 
         documentPublicationIndexRepository.delete(

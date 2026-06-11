@@ -339,7 +339,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesisToDelete = thesisJPAService.findOne(thesisId);
         checkIfAvailableForEditing(thesisToDelete);
 
+        updateIndexedPersonContributions(thesisToDelete);
+
         thesisJPAService.delete(thesisId);
+        documentRepository.deleteDocumentContributions(thesisId);
+
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(thesisId));
     }

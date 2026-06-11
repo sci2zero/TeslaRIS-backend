@@ -168,9 +168,12 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     public void deleteGeneticMaterial(Integer geneticMaterialId) {
         var geneticMaterialToDelete = geneticMaterialJPAService.findOne(geneticMaterialId);
 
+        updateIndexedPersonContributions(geneticMaterialToDelete);
+
         deleteProofsAndFileItems(geneticMaterialToDelete);
 
         geneticMaterialJPAService.delete(geneticMaterialId);
+        documentRepository.deleteDocumentContributions(geneticMaterialId);
         save(geneticMaterialToDelete);
 
         documentPublicationIndexRepository.delete(

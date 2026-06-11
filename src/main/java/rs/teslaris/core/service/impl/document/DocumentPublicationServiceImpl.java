@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -48,6 +49,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -465,6 +467,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
 
+        updateIndexedPersonContributions(document);
+
         document.getFileItems().forEach(file -> {
             file.setDeleted(true);
             documentFileService.save(file);
@@ -497,6 +501,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setDeleted(true);
         documentRepository.save(document);
+        documentRepository.deleteDocumentContributions(documentId);
         documentRepository.flush();
 
         var index =
@@ -1088,7 +1093,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.setPublicationStatus(documentDTO.getPublicationStatus());
         }
 
+        var contributorIds = new HashSet<Integer>();
+
+        contributorIds.addAll(document.getContributors().stream()
+            .filter(c -> Objects.nonNull(c.getPerson()))
+            .map(c -> c.getPerson().getId())
+            .toList());
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
+        contributorIds.addAll(documentDTO.getContributions().stream()
+            .map(PersonContributionDTO::getPersonId)
+            .filter(Objects::nonNull).toList());
+
+        applicationEventPublisher.publishEvent(new PersonContributionsChangeEvent(contributorIds));
 
         if (Objects.nonNull(documentDTO.getOldId())) {
             document.getOldIds().add(documentDTO.getOldId());
@@ -2057,5 +2073,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
+    }
+
+    protected void updateIndexedPersonContributions(Document document) {
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(document.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(contribution -> contribution.getPerson().getId())
+                .collect(Collectors.toSet())));
     }
 }

@@ -216,7 +216,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public void deleteMonographPublication(Integer monographPublicationId) {
         var publicationToDelete = monographPublicationJPAService.findOne(monographPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         monographPublicationJPAService.delete(publicationToDelete.getId());
+        documentRepository.deleteDocumentContributions(monographPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(monographPublicationId));
