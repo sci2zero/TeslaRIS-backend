@@ -4,11 +4,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,9 +18,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -62,13 +66,14 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  LanguageService languageService,
                                  PersonContributionService personContributionService,
                                  IndexBulkUpdateService indexBulkUpdateService,
+                                 ApplicationEventPublisher applicationEventPublisher,
                                  BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
                                  SearchService<BookSeriesIndex> searchService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  BookSeriesRepository bookSeriesRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageService,
-            personContributionService, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService, applicationEventPublisher);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;
@@ -130,9 +135,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
 
-        clearPublicationSeriesCommonFields(bookSeries);
+        var oldContributorIds = clearPublicationSeriesCommonFields(bookSeries);
         setPublicationSeriesCommonFields(bookSeries, bookSeriesDTO);
-        setBookSeriesFields(bookSeries, bookSeriesDTO);
+        setBookSeriesFields(bookSeries, bookSeriesDTO, oldContributorIds);
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
         if (index) {
@@ -148,9 +153,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
         bookSeriesToUpdate.getLanguages().clear();
 
-        clearPublicationSeriesCommonFields(bookSeriesToUpdate);
+        var oldContributorIds = clearPublicationSeriesCommonFields(bookSeriesToUpdate);
         setPublicationSeriesCommonFields(bookSeriesToUpdate, bookSeriesDTO);
-        setBookSeriesFields(bookSeriesToUpdate, bookSeriesDTO);
+        setBookSeriesFields(bookSeriesToUpdate, bookSeriesDTO, oldContributorIds);
 
         bookSeriesJPAService.save(bookSeriesToUpdate);
         var index =
@@ -168,10 +173,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         }
 
         var bookSeries = bookSeriesJPAService.findOne(bookSeriesId);
-        bookSeries.getContributions().forEach(contribution -> {
-            contribution.setDeleted(true);
-            personContributionService.save(contribution);
-        });
+        publicationSeriesRepository.deletePublicationSeriesContributions(bookSeriesId);
+        updateIndexedPersonContributions(bookSeries);
 
         bookSeriesJPAService.delete(bookSeriesId);
         bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
@@ -241,11 +244,19 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             .orElse(null);
     }
 
-    private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
+    private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO,
+                                     HashSet<Integer> oldContributorIds) {
         if (Objects.nonNull(bookSeriesDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForBookSeries(
                 bookSeries,
                 bookSeriesDTO);
+
+            oldContributorIds.addAll(bookSeriesDTO.getContributions().stream()
+                .map(PersonContributionDTO::getPersonId)
+                .filter(Objects::nonNull).toList());
+
+            applicationEventPublisher.publishEvent(
+                new PersonContributionsChangeEvent(oldContributorIds));
         }
     }
 

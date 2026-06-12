@@ -2,6 +2,7 @@ package rs.teslaris.core.util.functional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.BiConsumer;
@@ -135,23 +136,35 @@ public class FunctionalUtil {
         Sort sort,
         Consumer<T> itemProcessor
     ) {
+        performBulkOperation(pageSupplier, sort, itemProcessor, null);
+    }
+
+    public static <T> void performBulkOperation(
+        Function<PageRequest, Page<T>> pageSupplier,
+        Sort sort,
+        Consumer<T> itemProcessor,
+        Consumer<List<T>> chunkProcessor
+    ) {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
-            List<T> chunk =
-                pageSupplier.apply(
-                    PageRequest.of(pageNumber, chunkSize, sort)
-                ).getContent();
+            List<T> chunk = pageSupplier.apply(
+                PageRequest.of(pageNumber, chunkSize, sort)
+            ).getContent();
 
-            chunk.forEach((entity) -> {
+            chunk.forEach(entity -> {
                 try {
                     itemProcessor.accept(entity);
                 } catch (Exception e) {
                     log.warn("Skipping due to indexing error: {}", e.getMessage());
                 }
             });
+
+            if (Objects.nonNull(chunkProcessor)) {
+                chunkProcessor.accept(chunk);
+            }
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

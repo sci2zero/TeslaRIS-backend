@@ -32,7 +32,7 @@ public class PublicationSeriesDTO {
     private String openAlexId;
 
     @NotNull(message = "You have to provide contributions.")
-    private List<PersonPublicationSeriesContributionDTO> contributions;
+    private List<PersonPublicationSeriesContributionDTO> contributions = new ArrayList<>();
 
     @NotNull(message = "You have to provide languages.")
     private Set<Integer> languageIds;

@@ -1,9 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -53,21 +55,20 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
                                  EventRepository eventRepository,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  CommissionRepository commissionRepository,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ApplicationEventPublisher applicationEventPublisher,
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService,
                                  CountryService countryService,
                                  OrganisationUnitService organisationUnitService,
-                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  ResearchAreaService researchAreaService,
                                  ExhibitionJPAServiceImpl exhibitionJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ExhibitionRepository exhibitionRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository,
-            documentPublicationIndexRepository,
-            eventsRelationRepository, searchService, countryService,
-            organisationUnitService,
-            researchAreaService);
+            documentPublicationIndexRepository, applicationEventPublisher, eventsRelationRepository,
+            searchService, countryService, organisationUnitService, researchAreaService);
         this.exhibitionJPAService = exhibitionJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.exhibitionRepository = exhibitionRepository;
@@ -139,7 +140,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public Exhibition createExhibition(ExhibitionDTO exhibitionDTO, Boolean index) {
         var exhibition = new Exhibition();
 
-        setEventCommonFields(exhibition, EventType.EXHIBITION, exhibitionDTO);
+        setEventCommonFields(exhibition, EventType.EXHIBITION, exhibitionDTO, new HashSet<>());
         setExhibitionRelatedFields(exhibition, exhibitionDTO);
 
         var savedExhibition = exhibitionJPAService.save(exhibition);
@@ -156,8 +157,9 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public void updateExhibition(Integer exhibitionId, ExhibitionDTO exhibitionDTO) {
         var exhibitionToUpdate = findExhibitionById(exhibitionId);
 
-        clearEventCommonFields(exhibitionToUpdate);
-        setEventCommonFields(exhibitionToUpdate, EventType.EXHIBITION, exhibitionDTO);
+        var oldContributorIds = clearEventCommonFields(exhibitionToUpdate);
+        setEventCommonFields(exhibitionToUpdate, EventType.EXHIBITION, exhibitionDTO,
+            oldContributorIds);
         setExhibitionRelatedFields(exhibitionToUpdate, exhibitionDTO);
 
         exhibitionJPAService.save(exhibitionToUpdate);
@@ -173,10 +175,8 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     @Transactional
     public void deleteExhibition(Integer exhibitionId) {
         var exhibition = exhibitionJPAService.findOne(exhibitionId);
-        exhibition.getContributions().forEach(contribution -> {
-            contribution.setDeleted(true);
-            personContributionService.save(contribution);
-        });
+        eventRepository.deleteEventContributions(exhibitionId);
+        updateIndexedPersonContributions(exhibition);
 
         exhibitionJPAService.delete(exhibitionId);
 

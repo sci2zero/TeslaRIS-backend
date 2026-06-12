@@ -64,9 +64,8 @@ public class PersonEventListener {
             (personIndex) -> {
                 personIndex.setHasContributions(
                     personRepository.hasContribution(personIndex.getDatabaseId()));
-
-                personIndexRepository.save(personIndex);
-            }
+            },
+            personIndexRepository::saveAll
         );
     }
 

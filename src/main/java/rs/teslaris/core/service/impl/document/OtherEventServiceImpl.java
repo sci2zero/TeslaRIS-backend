@@ -1,9 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -45,28 +47,25 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
 
 
     @Autowired
-    public OtherEventServiceImpl(
-        EventIndexRepository eventIndexRepository,
-        MultilingualContentService multilingualContentService,
-        PersonContributionService personContributionService,
-        EventRepository eventRepository,
-        IndexBulkUpdateService indexBulkUpdateService,
-        CommissionRepository commissionRepository,
-        EventsRelationRepository eventsRelationRepository,
-        SearchService<EventIndex> searchService,
-        CountryService countryService,
-        OrganisationUnitService organisationUnitService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        ResearchAreaService researchAreaService,
-        OtherEventJPAServiceImpl otherEventJPAService,
-        OtherEventRepository otherEventRepository
-    ) {
+    public OtherEventServiceImpl(EventIndexRepository eventIndexRepository,
+                                 MultilingualContentService multilingualContentService,
+                                 PersonContributionService personContributionService,
+                                 EventRepository eventRepository,
+                                 IndexBulkUpdateService indexBulkUpdateService,
+                                 CommissionRepository commissionRepository,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ApplicationEventPublisher applicationEventPublisher,
+                                 EventsRelationRepository eventsRelationRepository,
+                                 SearchService<EventIndex> searchService,
+                                 CountryService countryService,
+                                 OrganisationUnitService organisationUnitService,
+                                 ResearchAreaService researchAreaService,
+                                 OtherEventJPAServiceImpl otherEventJPAService,
+                                 OtherEventRepository otherEventRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository,
-            documentPublicationIndexRepository, eventsRelationRepository, searchService,
-            countryService, organisationUnitService,
-            researchAreaService);
-
+            documentPublicationIndexRepository, applicationEventPublisher, eventsRelationRepository,
+            searchService, countryService, organisationUnitService, researchAreaService);
         this.otherEventJPAService = otherEventJPAService;
         this.otherEventRepository = otherEventRepository;
     }
@@ -109,7 +108,7 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
         var event = new OtherEvent();
 
         event.setType(dto.getType());
-        setEventCommonFields(event, EventType.OTHER_EVENT, dto);
+        setEventCommonFields(event, EventType.OTHER_EVENT, dto, new HashSet<>());
 
         var saved = otherEventJPAService.save(event);
 
@@ -125,10 +124,10 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public void updateOtherEvent(Integer id, OtherEventDTO dto) {
         var event = findOtherEventById(id);
 
-        clearEventCommonFields(event);
+        var oldContributorIds = clearEventCommonFields(event);
         event.setType(dto.getType());
 
-        setEventCommonFields(event, EventType.OTHER_EVENT, dto);
+        setEventCommonFields(event, EventType.OTHER_EVENT, dto, oldContributorIds);
 
         otherEventJPAService.save(event);
 
@@ -139,16 +138,13 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
 
     @Override
     @Transactional
-    public void deleteOtherEvent(Integer id) {
-        var event = otherEventJPAService.findOne(id);
+    public void deleteOtherEvent(Integer otherEventId) {
+        var event = otherEventJPAService.findOne(otherEventId);
+        eventRepository.deleteEventContributions(otherEventId);
+        updateIndexedPersonContributions(event);
 
-        event.getContributions().forEach(c -> {
-            c.setDeleted(true);
-            personContributionService.save(c);
-        });
-
-        otherEventJPAService.delete(id);
-        eventIndexRepository.findByDatabaseId(id).ifPresent(eventIndexRepository::delete);
+        otherEventJPAService.delete(otherEventId);
+        eventIndexRepository.findByDatabaseId(otherEventId).ifPresent(eventIndexRepository::delete);
     }
 
     @Override

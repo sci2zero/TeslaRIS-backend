@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.document.CourseDTO;
@@ -72,6 +73,9 @@ public class CourseServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private CourseServiceImpl courseService;

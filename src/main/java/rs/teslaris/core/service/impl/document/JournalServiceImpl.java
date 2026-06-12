@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +23,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -73,6 +77,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               LanguageService languageService,
                               PersonContributionService personContributionService,
                               IndexBulkUpdateService indexBulkUpdateService,
+                              ApplicationEventPublisher applicationEventPublisher,
                               JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
@@ -80,7 +85,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
                               CommissionRepository commissionRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageService,
-            personContributionService, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService, applicationEventPublisher);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
@@ -174,9 +179,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public Journal createJournal(JournalDTO journalDTO, Boolean index) {
         var journal = new Journal();
 
-        clearPublicationSeriesCommonFields(journal);
+        var oldContributorIds = clearPublicationSeriesCommonFields(journal);
         setPublicationSeriesCommonFields(journal, journalDTO);
-        setJournalRelatedFields(journal, journalDTO);
+        setJournalRelatedFields(journal, journalDTO, oldContributorIds);
 
         var savedJournal = journalJPAService.save(journal);
 
@@ -210,9 +215,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
 
-        clearPublicationSeriesCommonFields(journalToUpdate);
+        var oldContributorIds = clearPublicationSeriesCommonFields(journalToUpdate);
         setPublicationSeriesCommonFields(journalToUpdate, journalDTO);
-        setJournalRelatedFields(journalToUpdate, journalDTO);
+        setJournalRelatedFields(journalToUpdate, journalDTO, oldContributorIds);
 
         var indexToUpdate = journalIndexRepository.findJournalIndexByDatabaseId(journalId)
             .orElse(new JournalIndex());
@@ -231,10 +236,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         }
 
         var journal = journalJPAService.findOne(journalId);
-        journal.getContributions().forEach(contribution -> {
-            contribution.setDeleted(true);
-            personContributionService.save(contribution);
-        });
+        publicationSeriesRepository.deletePublicationSeriesContributions(journalId);
+        updateIndexedPersonContributions(journal);
 
         journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
@@ -274,7 +277,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         return null;
     }
 
-    private void setJournalRelatedFields(Journal journal, JournalDTO journalDTO) {
+    private void setJournalRelatedFields(Journal journal, JournalDTO journalDTO,
+                                         HashSet<Integer> oldContributorIds) {
         if (Objects.isNull(journalDTO.getType())) {
             throw new IllegalArgumentException("Journal type cannot be null");
         }
@@ -284,6 +288,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         if (Objects.nonNull(journalDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForJournal(journal,
                 journalDTO);
+
+            oldContributorIds.addAll(journalDTO.getContributions().stream()
+                .map(PersonContributionDTO::getPersonId)
+                .filter(Objects::nonNull).toList());
+
+            applicationEventPublisher.publishEvent(
+                new PersonContributionsChangeEvent(oldContributorIds));
         }
     }
 
