@@ -125,6 +125,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addAgreementDocument(Integer fundingId,
                                                         DocumentFileDTO agreement) {
         var funding = findOne(fundingId);
@@ -146,6 +147,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public void deleteAgreementDocument(Integer agreementFileId, Integer fundingId) {
         var documentFile = documentFileService.findOne(agreementFileId);
         var fundingCall = findOne(fundingId);
