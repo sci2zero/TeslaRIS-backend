@@ -201,7 +201,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Integer> findPersonIdsByDocumentId(Integer documentId);
 
     @Modifying
-    @Query("UPDATE PersonDocumentContribution pdc SET pdc.deleted = true " +
+    @Query("UPDATE PersonDocumentContribution pdc SET pdc.deleted = TRUE " +
         "WHERE pdc.document.id = :documentId")
     void deleteDocumentContributions(Integer documentId);
+
+    @Modifying
+    @Query("UPDATE Document d SET d.openAccess = TRUE WHERE d.doi = :doi")
+    void setIsOpenAccess(String doi);
 }

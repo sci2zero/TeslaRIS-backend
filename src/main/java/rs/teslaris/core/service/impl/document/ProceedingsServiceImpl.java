@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -181,7 +182,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
 
-        setCommonFields(proceedings, proceedingsDTO);
+        setCommonFields(proceedings, proceedingsDTO, new HashSet<>());
         setProceedingsRelatedFields(proceedings, proceedingsDTO);
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
@@ -198,19 +199,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
 
-        var oldContributorIds =
-            proceedingsToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
 
         proceedingsToUpdate.getLanguages().clear();
-        clearCommonFields(proceedingsToUpdate);
+        var oldContributorIds = clearCommonFields(proceedingsToUpdate);
 
-        setCommonFields(proceedingsToUpdate, proceedingsDTO);
+        setCommonFields(proceedingsToUpdate, proceedingsDTO, oldContributorIds);
         setProceedingsRelatedFields(proceedingsToUpdate, proceedingsDTO);
 
         var proceedingsIndex = findDocumentPublicationIndexByDatabaseId(proceedingsId);

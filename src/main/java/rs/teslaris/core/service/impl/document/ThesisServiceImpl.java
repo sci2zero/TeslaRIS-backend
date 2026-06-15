@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -277,7 +276,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisDTO.setContributions(result);
         }
 
-        setCommonFields(newThesis, thesisDTO);
+        setCommonFields(newThesis, thesisDTO, new HashSet<>());
         setThesisRelatedFields(newThesis, thesisDTO);
 
         var savedThesis = thesisJPAService.save(newThesis);
@@ -296,15 +295,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
-        var oldContributorIds =
-            thesisToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkIfAvailableForEditing(thesisToUpdate);
 
-        clearCommonFields(thesisToUpdate);
+        var oldContributorIds = clearCommonFields(thesisToUpdate);
         thesisToUpdate.setOrganisationUnit(null);
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
@@ -321,7 +314,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisDTO.setContributions(filteredContributions);
         }
 
-        setCommonFields(thesisToUpdate, thesisDTO);
+        setCommonFields(thesisToUpdate, thesisDTO, oldContributorIds);
         setThesisRelatedFields(thesisToUpdate, thesisDTO);
 
         thesisJPAService.save(thesisToUpdate);

@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -127,7 +126,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         var newProduct = new MaterialProduct();
 
         checkForDocumentDate(materialProductDTO);
-        setCommonFields(newProduct, materialProductDTO);
+        setCommonFields(newProduct, materialProductDTO, new HashSet<>());
         setMaterialProductRelatedFields(newProduct, materialProductDTO);
 
         var savedProduct = materialProductJPAService.save(newProduct);
@@ -147,15 +146,9 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                                     MaterialProductDTO materialProductDTO) {
         var materialProductToUpdate = materialProductJPAService.findOne(materialProductId);
 
-        var oldContributorIds =
-            materialProductToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkForDocumentDate(materialProductDTO);
-        clearCommonFields(materialProductToUpdate);
-        setCommonFields(materialProductToUpdate, materialProductDTO);
+        var oldContributorIds = clearCommonFields(materialProductToUpdate);
+        setCommonFields(materialProductToUpdate, materialProductDTO, oldContributorIds);
 
         materialProductToUpdate.getResearchAreas().clear();
         setMaterialProductRelatedFields(materialProductToUpdate, materialProductDTO);

@@ -3,10 +3,10 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -219,7 +219,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public Monograph createMonograph(MonographDTO monographDTO, Boolean index) {
         var newMonograph = new Monograph();
 
-        setCommonFields(newMonograph, monographDTO);
+        setCommonFields(newMonograph, monographDTO, new HashSet<>());
         setMonographRelatedFields(newMonograph, monographDTO);
 
         var savedMonograph = monographJPAService.save(newMonograph);
@@ -238,19 +238,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
-        var oldContributorIds =
-            monographToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
 
         monographToUpdate.getLanguages().clear();
-        clearCommonFields(monographToUpdate);
+        var oldContributorIds = clearCommonFields(monographToUpdate);
 
-        setCommonFields(monographToUpdate, monographDTO);
+        setCommonFields(monographToUpdate, monographDTO, oldContributorIds);
         setMonographRelatedFields(monographToUpdate, monographDTO);
 
         var monographIndex = findDocumentPublicationIndexByDatabaseId(monographId);

@@ -1053,7 +1053,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
-    protected void setCommonFields(Document document, DocumentDTO documentDTO) {
+    protected void setCommonFields(Document document, DocumentDTO documentDTO,
+                                   HashSet<Integer> oldContributorIds) {
         if (document.getIsArchived()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
@@ -1093,18 +1094,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.setPublicationStatus(documentDTO.getPublicationStatus());
         }
 
-        var contributorIds = new HashSet<Integer>();
-
-        contributorIds.addAll(document.getContributors().stream()
-            .filter(c -> Objects.nonNull(c.getPerson()))
-            .map(c -> c.getPerson().getId())
-            .toList());
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
-        contributorIds.addAll(documentDTO.getContributions().stream()
+
+        oldContributorIds.addAll(documentDTO.getContributions().stream()
             .map(PersonContributionDTO::getPersonId)
             .filter(Objects::nonNull).toList());
-
-        applicationEventPublisher.publishEvent(new PersonContributionsChangeEvent(contributorIds));
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(oldContributorIds));
 
         if (Objects.nonNull(documentDTO.getOldId())) {
             document.getOldIds().add(documentDTO.getOldId());
@@ -1334,15 +1330,25 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             webOfScienceId);
     }
 
-    protected void clearCommonFields(Document publication) {
+    protected HashSet<Integer> clearCommonFields(Document publication) {
+        var oldContributorIds = new HashSet<Integer>();
+
         publication.getTitle().clear();
         publication.getSubTitle().clear();
         publication.getDescription().clear();
         publication.getKeywords().clear();
 
         publication.getContributors().forEach(
-            contribution -> personContributionService.deleteContribution(contribution.getId()));
+            contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    oldContributorIds.add(contribution.getPerson().getId());
+                }
+
+                personContributionService.deleteContribution(contribution.getId());
+            });
         publication.getContributors().clear();
+
+        return oldContributorIds;
     }
 
     private void clearCommonIndexFields(DocumentPublicationIndex index) {
