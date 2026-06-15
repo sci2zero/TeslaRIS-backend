@@ -5,4 +5,6 @@ public enum PublicationSeriesContributionType {
     ASSOCIATE_EDITOR,
     REVIEWER,
     SCIENTIFIC_BOARD_MEMBER,
+    INVITED_EDITOR,
+    ADHOC_REVIEWER
 }

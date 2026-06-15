@@ -1827,6 +1827,9 @@ public class AssessmentDataInitializer {
         commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Web Of Science", 1),
             new MultiLingualContent(serbianTag, "Web Of Science", 2)));
         commission1.setFormalDescriptionOfRule("WOSJournalClassificationRuleEngine");
+        commission1.setAssessmentDateFrom(LocalDate.of(2025, 1, 1));
+        commission1.setAssessmentDateTo(LocalDate.of(2100, 1, 1));
+        commission1.setRecognisedResearchAreas(new HashSet<>(Set.of("TECHNICAL", "NATURAL")));
 
         var commission2 = new Commission();
         commission2.setDescription(Set.of(new MultiLingualContent(englishTag, "SciMAGO", 1),
@@ -1844,6 +1847,9 @@ public class AssessmentDataInitializer {
         commission4.setDescription(Set.of(new MultiLingualContent(englishTag, "MKS Slavists", 1),
             new MultiLingualContent(serbianTag, "MKS Slavisti", 2)));
         commission4.setFormalDescriptionOfRule("MKSJournalClassificationRuleEngine");
+        commission4.setAssessmentDateFrom(LocalDate.of(2025, 1, 1));
+        commission4.setAssessmentDateTo(LocalDate.of(2100, 1, 1));
+        commission4.setRecognisedResearchAreas(new HashSet<>(Set.of("HUMANITIES", "SOCIAL")));
 
         var commission5 = new Commission();
         commission5.setDescription(

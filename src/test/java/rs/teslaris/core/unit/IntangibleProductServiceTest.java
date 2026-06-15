@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -92,6 +93,9 @@ public class IntangibleProductServiceTest {
     @Mock
     private ResearchAreaService researchAreaService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private IntangibleProductServiceImpl intangibleProductService;
 
@@ -138,7 +142,7 @@ public class IntangibleProductServiceTest {
         var result = intangibleProductService.createIntangibleProduct(dto, true);
 
         // Then
-        verify(multilingualContentService, times(9)).getMultilingualContent(any());
+        verify(multilingualContentService, times(10)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(intangibleProductJPAService).save(eq(document));

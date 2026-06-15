@@ -10,5 +10,7 @@ public enum DocumentContributionType {
     TRANSLATOR,
     ASSISTANT_STAFF,
     ARGUER,
-    OWNER
+    OWNER,
+    ASSOCIATED_EDITOR,
+    INVITED_EDITOR
 }

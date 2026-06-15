@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -87,6 +88,9 @@ public class DatasetServiceTest {
     @Mock
     private CitationService citationService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private DatasetServiceImpl datasetService;
 
@@ -133,7 +137,7 @@ public class DatasetServiceTest {
         var result = datasetService.createDataset(dto, true);
 
         // Then
-        verify(multilingualContentService, times(8)).getMultilingualContent(any());
+        verify(multilingualContentService, times(9)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(datasetJPAService).save(eq(document));

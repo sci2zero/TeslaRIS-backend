@@ -58,6 +58,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.LibraryFormat;
+import rs.teslaris.core.model.document.PublicationStatus;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
@@ -338,7 +339,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesisToDelete = thesisJPAService.findOne(thesisId);
         checkIfAvailableForEditing(thesisToDelete);
 
+        updateIndexedPersonContributions(thesisToDelete);
+
         thesisJPAService.delete(thesisId);
+        documentRepository.deleteDocumentContributions(thesisId);
+
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(thesisId));
     }
@@ -596,6 +601,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setPublicReviewCompleted(false);
         thesis.setIsShortenedReview(shortened);
         updatePublicReviewDates(thesis, continueLastReview, false);
+        thesis.setPublicationStatus(PublicationStatus.IN_REVIEW);
 
         thesis.setIsOnPublicReviewPause(false);
         thesisJPAService.save(thesis);
@@ -753,6 +759,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             }
 
             thesis.setOrganisationUnit(institution);
+            thesis.setPublicationStatus(PublicationStatus.SUBMITTED);
         } else {
             if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
                 throw new NotFoundException(
@@ -762,6 +769,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setExternalOrganisationUnitName(
                 multilingualContentService.getMultilingualContent(
                     thesisDTO.getExternalOrganisationUnitName()));
+            thesis.setPublicationStatus(PublicationStatus.PUBLISHED);
         }
 
         var isAdmin = SessionUtil.isUserLoggedInAndAdmin();
@@ -796,6 +804,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 (Objects.nonNull(thesis.getOrganisationUnit()) &&
                     !thesis.getOrganisationUnit().getIsClientInstitutionDl())) {
                 thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
+                thesis.setPublicationStatus(PublicationStatus.PUBLISHED);
             }
         } else {
             thesis.setThesisDefenceDate(null);
@@ -860,9 +869,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 if (withinWindow || isOnReviewFlag) {
                     thesis.setIsOnPublicReview(true);
                     thesis.setPublicReviewCompleted(false);
+                    thesis.setPublicationStatus(PublicationStatus.IN_REVIEW);
                 } else {
                     thesis.setPublicReviewCompleted(true);
                     thesis.setIsOnPublicReview(false);
+                    thesis.setPublicationStatus(PublicationStatus.IN_PRINT);
                 }
             }
 
@@ -1043,6 +1054,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setIsShortenedReview(false);
         thesis.setPublicReviewCompleted(true);
         thesis.getPublicReviewEndDates().add(LocalDate.now());
+        thesis.setPublicationStatus(PublicationStatus.IN_PRINT);
         thesisJPAService.save(thesis);
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())

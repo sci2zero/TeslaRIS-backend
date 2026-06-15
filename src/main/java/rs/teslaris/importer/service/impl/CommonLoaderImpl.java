@@ -25,6 +25,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.Importable;
+import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -39,6 +40,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.ArticleCollectionSeriesType;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PublicationSeries;
@@ -610,7 +612,9 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         var createdConference = createConference(currentlyLoadedEntity.getEvent());
-        return createProceedings(currentlyLoadedEntity, createdConference.getId());
+        return createProceedings(currentlyLoadedEntity, createdConference.getId(),
+            Objects.nonNull(createdConference.getDateFrom()) ?
+                String.valueOf(createdConference.getDateFrom().getYear()) : "");
     }
 
     @Override
@@ -825,10 +829,11 @@ public class CommonLoaderImpl implements CommonLoader {
             return potentialMatch;
         }
 
-        var journalDTO = new PublicationSeriesDTO();
+        var journalDTO = new JournalDTO();
 
         journalDTO.setTitle(new ArrayList<>());
         setMultilingualContent(journalDTO.getTitle(), documentImport.getPublishedIn());
+        journalDTO.setType(ArticleCollectionSeriesType.JOURNAL);
 
         journalDTO.setEissn(documentImport.getEIssn());
         journalDTO.setPrintISSN(documentImport.getPrintIssn());
@@ -852,9 +857,10 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private ProceedingsDTO createProceedings(DocumentImport proceedingsPublication,
-                                             Integer eventId) {
+                                             Integer eventId, String year) {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setEventId(eventId);
+        proceedingsDTO.setDocumentDate(year);
 
         proceedingsDTO.setTitle(new ArrayList<>());
         setMultilingualContent(proceedingsDTO.getTitle(), proceedingsPublication.getPublishedIn());

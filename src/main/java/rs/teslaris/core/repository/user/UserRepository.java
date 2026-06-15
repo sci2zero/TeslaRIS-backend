@@ -120,6 +120,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Transactional
     @Query("DELETE FROM User u WHERE " +
         "u.tombstone IS NOT NULL " +
-        "AND u.tombstone = :date")
+        "AND u.tombstone <= :date")
     void deleteAllThatExpireOnDate(LocalDate date);
 }

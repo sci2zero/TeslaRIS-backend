@@ -18,4 +18,6 @@ public class PersonPublicationSeriesContributionDTO extends PersonContributionDT
     private LocalDate dateFrom;
 
     private LocalDate dateTo;
+
+    private Boolean isMainContributor;
 }

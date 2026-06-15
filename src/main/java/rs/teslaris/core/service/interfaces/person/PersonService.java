@@ -33,7 +33,9 @@ public interface PersonService extends JPAService<Person> {
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
                                                     boolean strict, Integer institutionId,
-                                                    boolean onlyHarvestable);
+                                                    boolean onlyHarvestable,
+                                                    boolean withoutInvolvements,
+                                                    boolean withoutContributions);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
                                                     List<String> tokens,

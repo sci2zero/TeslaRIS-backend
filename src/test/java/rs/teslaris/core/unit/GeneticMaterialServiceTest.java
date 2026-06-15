@@ -229,7 +229,7 @@ public class GeneticMaterialServiceTest {
         var result = geneticMaterialService.createGeneticMaterial(dto, true);
 
         // Then
-        verify(multilingualContentService, times(8))
+        verify(multilingualContentService, times(9))
             .getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             any(), any());

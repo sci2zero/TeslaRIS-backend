@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -118,6 +119,9 @@ public class ProceedingsServiceTest {
     @Mock
     private DocumentLookupService documentLookupService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
 
@@ -194,7 +198,7 @@ public class ProceedingsServiceTest {
         var result = proceedingsService.createProceedings(proceedingsDTO, true);
 
         // Then
-        verify(multilingualContentService, times(9)).getMultilingualContent(any());
+        verify(multilingualContentService, times(10)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(proceedingsDTO));
         verify(proceedingsJPAService).save(eq(document));

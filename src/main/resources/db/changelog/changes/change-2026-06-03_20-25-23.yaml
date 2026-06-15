@@ -1,0 +1,14 @@
+databaseChangeLog:
+- changeSet:
+    id: 1780518365443-1
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: main_contributor
+            type: BOOLEAN
+        tableName: person_journal_contributions
+

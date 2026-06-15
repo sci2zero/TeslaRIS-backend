@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -48,6 +49,8 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -62,6 +65,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PrintedPageable;
+import rs.teslaris.core.model.document.PublicationStatus;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -264,6 +268,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case ASSISTANT_STAFF -> "assistant_staff_ids";
             case ARGUER -> "arguer_ids";
             case OWNER -> "owner_ids";
+            case ASSOCIATED_EDITOR -> "associated_editor_ids";
+            case INVITED_EDITOR -> "invited_editor_ids";
         };
     }
 
@@ -461,6 +467,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
 
+        updateIndexedPersonContributions(document);
+
         document.getFileItems().forEach(file -> {
             file.setDeleted(true);
             documentFileService.save(file);
@@ -493,6 +501,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setDeleted(true);
         documentRepository.save(document);
+        documentRepository.deleteDocumentContributions(documentId);
         documentRepository.flush();
 
         var index =
@@ -709,6 +718,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 handleAuthorContribution(contribution, index, contributorName, personExists);
             case EDITOR -> handleGenericContribution(contribution, index::getEditorIds,
                 index::setEditorNames, contributorName, personExists);
+            case ASSOCIATED_EDITOR ->
+                handleGenericContribution(contribution, index::getAssociatedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
+            case INVITED_EDITOR ->
+                handleGenericContribution(contribution, index::getInvitedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
             case ADVISOR -> handleGenericContribution(contribution, index::getAdvisorIds,
                 index::setAdvisorNames, contributorName, personExists);
             case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
@@ -1059,6 +1076,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(
                 documentDTO.getChronologicalSpaceDescription()));
         document.setCity(multilingualContentService.getMultilingualContent(documentDTO.getCity()));
+        document.setEdition(
+            multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
         if (Objects.nonNull(documentDTO.getCountryId())) {
             document.setCountry(countryService.findOne(documentDTO.getCountryId()));
@@ -1068,15 +1087,35 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
-        document.setPublicationStatus(documentDTO.getPublicationStatus());
+        document.setAuthorReprint(documentDTO.getAuthorReprint());
 
+        if (!(documentDTO instanceof ThesisDTO)) {
+            document.setPublicationStatus(documentDTO.getPublicationStatus());
+        }
+
+        var contributorIds = new HashSet<Integer>();
+
+        contributorIds.addAll(document.getContributors().stream()
+            .filter(c -> Objects.nonNull(c.getPerson()))
+            .map(c -> c.getPerson().getId())
+            .toList());
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
+        contributorIds.addAll(documentDTO.getContributions().stream()
+            .map(PersonContributionDTO::getPersonId)
+            .filter(Objects::nonNull).toList());
+
+        applicationEventPublisher.publishEvent(new PersonContributionsChangeEvent(contributorIds));
 
         if (Objects.nonNull(documentDTO.getOldId())) {
             document.getOldIds().add(documentDTO.getOldId());
         }
 
         document.setDocumentDate(documentDTO.getDocumentDate());
+        if (!StringUtil.valueExists(document.getDocumentDate())) {
+            document.setPublicationStatus(PublicationStatus.IN_PRINT);
+        } else {
+            document.setPublicationStatus(PublicationStatus.PUBLISHED);
+        }
 
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
@@ -2034,5 +2073,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
+    }
+
+    protected void updateIndexedPersonContributions(Document document) {
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(document.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(contribution -> contribution.getPerson().getId())
+                .collect(Collectors.toSet())));
     }
 }

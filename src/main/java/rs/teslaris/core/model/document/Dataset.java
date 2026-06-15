@@ -27,9 +27,6 @@ public non-sealed class Dataset extends Document implements PublisherPublishable
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(name = "author_reprint")
-    private Boolean authorReprint = false;
-
 
     public Dataset() {
         super(DocumentPublicationType.DATASET);

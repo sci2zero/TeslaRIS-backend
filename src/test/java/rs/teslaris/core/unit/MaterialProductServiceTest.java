@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -90,6 +91,9 @@ public class MaterialProductServiceTest {
 
     @Mock
     private ResearchAreaService researchAreaService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private MaterialProductServiceImpl materialProductService;
@@ -206,7 +210,7 @@ public class MaterialProductServiceTest {
         var result = materialProductService.createMaterialProduct(dto, true);
 
         // Then
-        verify(multilingualContentService, times(9))
+        verify(multilingualContentService, times(10))
             .getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             any(), any());

@@ -160,8 +160,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                     }
 
                     var results = personService.findPeopleByNameAndEmployment(
-                        List.of(authorNames[i].trim().split(" ")), Pageable.unpaged(), false, null,
-                        false);
+                        List.of(authorNames[i].trim().split(" ")), Pageable.unpaged(),
+                        false, null, false,
+                        false, false
+                    );
                     int authorOrderNumber = i;
 
                     results.getContent().forEach(person -> {

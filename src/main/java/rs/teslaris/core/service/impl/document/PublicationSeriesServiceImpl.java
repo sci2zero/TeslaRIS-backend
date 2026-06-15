@@ -1,15 +1,18 @@
 package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PublicationSeries;
@@ -39,6 +42,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final PersonContributionService personContributionService;
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
+
+    protected final ApplicationEventPublisher applicationEventPublisher;
 
     protected final Pattern issnPattern =
         Pattern.compile("^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$", Pattern.CASE_INSENSITIVE);
@@ -90,10 +95,22 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         });
     }
 
-    protected void clearPublicationSeriesCommonFields(PublicationSeries publicationSeries) {
+    protected HashSet<Integer> clearPublicationSeriesCommonFields(
+        PublicationSeries publicationSeries) {
+        var oldContributorIds = new HashSet<Integer>();
+
         publicationSeries.getContributions().forEach(
-            contribution -> personContributionService.deleteContribution(contribution.getId()));
+            contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    oldContributorIds.add(contribution.getPerson().getId());
+                }
+
+                personContributionService.deleteContribution(contribution.getId());
+            });
+
         publicationSeries.getContributions().clear();
+
+        return oldContributorIds;
     }
 
     private void setCommonIdentifiers(PublicationSeries publicationSeries,
@@ -148,5 +165,13 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
 
         personContributionService.reorderContributions(contributions, contributionId,
             oldContributionOrderNumber, newContributionOrderNumber);
+    }
+
+    protected void updateIndexedPersonContributions(PublicationSeries publicationSeries) {
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(publicationSeries.getContributions().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(contribution -> contribution.getPerson().getId())
+                .collect(Collectors.toSet())));
     }
 }

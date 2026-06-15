@@ -20,16 +20,17 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 
 public class BibTexConverter {
 
     private static final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
+
 
     public static Optional<DocumentImport> toCommonImportModel(BibTeXEntry bibEntry) {
         String entryType = bibEntry.getType().getValue();
@@ -69,14 +70,16 @@ public class BibTexConverter {
         }
 
         getFieldValue(bibEntry, BibTeXEntry.KEY_TITLE)
-            .ifPresent(title -> document.getTitle().add(new MultilingualContent("EN", title, 1)));
+            .ifPresent(title ->
+                document.getTitle().add(CommonHarvestUtility.createMultilingualContent(title))
+            );
 
         if (!addPublishedIn(bibEntry, document, isArticle)) {
             return Optional.empty();
         }
 
         document.setVolume(getFieldValue(bibEntry, BibTeXEntry.KEY_VOLUME).orElse(""));
-        document.setArticleNumber(getFieldValue(bibEntry, BibTeXEntry.KEY_NUMBER).orElse(""));
+        document.setIssue(getFieldValue(bibEntry, BibTeXEntry.KEY_NUMBER).orElse(""));
         setPageInfo(bibEntry, document);
         document.setDocumentDate(getFieldValue(bibEntry, BibTeXEntry.KEY_YEAR).orElse(""));
 
@@ -88,25 +91,28 @@ public class BibTexConverter {
                 if (bookTitle.get().contains(";")) {
                     var eventAndProceedings = bookTitle.get().split("; ");
                     event.getName().add(
-                        new MultilingualContent("EN", sanitizeBibTexString(eventAndProceedings[0]),
-                            1));
+                        CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(eventAndProceedings[0])));
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN",
-                            sanitizeBibTexString(eventAndProceedings[1]), 1));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(eventAndProceedings[1])));
                 } else if (bookTitle.get().contains("Proceedings") ||
                     bookTitle.get().contains("proceedings")) {
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN", sanitizeBibTexString(bookTitle.get()),
-                            1));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(bookTitle.get())));
                     String eventName = cleanProceedingsTitleToEvent(bookTitle.get());
                     event.getName()
-                        .add(new MultilingualContent("EN", sanitizeBibTexString(eventName), 1));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(eventName)));
                 } else {
                     event.getName().add(
-                        new MultilingualContent("EN", sanitizeBibTexString(bookTitle.get()), 1));
+                        CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(bookTitle.get())));
                     document.getPublishedIn()
-                        .add(new MultilingualContent("EN",
-                            "Proceedings of " + sanitizeBibTexString(bookTitle.get()), 1));
+                        .add(CommonHarvestUtility.createProceedingsName(
+                            sanitizeBibTexString(bookTitle.get())
+                        ));
                 }
 
                 document.setEvent(event);
@@ -125,9 +131,9 @@ public class BibTexConverter {
 
                 document.getPublishedIn()
                     .add(
-                        new MultilingualContent("EN", "Proceedings of " + cleanName, 1));
+                        CommonHarvestUtility.createProceedingsName(cleanName));
                 var event = new Event();
-                event.getName().add(new MultilingualContent("EN", cleanName, 1));
+                event.getName().add(CommonHarvestUtility.createMultilingualContent(cleanName));
                 document.setEvent(event);
             }
 
@@ -173,7 +179,8 @@ public class BibTexConverter {
         if (getFieldValue(bibEntry, BibTeXEntry.KEY_JOURNAL)
             .map(journal -> {
                 doc.getPublishedIn()
-                    .add(new MultilingualContent("EN", sanitizeBibTexString(journal), 1));
+                    .add(CommonHarvestUtility.createMultilingualContent(
+                        sanitizeBibTexString(journal)));
                 return true;
             }).orElse(false)) {
             return true;
@@ -184,7 +191,8 @@ public class BibTexConverter {
                 .or(() -> getFieldValue(bibEntry, BibTeXEntry.KEY_ORGANIZATION))
                 .map(pubOrg -> {
                     doc.getPublishedIn()
-                        .add(new MultilingualContent("EN", sanitizeBibTexString(pubOrg), 1));
+                        .add(CommonHarvestUtility.createMultilingualContent(
+                            sanitizeBibTexString(pubOrg)));
                     return true;
                 }).orElse(false);
         }
@@ -194,7 +202,9 @@ public class BibTexConverter {
 
     private static void parseAuthors(BibTeXEntry bibEntry, DocumentImport doc)
         throws ParseException {
+
         var authorValue = bibEntry.getField(BibTeXEntry.KEY_AUTHOR);
+
         if (Objects.isNull(authorValue)) {
             return;
         }
@@ -203,28 +213,64 @@ public class BibTexConverter {
         var printer = new LaTeXPrinter();
 
         var contributions = new ArrayList<PersonDocumentContribution>();
+
         var authors = printer.print(parser.parse(authorValue.toUserString()))
             .replace("\n", " ")
             .split(" and ");
 
         var orderNumber = 1;
+
         for (var authorName : authors) {
-            if (authorName.equals("others")) {
+
+            if (authorName.equalsIgnoreCase("others")) {
                 continue;
             }
 
-            var tokens = authorName.split(", ");
-            if (tokens.length == 2) {
-                var contribution = new PersonDocumentContribution();
-                contribution.setOrderNumber(orderNumber);
-                var person = new Person();
-                person.setImportId(String.valueOf(orderNumber));
-                person.setName(new PersonName(tokens[1], "", tokens[0]));
-                contribution.setPerson(person);
-                contribution.setContributionType(DocumentContributionType.AUTHOR);
+            authorName = authorName.trim();
 
-                contributions.add(contribution);
+            if (authorName.isBlank()) {
+                continue;
             }
+
+            var contribution = new PersonDocumentContribution();
+            contribution.setOrderNumber(orderNumber);
+
+            var person = new Person();
+            person.setImportId(String.valueOf(orderNumber));
+
+            String firstName = "";
+            String lastName = "";
+
+            // Case: "Surname, Name"
+            if (authorName.contains(",")) {
+                var tokens = authorName.split(",\\s*", 2);
+
+                if (tokens.length == 2) {
+                    lastName = tokens[0].trim();
+                    firstName = tokens[1].trim();
+                }
+            } else {
+                // Case: "Name Surname"
+                var tokens = authorName.split("\\s+");
+
+                if (tokens.length == 1) {
+                    lastName = tokens[0];
+                } else {
+                    firstName = tokens[0];
+
+                    lastName = String.join(
+                        " ",
+                        Arrays.copyOfRange(tokens, 1, tokens.length)
+                    );
+                }
+            }
+
+            person.setName(new PersonName(firstName, "", lastName));
+
+            contribution.setPerson(person);
+            contribution.setContributionType(DocumentContributionType.AUTHOR);
+
+            contributions.add(contribution);
 
             orderNumber++;
         }
@@ -274,11 +320,17 @@ public class BibTexConverter {
             }
         });
 
-        getFieldValue(bibEntry, "author_keywords").ifPresent(keywords -> document.getKeywords()
-            .add(new MultilingualContent("EN", keywords.replace("; ", "\n"), 1)));
+        getFieldValue(bibEntry, "author_keywords")
+            .ifPresent(keywords -> document.getKeywords().add(
+                    CommonHarvestUtility.createMultilingualContent(keywords.replace("; ", "\n"))
+                )
+            );
 
-        getFieldValue(bibEntry, "abstract").ifPresent(description -> document.getDescription()
-            .add(new MultilingualContent("EN", description, 1)));
+        getFieldValue(bibEntry, "abstract")
+            .ifPresent(description ->
+                document.getDescription()
+                    .add(CommonHarvestUtility.createMultilingualContent(description))
+            );
 
         getFieldValue(bibEntry, "uri").ifPresent(uri -> document.getUris().add(uri));
 
@@ -290,7 +342,7 @@ public class BibTexConverter {
                         var institution = new OrganisationUnit();
                         institution.setImportId(String.valueOf(i + 1));
                         institution.getName()
-                            .add(new MultilingualContent("EN", affiliations[0], 1));
+                            .add(CommonHarvestUtility.createMultilingualContent(affiliations[0]));
                         contribution.getInstitutions().add(institution);
                     });
             } else if (affiliations.length == document.getContributions().size()) {
@@ -299,7 +351,7 @@ public class BibTexConverter {
                         var institution = new OrganisationUnit();
                         institution.setImportId(String.valueOf(i + 1));
                         institution.getName()
-                            .add(new MultilingualContent("EN", affiliations[i], 1));
+                            .add(CommonHarvestUtility.createMultilingualContent(affiliations[i]));
                         contribution.getInstitutions().add(institution);
                     });
             }
@@ -307,9 +359,10 @@ public class BibTexConverter {
     }
 
     private static String sanitizeBibTexString(String value) {
-        if (value == null) {
+        if (Objects.isNull(value)) {
             return null;
         }
+
         return value
             .replace("\\&", "&")
             .replace("\\%", "%")

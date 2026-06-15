@@ -102,19 +102,28 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
     @Query(value = """
             SELECT rel.id,
                    rel.priority,
-                   ARRAY_AGG(tc.id ORDER BY tc.id),
+                   ARRAY_AGG(DISTINCT tc.id ORDER BY tc.id),
                    rel.result_calculation_method
             FROM commission_relations rel
             JOIN commission_relation_targets crt
               ON rel.id = crt.commission_relation_id
             JOIN commissions tc
               ON crt.target_commission_id = tc.id
-            WHERE rel.source_commission = :commissionId AND
-                rel.deleted = FALSE
+            JOIN commission_recognised_research_areas target_crra
+              ON tc.id = target_crra.commission_id
+            WHERE rel.source_commission = :commissionId
+              AND rel.deleted = FALSE
+              AND (
+                  :researchArea IS NULL
+                  OR target_crra.recognised_research_areas ILIKE CONCAT('%', :researchArea, '%')
+              )
             GROUP BY rel.id, rel.priority, rel.result_calculation_method
             ORDER BY rel.priority
         """, nativeQuery = true)
-    List<Object[]> findRelationsWithTargetIds(Integer commissionId);
+    List<Object[]> findRelationsWithTargetIds(
+        Integer commissionId,
+        String researchArea
+    );
 
     @Modifying
     @Query(

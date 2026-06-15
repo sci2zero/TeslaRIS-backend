@@ -190,10 +190,12 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public void deletePatent(Integer patentId) {
         var patentToDelete = patentJPAService.findOne(patentId);
 
+        updateIndexedPersonContributions(patentToDelete);
+
         deleteProofsAndFileItems(patentToDelete);
 
         patentJPAService.delete(patentId);
-        this.delete(patentId);
+        documentRepository.deleteDocumentContributions(patentId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(patentId));

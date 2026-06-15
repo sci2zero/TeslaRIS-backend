@@ -26,6 +26,7 @@ import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 
@@ -89,18 +90,21 @@ public class TaggedBibliographicFormatUtility {
             FunctionalUtil.forEachWithCounter(doc.getContributions(), (i, c) -> {
                 var inst = new OrganisationUnit();
                 inst.setImportId(String.valueOf(i + 1));
-                inst.getName().add(new MultilingualContent("EN", affiliations.getFirst(), 1));
+                inst.getName()
+                    .add(CommonHarvestUtility.createMultilingualContent(affiliations.getFirst()));
                 c.getInstitutions().add(inst);
             });
         } else if (affiliations.size() == doc.getContributions().size()) {
             FunctionalUtil.forEachWithCounter(doc.getContributions(), (i, c) -> {
                 var inst = new OrganisationUnit();
                 inst.setImportId(String.valueOf(i + 1));
-                inst.getName().add(new MultilingualContent("EN", affiliations.get(i), 1));
+                inst.getName()
+                    .add(CommonHarvestUtility.createMultilingualContent(affiliations.get(i)));
                 c.getInstitutions().add(inst);
             });
         }
-        doc.getKeywords().add(new MultilingualContent("EN", String.join("\n", keywords), 1));
+        doc.getKeywords()
+            .add(CommonHarvestUtility.createMultilingualContent(String.join("\n", keywords)));
         affiliations.clear();
         keywords.clear();
 
@@ -140,19 +144,19 @@ public class TaggedBibliographicFormatUtility {
                 .findFirst().ifPresent(
                     s -> {
                         var eventName = s.split(": ")[1];
-                        event.getName().add(new MultilingualContent("EN", eventName, 1));
+                        event.getName().add(CommonHarvestUtility.createMultilingualContent(eventName));
                         document.getPublishedIn()
-                            .add(new MultilingualContent("EN", "Proceedings of " + eventName, 1));
+                            .add(CommonHarvestUtility.createProceedingsName(eventName));
                     });
         } else if (content.contains("Proceedings") || content.contains("proceedings")) {
-            document.getPublishedIn().add(new MultilingualContent("EN", content, 1));
-            event.getName().add(
-                new MultilingualContent("EN", BibTexConverter.cleanProceedingsTitleToEvent(content),
-                    1));
-        } else {
             document.getPublishedIn()
-                .add(new MultilingualContent("EN", "Proceedings of " + content, 1));
-            event.getName().add(new MultilingualContent("EN", content, 1));
+                .add(CommonHarvestUtility.createMultilingualContent(content));
+            event.getName().add(
+                CommonHarvestUtility.createMultilingualContent(
+                    BibTexConverter.cleanProceedingsTitleToEvent(content)));
+        } else {
+            document.getPublishedIn().add(CommonHarvestUtility.createProceedingsName(content));
+            event.getName().add(CommonHarvestUtility.createMultilingualContent(content));
         }
 
         document.setEvent(event);

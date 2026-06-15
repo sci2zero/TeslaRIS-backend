@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -29,6 +30,9 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
         publicationDTO.setArticleNumber(publication.getArticleNumber());
         publicationDTO.setProceedingsId(publication.getProceedings().getId());
         publicationDTO.setEventId(publication.getEvent().getId());
+
+        publicationDTO.setSection(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getSection()));
     }
 
     public static BibTeXEntry toBibTexEntry(ProceedingsPublication proceedingsPublication,

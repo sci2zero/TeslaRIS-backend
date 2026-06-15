@@ -7,8 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
-import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.document.Journal;
@@ -45,11 +45,11 @@ public interface JournalService {
 
     Journal findJournalByOldId(Integer journalId);
 
-    Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index);
+    Journal createJournal(JournalDTO journalDTO, Boolean index);
 
     Journal createJournal(JournalBasicAdditionDTO journalDTO);
 
-    void updateJournal(Integer journalId, PublicationSeriesDTO journalDTO);
+    void updateJournal(Integer journalId, JournalDTO journalDTO);
 
     void deleteJournal(Integer journalId);
 

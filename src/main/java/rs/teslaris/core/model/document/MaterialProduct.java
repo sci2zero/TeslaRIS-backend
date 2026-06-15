@@ -44,9 +44,6 @@ public non-sealed class MaterialProduct extends Document implements PublisherPub
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(name = "author_reprint")
-    private Boolean authorReprint = false;
-
 
     public MaterialProduct() {
         super(DocumentPublicationType.MATERIAL_PRODUCT);

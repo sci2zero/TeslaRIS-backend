@@ -193,10 +193,12 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToDelete =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
+        updateIndexedPersonContributions(performanceRelatedOutputToDelete);
+
         deleteProofsAndFileItems(performanceRelatedOutputToDelete);
 
         performanceRelatedOutputJPAService.delete(performanceRelatedOutputId);
-        this.delete(performanceRelatedOutputId);
+        documentRepository.deleteDocumentContributions(performanceRelatedOutputId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(performanceRelatedOutputId));

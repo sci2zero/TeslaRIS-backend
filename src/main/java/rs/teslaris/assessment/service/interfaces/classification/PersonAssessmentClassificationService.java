@@ -19,7 +19,8 @@ public interface PersonAssessmentClassificationService {
                                                                     List<Integer> researcherIds,
                                                                     Integer startYear,
                                                                     Integer endYear,
-                                                                    Integer topLevelInstitutionId);
+                                                                    Integer topLevelInstitutionId,
+                                                                    boolean processUnclassifiedPublications);
 
     List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
                                                                  LocalDate startDate,

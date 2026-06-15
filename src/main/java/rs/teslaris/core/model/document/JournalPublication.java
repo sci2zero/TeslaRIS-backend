@@ -1,16 +1,22 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
 @Setter
@@ -44,6 +50,9 @@ public class JournalPublication extends Document implements PrintedPageable {
     @JoinColumn(name = "journal_id", nullable = false)
     private Journal journal;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> section = new HashSet<>();
+
 
     public JournalPublication() {
         super(DocumentPublicationType.JOURNAL_PUBLICATION);
@@ -62,6 +71,10 @@ public class JournalPublication extends Document implements PrintedPageable {
                 .equals(proceedingsPublication.getProceedingsPublicationType().name()))
             .findFirst()
             .orElse(JournalPublicationType.RESEARCH_ARTICLE);
+
+        this.section = proceedingsPublication.getSection().stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
 
         this.setDocumentType(DocumentPublicationType.JOURNAL_PUBLICATION);
     }

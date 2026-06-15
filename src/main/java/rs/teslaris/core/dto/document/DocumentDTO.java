@@ -41,7 +41,7 @@ public class DocumentDTO {
 
     @Valid
     @NotNull(message = "You have to provide contributions.")
-    private List<PersonDocumentContributionDTO> contributions;
+    private List<PersonDocumentContributionDTO> contributions = new ArrayList<>();
 
     @NotNull(message = "You have to provide a list of URIs.")
     private Set<String> uris;
@@ -76,11 +76,15 @@ public class DocumentDTO {
 
     private List<MultilingualContentDTO> city = new ArrayList<>();
 
+    private List<MultilingualContentDTO> edition = new ArrayList<>();
+
     private Boolean peerReviewed = false;
 
     private Boolean openAccess = false;
 
     private PublicationStatus publicationStatus;
+
+    private Boolean authorReprint;
 
     // Used only for responses
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();

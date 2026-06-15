@@ -1,0 +1,610 @@
+databaseChangeLog:
+- changeSet:
+    id: 1780407328171-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_edition_pkey
+            name: document_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_edition_pkey
+            name: edition_id
+            type: INTEGER
+        tableName: documents_edition
+- changeSet:
+    id: 1780407328171-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: journal_publications_section_pkey
+            name: journal_publication_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: journal_publications_section_pkey
+            name: section_id
+            type: INTEGER
+        tableName: journal_publications_section
+- changeSet:
+    id: 1780407328171-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: monograph_publications_section_pkey
+            name: monograph_publication_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: monograph_publications_section_pkey
+            name: section_id
+            type: INTEGER
+        tableName: monograph_publications_section
+- changeSet:
+    id: 1780407328171-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_case_name_pkey
+            name: case_name_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_case_name_pkey
+            name: person_event_contribution_id
+            type: INTEGER
+        tableName: person_event_contributions_case_name
+- changeSet:
+    id: 1780407328171-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_display_event_pkey
+            name: display_event_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_display_event_pkey
+            name: person_event_contribution_id
+            type: INTEGER
+        tableName: person_event_contributions_display_event
+- changeSet:
+    id: 1780407328171-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_location_jurisdiction_pkey
+            name: location_jurisdiction_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_event_contributions_location_jurisdiction_pkey
+            name: person_event_contribution_id
+            type: INTEGER
+        tableName: person_event_contributions_location_jurisdiction
+- changeSet:
+    id: 1780407328171-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: proceedings_publications_section_pkey
+            name: proceedings_publication_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: proceedings_publications_section_pkey
+            name: section_id
+            type: INTEGER
+        tableName: proceedings_publications_section
+- changeSet:
+    id: 1780407328171-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: edition_id
+        constraintName: documents_edition_edition_id_key
+        tableName: documents_edition
+- changeSet:
+    id: 1780407328171-10
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: section_id
+        constraintName: journal_publications_section_section_id_key
+        tableName: journal_publications_section
+- changeSet:
+    id: 1780407328171-11
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: section_id
+        constraintName: monograph_publications_section_section_id_key
+        tableName: monograph_publications_section
+- changeSet:
+    id: 1780407328171-12
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: case_name_id
+        constraintName: person_event_contributions_case_name_case_name_id_key
+        tableName: person_event_contributions_case_name
+- changeSet:
+    id: 1780407328171-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_event_id
+        constraintName: person_event_contributions_display_event_display_event_id_key
+        tableName: person_event_contributions_display_event
+- changeSet:
+    id: 1780407328171-14
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: location_jurisdiction_id
+        constraintName: person_event_contributions_locatio_location_jurisdiction_id_key
+        tableName: person_event_contributions_location_jurisdiction
+- changeSet:
+    id: 1780407328171-15
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: section_id
+        constraintName: proceedings_publications_section_section_id_key
+        tableName: proceedings_publications_section
+- changeSet:
+    id: 1780407328171-16
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1780407328171-17
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: informative_attachments
+- changeSet:
+    id: 1780407328171-18
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: journal_publications
+- changeSet:
+    id: 1780407328171-19
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: monograph_publications
+- changeSet:
+    id: 1780407328171-20
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1780407328171-21
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        tableName: proceedings_publications
+- changeSet:
+    id: 1780407328171-22
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: type
+            type: SMALLINT
+            valueNumeric: 0
+        tableName: journals
+- changeSet:
+    id: 1780407328171-23
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: event_type
+            type: SMALLINT
+            valueNumeric: 0
+        tableName: conferences
+- changeSet:
+    id: 1780407328171-24
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: event_type
+            type: SMALLINT
+            valueNumeric: 2
+        tableName: courses
+- changeSet:
+    id: 1780407328171-25
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: event_type
+            type: SMALLINT
+            valueNumeric: 1
+        tableName: exhibitions
+- changeSet:
+    id: 1780407328171-26
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: event_type
+            type: SMALLINT
+            valueNumeric: 3
+        tableName: other_events
+- changeSet:
+    id: 1780407328171-27
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: main_arguer
+            type: BOOLEAN
+        tableName: person_event_contributions
+- changeSet:
+    id: 1780407328171-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_reviews_or_assessment
+            type: INTEGER
+        tableName: person_event_contributions
+- changeSet:
+    id: 1780407328171-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: lab_hours_per_week
+            type: VARCHAR(255)
+        tableName: person_event_contributions
+- changeSet:
+    id: 1780407328171-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: lecture_hours_per_week
+            type: VARCHAR(255)
+        tableName: person_event_contributions
+- changeSet:
+    id: 1780407328171-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: other_contact_hours_per_week
+            type: VARCHAR(255)
+        tableName: person_event_contributions
+- changeSet:
+    id: 1780407328171-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: tutorial_hours_per_week
+            type: VARCHAR(255)
+        tableName: person_event_contributions 
+
+- changeSet:
+    id: 1780407328171-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: institution_name_sortable
+            type: VARCHAR(255)
+        tableName: registry_book_entries
+    - update:
+        tableName: registry_book_entries
+        columns:
+          - column:
+              name: institution_name_sortable
+              valueComputed: |
+                (SELECT mlc."content"
+                 FROM theses t
+                   LEFT JOIN organisation_units_name oun ON oun.organisation_unit_id = t.organisation_unit_id
+                   LEFT JOIN multi_lingual_content mlc ON oun.name_id = mlc.id
+                 WHERE t.id = registry_book_entries.thesis_id AND mlc.language_tag_id = 2
+                 LIMIT 1
+                )
+
+- changeSet:
+    id: 1780407328171-34
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_event_contribution_id
+        baseTableName: person_event_contributions_display_event
+        constraintName: fk2jsv7mfqwmqb2mh3wafcysfe2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_event_contributions
+        validate: true
+- changeSet:
+    id: 1780407328171-35
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: monograph_publication_id
+        baseTableName: monograph_publications_section
+        constraintName: fk3e0jexmjqtx4o8xxwe3ec7aav
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: monograph_publications
+        validate: true
+- changeSet:
+    id: 1780407328171-36
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: proceedings_publication_id
+        baseTableName: proceedings_publications_section
+        constraintName: fk4luwbm8pdueqipe9a5jh14fxx
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: proceedings_publications
+        validate: true
+- changeSet:
+    id: 1780407328171-37
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_event_id
+        baseTableName: person_event_contributions_display_event
+        constraintName: fk4rice2qpve48mud0etnl7662o
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-38
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: section_id
+        baseTableName: proceedings_publications_section
+        constraintName: fk5aayguymjnng4elnm4da26t9w
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-39
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: section_id
+        baseTableName: journal_publications_section
+        constraintName: fk5c3nnfd2ta0bfug5nypv8chmx
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-40
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: location_jurisdiction_id
+        baseTableName: person_event_contributions_location_jurisdiction
+        constraintName: fk65ppo13gxuggah84y3klyc7n5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-41
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_event_contribution_id
+        baseTableName: person_event_contributions_location_jurisdiction
+        constraintName: fk6ekl6t0ndtghvxh4x39v5kde
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_event_contributions
+        validate: true
+- changeSet:
+    id: 1780407328171-42
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: case_name_id
+        baseTableName: person_event_contributions_case_name
+        constraintName: fk9s0ytsanymrm8n846cs26fbwo
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-43
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: edition_id
+        baseTableName: documents_edition
+        constraintName: fkcta8wklr4m3uuxvni6nqr2s9i
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-44
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_event_contribution_id
+        baseTableName: person_event_contributions_case_name
+        constraintName: fki77ast5klamx5ynh4ywq627nv
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_event_contributions
+        validate: true
+- changeSet:
+    id: 1780407328171-45
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: journal_publication_id
+        baseTableName: journal_publications_section
+        constraintName: fkihisbrxko32vxrm1yh3nbl0ux
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: journal_publications
+        validate: true
+- changeSet:
+    id: 1780407328171-46
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: section_id
+        baseTableName: monograph_publications_section
+        constraintName: fkq3y07u0shy6yyudg4b8xq6pa0
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1780407328171-1
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: int
+        columnName: event_id
+        tableName: person_event_contributions
+

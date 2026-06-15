@@ -175,6 +175,7 @@ public class FundingCallControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
+
                 MockMvcRequestBuilders.delete(
                         "http://localhost:8081/api/funding-call/{fundingCallId}", 2)
                     .contentType(MediaType.APPLICATION_JSON)

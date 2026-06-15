@@ -31,6 +31,7 @@ import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -50,6 +51,7 @@ import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -110,6 +112,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ThesisRepository thesisRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final PerformanceRelatedOutputRepository performanceRelatedOutputRepository;
 
     private final MaterialProductRepository materialProductRepository;
 
@@ -364,6 +368,14 @@ public class CommonExportServiceImpl implements CommonExportService {
                     GeneticMaterial::getId,
                     allTime,
                     ExportPublicationType.GENETIC_MATERIAL
+                );
+                case PERFORMANCE_RELATED_OUTPUT -> exportEntitiesAsync(
+                    performanceRelatedOutputRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    PerformanceRelatedOutput::getId,
+                    allTime,
+                    ExportPublicationType.PERFORMANCE_RELATED_OUTPUT
                 );
             };
         } catch (Exception e) {

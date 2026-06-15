@@ -5,13 +5,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.EventType;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "other_events")
@@ -19,5 +18,9 @@ import org.hibernate.annotations.SQLRestriction;
 public class OtherEvent extends Event {
 
     @Column(name = "type")
-    OtherEventType type;
+    private OtherEventType type;
+
+    public OtherEvent() {
+        this.setEventType(EventType.OTHER_EVENT);
+    }
 }

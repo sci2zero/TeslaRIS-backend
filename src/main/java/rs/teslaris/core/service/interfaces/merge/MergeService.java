@@ -16,6 +16,7 @@ import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
@@ -113,6 +114,10 @@ public interface MergeService {
     void saveMergedGeneticMaterialMetadata(Integer leftId, Integer rightId,
                                            GeneticMaterialDTO leftData,
                                            GeneticMaterialDTO rightData);
+
+    void saveMergedPerformanceRelatedOutputMetadata(Integer leftId, Integer rightId,
+                                                    PerformanceRelatedOutputDTO leftData,
+                                                    PerformanceRelatedOutputDTO rightData);
 
     void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
                                     DatasetDTO rightData);

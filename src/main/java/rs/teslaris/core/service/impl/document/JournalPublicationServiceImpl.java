@@ -198,7 +198,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var journalUpdated = Objects.nonNull(publicationDTO.getJournalId()) &&
             !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId());
         var yearUpdated = Objects.nonNull(publicationDTO.getDocumentDate()) &&
-            !publicationDTO.getDocumentDate().equals(indexToUpdate.getYear().toString());
+            !publicationDTO.getDocumentDate()
+                .equals(Objects.requireNonNullElse(indexToUpdate.getYear(), -1).toString());
 
         indexJournalPublication(publicationToUpdate, indexToUpdate);
         journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
@@ -223,10 +224,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         deleteProofsAndFileItems(publicationToDelete);
 
         journalPublicationJPAService.delete(journalPublicationId);
-        this.delete(journalPublicationId);
+        documentRepository.deleteDocumentContributions(journalPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(journalPublicationId));
@@ -331,5 +334,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setIssue(publicationDTO.getIssue());
 
         publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
+
+        publication.setSection(
+            multilingualContentService.getMultilingualContent(publicationDTO.getSection()));
     }
 }

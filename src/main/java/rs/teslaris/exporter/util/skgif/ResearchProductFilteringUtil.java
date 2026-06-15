@@ -2,6 +2,7 @@ package rs.teslaris.exporter.util.skgif;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -26,11 +27,13 @@ public class ResearchProductFilteringUtil {
 
 
     public static void addQueryFilters(SKGIFFilterCriteria criteria, Query query) {
+        var criteriaList = new ArrayList<Criteria>();
+
         criteria.getFilters().forEach((key, value) -> {
             switch (key) {
                 case "identifiers.scheme":
                     if (value.equals("isbn")) {
-                        query.addCriteria(
+                        criteriaList.add(
                             new Criteria().orOperator(
                                 Criteria.where("e_isbn").exists(true),
                                 Criteria.where("print_isbn").exists(true)
@@ -38,12 +41,12 @@ public class ResearchProductFilteringUtil {
                         );
                     } else {
                         var fieldName = getIdentifierFieldName(value);
-                        query.addCriteria(Criteria.where(fieldName).exists(true));
+                        criteriaList.add(Criteria.where(fieldName).exists(true));
                     }
                     break;
                 case "identifiers.value":
                     value = StringUtil.normalizeIdentifier(value);
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),
                             Criteria.where("scopus_afid").is(value),
@@ -52,19 +55,19 @@ public class ResearchProductFilteringUtil {
                     );
                     break;
                 case "titles":
-                    query.addCriteria(
+                    criteriaList.add(
                         Criteria.where("title").elemMatch(Criteria.where("content").is(value)));
                     break;
                 case "abstracts":
-                    query.addCriteria(
-                        Criteria.where("title")
+                    criteriaList.add(
+                        Criteria.where("description")
                             .elemMatch(Criteria.where("content").regex(value, "i")));
                     break;
                 case "product_type":
-                    addProductTypeQuery(query, value);
+                    addProductTypeQuery(criteriaList, value);
                     break;
                 case "contributions.by":
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("authors").elemMatch(Criteria.where("person.database_id")
                                 .is(Integer.parseInt(IdentifierUtil.removeCommonPrefix(value)))),
@@ -76,7 +79,7 @@ public class ResearchProductFilteringUtil {
                         ));
                     break;
                 case "contributions.declared_affiliations":
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("authors").elemMatch(
                                 Criteria.where("declared_contributions").in(Integer.parseInt(
@@ -90,43 +93,43 @@ public class ResearchProductFilteringUtil {
                         ));
                     break;
                 case "contributions.role":
-                    query.addCriteria(Criteria.where(getContributionField(value)).not().size(0));
+                    criteriaList.add(Criteria.where(getContributionField(value)).not().size(0));
                     break;
                 case "contributions.contribution_types":
-                    addContributionTypeQuery(query, value);
+                    addContributionTypeQuery(criteriaList, value);
                     break;
                 case "manifestations.type.class":
-                    query.addCriteria(
+                    criteriaList.add(
                         Criteria.where("document_files")
                             .elemMatch(Criteria.where("type").is(getResourceType(value))));
                     break;
                 case "manifestations.dates.modified":
-                    addManifestationDateQuery(query, value, "last_updated");
+                    addManifestationDateQuery(criteriaList, value, "last_updated");
                     break;
                 case "manifestations.dates.distribution":
-                    addManifestationDateQuery(query, value, "creation_date");
+                    addManifestationDateQuery(criteriaList, value, "creation_date");
                     break;
                 case "manifestations.license":
                     var license = value.replace("https://creativecommons.org/licenses/", "")
                         .replace("/4.0/legalcode.en", "").replace("-", "_").toUpperCase();
-                    query.addCriteria(
+                    criteriaList.add(
                         Criteria.where("document_files")
                             .elemMatch(Criteria.where("license").is(License.valueOf(license))));
                     break;
                 case "biblio.issue":
-                    query.addCriteria(Criteria.where("issue").is(value));
+                    criteriaList.add(Criteria.where("issue").is(value));
                     break;
                 case "biblio.volume":
-                    query.addCriteria(Criteria.where("volume").is(value));
+                    criteriaList.add(Criteria.where("volume").is(value));
                     break;
                 case "biblio.pages.first":
-                    query.addCriteria(Criteria.where("start_page").is(value));
+                    criteriaList.add(Criteria.where("start_page").is(value));
                     break;
                 case "biblio.pages.last":
-                    query.addCriteria(Criteria.where("end_page").is(value));
+                    criteriaList.add(Criteria.where("end_page").is(value));
                     break;
                 case "biblio.in":
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("journal.title")
                                 .elemMatch(Criteria.where("content").regex(value, "i")),
@@ -138,7 +141,7 @@ public class ResearchProductFilteringUtil {
                     );
                     break;
                 case "contributions.by.identifiers.value":
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("authors")
                                 .elemMatch(Criteria.where("person.orcid").is(value)),
@@ -161,11 +164,17 @@ public class ResearchProductFilteringUtil {
                         ));
                     break;
                 case "relevant_organisations":
-                    query.addCriteria(Criteria.where("related_institution_ids")
+                    criteriaList.add(Criteria.where("related_institution_ids")
                         .in(IdentifierUtil.removeCommonPrefix(value)));
                     break;
             }
         });
+
+        if (!criteriaList.isEmpty()) {
+            query.addCriteria(
+                new Criteria().andOperator(criteriaList.toArray(new Criteria[0]))
+            );
+        }
     }
 
     private static String getIdentifierFieldName(String skgifFieldName) {
@@ -179,7 +188,7 @@ public class ResearchProductFilteringUtil {
         };
     }
 
-    private static void addProductTypeQuery(Query query, String productType) {
+    private static void addProductTypeQuery(List<Criteria> criteriaList, String productType) {
         productType = productType.toLowerCase();
 
         if (!List.of("literature", "research data", "research software").contains(productType)) {
@@ -187,7 +196,7 @@ public class ResearchProductFilteringUtil {
         }
 
         switch (productType) {
-            case "literature" -> query.addCriteria(
+            case "literature" -> criteriaList.add(
                 new Criteria().orOperator(
                     Criteria.where("type").is(ExportPublicationType.JOURNAL_PUBLICATION),
                     Criteria.where("type").is(ExportPublicationType.PROCEEDINGS_PUBLICATION),
@@ -195,10 +204,10 @@ public class ResearchProductFilteringUtil {
                     Criteria.where("type").is(ExportPublicationType.THESIS)
                 )
             );
-            case "research software" -> query.addCriteria(
+            case "research software" -> criteriaList.add(
                 Criteria.where("type").is(ExportPublicationType.INTANGIBLE_PRODUCT));
             case "research data" ->
-                query.addCriteria(Criteria.where("type").is(ExportPublicationType.DATASET));
+                criteriaList.add(Criteria.where("type").is(ExportPublicationType.DATASET));
             default ->
                 throw new IllegalArgumentException("No RP entity type type for: " + productType);
         }
@@ -215,7 +224,8 @@ public class ResearchProductFilteringUtil {
         return contributionType.replace(" ", "_") + "s";
     }
 
-    private static void addContributionTypeQuery(Query query, String contributionType) {
+    private static void addContributionTypeQuery(List<Criteria> criteriaList,
+                                                 String contributionType) {
         contributionType = contributionType.toLowerCase();
 
         if (!List.of("writing - original draft", "conceptualization", "writing - review & editing",
@@ -226,11 +236,11 @@ public class ResearchProductFilteringUtil {
 
         switch (contributionType) {
             case "writing - original draft", "conceptualization" ->
-                query.addCriteria(Criteria.where("authors").not().size(0));
+                criteriaList.add(Criteria.where("authors").not().size(0));
             case "writing - review & editing" ->
-                query.addCriteria(Criteria.where("editors").not().size(0));
+                criteriaList.add(Criteria.where("editors").not().size(0));
             case "supervision", "validation" ->
-                query.addCriteria(Criteria.where("advisors").not().size(0));
+                criteriaList.add(Criteria.where("advisors").not().size(0));
             default -> throw new IllegalArgumentException(
                 "No RP contribution type for: " + contributionType);
         }
@@ -250,7 +260,8 @@ public class ResearchProductFilteringUtil {
         };
     }
 
-    private static void addManifestationDateQuery(Query query, String dateString, String field) {
+    private static void addManifestationDateQuery(List<Criteria> criteriaList, String dateString,
+                                                  String field) {
         if (!dateString.contains("T")) {
             dateString += "T00:00:00";
         }
@@ -259,7 +270,7 @@ public class ResearchProductFilteringUtil {
             .toLocalDate();
         var end = start.plusDays(1);
 
-        query.addCriteria(
+        criteriaList.add(
             Criteria.where("document_files")
                 .elemMatch(Criteria.where(field).gte(start).lt(end)));
     }

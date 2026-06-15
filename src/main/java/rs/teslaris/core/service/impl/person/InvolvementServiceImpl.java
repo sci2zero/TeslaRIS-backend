@@ -524,7 +524,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                                                     List<MultilingualContentDTO> externalInstitutionName,
                                                     String employmentTitle,
                                                     boolean performPersonUserCheck) {
-        if (performPersonUserCheck && Objects.nonNull(personService.findOne(personId).getUser())) {
+        if (Objects.isNull(personId)) {
+            return;
+        }
+
+        if (performPersonUserCheck &&
+            Objects.nonNull(personService.findOne(personId).getUser())) {
             log.info("User account bound to PERSON with ID {}. Skipping...", personId);
             return;
         }

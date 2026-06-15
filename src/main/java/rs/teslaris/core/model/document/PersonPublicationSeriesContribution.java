@@ -31,4 +31,7 @@ public class PersonPublicationSeriesContribution extends PersonContribution {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id", nullable = false)
     private PublicationSeries publicationSeries;
+
+    @Column(name = "main_contributor", nullable = false)
+    private Boolean isMainContributor = false;
 }

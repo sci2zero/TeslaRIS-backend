@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -30,6 +31,10 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         monographPublicationDTO.setNumberOfPages(monographPublication.getNumberOfPages());
         monographPublicationDTO.setArticleNumber(monographPublication.getArticleNumber());
         monographPublicationDTO.setMonographId(monographPublication.getMonograph().getId());
+
+        monographPublicationDTO.setSection(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                monographPublication.getSection()));
     }
 
     public static BibTeXEntry toBibTexEntry(MonographPublication monographPublication,

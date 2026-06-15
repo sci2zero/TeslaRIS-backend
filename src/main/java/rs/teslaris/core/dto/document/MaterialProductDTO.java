@@ -37,8 +37,6 @@ public class MaterialProductDTO extends DocumentDTO implements PublishableDTO {
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
 
-    private Boolean authorReprint;
-
     // used only for responses
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();

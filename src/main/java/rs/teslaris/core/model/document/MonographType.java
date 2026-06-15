@@ -15,5 +15,6 @@ public enum MonographType {
     PREPRINT,
     MANUAL,
     DATA_MANAGEMENT_PLAN,
-    PROCEEDINGS
+    PROCEEDINGS,
+    BOOK
 }

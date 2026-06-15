@@ -44,6 +44,7 @@ import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -110,6 +111,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private ThesisRepository thesisRepository;
+
+    @Mock
+    private PerformanceRelatedOutputRepository performanceRelatedOutputRepository;
 
     @Mock
     private BookSeriesRepository bookSeriesRepository;
@@ -242,12 +246,15 @@ public class CommonExportServiceTest {
         when(thesisRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
+        when(performanceRelatedOutputRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
 
         // When
         commonExportService.exportDocumentsToCommonModel(allTime, Collections.emptyList());
 
         // Then
-        verify(commonExportWorker, times(13)).exportEntities(
+        verify(commonExportWorker, times(14)).exportEntities(
             any(), any(), eq(ExportDocument.class), any(), eq(allTime), any());
     }
 
@@ -290,6 +297,9 @@ public class CommonExportServiceTest {
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(bookSeriesRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(performanceRelatedOutputRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
 

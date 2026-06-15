@@ -12,12 +12,14 @@ import rs.teslaris.core.model.commontypes.RecurrenceType;
 @Service
 public interface ReportingService {
 
-    void generateReport(ReportType type, Integer year, List<Integer> commissionIds, String locale,
+    void generateReport(ReportType type, Integer specifiedStartYear, Integer assessmentYear,
+                        List<Integer> commissionIds, String locale,
                         Integer topLevelInstitutionId);
 
     void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
-                                  Integer assessmentYear, List<Integer> commissionIds,
-                                  String locale, Integer topLevelInstitutionId, Integer userId,
+                                  Integer specifiedStartYear, Integer assessmentYear,
+                                  List<Integer> commissionIds, String locale,
+                                  Integer topLevelInstitutionId, Integer userId,
                                   RecurrenceType recurrence);
 
     List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId);

@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +27,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
@@ -81,6 +85,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    protected final ApplicationEventPublisher applicationEventPublisher;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
@@ -100,7 +106,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
-    public void setEventCommonFields(Event event, EventDTO eventDTO) {
+    public void setEventCommonFields(Event event, EventType eventType, EventDTO eventDTO,
+                                     HashSet<Integer> oldContributorIds) {
         event.setName(multilingualContentService.getMultilingualContent(eventDTO.getName()));
         event.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(eventDTO.getNameAbbreviation()));
@@ -139,7 +146,14 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         IdentifierUtil.setUris(event.getUris(), eventDTO.getUris());
 
         if (Objects.nonNull(eventDTO.getContributions())) {
-            personContributionService.setPersonEventContributionForEvent(event, eventDTO);
+            personContributionService.setPersonEventContributionForEvent(event, eventType,
+                eventDTO);
+            oldContributorIds.addAll(eventDTO.getContributions().stream()
+                .map(PersonContributionDTO::getPersonId)
+                .filter(Objects::nonNull).toList());
+
+            applicationEventPublisher.publishEvent(
+                new PersonContributionsChangeEvent(oldContributorIds));
         }
 
         if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {
@@ -150,7 +164,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
-    public void clearEventCommonFields(Event event) {
+    public HashSet<Integer> clearEventCommonFields(Event event) {
+        var oldContributorIds = new HashSet<Integer>();
+
         event.getName().clear();
         event.getNameAbbreviation().clear();
         event.getPlace().clear();
@@ -160,8 +176,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setCountry(null);
 
         event.getContributions().forEach(
-            contribution -> personContributionService.deleteContribution(contribution.getId()));
+            contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    oldContributorIds.add(contribution.getPerson().getId());
+                }
+
+                personContributionService.deleteContribution(contribution.getId());
+            });
         event.getContributions().clear();
+
+        return oldContributorIds;
     }
 
     protected void clearEventIndexCommonFields(EventIndex index) {
@@ -200,8 +224,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
-        return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
-            Pageable.ofSize(5), EventIndex.class, "events");
+        return searchService.runQuery(buildEventImportSearchQuery(
+                names,
+                Math.max(
+                    Integer.parseInt(dateFrom.substring(0, 4)),
+                    Integer.parseInt(dateTo.substring(0, 4))
+                )
+            ),
+            Pageable.ofSize(5),
+            EventIndex.class, "events"
+        );
     }
 
     @Override
@@ -317,29 +349,49 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         });
     }
 
-    private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
+    private Query buildEventImportSearchQuery(List<String> names, int publicationYear) {
+        String from = (publicationYear - 1) + "-01-01";
+        String to = publicationYear + "-12-31";
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+
             b.must(bq -> {
                 bq.bool(eq -> {
+
                     names.forEach(name -> {
-                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_sr").query(name)));
-                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_other").query(name)));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_sr").query(name)
+                        ));
+
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_other").query(name)
+                        ));
                     });
-                    eq.should(sb -> sb.wildcard(
-                        m -> m.field("date_from_to").value(dateFrom)));
-                    eq.should(sb -> sb.wildcard(
-                        m -> m.field("date_from_to").value(dateTo)));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("date_sortable").query(dateFrom)));
+
+                    eq.minimumShouldMatch("1");
+
+                    eq.must(sb -> sb.range(r -> r
+                        .field("date_sortable")
+                        .gte(JsonData.of(from))
+                        .lte(JsonData.of(to))
+                    ));
+
                     return eq;
                 });
+
                 return bq;
             });
-            b.must(sb -> {
-                sb.match(m -> m.field("event_type").query(EventType.CONFERENCE.name()));
-                sb.match(m -> m.field("is_serial_event").query(false));
-                return sb;
-            });
+
+            b.must(sb -> sb.match(
+                m -> m.field("event_type")
+                    .query(EventType.CONFERENCE.name())
+            ));
+
+            b.must(sb -> sb.match(
+                m -> m.field("is_serial_event")
+                    .query(false)
+            ));
+
             return b;
         })))._toQuery();
     }
@@ -636,6 +688,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     event.getDateTo().format(formatter));
         }
 
+        index.setDateFrom(event.getDateFrom());
+        index.setDateTo(event.getDateTo());
         index.setDateSortable(event.getDateFrom());
     }
 
@@ -692,5 +746,13 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             "event_id",
             eventId
         );
+    }
+
+    protected void updateIndexedPersonContributions(Event event) {
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(event.getContributions().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(contribution -> contribution.getPerson().getId())
+                .collect(Collectors.toSet())));
     }
 }

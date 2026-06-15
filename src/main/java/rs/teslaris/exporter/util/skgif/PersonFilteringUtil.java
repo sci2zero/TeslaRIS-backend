@@ -2,6 +2,7 @@ package rs.teslaris.exporter.util.skgif;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -19,15 +20,17 @@ public class PersonFilteringUtil {
 
 
     public static void addQueryFilters(SKGIFFilterCriteria criteria, Query query) {
+        var criteriaList = new ArrayList<Criteria>();
+
         criteria.getFilters().forEach((key, value) -> {
             switch (key) {
                 case "identifiers.scheme":
                     var fieldName = getIdentifierFieldName(value);
-                    query.addCriteria(Criteria.where(fieldName).exists(true));
+                    criteriaList.add(Criteria.where(fieldName).exists(true));
                     break;
                 case "identifiers.value":
                     value = StringUtil.normalizeIdentifier(value);
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),
                             Criteria.where("scopus_id").is(value)
@@ -35,16 +38,16 @@ public class PersonFilteringUtil {
                     );
                     break;
                 case "given_name":
-                    query.addCriteria(Criteria.where("name.firstName").is(value));
+                    criteriaList.add(Criteria.where("name.firstName").is(value));
                     break;
                 case "family_name":
-                    query.addCriteria(Criteria.where("name.lastName").is(value));
+                    criteriaList.add(Criteria.where("name.lastName").is(value));
                     break;
                 case "name": {
                     var parts = value.trim().split("\\s+");
 
                     if (parts.length == 1) {
-                        query.addCriteria(
+                        criteriaList.add(
                             new Criteria().orOperator(
                                 Criteria.where("name.firstName").regex("^" + parts[0], "i"),
                                 Criteria.where("name.lastName").regex("^" + parts[0], "i")
@@ -54,7 +57,7 @@ public class PersonFilteringUtil {
                         var first = parts[0];
                         var last = parts[1];
 
-                        query.addCriteria(
+                        criteriaList.add(
                             new Criteria().andOperator(
                                 Criteria.where("name.firstName").regex("^" + first, "i"),
                                 Criteria.where("name.lastName").regex("^" + last, "i")
@@ -64,7 +67,7 @@ public class PersonFilteringUtil {
                     break;
                 }
                 case "affiliations.affiliation":
-                    query.addCriteria(
+                    criteriaList.add(
                         Criteria.where("employments")
                             .elemMatch(
                                 Criteria.where("employment_institution.database_id")
@@ -72,17 +75,23 @@ public class PersonFilteringUtil {
                             ));
                     break;
                 case "affiliations.role":
-                    query.addCriteria(Criteria.where("employments")
+                    criteriaList.add(Criteria.where("employments")
                         .elemMatch(Criteria.where("role").regex(value, "i")));
                     break;
                 case "affiliations.period.start":
-                    addDateQuery(query, value, "from");
+                    addDateQuery(criteriaList, value, "from");
                     break;
                 case "affiliations.period.end":
-                    addDateQuery(query, value, "to");
+                    addDateQuery(criteriaList, value, "to");
                     break;
             }
         });
+
+        if (!criteriaList.isEmpty()) {
+            query.addCriteria(
+                new Criteria().andOperator(criteriaList.toArray(new Criteria[0]))
+            );
+        }
     }
 
     private static String getIdentifierFieldName(String skgifFieldName) {
@@ -93,7 +102,7 @@ public class PersonFilteringUtil {
         };
     }
 
-    private static void addDateQuery(Query query, String dateString, String field) {
+    private static void addDateQuery(List<Criteria> criteriaList, String dateString, String field) {
         if (!dateString.contains("T")) {
             dateString += "T00:00:00";
         }
@@ -102,7 +111,7 @@ public class PersonFilteringUtil {
             .toLocalDate();
         var end = start.plusDays(1);
 
-        query.addCriteria(
+        criteriaList.add(
             Criteria.where("employments").elemMatch(Criteria.where(field).gte(start).lt(end)));
     }
 }

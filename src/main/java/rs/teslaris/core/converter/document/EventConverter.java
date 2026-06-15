@@ -9,8 +9,8 @@ import rs.teslaris.core.model.document.Event;
 public class EventConverter {
 
     protected static <T extends EventDTO> T fillCommonFields(Event event, T dto) {
-
         dto.setId(event.getId());
+        dto.setEventType(event.getEventType());
 
         if (Objects.nonNull(event.getOldIds())) {
             event.getOldIds().stream().findFirst().ifPresent(dto::setOldId);

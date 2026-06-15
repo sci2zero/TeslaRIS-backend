@@ -14,6 +14,7 @@ import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.MaterialProductType;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
+import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 
@@ -149,6 +150,9 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("genetic_material_type")
     private GeneticMaterialType geneticMaterialType;
+
+    @Field("performance_related_output_type")
+    private PerformanceRelatedOutputType performanceRelatedOutputType;
 
     @Field("thesis_grantor")
     private ExportOrganisationUnit thesisGrantor;

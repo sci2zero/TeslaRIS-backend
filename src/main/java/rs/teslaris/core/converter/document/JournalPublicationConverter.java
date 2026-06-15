@@ -34,6 +34,9 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
         publicationDTO.setJournalName(
             MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getJournal().getTitle()));
+
+        publicationDTO.setSection(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getSection()));
     }
 
     public static BibTeXEntry toBibTexEntry(JournalPublication journalPublication,

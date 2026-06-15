@@ -27,6 +27,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -73,6 +74,8 @@ public class DocumentPublicationConverter {
                 publication.getChronologicalSpaceDescription()));
         publicationDTO.setCity(
             MultilingualContentConverter.getMultilingualContentDTO(publication.getCity()));
+        publicationDTO.setEdition(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getEdition()));
 
         if (Objects.nonNull(publication.getCountry())) {
             publicationDTO.setCountryId(publication.getCountry().getId());
@@ -290,6 +293,9 @@ public class DocumentPublicationConverter {
                 MaterialProductConverter.toBibTexEntry(materialProduct, defaultLanguageTag);
             case GeneticMaterial geneticMaterial ->
                 GeneticMaterialConverter.toBibTexEntry(geneticMaterial, defaultLanguageTag);
+            case PerformanceRelatedOutput performanceRelatedOutput ->
+                PerformanceRelatedOutputConverter.toBibTexEntry(performanceRelatedOutput,
+                    defaultLanguageTag);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };
@@ -326,6 +332,9 @@ public class DocumentPublicationConverter {
             case GeneticMaterial geneticMaterial ->
                 GeneticMaterialConverter.toTaggedFormat(geneticMaterial, defaultLanguageTag,
                     refMan);
+            case PerformanceRelatedOutput performanceRelatedOutput ->
+                PerformanceRelatedOutputConverter.toTaggedFormat(performanceRelatedOutput,
+                    defaultLanguageTag, refMan);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };

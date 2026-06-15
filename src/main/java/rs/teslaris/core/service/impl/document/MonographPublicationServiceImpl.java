@@ -216,7 +216,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public void deleteMonographPublication(Integer monographPublicationId) {
         var publicationToDelete = monographPublicationJPAService.findOne(monographPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         monographPublicationJPAService.delete(publicationToDelete.getId());
+        documentRepository.deleteDocumentContributions(monographPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(monographPublicationId));
@@ -259,6 +262,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setDocumentDate(
             Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
                 monographPublicationDTO.getDocumentDate());
+
+        monographPublication.setSection(multilingualContentService.getMultilingualContent(
+            monographPublicationDTO.getSection()));
     }
 
     @Override

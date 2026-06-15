@@ -44,6 +44,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -161,6 +162,9 @@ public class ThesisServiceTest {
     @Mock
     private TaskManagerService taskManagerService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private ThesisServiceImpl thesisService;
 
@@ -211,7 +215,7 @@ public class ThesisServiceTest {
         var result = thesisService.createThesis(dto, true);
 
         // Then
-        verify(multilingualContentService, times(14)).getMultilingualContent(any());
+        verify(multilingualContentService, times(15)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(thesisJPAService).save(eq(document));

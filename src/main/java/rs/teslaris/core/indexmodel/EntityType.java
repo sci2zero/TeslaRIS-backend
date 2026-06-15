@@ -21,5 +21,6 @@ public enum EntityType {
     PROJECT,
     COURSE,
     OTHER_EVENT,
-    FUNDING_APPLICATION
+    FUNDING_APPLICATION,
+    FUNDING
 }

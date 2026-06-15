@@ -10,14 +10,13 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "courses")
@@ -41,4 +40,8 @@ public class Course extends Event {
 
     @Column(name = "number_of_students")
     private Integer numberOfStudents;
+
+    public Course() {
+        this.setEventType(EventType.COURSE);
+    }
 }

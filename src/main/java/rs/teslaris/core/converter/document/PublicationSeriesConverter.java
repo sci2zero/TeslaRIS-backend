@@ -22,6 +22,7 @@ public class PublicationSeriesConverter {
         journal.getLanguages()
             .forEach(language -> responseDTO.getLanguageTagNames().add(
                 language.getLanguageCode()));
+        responseDTO.setType(journal.getType());
 
         return responseDTO;
     }

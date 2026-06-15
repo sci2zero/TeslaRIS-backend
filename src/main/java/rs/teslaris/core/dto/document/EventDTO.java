@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.indexmodel.EventType;
 
 @Getter
 @Setter
@@ -53,7 +54,7 @@ public class EventDTO {
     private List<MultilingualContentDTO> displayOrganizer = new ArrayList<>();
 
     @NotNull(message = "You have to provide contribution list.")
-    private List<PersonEventContributionDTO> contributions;
+    private List<PersonEventContributionDTO> contributions = new ArrayList<>();
 
     private Set<String> uris;
 
@@ -63,4 +64,6 @@ public class EventDTO {
     // used only for responses
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
+    private EventType eventType;
 }

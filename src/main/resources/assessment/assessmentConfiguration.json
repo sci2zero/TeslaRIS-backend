@@ -114,6 +114,9 @@
       "M110",
       "M111",
       "M112"
+    ],
+    "M00": [
+      "M00"
     ]
   },
   "groupToNameMapping": {
@@ -161,6 +164,11 @@
       "sr": "Patenti, sorte, rase ili sojevi",
       "sr-cyr": "Патенти, сорте, расе или сојеви",
       "en": "Patents, varieties, breeds, or strains"
+    },
+    "M00": {
+      "sr": "Nekategorisane publikacije",
+      "sr-cyr": "Некатегорисане публикације",
+      "en": "Uncategorized publications"
     }
   },
   "sciList": [
@@ -301,5 +309,6 @@
       "+": -0.5
     }
   },
-  "defaultJournalAssessmentCode": "journalM53"
+  "defaultJournalAssessmentCode": "journalM53",
+  "unclassifiedPublicationsCode": "M00"
 }

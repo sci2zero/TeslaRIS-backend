@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.model.funding.FundingType;
 
 @Getter
@@ -23,7 +24,11 @@ import rs.teslaris.project.model.funding.FundingType;
 @AllArgsConstructor
 public class FundingDTO {
 
-    private String internalIdentifier;
+    private Set<String> internalIdentifiers = new HashSet<>();
+
+    private Set<String> oldIds = new HashSet<>();
+
+    private Set<Integer> mergedIds = new HashSet<>();
 
     private String doi;
 
@@ -33,14 +38,16 @@ public class FundingDTO {
     @Positive(message = "Project ID cannot be a negative number.")
     private Integer projectId;
 
+    private List<DocumentFileResponseDTO> agreements = new ArrayList<>();
+
+    private List<FundingPartDTO> fundingParts = new ArrayList<>();
+
     @Valid
     @NotNull(message = "You have to provide a funding name.")
     @NotEmpty(message = "You have to provide a funding name.")
     private List<MultilingualContentDTO> name;
 
     private List<MultilingualContentDTO> description = new ArrayList<>();
-
-    private List<MultilingualContentDTO> objectives = new ArrayList<>();
 
     private List<MultilingualContentDTO> nameAbbreviation = new ArrayList<>();
 
@@ -51,6 +58,11 @@ public class FundingDTO {
     private Set<String> uris = new HashSet<>();
 
     private Integer fundingCallId;
+
+    private Integer funderId;
+
+    // Used only for responses
+    private Integer id;
 
     private List<MultilingualContentDTO> displayCall = new ArrayList<>();
 
@@ -78,4 +90,5 @@ public class FundingDTO {
     private Boolean oaMandated;
 
     private String oaMandateUrl;
+
 }

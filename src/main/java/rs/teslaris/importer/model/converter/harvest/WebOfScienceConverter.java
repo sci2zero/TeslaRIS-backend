@@ -12,10 +12,10 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
-import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.webofscience.WebOfScienceImportUtility;
 
 public class WebOfScienceConverter {
@@ -44,7 +44,7 @@ public class WebOfScienceConverter {
 
     private static void addTitle(DocumentImport document,
                                  WebOfScienceImportUtility.WosPublication record) {
-        document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
+        document.getTitle().add(CommonHarvestUtility.createMultilingualContent(record.title()));
     }
 
     private static void addDoiIfPresent(DocumentImport document,
@@ -67,7 +67,7 @@ public class WebOfScienceConverter {
                 sourceTypes.contains("Review") ? JournalPublicationType.REVIEW_ARTICLE :
                     JournalPublicationType.RESEARCH_ARTICLE);
             document.getPublishedIn()
-                .add(new MultilingualContent("EN", record.source().sourceTitle(), 1));
+                .add(CommonHarvestUtility.createMultilingualContent(record.source().sourceTitle()));
             addIssn(document, record);
         } else if (sourceTypes.contains("Proceedings Paper")) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
@@ -97,11 +97,10 @@ public class WebOfScienceConverter {
     private static void addProceedingsMetadata(DocumentImport document,
                                                WebOfScienceImportUtility.WosPublication record) {
         var conferenceName = record.source().sourceTitle();
-        document.getPublishedIn()
-            .add(new MultilingualContent("EN", "Proceedings of " + conferenceName, 1));
+        document.getPublishedIn().add(CommonHarvestUtility.createProceedingsName(conferenceName));
 
         var event = new Event();
-        event.getName().add(new MultilingualContent("EN", conferenceName, 1));
+        event.getName().add(CommonHarvestUtility.createMultilingualContent(conferenceName));
         event.setDateFrom(LocalDate.of(record.source().publishYear(), 1, 1));
         event.setDateTo(LocalDate.of(record.source().publishYear(), 12, 31));
         document.setEvent(event);
@@ -151,7 +150,8 @@ public class WebOfScienceConverter {
     private static void addKeywords(DocumentImport document,
                                     WebOfScienceImportUtility.WosPublication record) {
         var keywords = new ArrayList<>(record.keywords().authorKeywords());
-        document.getKeywords().add(new MultilingualContent("EN", Strings.join(keywords, '\n'), 1));
+        document.getKeywords()
+            .add(CommonHarvestUtility.createMultilingualContent(Strings.join(keywords, '\n')));
     }
 
     private static void addUris(DocumentImport document,

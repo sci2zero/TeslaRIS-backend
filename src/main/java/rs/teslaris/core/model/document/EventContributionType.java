@@ -9,5 +9,16 @@ public enum EventContributionType {
     PANELISTS,
     CHAIR,
     AUDIENCE,
-    DEMONSTRATOR
+    DEMONSTRATOR,
+    ORGANIZER,
+    INVITED_SPEAKER,
+    KEYNOTE_SPEAKER,
+    PERFORMER,
+    PRODUCER,
+    INSTRUCTOR,
+    TEACHER,
+    EXAMINER,
+    WITNESS,
+    ARGUER,
+    OTHER
 }

@@ -66,9 +66,6 @@ public non-sealed class Monograph extends Document
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(name = "author_reprint")
-    private Boolean authorReprint = false;
-
     @Column(name = "udc")
     private String udc;
 

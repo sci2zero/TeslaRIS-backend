@@ -196,10 +196,12 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
     public void deleteIntangibleProduct(Integer intangibleProductId) {
         var intangibleProductToDelete = intangibleProductJPAService.findOne(intangibleProductId);
 
+        updateIndexedPersonContributions(intangibleProductToDelete);
+
         deleteProofsAndFileItems(intangibleProductToDelete);
 
         intangibleProductJPAService.delete(intangibleProductId);
-        this.delete(intangibleProductId);
+        documentRepository.deleteDocumentContributions(intangibleProductId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(intangibleProductId));

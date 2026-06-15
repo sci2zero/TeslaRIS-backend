@@ -2,10 +2,13 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 
 @Getter
@@ -28,4 +31,6 @@ public class ProceedingsPublicationDTO extends DocumentDTO implements Importable
     @NotNull(message = "You have to provide a proceedings ID.")
     @Positive(message = "Proceedings ID must be a positive number.")
     private Integer proceedingsId;
+
+    private List<MultilingualContentDTO> section = new ArrayList<>();
 }

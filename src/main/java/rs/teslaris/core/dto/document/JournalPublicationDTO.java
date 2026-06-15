@@ -2,10 +2,13 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.JournalPublicationType;
 
 @Getter
@@ -32,4 +35,6 @@ public class JournalPublicationDTO extends DocumentDTO {
     @NotNull(message = "You have to provide a journal ID.")
     @Positive(message = "Journal ID must be a positive number.")
     private Integer journalId;
+
+    private List<MultilingualContentDTO> section = new ArrayList<>();
 }
