@@ -822,6 +822,7 @@ package document {
     Boolean isArchived
     DocumentPublicationType documentType
     Boolean authorReprint /' !!! moved from Monograph and Patent '/
+    Set<MultilingualContent> displayPublisher /' !!! '/
   }
   
   enum DocumentPublicationType {
@@ -983,7 +984,7 @@ package document {
   class Conference extends Event{
     String number
     String fee
-    String confId
+    String confIDent /' !!! renamed from confId, skip for now '/
     String openAlexId
   }
    
