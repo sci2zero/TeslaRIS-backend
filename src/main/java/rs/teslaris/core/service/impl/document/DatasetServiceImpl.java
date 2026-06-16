@@ -41,6 +41,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -135,6 +136,15 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     @Transactional
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.DATASET.name(),
+                datasetId,
+                DatasetConverter.toDTO(datasetToUpdate),
+                datasetDTO
+            )
+        );
 
         checkForDocumentDate(datasetDTO);
         var oldContributorIds = clearCommonFields(datasetToUpdate);
