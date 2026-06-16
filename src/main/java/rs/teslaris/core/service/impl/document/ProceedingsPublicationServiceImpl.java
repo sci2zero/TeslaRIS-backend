@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -177,7 +178,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index) {
         var publication = new ProceedingsPublication();
 
-        setCommonFields(publication, proceedingsPublicationDTO);
+        setCommonFields(publication, proceedingsPublicationDTO, new HashSet<>());
         setProceedingsPublicationRelatedFields(publication, proceedingsPublicationDTO);
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
@@ -204,18 +205,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         var publicationToUpdate =
             proceedingPublicationJPAService.findOne(publicationId);
 
-        var oldContributorIds =
-            publicationToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         var oldConferenceId = publicationToUpdate.getEvent().getId();
 
-        clearCommonFields(publicationToUpdate);
+        var oldContributorIds = clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
 
-        setCommonFields(publicationToUpdate, publicationDTO);
+        setCommonFields(publicationToUpdate, publicationDTO, oldContributorIds);
         setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);

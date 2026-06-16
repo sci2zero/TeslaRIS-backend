@@ -1,8 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -121,7 +121,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         var newProduct = new GeneticMaterial();
 
         checkForDocumentDate(geneticMaterialDTO);
-        setCommonFields(newProduct, geneticMaterialDTO);
+        setCommonFields(newProduct, geneticMaterialDTO, new HashSet<>());
         setGeneticMaterialRelatedFields(newProduct, geneticMaterialDTO);
 
         var savedProduct = geneticMaterialJPAService.save(newProduct);
@@ -141,15 +141,9 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
 
-        var oldContributorIds =
-            geneticMaterialToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkForDocumentDate(geneticMaterialDTO);
-        clearCommonFields(geneticMaterialToUpdate);
-        setCommonFields(geneticMaterialToUpdate, geneticMaterialDTO);
+        var oldContributorIds = clearCommonFields(geneticMaterialToUpdate);
+        setCommonFields(geneticMaterialToUpdate, geneticMaterialDTO, oldContributorIds);
 
         setGeneticMaterialRelatedFields(geneticMaterialToUpdate, geneticMaterialDTO);
 

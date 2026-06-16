@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -133,7 +132,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var newPerformanceRelatedOutput = new PerformanceRelatedOutput();
 
         checkForDocumentDate(performanceRelatedOutputDTO);
-        setCommonFields(newPerformanceRelatedOutput, performanceRelatedOutputDTO);
+        setCommonFields(newPerformanceRelatedOutput, performanceRelatedOutputDTO, new HashSet<>());
         setPerformanceRelatedOutputRelatedFields(newPerformanceRelatedOutput,
             performanceRelatedOutputDTO);
 
@@ -157,15 +156,10 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToUpdate =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
-        var oldContributorIds =
-            performanceRelatedOutputToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkForDocumentDate(performanceRelatedOutputDTO);
-        clearCommonFields(performanceRelatedOutputToUpdate);
-        setCommonFields(performanceRelatedOutputToUpdate, performanceRelatedOutputDTO);
+        var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);
+        setCommonFields(performanceRelatedOutputToUpdate, performanceRelatedOutputDTO,
+            oldContributorIds);
 
         if (Objects.nonNull(performanceRelatedOutputToUpdate.getLanguages())) {
             performanceRelatedOutputToUpdate.getLanguages().clear();

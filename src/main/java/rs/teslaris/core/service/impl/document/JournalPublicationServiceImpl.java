@@ -1,9 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -157,7 +157,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                                        Boolean index) {
         var publication = new JournalPublication();
 
-        setCommonFields(publication, publicationDTO);
+        setCommonFields(publication, publicationDTO, new HashSet<>());
         setJournalPublicationRelatedFields(publication, publicationDTO);
 
         var savedPublication = journalPublicationJPAService.save(publication);
@@ -181,16 +181,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
 
-        var oldContributorIds =
-            publicationToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
-        clearCommonFields(publicationToUpdate);
+        var oldContributorIds = clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
 
-        setCommonFields(publicationToUpdate, publicationDTO);
+        setCommonFields(publicationToUpdate, publicationDTO, oldContributorIds);
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);

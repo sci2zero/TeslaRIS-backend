@@ -1,8 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -117,7 +117,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         var newDataset = new Dataset();
 
         checkForDocumentDate(datasetDTO);
-        setCommonFields(newDataset, datasetDTO);
+        setCommonFields(newDataset, datasetDTO, new HashSet<>());
         setDatasetRelatedFields(newDataset, datasetDTO);
 
         var savedDataset = datasetJPAService.save(newDataset);
@@ -136,15 +136,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
 
-        var oldContributorIds =
-            datasetToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkForDocumentDate(datasetDTO);
-        clearCommonFields(datasetToUpdate);
-        setCommonFields(datasetToUpdate, datasetDTO);
+        var oldContributorIds = clearCommonFields(datasetToUpdate);
+        setCommonFields(datasetToUpdate, datasetDTO, oldContributorIds);
         setDatasetRelatedFields(datasetToUpdate, datasetDTO);
 
         datasetJPAService.save(datasetToUpdate);

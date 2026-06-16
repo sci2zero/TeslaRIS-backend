@@ -1,8 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -133,7 +133,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         var newPatent = new Patent();
 
         checkForDocumentDate(patentDTO);
-        setCommonFields(newPatent, patentDTO);
+        setCommonFields(newPatent, patentDTO, new HashSet<>());
         setPatentRelatedFields(newPatent, patentDTO);
 
         var savedPatent = patentJPAService.save(newPatent);
@@ -152,15 +152,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
 
-        var oldContributorIds =
-            patentToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
-
         checkForDocumentDate(patentDTO);
-        clearCommonFields(patentToUpdate);
-        setCommonFields(patentToUpdate, patentDTO);
+        var oldContributorIds = clearCommonFields(patentToUpdate);
+        setCommonFields(patentToUpdate, patentDTO, oldContributorIds);
         setPatentRelatedFields(patentToUpdate, patentDTO);
 
         var updatedPatent = patentJPAService.save(patentToUpdate);
