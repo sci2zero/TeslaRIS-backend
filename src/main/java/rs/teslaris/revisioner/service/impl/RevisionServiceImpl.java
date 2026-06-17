@@ -11,8 +11,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,17 +23,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
+import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
+import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 
 @Service
 @RequiredArgsConstructor
 public class RevisionServiceImpl implements RevisionService {
 
     private final EntityRevisionRepository repository;
+
+    private final RevisionHydratorRegistry revisionHydratorRegistry;
 
     private final ObjectMapper objectMapper =
         JsonMapper.builder()
@@ -83,31 +87,46 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LocalDateTime> getRevisionJsons(String entityType, Integer entityId) {
+    public List<Instant> getRevisionTimestamps(String entityType, Integer entityId) {
         return repository
             .findByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .stream()
-            .map(r -> LocalDateTime.ofInstant(r.getRevisionTimestamp(), ZoneId.systemDefault())
-            )
+            .map(EntityRevision::getRevisionTimestamp)
             .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public <T> Optional<T> getRevisionAtDate(String entityType, Integer entityId, Instant timestamp,
-                                             Class<T> dtoClass) {
+    public Optional<String> getRevisionAtTimestamp(String entityType, Integer entityId,
+                                                   Instant timestamp) {
+        Class<?> dtoClass =
+            revisionHydratorRegistry.getDtoClass(entityType);
+
         return repository
             .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
                 entityType,
                 entityId,
                 timestamp
-            ).map(r ->
-                CompressionUtil.decompress(r.getCompressedContent())
-            ).map(json -> {
+            )
+            .map(r -> CompressionUtil.decompress(r.getCompressedContent()))
+            .map(json -> {
                 try {
-                    return objectMapper.readValue(json, dtoClass);
+                    var tree = objectMapper.readTree(json);
+
+                    var renames = RevisionConfigurationLoader.getMigrationMappings(entityType);
+
+                    applyFieldRenames(tree, renames);
+
+                    Object dto = objectMapper.treeToValue(tree, dtoClass);
+
+                    revisionHydratorRegistry
+                        .get(entityType)
+                        .ifPresent(h -> hydrateUnchecked(h, dto));
+
+                    return objectMapper.writeValueAsString(dto);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new LoadingException(
+                        "Unable to load revisions at given timestamp. Reason: " + e.getMessage());
                 }
             });
     }
@@ -118,7 +137,7 @@ public class RevisionServiceImpl implements RevisionService {
         var tree = normalize(objectMapper.readTree(json));
 
         removeIgnoredFields(tree,
-            Set.of("peerReviewed", "openAccess", "publicationStatus"));
+            RevisionConfigurationLoader.listExcludedFieldsForType(entityType));
 
         return objectMapper.writeValueAsString(tree);
     }
@@ -160,44 +179,48 @@ public class RevisionServiceImpl implements RevisionService {
     }
 
     private void removeIgnoredFields(JsonNode node, Set<String> ignoredFields) {
-        if (node instanceof ObjectNode objectNode) {
+        if (ignoredFields.isEmpty()) {
+            return;
+        }
 
+        if (node instanceof ObjectNode objectNode) {
             ignoredFields.forEach(objectNode::remove);
 
             objectNode.fields()
                 .forEachRemaining(entry ->
-                    removeIgnoredFields(
-                        entry.getValue(),
-                        ignoredFields
-                    )
+                    removeIgnoredFields(entry.getValue(), ignoredFields)
                 );
         }
 
         if (node instanceof ArrayNode arrayNode) {
             arrayNode.forEach(child ->
-                removeIgnoredFields(
-                    child,
-                    ignoredFields
-                )
+                removeIgnoredFields(child, ignoredFields)
             );
         }
     }
 
     private void applyFieldRenames(JsonNode node, Map<String, String> renames) {
-        if (!(node instanceof ObjectNode objectNode)) {
-            return;
+        if (node instanceof ObjectNode objectNode) {
+            renames.forEach((oldName, newName) -> {
+                var value = objectNode.remove(oldName);
+
+                if (Objects.nonNull(value)) {
+                    objectNode.set(newName, value);
+                }
+            });
+
+            objectNode.fields().forEachRemaining(entry ->
+                applyFieldRenames(entry.getValue(), renames)
+            );
+        } else if (node instanceof ArrayNode arrayNode) {
+            arrayNode.forEach(child ->
+                applyFieldRenames(child, renames)
+            );
         }
+    }
 
-        renames.forEach((oldName, newName) -> {
-            var value = objectNode.remove(oldName);
-
-            if (Objects.nonNull(value)) {
-                objectNode.set(newName, value);
-            }
-        });
-
-        objectNode.fields()
-            .forEachRemaining(entry ->
-                applyFieldRenames(entry.getValue(), renames));
+    @SuppressWarnings("unchecked")
+    private <T> void hydrateUnchecked(RevisionHydrator<?> hydrator, Object dto) {
+        ((RevisionHydrator<T>) hydrator).hydrate((T) dto);
     }
 }

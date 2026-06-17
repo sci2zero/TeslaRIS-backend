@@ -1,7 +1,6 @@
 package rs.teslaris.revisioner.controller;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -22,11 +21,9 @@ public class RevisionController {
 
 
     @GetMapping(value = "/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<LocalDateTime>> getRevisionHistory(@PathVariable String entityType,
-                                                                  @PathVariable Integer entityId) {
-        return ResponseEntity.ok(
-            revisionService.getRevisionJsons(entityType, entityId)
-        );
+    public ResponseEntity<List<Instant>> getRevisionHistory(@PathVariable String entityType,
+                                                            @PathVariable Integer entityId) {
+        return ResponseEntity.ok(revisionService.getRevisionTimestamps(entityType, entityId));
     }
 
     @GetMapping(value = "/{entityType}/{entityId}/at", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -34,7 +31,7 @@ public class RevisionController {
                                                     @PathVariable Integer entityId,
                                                     @RequestParam Instant timestamp) {
         return revisionService
-            .getRevisionAtDate(entityType, entityId, timestamp, String.class)
+            .getRevisionAtTimestamp(entityType, entityId, timestamp)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }

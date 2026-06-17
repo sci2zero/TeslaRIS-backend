@@ -42,6 +42,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -145,6 +146,15 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
     public void editIntangibleProduct(Integer intangibleProductId,
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                intangibleProductId,
+                IntangibleProductConverter.toDTO(intangibleProductToUpdate),
+                intangibleProductDTO
+            )
+        );
 
         checkForDocumentDate(intangibleProductDTO);
         var oldContributorIds = clearCommonFields(intangibleProductToUpdate);
