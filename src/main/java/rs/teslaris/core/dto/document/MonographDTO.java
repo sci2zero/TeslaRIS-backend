@@ -1,11 +1,13 @@
 package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.Positive;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.MonographType;
 
 @Getter
@@ -38,4 +40,10 @@ public class MonographDTO extends DocumentDTO implements PublishableDTO, InSerie
     private Integer publisherId;
 
     private String udc;
+
+    // used only for responses
+
+    private List<MultilingualContentDTO> publicationSeriesName = new ArrayList<>();
+
+    private List<MultilingualContentDTO> publisherName = new ArrayList<>();
 }

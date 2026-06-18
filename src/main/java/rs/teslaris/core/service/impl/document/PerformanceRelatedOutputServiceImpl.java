@@ -43,6 +43,7 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -155,6 +156,15 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
                                              PerformanceRelatedOutputDTO performanceRelatedOutputDTO) {
         var performanceRelatedOutputToUpdate =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                performanceRelatedOutputId,
+                PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
+                performanceRelatedOutputDTO
+            )
+        );
 
         checkForDocumentDate(performanceRelatedOutputDTO);
         var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);

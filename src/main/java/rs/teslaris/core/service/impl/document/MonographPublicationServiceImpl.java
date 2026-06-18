@@ -47,6 +47,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -191,6 +192,15 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                          MonographPublicationDTO monographPublicationDTO) {
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                monographPublicationId,
+                MonographPublicationConverter.toDTO(monographPublicationToUpdate),
+                monographPublicationDTO
+            )
+        );
 
         var oldContributorIds = clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO, oldContributorIds);

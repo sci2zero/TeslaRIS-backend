@@ -60,6 +60,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -237,6 +238,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Transactional
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH.name(),
+                monographId,
+                MonographConverter.toDTO(monographToUpdate),
+                monographDTO
+            )
+        );
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());

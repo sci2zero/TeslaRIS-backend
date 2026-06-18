@@ -3,26 +3,27 @@ package rs.teslaris.revisioner.hydrator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 
 @Component
-public class DatasetRevisionHydrator extends RevisionHydrator<DatasetDTO> {
+public class GeneticMaterialRevisionHydrator extends RevisionHydrator<GeneticMaterialDTO> {
 
     @Autowired
-    public DatasetRevisionHydrator(CountryService countryService) {
+    public GeneticMaterialRevisionHydrator(
+        CountryService countryService) {
         super(countryService);
     }
 
     @Override
     public String entityType() {
-        return DocumentPublicationType.DATASET.name();
+        return DocumentPublicationType.GENETIC_MATERIAL.name();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void hydrate(DatasetDTO dto) {
+    public void hydrate(GeneticMaterialDTO dto) {
         hydrateCommonFields(dto);
     }
 }

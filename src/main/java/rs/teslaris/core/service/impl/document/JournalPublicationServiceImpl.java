@@ -48,6 +48,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -180,6 +181,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public void editJournalPublication(Integer publicationId,
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                publicationId,
+                JournalPublicationConverter.toDTO(publicationToUpdate),
+                publicationDTO
+            )
+        );
 
         var oldContributorIds = clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();

@@ -41,6 +41,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -140,6 +141,15 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     public void editGeneticMaterial(Integer geneticMaterialId,
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.GENETIC_MATERIAL.name(),
+                geneticMaterialId,
+                GeneticMaterialConverter.toDTO(geneticMaterialToUpdate),
+                geneticMaterialDTO
+            )
+        );
 
         checkForDocumentDate(geneticMaterialDTO);
         var oldContributorIds = clearCommonFields(geneticMaterialToUpdate);

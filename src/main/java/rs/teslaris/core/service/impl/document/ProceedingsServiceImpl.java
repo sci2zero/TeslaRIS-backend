@@ -57,6 +57,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @Traceable
@@ -198,6 +199,15 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Transactional
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                proceedingsId,
+                ProceedingsConverter.toDTO(proceedingsToUpdate),
+                proceedingsDTO
+            )
+        );
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
