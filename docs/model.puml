@@ -37,6 +37,14 @@ package commonTypes {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
   }
+  
+  /' !!!! '/
+  class CrisContextInformation {
+    String personNationalIdRegularExpression
+    String projectNationalIdRegularExpression
+    String organisationUnitNationalIdRegularExpression
+    String projectNationalIdRegularExpression
+  }
 
   class ProfilePhotoOrLogo {
     String imageServerName
@@ -120,7 +128,6 @@ package commonTypes {
     Boolean deleted
     String importSource
     Boolean privateInfo
-    ApproveStatus approveStatus /' !!! '/
   }
   
   enum ExportableEndpointType {
@@ -306,8 +313,8 @@ package person {
     String apvnt 
     String eCrisId 
     String eNaukaId 
-    String nationalScienceId 
-    String nationalScienceIdRegularExpression /' !!! '/
+    String nationalId /' !!! rename from nationalScienceId to nationalId'/
+    /' String nationalIdRegularExpression  !!! this should not be a field for all row in database, it should be defined once (once for person, once for project, once for document, once for organisationUnit), and applied on all rows '/
     String orcid
     String scopusAuthorId
     String openAlexId
@@ -320,7 +327,7 @@ package person {
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds 
     Set<String> urls
-    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
+    ApproveStatus approveStatus
     PersonalInfo personalInfo
     Set<SDGoal> sdgs /' !!! will be done by using indicators '/
     ProfilePhotoOrLogo profilePhoto
@@ -418,7 +425,7 @@ package person {
   }
 
   class Involvement {
-    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
+    ApproveStatus approveStatus
     InvolvementType involvementType
     Set<MultiLingualContent> affiliationStatement /' !!!! to rename to displayOrganisationUnit? '/
     Boolean favourite 
@@ -561,11 +568,13 @@ package institution {
     String numberOfEmployees /' !!! should stay String, add in the placeholder or tooltip that it is not mandatory exact number, can be 50-100 for instance '/
     GeoLocation location
     PostalAddress postalAddress
-    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
+    ApproveStatus approveStatus
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds
     Set<String> accountingIds 
     Set<String> internalIds
+    String nationalId /' !!! '/
+   /' String nationalIdRegularExpression  !!! this should not be a field for all row in database, it should be defined once (once for person, once for project, once for document, once for organisationUnit), and applied on all rows '/
     String scopusAfid
     String openAlexId
     String ror
@@ -622,7 +631,7 @@ package institution {
     OrganisationUnitRelationType relationType
     FlexibleDate dateFrom
     FlexibleDate dateTo
-    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
+    ApproveStatus approveStatus
     Set<DocumentFile> proofs
   }
 
@@ -682,7 +691,7 @@ package document {
     Set<MultiLingualContent> contributionDescription
     AffiliationStatement affiliationStatement
     Integer orderNumber
-    /' !!!! moved to BaseEntity - ApproveStatus approveStatus '/
+    ApproveStatus approveStatus
     ' !!! the fields below are available in additional dialog in UI, it represents details contribution
     ' !!! if some of those fields are filled it is indexed as activity linked with person
     Set<MultiLingualContent> keywords /' !!! '/
@@ -694,12 +703,11 @@ package document {
     Set<String> uris /' !!! contribution might be proved by url or attached file (uris or proofs) '/
     
     boolean isMainContributor /' moved from PersonDocumentContribution !!!! '/
-    boolean isCorrespondingContributor /' moved from PersonDocumentContribution !!!! '/
     boolean isInvitedContributor /' !!!! '/
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
-  PersonContribution "*" -- "1" Person : contributions / person
+  PersonContribution "*" -- "0..1" Person : contributions / person
   PersonContribution "0..1" --> "*" FundingPart : fundingParts /' !!!! '/ 
   
   class AffiliationStatement {
@@ -712,8 +720,8 @@ package document {
   class PersonDocumentContribution extends PersonContribution {
     DocumentContributionType contributionType
     /' !!!! to move this to PersonContribution ?
-    boolean isMainContributor
-    boolean isCorrespondingContributor '/
+    boolean isMainContributor '/
+    boolean isCorrespondingContributor 
     /' use isMainContributor + BOARD_MEMBER here? 
     boolean isBoardPresident !!!! '/
     EmploymentTitle employmentTitle
@@ -743,6 +751,45 @@ package document {
   }
   
   PersonDocumentContribution "*" --> "0..1" Document : document
+  
+  
+  /' !!! '/ 
+  class OrganisationUnitContribution {
+      Boolean favourite /' !!! we might implemente later highlight section with most important output, project, event '/
+      
+      Set<MultiLingualContent> contributionDescription
+      Set<MultiLingualContent> displayOrganisationUnit /' for non-managed organisationUnit '/
+      PersonName displayContactPersonName /' for non-managed contactPerson '/
+      Integer orderNumber
+      ApproveStatus approveStatus
+      ' !!! the fields below are available in additional dialog in UI, it represents details contribution
+      ' !!! if some of those fields are filled it is indexed as activity linked with person
+      FlexibleDate dateFrom /' !!! '/
+      FlexibleDate dateTo /' !!! '/
+      Set<SDGoal> sdgs /' !!! skip for now, there is a sense in this only if contributionDescription is there '/
+      Set<DocumentFile> proofs /' !!! '/
+      Set<String> uris /' !!! contribution might be proved by url or attached file (uris or proofs) '/
+      
+      boolean isMainContributor /' !!!! '/
+  } 
+  
+  OrganisationUnitContribution "*" --> "0..1" person.Person : contactPerson /' !!!! '/
+  OrganisationUnitContribution "*" -- "0..1" institution.OrganisationUnit : contributions / organisationUnit /' !!!! '/
+  OrganisationUnitContribution "0..1" --> "*" FundingPart : fundingParts /' !!!! '/
+  
+  class OrganisationUnitDocumentContribution extends OrganisationUnitContribution {
+      DocumentOrgUnitContributionType contributionType
+  }
+  
+  /' !!! '/
+  enum DocumentOrgUnitContributionType {
+      AUTHOR
+      PUBLISHER 
+      OWNER
+      OTHER
+  }
+  
+  OrganisationUnitDocumentContribution "*" --> "0..1" Document : document /' !!! '/
     
   class DocumentFile {
     String filename
@@ -813,6 +860,8 @@ package document {
     String arXivId 
     String pubmedId 
     String ssrnId 
+    String nationalId /' !!! '/
+    /' String nationalIdRegularExpression  !!! this should not be a field for all row in database, it should be defined once (once for person, once for project, once for document, once for organisationUnit), and applied on all rows '/   
     Set<String> internalIds /' !!! changed title, skip for now '/
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds 
@@ -976,13 +1025,25 @@ package document {
      Set<MultilingualContent> caseName
      Set<MultilingualContent> locationJurisdiction  
      
-     boolean isKeynoteContributor /' !!!! to add '/ 
+     boolean isKeynoteContributor /' !!!! '/ 
      
      /' !!!! instead of mainArguer here, I would use isMainContributor from the PersonContribution (moved from PersonDocumentContribution) '/
   }
 
   Event "1" --> "*" PersonEventContribution : contributors
-  Event "*" --> "0..1" OrganisationUnit : organizer /' !!!! '/
+  
+  class OrganisationUnitEventContribution extends OrganisationUnitContribution {
+        EventOrgUnitContributionType contributionType
+    }
+    
+    /' !!! '/
+    enum EventOrgUnitContributionType {
+        ORGANIZER
+        HOST 
+        OTHER
+    }
+    
+    OrganisationUnitDocumentContribution "*" --> "1" Event : event /' !!! '/
   
   EventsRelation "*" --> "0..1" Event : source
   EventsRelation "*" --> "0..1" Event : target
@@ -1119,6 +1180,18 @@ package document {
     ADHOC_REVIEWER
     SCIENTIFIC_BOARD_MEMBER
   }
+  
+  class OrganisationUnitPublicationSeriesContribution extends OrganisationUnitContribution {
+        PublicationSeriesOrgUnitContributionType contributionType
+    }
+    
+    /' !!! '/
+    enum PublicationSeriesOrgUnitContributionType {
+        PUBLISHER 
+        OTHER
+    }
+    
+    OrganisationUnitPublicationSeriesContribution "*" --> "1" PublicationSeries : publicationSeries /' !!! '/
 
   class MonographPublication extends Document {
     MonographPublicationType monographPublicationType
@@ -1408,7 +1481,8 @@ package project {
     Set<Integer> mergedIds 
     String doi 
     String raid
-    String projectReferenceId /' !!!! this is an important PT project identifier '/
+    String nationalId /' !!! might be in PT projectReferenceNumber'/
+    /' String nationalIdRegularExpression  !!! this should not be a field for all row in database, it should be defined once (once for person, once for project, once for document, once for organisationUnit), and applied on all rows '/
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
@@ -1449,23 +1523,25 @@ package project {
     OTHER
   }
   
-  class OrganisationUnitProjectContribution {
-    OrganisationUnitProjectContributionType contributionType
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
-    ' !!! let's keep as is for now. Later, we might consider decoupling orgunit contributions/involvements also into two levels
-    ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitContribution. Org Unit involvements are 
-    ' !!! defined by OrganisationUnitsRelations (Member), moreover, we don't have option that org unit is creator (author) of a document
-    Set<MultiLingualContent> displayOU
-    Set<MultilingualContent> displayProject /' !!! in the case Project is not linked, it will be rarely used, no sense there is no link to OU and Project, only one might be missing '/ 
-    Set<MultiLingualContent> description
-    Set<MultilingualContent> contactPoint        
-    Integer orderNumber
-    ApproveStatus approveStatus
+  class OrganisationUnitProjectContribution extends OrganisationUnitContribution {
+     OrganisationUnitProjectContributionType contributionType
+     /' !!! moved to superclass OrganisationUnitContribution 
+     FlexibleDate dateFrom
+     FlexibleDate dateTo
+     Set<MultiLingualContent> displayOU '/
+     Set<MultilingualContent> displayProject /' !!! in the case Project is not linked, it will be rarely used, no sense there is no link to OU and Project, only one might be missing '/ 
+     /' !!! moved to superclass OrganisationUnitContribution.contributionDescription
+     Set<MultiLingualContent> description '/
+     /' !!! replace with displayContactPersonName from OrganisationUnitContribution 
+     Set<MultilingualContent> contactPoint  '/      
+     /' !!! moved to superclass OrganisationUnitContribution 
+     Integer orderNumber
+     ApproveStatus approveStatus '/
   }
-    
+  
+  /' !!! moved to superclass OrganisationUnitContribution   
   OrganisationUnitProjectContribution "*" --> "0..1" institution.OrganisationUnit : organisationUnit
-  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts
+  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts '/
   
   enum OrganisationUnitProjectContributionType {
     COORDINATOR
