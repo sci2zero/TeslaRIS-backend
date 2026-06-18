@@ -1,0 +1,14 @@
+{
+  "fieldExclusions": {
+    "DATASET": [],
+    "INTANGIBLE_PRODUCT": [
+      "researchAreas"
+    ]
+  },
+  "migrationMappings": {
+    "DATASET": {
+      "doi": "grabbahand",
+      "asdasda": "asda"
+    }
+  }
+}

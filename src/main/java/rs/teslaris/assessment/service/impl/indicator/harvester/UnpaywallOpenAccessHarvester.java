@@ -20,8 +20,10 @@ import rs.teslaris.core.util.session.RestTemplateProvider;
 public class UnpaywallOpenAccessHarvester implements DocumentMetricHarvester {
 
     private final RestTemplateProvider restTemplateProvider;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     @Value("${unpaywall.email}")
     private String email;
 
