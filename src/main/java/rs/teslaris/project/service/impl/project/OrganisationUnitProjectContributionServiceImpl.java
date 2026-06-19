@@ -8,6 +8,8 @@ import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OrganisationUnitProjectContributionServiceImpl
@@ -21,5 +23,10 @@ public class OrganisationUnitProjectContributionServiceImpl
     @Override
     protected JpaRepository<OrganisationUnitProjectContribution, Integer> getEntityRepository() {
         return organisationUnitProjectContributionRepository;
+    }
+
+    @Override
+    public List<OrganisationUnitProjectContribution> getOrganisationUnitsByIds(List<Integer> id) {
+        return organisationUnitProjectContributionRepository.findAllById(id);
     }
 }

@@ -6,9 +6,15 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.project.model.common.Currency;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
@@ -16,16 +22,14 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
-import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.*;
 import rs.teslaris.project.repository.common.CurrencyRepository;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
+import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
 
 @Component
@@ -47,8 +51,11 @@ public class ProjectDataInitializer {
 
     private final ProjectRepository projectRepository;
 
+    private final ThesisRepository thesisRepository;
 
-    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
+    private final ProjectDocumentRepository projectDocumentRepository;
+
+    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1, Thesis document1) {
         var currencyEuro = new Currency();
         currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
         currencyEuro.setCode("EUR");
@@ -117,7 +124,16 @@ public class ProjectDataInitializer {
         project2.setDateFrom(LocalDate.of(2020, 6, 1));
         project2.setDateTo(LocalDate.of(2023, 5, 31));
 
-        projectRepository.saveAll(List.of(project1, project2));
+        var project3 = new Project();
+        project3.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 3", 1)));
+        project3.setStatus(ProjectStatus.SUBMITTED);
+        project3.setCollaborationType(ProjectCollaborationType.INTERNAL);
+        project3.setResearchType(ProjectResearchType.OTHER);
+        project3.setDateFrom(LocalDate.of(2023, 1, 1));
+        project3.setDateTo(LocalDate.of(2026, 12, 31));
+        project3.setCosts(new MonetaryAmount(100000, currencyEuro));
+
+        projectRepository.saveAll(List.of(project1, project2, project3));
 
         var funding1 = new Funding();
         funding1.setName(Set.of(new MultiLingualContent(englishTag, "Test Funding", 1)));
@@ -167,5 +183,13 @@ public class ProjectDataInitializer {
         fundingApplication2.setFundingCall(fundingCall1);
 
         fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
+
+        var projectDocument1 = new ProjectDocument();
+        projectDocument1.setProject(project1);
+        projectDocument1.setDocument(document1);
+        projectDocument1.setRelationType(ProjectDocumentType.RESULT);
+
+        projectDocumentRepository.save(projectDocument1);
+
     }
 }

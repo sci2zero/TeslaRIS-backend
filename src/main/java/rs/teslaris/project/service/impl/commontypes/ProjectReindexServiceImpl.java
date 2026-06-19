@@ -1,9 +1,5 @@
 package rs.teslaris.project.service.impl.commontypes;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -16,6 +12,12 @@ import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.ProjectService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,8 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
     private final FundingApplicationService fundingApplicationService;
 
     private final FundingService fundingService;
+
+    private final ProjectService projectService;
 
 
     @Override
@@ -49,6 +53,10 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
 
         if (indexesToRepopulate.contains(EntityType.FUNDING)) {
             futures.add(fundingService.reindexFunding());
+        }
+
+        if (indexesToRepopulate.contains(EntityType.PROJECT)) {
+            futures.add(projectService.reindexProject());
         }
 
         try {
