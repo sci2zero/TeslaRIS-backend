@@ -6,6 +6,8 @@ import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
 import java.util.Map;
 import java.util.Objects;
+
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,7 @@ public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
 
     @Override
     public void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
-                                    String idField, Integer idToSet) {
+                                    String idField, @Nullable Integer idToSet) {
         var request = Objects.nonNull(idToSet) ?
             new UpdateByQueryRequest.Builder()
                 .index(indexName)

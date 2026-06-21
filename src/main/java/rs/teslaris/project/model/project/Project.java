@@ -85,7 +85,7 @@ public class Project extends BaseEntity {
     @BatchSize(size = 50)
     private Set<PersonProjectContribution> team = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private Set<ProjectDocument> documents = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)

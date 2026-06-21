@@ -22,5 +22,5 @@ public enum EntityType {
     COURSE,
     OTHER_EVENT,
     FUNDING_APPLICATION,
-    FUNDING
+    FUNDING,
 }

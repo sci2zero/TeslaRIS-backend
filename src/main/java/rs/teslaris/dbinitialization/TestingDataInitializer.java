@@ -1316,8 +1316,6 @@ public class TestingDataInitializer {
 
         employmentPositionRepository.saveAll(List.of(position1, position2, position3));
 
-        projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU);
-
         var course1 = new Course();
         course1.setName(Set.of(new MultiLingualContent(serbianTag, "Kurs 1", 1)));
         course1.setDateFrom(LocalDate.of(2025, 2, 1));
@@ -1412,5 +1410,16 @@ public class TestingDataInitializer {
         play1.setDocumentDate("2003-1-1");
         play1.setType(PerformanceRelatedOutputType.ART_PERFORMANCE);
         performanceRelatedOutputRepository.save(play1);
+
+        var dummyDocument = new Thesis();
+        dummyDocument.setApproveStatus(ApproveStatus.APPROVED);
+        dummyDocument.setThesisType(ThesisType.PHD);
+        dummyDocument.setOrganisationUnit(dummyOU);
+        dummyDocument.setTitle(
+                Set.of(new MultiLingualContent(englishTag, "Dummy Document", 1)));
+
+        thesisRepository.save(dummyDocument);
+
+        projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU, dummyDocument);
     }
 }

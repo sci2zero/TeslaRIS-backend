@@ -43,6 +43,6 @@ public class ProjectEvent extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> textualDescription = new HashSet<>();
 
-    @Column(name = "relation_type")
+    @Column(name = "relation_type", nullable = false)
     private ProjectEventType relationType;
 }
