@@ -60,6 +60,8 @@ public class RevisionServiceImpl implements RevisionService {
             var newJson = canonicalize(objectMapper.writeValueAsString(event.newObject()),
                 event.entityType());
 
+            newJson = normalizeIds(oldJson, newJson);
+
             var oldHash = sha256(oldJson);
             var newHash = sha256(newJson);
 
@@ -140,6 +142,22 @@ public class RevisionServiceImpl implements RevisionService {
             RevisionConfigurationLoader.listExcludedFieldsForType(entityType));
 
         return objectMapper.writeValueAsString(tree);
+    }
+
+    private String normalizeIds(String oldJson, String newJson) throws JsonProcessingException {
+        JsonNode oldNode = objectMapper.readTree(oldJson);
+        JsonNode newNode = objectMapper.readTree(newJson);
+
+        if (oldNode instanceof ObjectNode oldObject &&
+            newNode instanceof ObjectNode newObject &&
+            oldObject.has("id")) {
+
+            newObject.set("id", oldObject.get("id"));
+
+            return objectMapper.writeValueAsString(newObject);
+        }
+
+        return newJson;
     }
 
     private String sha256(String value) {

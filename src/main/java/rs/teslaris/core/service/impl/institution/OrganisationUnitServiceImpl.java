@@ -50,6 +50,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -58,6 +59,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.institution.EmailConfiguration;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -90,6 +92,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -521,8 +524,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Transactional
     public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
-
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.ORGANISATION_UNIT.name(),
+                organisationUnitId,
+                OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
+                organisationUnitDTORequest
+            )
+        );
 
         var oldNames = organisationUnitToUpdate.getName().stream()
             .map(MultiLingualContent::getContent)
@@ -753,28 +764,32 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnit.setEmailConfigurations(new HashMap<>());
         }
 
-        organisationUnit.getCrisConfig()
+        var emailCrisConfig = new EmailConfiguration();
+        var emailDlConfig = new EmailConfiguration();
+        emailCrisConfig
             .setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomainCris());
-        organisationUnit.getCrisConfig()
+        emailCrisConfig
             .setAllowSubdomains(organisationUnitDTO.isAllowingSubdomainsCris());
 
-        organisationUnit.getDlConfig()
+        emailDlConfig
             .setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomainDl());
-        organisationUnit.getDlConfig()
+        emailDlConfig
             .setAllowSubdomains(organisationUnitDTO.isAllowingSubdomainsDl());
 
-        if ((organisationUnit.getCrisConfig().getValidateEmailDomain() &&
+        if ((emailCrisConfig.getValidateEmailDomain() &&
             !StringUtil.valueExists(organisationUnitDTO.getInstitutionEmailDomainCris()) ||
-            organisationUnit.getDlConfig().getValidateEmailDomain() &&
+            emailDlConfig.getValidateEmailDomain() &&
                 !StringUtil.valueExists(organisationUnitDTO.getInstitutionEmailDomainDl()))) {
             throw new IllegalArgumentException(
                 "You have to specify the domain when domain validation is specified.");
         }
 
-        organisationUnit.getCrisConfig()
+        emailCrisConfig
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainCris());
-        organisationUnit.getDlConfig()
+        emailDlConfig
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainDl());
+        organisationUnit.setCrisConfig(emailCrisConfig);
+        organisationUnit.setDlConfig(emailDlConfig);
     }
 
     private void setPostalAddressInfo(OrganisationUnit organisationUnit,

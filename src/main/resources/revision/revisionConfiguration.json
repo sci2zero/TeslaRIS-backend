@@ -3,6 +3,13 @@
     "DATASET": [],
     "INTANGIBLE_PRODUCT": [
       "researchAreas"
+    ],
+    "ORGANISATION_UNIT": [
+      "researchAreas",
+      "logoServerFilename",
+      "logoBackgroundHex",
+      "superInstitutionId",
+      "superInstitutionName"
     ]
   },
   "migrationMappings": {

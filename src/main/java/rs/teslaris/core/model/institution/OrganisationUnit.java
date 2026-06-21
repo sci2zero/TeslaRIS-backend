@@ -164,7 +164,15 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
         return emailConfigurations.getOrDefault(CRIS_KEY, new EmailConfiguration());
     }
 
+    public void setCrisConfig(EmailConfiguration config) {
+        emailConfigurations.put(CRIS_KEY, config);
+    }
+
     public EmailConfiguration getDlConfig() {
         return emailConfigurations.getOrDefault(DL_KEY, new EmailConfiguration());
+    }
+
+    public void setDlConfig(EmailConfiguration config) {
+        emailConfigurations.put(DL_KEY, config);
     }
 }

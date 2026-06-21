@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.commontypes;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,13 +14,16 @@ public class MultilingualContentConverter {
 
     public static List<MultilingualContentDTO> getMultilingualContentDTO(
         Set<MultiLingualContent> multilingualContent) {
-        return multilingualContent.stream().map(mc ->
-            new MultilingualContentDTO(
+
+        return multilingualContent.stream()
+            .sorted(Comparator.comparing(MultiLingualContent::getPriority))
+            .map(mc -> new MultilingualContentDTO(
                 mc.getLanguage().getId(),
                 mc.getLanguage().getLanguageTag(),
                 mc.getContent(),
                 mc.getPriority()
-            )).collect(Collectors.toList());
+            ))
+            .collect(Collectors.toList());
     }
 
     public static String getLocalizedContent(Set<MultiLingualContent> multilingualContent,
