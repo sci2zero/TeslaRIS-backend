@@ -42,6 +42,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -147,7 +148,8 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                 DocumentPublicationType.GENETIC_MATERIAL.name(),
                 geneticMaterialId,
                 GeneticMaterialConverter.toDTO(geneticMaterialToUpdate),
-                geneticMaterialDTO
+                geneticMaterialDTO,
+                RevisionType.UPDATE
             )
         );
 

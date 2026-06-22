@@ -1,10 +1,9 @@
 package rs.teslaris.project.service.interfaces.project;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
-
-import java.util.List;
 
 @Service
 public interface OrganisationUnitProjectContributionService

@@ -1,8 +1,34 @@
 {
   "fieldExclusions": {
     "DATASET": [],
+    "PATENT": [
+      "publisherName"
+    ],
     "INTANGIBLE_PRODUCT": [
       "researchAreas"
+    ],
+    "MONOGRAPH": [
+      "publicationSeriesName",
+      "publisherName"
+    ],
+    "MONOGRAPH_PUBLICATION": [
+      "monographName"
+    ],
+    "PROCEEDINGS": [],
+    "PROCEEDINGS_PUBLICATION": [
+      "proceedingsName"
+    ],
+    "JOURNAL_PUBLICATION": [],
+    "THESIS": [
+      "languageCode"
+    ],
+    "GENETIC_MATERIAL": [],
+    "MATERIAL_PRODUCT": [
+      "researchAreas"
+    ],
+    "PERFORMANCE_RELATED_OUTPUT": [
+      "researchAreas",
+      "languageTags"
     ],
     "ORGANISATION_UNIT": [
       "researchAreas",
@@ -10,12 +36,18 @@
       "logoBackgroundHex",
       "superInstitutionId",
       "superInstitutionName"
-    ]
+    ],
+    "JOURNAL": [
+      "languageTagNames"
+    ],
+    "BOOK_SERIES": [
+      "languageTagNames"
+    ],
+    "PERSON": []
   },
   "migrationMappings": {
     "DATASET": {
-      "doi": "grabbahand",
-      "asdasda": "asda"
+      "oldFieldNameExample": "newFieldNameExample"
     }
   }
 }

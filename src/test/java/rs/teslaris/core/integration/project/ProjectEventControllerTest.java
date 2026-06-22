@@ -1,6 +1,9 @@
 package rs.teslaris.core.integration.project;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,10 +18,6 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.project.ProjectEventType;
-
-import java.util.ArrayList;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 public class ProjectEventControllerTest extends BaseTest {
@@ -73,10 +72,10 @@ public class ProjectEventControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/project/add-event")
-                        .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_EVENT"))
-                .andExpect(status().isCreated());
+                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_EVENT"))
+            .andExpect(status().isCreated());
     }
 
     @Test
@@ -85,11 +84,11 @@ public class ProjectEventControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.delete(
-                                        "http://localhost:8081/api/project/remove-event/{projectEventId}", 1)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                MockMvcRequestBuilders.delete(
+                        "http://localhost:8081/api/project/remove-event/{projectEventId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
 }

@@ -1416,7 +1416,7 @@ public class TestingDataInitializer {
         dummyDocument.setThesisType(ThesisType.PHD);
         dummyDocument.setOrganisationUnit(dummyOU);
         dummyDocument.setTitle(
-                Set.of(new MultiLingualContent(englishTag, "Dummy Document", 1)));
+            Set.of(new MultiLingualContent(englishTag, "Dummy Document", 1)));
 
         thesisRepository.save(dummyDocument);
 

@@ -6,15 +6,11 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.Thesis;
-import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.ThesisRepository;
-import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.project.model.common.Currency;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
@@ -22,7 +18,12 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
-import rs.teslaris.project.model.project.*;
+import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectDocument;
+import rs.teslaris.project.model.project.ProjectDocumentType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.common.CurrencyRepository;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
@@ -55,7 +56,8 @@ public class ProjectDataInitializer {
 
     private final ProjectDocumentRepository projectDocumentRepository;
 
-    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1, Thesis document1) {
+    public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1,
+                                             Thesis document1) {
         var currencyEuro = new Currency();
         currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
         currencyEuro.setCode("EUR");

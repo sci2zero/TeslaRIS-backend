@@ -1,5 +1,7 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,6 @@ import rs.teslaris.project.model.project.ProjectEvent;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.util.HashSet;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +48,8 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
         var savedProjectEvent = save(newProjectEvent);
 
         indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
-                savedProjectEvent.getEvent().getId(), "project_id", savedProjectEvent.getProject().getId());
+            savedProjectEvent.getEvent().getId(), "project_id",
+            savedProjectEvent.getProject().getId());
 
         return savedProjectEvent;
     }
@@ -63,14 +63,14 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
         delete(projectEventId);
 
         indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
-                eventId, "project_id", null);
+            eventId, "project_id", null);
     }
 
     private void setCommonFields(ProjectEvent projectEvent, ProjectEventDTO dto) {
 
         buildFundingParts(projectEvent, dto);
         projectEvent.setTextualDescription(
-                multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
+            multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
 
         projectEvent.setRelationType(dto.getRelationType());
 
@@ -103,11 +103,11 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
         var part = new FundingPart();
 
         part.setDescription(
-                multilingualContentService.getMultilingualContent(dto.getDescription()));
+            multilingualContentService.getMultilingualContent(dto.getDescription()));
 
         part.setAmount(new MonetaryAmount());
         part.getAmount().setCurrency(
-                currencyService.findOne(dto.getAmount().getCurrencyId()));
+            currencyService.findOne(dto.getAmount().getCurrencyId()));
         part.getAmount().setAmount(dto.getAmount().getAmount());
 
         if (Objects.nonNull(dto.getFundingId())) {

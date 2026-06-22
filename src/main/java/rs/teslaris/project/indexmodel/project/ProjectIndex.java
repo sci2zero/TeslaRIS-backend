@@ -2,6 +2,7 @@ package rs.teslaris.project.indexmodel.project;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +11,6 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter

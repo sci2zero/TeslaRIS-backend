@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -27,6 +27,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
@@ -51,22 +52,26 @@ public class RevisionServiceImpl implements RevisionService {
 
 
     @Override
-    @EventListener
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public boolean createRevisionIfChanged(RevisionCreateEvent event) {
         try {
-            var oldJson = canonicalize(objectMapper.writeValueAsString(event.oldObject()),
-                event.entityType());
             var newJson = canonicalize(objectMapper.writeValueAsString(event.newObject()),
                 event.entityType());
-
-            newJson = normalizeIds(oldJson, newJson);
-
-            var oldHash = sha256(oldJson);
             var newHash = sha256(newJson);
 
-            if (oldHash.equals(newHash)) {
-                return false;
+            if (event.revisionType().equals(RevisionType.UPDATE)) {
+                var oldJson = canonicalize(objectMapper.writeValueAsString(event.oldObject()),
+                    event.entityType());
+
+                newJson = normalizeIds(oldJson, newJson);
+
+                var oldHash = sha256(oldJson);
+                newHash = sha256(newJson);
+
+                if (oldHash.equals(newHash)) {
+                    return false;
+                }
             }
 
             repository.save(

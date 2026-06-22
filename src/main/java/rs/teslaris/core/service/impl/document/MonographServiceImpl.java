@@ -61,6 +61,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -244,7 +245,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                 DocumentPublicationType.MONOGRAPH.name(),
                 monographId,
                 MonographConverter.toDTO(monographToUpdate),
-                monographDTO
+                monographDTO,
+                RevisionType.UPDATE
             )
         );
 

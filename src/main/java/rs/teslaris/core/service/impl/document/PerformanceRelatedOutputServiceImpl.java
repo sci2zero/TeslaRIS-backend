@@ -44,6 +44,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -162,7 +163,8 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
                 DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
                 performanceRelatedOutputId,
                 PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
-                performanceRelatedOutputDTO
+                performanceRelatedOutputDTO,
+                RevisionType.UPDATE
             )
         );
 

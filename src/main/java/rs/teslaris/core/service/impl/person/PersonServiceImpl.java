@@ -58,6 +58,7 @@ import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -105,6 +106,8 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
@@ -504,6 +507,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo) {
         var personToUpdate = findOne(personId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                PersonConverter.toPersonalInfoDTO(personToUpdate),
+                personalInfo,
+                RevisionType.UPDATE
+            )
+        );
+
         setAllPersonIdentifiers(personToUpdate, personalInfo);
 
         var personalInfoToUpdate = personToUpdate.getPersonalInfo();

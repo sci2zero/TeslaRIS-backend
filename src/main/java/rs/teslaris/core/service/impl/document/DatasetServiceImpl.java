@@ -42,6 +42,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -142,7 +143,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 DocumentPublicationType.DATASET.name(),
                 datasetId,
                 DatasetConverter.toDTO(datasetToUpdate),
-                datasetDTO
+                datasetDTO,
+                RevisionType.UPDATE
             )
         );
 

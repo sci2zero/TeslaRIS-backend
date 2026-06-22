@@ -93,6 +93,7 @@ import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
@@ -531,7 +532,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 EntityType.ORGANISATION_UNIT.name(),
                 organisationUnitId,
                 OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
-                organisationUnitDTORequest
+                organisationUnitDTORequest,
+                RevisionType.UPDATE
             )
         );
 

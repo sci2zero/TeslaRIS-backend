@@ -46,7 +46,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;

@@ -6,10 +6,12 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
+import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
@@ -18,7 +20,10 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
@@ -48,7 +53,11 @@ public class RevisionHydratorRegistry {
                 Map.entry(DocumentPublicationType.JOURNAL_PUBLICATION.name(),
                     JournalPublicationResponseDTO.class),
                 Map.entry(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
-                    PerformanceRelatedOutputDTO.class));
+                    PerformanceRelatedOutputDTO.class),
+                Map.entry(EntityType.JOURNAL.name(), JournalResponseDTO.class),
+                Map.entry(EntityType.BOOK_SERIES.name(), BookSeriesResponseDTO.class),
+                Map.entry(EntityType.ORGANISATION_UNIT.name(), OrganisationUnitDTO.class),
+                Map.entry(EntityType.PERSON.name(), PersonalInfoDTO.class));
     }
 
 

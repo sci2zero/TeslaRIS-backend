@@ -1,5 +1,6 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
@@ -7,8 +8,6 @@ import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.project.converter.funding.FundingPartConverter;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.model.project.PersonProjectContribution;
-
-import java.util.Objects;
 
 public class PersonProjectContributionConverter {
 
@@ -24,17 +23,17 @@ public class PersonProjectContributionConverter {
         }
 
         dto.setContributionDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(
-                        contribution.getContributionDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getContributionDescription()));
 
         contribution.getInstitutions().forEach(institution ->
-                dto.getInstitutionIds().add(institution.getId()));
+            dto.getInstitutionIds().add(institution.getId()));
 
         var affiliation = contribution.getAffiliationStatement();
         if (Objects.nonNull(affiliation)) {
             dto.setDisplayAffiliationStatement(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                            affiliation.getDisplayAffiliationStatement()));
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    affiliation.getDisplayAffiliationStatement()));
 
             if (Objects.nonNull(affiliation.getDisplayPersonName())) {
                 dto.setPersonName(PersonNameConverter.toDTO(affiliation.getDisplayPersonName()));
@@ -51,11 +50,11 @@ public class PersonProjectContributionConverter {
         dto.setInvestigationRole(contribution.getInvestigationRole());
 
         dto.setOtherRoleDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(
-                        contribution.getOtherRoleDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getOtherRoleDescription()));
 
         contribution.getFundingParts().forEach(fundingPart ->
-                dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
+            dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
 
         return dto;
     }

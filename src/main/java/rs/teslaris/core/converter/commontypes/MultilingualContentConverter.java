@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.commontypes;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -9,11 +10,15 @@ import java.util.stream.Collectors;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 public class MultilingualContentConverter {
 
     public static List<MultilingualContentDTO> getMultilingualContentDTO(
         Set<MultiLingualContent> multilingualContent) {
+        if (!CollectionOperations.containsValues(multilingualContent)) {
+            return Collections.emptyList();
+        }
 
         return multilingualContent.stream()
             .sorted(Comparator.comparing(MultiLingualContent::getPriority))

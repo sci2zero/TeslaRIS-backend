@@ -4,6 +4,7 @@ public record RevisionCreateEvent(
     String entityType,
     Integer entityId,
     Object oldObject,
-    Object newObject
+    Object newObject,
+    RevisionType revisionType
 ) {
 }

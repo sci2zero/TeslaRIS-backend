@@ -43,6 +43,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -158,7 +159,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 DocumentPublicationType.PATENT.name(),
                 patentId,
                 PatentConverter.toDTO(patentToUpdate),
-                patentDTO
+                patentDTO,
+                RevisionType.UPDATE
             )
         );
 

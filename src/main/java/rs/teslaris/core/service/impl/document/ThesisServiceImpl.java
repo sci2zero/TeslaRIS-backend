@@ -105,6 +105,7 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -301,7 +302,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 DocumentPublicationType.THESIS.name(),
                 thesisId,
                 ThesisConverter.toDTO(thesisToUpdate),
-                thesisDTO
+                thesisDTO,
+                RevisionType.UPDATE
             )
         );
 
