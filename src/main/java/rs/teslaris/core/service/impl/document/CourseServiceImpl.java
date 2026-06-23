@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.CourseConverter;
 import rs.teslaris.core.dto.document.CourseDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -35,6 +36,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -120,8 +123,18 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
 
     @Override
     @Transactional
-    public void updateCourse(Integer id, CourseDTO dto) {
-        var course = findCourseById(id);
+    public void updateCourse(Integer courseId, CourseDTO dto) {
+        var course = findCourseById(courseId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.COURSE.name(),
+                courseId,
+                CourseConverter.toDTO(course),
+                dto,
+                RevisionType.UPDATE
+            )
+        );
 
         var oldContributorIds = clearEventCommonFields(course);
         setEventCommonFields(course, EventType.COURSE, dto, oldContributorIds);
@@ -129,7 +142,7 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
 
         courseJPAService.save(course);
 
-        var index = eventIndexRepository.findByDatabaseId(id).orElse(new EventIndex());
+        var index = eventIndexRepository.findByDatabaseId(courseId).orElse(new EventIndex());
         clearEventIndexCommonFields(index);
         indexCourse(course, index);
     }

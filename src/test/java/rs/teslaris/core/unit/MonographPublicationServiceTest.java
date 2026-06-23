@@ -219,6 +219,7 @@ public class MonographPublicationServiceTest {
         var monographPublicationDTO = new MonographPublicationDTO();
         monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
+        newMonographPublication.setMonograph(new Monograph());
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{

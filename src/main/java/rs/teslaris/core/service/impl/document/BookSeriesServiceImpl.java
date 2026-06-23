@@ -143,6 +143,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         setBookSeriesFields(bookSeries, bookSeriesDTO, oldContributorIds);
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.BOOK_SERIES.name(),
+                newBookSeries.getId(),
+                null,
+                PublicationSeriesConverter.toDTO(newBookSeries),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexBookSeries(newBookSeries, new BookSeriesIndex());
         }

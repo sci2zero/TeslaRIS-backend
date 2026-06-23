@@ -188,6 +188,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         var savedJournal = journalJPAService.save(journal);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.JOURNAL.name(),
+                savedJournal.getId(),
+                null,
+                PublicationSeriesConverter.toDTO(savedJournal),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexJournal(journal, new JournalIndex());
         }

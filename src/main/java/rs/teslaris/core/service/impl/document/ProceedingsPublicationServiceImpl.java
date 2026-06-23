@@ -185,6 +185,16 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                savedPublication.getId(),
+                null,
+                ProceedingsPublicationConverter.toDTO(savedPublication),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }

@@ -141,6 +141,16 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var savedPerformanceRelatedOutput =
             performanceRelatedOutputJPAService.save(newPerformanceRelatedOutput);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                savedPerformanceRelatedOutput.getId(),
+                null,
+                PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexPerformanceRelatedOutput(savedPerformanceRelatedOutput,
                 new DocumentPublicationIndex());

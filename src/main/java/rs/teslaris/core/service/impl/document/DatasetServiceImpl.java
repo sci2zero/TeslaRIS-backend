@@ -124,6 +124,16 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         var savedDataset = datasetJPAService.save(newDataset);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.DATASET.name(),
+                savedDataset.getId(),
+                null,
+                DatasetConverter.toDTO(savedDataset),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexDataset(savedDataset, new DocumentPublicationIndex());
         }

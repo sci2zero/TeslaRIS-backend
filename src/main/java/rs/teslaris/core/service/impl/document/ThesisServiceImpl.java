@@ -283,6 +283,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedThesis = thesisJPAService.save(newThesis);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                savedThesis.getId(),
+                null,
+                ThesisConverter.toDTO(savedThesis),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }

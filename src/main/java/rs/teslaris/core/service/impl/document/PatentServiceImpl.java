@@ -140,6 +140,16 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedPatent = patentJPAService.save(newPatent);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PATENT.name(),
+                savedPatent.getId(),
+                null,
+                PatentConverter.toDTO(savedPatent),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }

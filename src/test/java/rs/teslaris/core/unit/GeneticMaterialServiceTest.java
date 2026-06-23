@@ -184,7 +184,7 @@ public class GeneticMaterialServiceTest {
 
         verify(geneticMaterialJPAService).findOne(eq(geneticMaterialId));
         verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseIdAndType(
-            eq(geneticMaterialId), eq(DocumentPublicationType.MATERIAL_PRODUCT.name()));
+            eq(geneticMaterialId), eq(DocumentPublicationType.GENETIC_MATERIAL.name()));
     }
 
     @Test

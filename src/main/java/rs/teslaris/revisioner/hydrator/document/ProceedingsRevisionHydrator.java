@@ -1,4 +1,4 @@
-package rs.teslaris.revisioner.hydrator;
+package rs.teslaris.revisioner.hydrator.document;
 
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +10,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
 public class ProceedingsRevisionHydrator extends RevisionHydrator<ProceedingsResponseDTO> {

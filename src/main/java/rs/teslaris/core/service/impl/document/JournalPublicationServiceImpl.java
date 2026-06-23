@@ -164,6 +164,16 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var savedPublication = journalPublicationJPAService.save(publication);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                savedPublication.getId(),
+                null,
+                JournalPublicationConverter.toDTO(savedPublication),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }

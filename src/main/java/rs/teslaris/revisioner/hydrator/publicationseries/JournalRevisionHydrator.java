@@ -1,4 +1,4 @@
-package rs.teslaris.revisioner.hydrator;
+package rs.teslaris.revisioner.hydrator.publicationseries;
 
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +8,7 @@ import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
 public class JournalRevisionHydrator extends RevisionHydrator<JournalResponseDTO> {

@@ -43,7 +43,12 @@
     "BOOK_SERIES": [
       "languageTagNames"
     ],
-    "PERSON": []
+    "PERSON": [],
+    "CONFERENCE": [],
+    "COURSE": [],
+    "EXHIBITION": [],
+    "OTHER_EVENT": [],
+    "PUBLISHER": []
   },
   "migrationMappings": {
     "DATASET": {

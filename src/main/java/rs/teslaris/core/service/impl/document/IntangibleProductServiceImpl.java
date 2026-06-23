@@ -133,6 +133,16 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
 
         var savedIntangibleProduct = intangibleProductJPAService.save(newIntangibleProduct);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                savedIntangibleProduct.getId(),
+                null,
+                IntangibleProductConverter.toDTO(savedIntangibleProduct),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
         }

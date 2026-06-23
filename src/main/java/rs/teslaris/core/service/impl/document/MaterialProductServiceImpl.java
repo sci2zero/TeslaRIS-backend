@@ -133,6 +133,16 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
         var savedProduct = materialProductJPAService.save(newProduct);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                savedProduct.getId(),
+                null,
+                MaterialProductConverter.toDTO(savedProduct),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
         }

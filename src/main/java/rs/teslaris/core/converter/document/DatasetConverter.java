@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -19,6 +20,8 @@ public class DatasetConverter extends DocumentPublicationConverter {
         datasetDTO.setInternalNumber(dataset.getInternalNumber());
         if (Objects.nonNull(dataset.getPublisher())) {
             datasetDTO.setPublisherId(dataset.getPublisher().getId());
+            datasetDTO.setPublisherName(MultilingualContentConverter.getMultilingualContentDTO(
+                dataset.getPublisher().getName()));
         } else {
             datasetDTO.setAuthorReprint(dataset.getAuthorReprint());
         }

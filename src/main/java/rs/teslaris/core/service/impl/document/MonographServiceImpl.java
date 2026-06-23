@@ -226,6 +226,16 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         var savedMonograph = monographJPAService.save(newMonograph);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH.name(),
+                savedMonograph.getId(),
+                null,
+                MonographConverter.toDTO(savedMonograph),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
         }

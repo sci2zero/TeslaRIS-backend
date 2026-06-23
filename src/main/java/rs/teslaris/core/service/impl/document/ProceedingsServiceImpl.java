@@ -189,6 +189,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                savedProceedings.getId(),
+                null,
+                ProceedingsConverter.toDTO(savedProceedings),
+                RevisionType.CREATE
+            )
+        );
+
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
         sendNotifications(savedProceedings, Collections.emptySet());

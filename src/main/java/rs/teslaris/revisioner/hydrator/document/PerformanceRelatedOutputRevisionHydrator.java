@@ -1,4 +1,4 @@
-package rs.teslaris.revisioner.hydrator;
+package rs.teslaris.revisioner.hydrator.document;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -11,6 +11,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.search.CollectionOperations;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
 public class PerformanceRelatedOutputRevisionHydrator
