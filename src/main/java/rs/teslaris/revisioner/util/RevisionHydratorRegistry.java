@@ -7,7 +7,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
+import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -15,10 +18,12 @@ import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -55,6 +60,11 @@ public class RevisionHydratorRegistry {
                 Map.entry(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
                     PerformanceRelatedOutputDTO.class),
                 Map.entry(EntityType.JOURNAL.name(), JournalResponseDTO.class),
+                Map.entry(EntityType.CONFERENCE.name(), ConferenceDTO.class),
+                Map.entry(EntityType.COURSE.name(), CourseDTO.class),
+                Map.entry(EntityType.EXHIBITION.name(), ExhibitionDTO.class),
+                Map.entry(EntityType.OTHER_EVENT.name(), OtherEventDTO.class),
+                Map.entry(EntityType.PUBLISHER.name(), PublisherDTO.class),
                 Map.entry(EntityType.BOOK_SERIES.name(), BookSeriesResponseDTO.class),
                 Map.entry(EntityType.ORGANISATION_UNIT.name(), OrganisationUnitDTO.class),
                 Map.entry(EntityType.PERSON.name(), PersonalInfoDTO.class));
