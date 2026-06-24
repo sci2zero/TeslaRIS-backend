@@ -56,7 +56,10 @@ public class RevisionConfigurationLoader {
         Map<String, List<String>> fieldExclusions,
 
         @JsonProperty(value = "migrationMappings", required = true)
-        Map<String, Map<String, String>> migrationMappings
+        Map<String, Map<String, String>> migrationMappings,
+
+        @JsonProperty(value = "dataQualityRemarks", required = true)
+        Map<String, Map<String, String>> dataQualityRemarks
     ) {
     }
 }

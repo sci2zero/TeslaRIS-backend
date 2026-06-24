@@ -31,6 +31,7 @@ import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
+import rs.teslaris.revisioner.util.DataQualityCalculatorPtCris;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 
@@ -41,6 +42,8 @@ public class RevisionServiceImpl implements RevisionService {
     private final EntityRevisionRepository repository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
+
+    private final DataQualityCalculatorPtCris dataQualityCalculatorPtCris;
 
     private final ObjectMapper objectMapper =
         JsonMapper.builder()
@@ -74,7 +77,7 @@ public class RevisionServiceImpl implements RevisionService {
                 }
             }
 
-            repository.save(
+            var revision =
                 EntityRevision.builder()
                     .entityType(event.entityType())
                     .entityId(event.entityId())
@@ -83,8 +86,10 @@ public class RevisionServiceImpl implements RevisionService {
                     .compressedContent(
                         CompressionUtil.compress(newJson)
                     )
-                    .build()
-            );
+                    .build();
+
+            dataQualityCalculatorPtCris.assessDataQuality(revision, newJson, objectMapper);
+            repository.save(revision);
 
             return true;
         } catch (Exception e) {
