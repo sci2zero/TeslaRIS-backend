@@ -66,235 +66,225 @@
       "sr-cyr": "Наслов \"%s\" у излазном запису %s прелази максималну дозвољену дужину од 255 карактера.",
       "en": "The title \"%s\" in output record %s exceeds the maximum allowed length of 255 characters."
     },
-    "titleContainsInvalidCharacters": {
-      "sr": "Naslov \"%s\" u izlaznom zapisu %s sadrži nedozvoljene karaktere. Dozvoljeni su samo slova, brojevi, razmaci, tačke, donje crte, zarezi, kose crte, ampersendi, zagrade i crtice.",
-      "sr-cyr": "Наслов \"%s\" у излазном запису %s садржи недозвољене карактере. Дозвољени су само слова, бројеви, размаци, тачке, доње црте, зарези, косе црте, амперсенди, заграде и цртице.",
-      "en": "The title \"%s\" in output record %s contains invalid characters. Only letters, numbers, spaces, dots, underscores, commas, slashes, ampersands, brackets and hyphens are allowed."
+    "invalidTitleFormat": {
+      "sr": "Naslov \"%s\" u izlaznom zapisu %s sadrži nedozvoljene karaktere.",
+      "sr-cyr": "Наслов \"%s\" у излазном запису %s садржи недозвољене карактере.",
+      "en": "The title \"%s\" in output record %s contains invalid characters."
     },
-    "publicationDateBefore1950": {
-      "sr": "Datum izlaska publikacije (%s) u izlaznom zapisu %s ne može biti pre 1950. godine.",
-      "sr-cyr": "Датум изласка публикације (%s) у излазном запису %s не може бити пре 1950. године.",
-      "en": "The output publication date (%s) in output record %s can't be before the year 1950."
+    "descriptionMissing": {
+      "sr": "Opis izlaznog zapisa %s mora biti unet radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Опис излазног записа %s мора бити унет ради усклађености са FAIR принципима.",
+      "en": "The output description for record %s must be informed to comply with the FAIR Principles."
     },
-    "publicationDateTooFarInFuture": {
-      "sr": "Datum izlaska publikacije (%s) u izlaznom zapisu %s može biti samo u bliskoj budućnosti (maksimalno +3 godine od sada).",
-      "sr-cyr": "Датум изласка публикације (%s) у излазном запису %s може бити само у блиској будућности (максимално +3 године од сада).",
-      "en": "The output publication date (%s) in output record %s can be only in the near future (+3 years from right now)."
+    "contributorsMissing": {
+      "sr": "Polje autori/saradnici nedostaje u izlaznom zapisu %s. Polje je obavezno.",
+      "sr-cyr": "Поље аутори/сарадници недостаје у излазном запису %s. Поље је обавезно.",
+      "en": "The contributors field is missing in output record %s. The contributors field is mandatory."
     },
-    "publicationDateMissing": {
-      "sr": "Datum izlaska publikacije nedostaje u izlaznom zapisu %s. Polje datuma publikacije (dokumenta) je obavezno.",
-      "sr-cyr": "Датум изласка публикације недостаје у излазном запису %s. Поље датума публикације (документа) је обавезно.",
-      "en": "The output publication date is missing in output record %s. The publication (document) date field is mandatory."
+    "noManagedContributor": {
+      "sr": "Najmanje jedna upravljana osoba mora biti povezana sa izlaznim zapisom %s.",
+      "sr-cyr": "Најмање једна управљана особа мора бити повезана са излазним записом %s.",
+      "en": "At least one managed person should be linked with output record %s."
     },
-    "identifierMissing": {
+    "documentDateMissing": {
+      "sr": "Datum publikovanja nedostaje u izlaznom zapisu %s. Polje je obavezno.",
+      "sr-cyr": "Датум публиковања недостаје у излазном запису %s. Поље је обавезно.",
+      "en": "The output publication date is missing in output record %s. The publication date field is mandatory."
+    },
+    "documentDateBefore1950": {
+      "sr": "Datum publikovanja (%s) u izlaznom zapisu %s ne može biti pre 1950. godine.",
+      "sr-cyr": "Датум публиковања (%s) у излазном запису %s не може бити пре 1950. године.",
+      "en": "The output publication date (%s) in output record %s cannot be before the year 1950."
+    },
+    "documentDateTooFarInFuture": {
+      "sr": "Datum publikovanja (%s) u izlaznom zapisu %s može biti najviše tri godine u budućnosti.",
+      "sr-cyr": "Датум публиковања (%s) у излазном запису %s може бити највише три године у будућности.",
+      "en": "The output publication date (%s) in output record %s can only be in the near future (+3 years)."
+    },
+    "invalidDocumentDateFormat": {
+      "sr": "Datum publikovanja \"%s\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "Датум публиковања \"%s\" у излазном запису %s није у исправном формату.",
+      "en": "The publication date \"%s\" in output record %s is not in a valid format."
+    },
+    "noDoiPresent": {
+      "sr": "DOI nedostaje u izlaznom zapisu %s. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "DOI недостаје у излазном запису %s. Иако није обавезан, препоручен је.",
+      "en": "The DOI field is missing in output record %s. Although the DOI field is not mandatory, it is recommended."
+    },
+    "doiTooShort": {
+      "sr": "DOI \"%s\" u izlaznom zapisu %s mora sadržati najmanje 9 karaktera.",
+      "sr-cyr": "DOI \"%s\" у излазном запису %s мора садржати најмање 9 карактера.",
+      "en": "The DOI \"%s\" in output record %s must contain at least 9 characters."
+    },
+    "doiTooLong": {
+      "sr": "DOI \"%s\" u izlaznom zapisu %s prelazi maksimalnu dužinu od 255 karaktera.",
+      "sr-cyr": "DOI \"%s\" у излазном запису %s прелази максималну дужину од 255 карактера.",
+      "en": "The DOI \"%s\" in output record %s exceeds the maximum allowed length of 255 characters."
+    },
+    "invalidDoiFormat": {
+      "sr": "DOI \"%s\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "DOI \"%s\" у излазном запису %s није у исправном формату.",
+      "en": "The DOI \"%s\" in output record %s is not in a valid format."
+    },
+    "duplicateDoi": {
+      "sr": "DOI \"%s\" u izlaznom zapisu %s već postoji u drugom zapisu.",
+      "sr-cyr": "DOI \"%s\" у излазном запису %s већ постоји у другом запису.",
+      "en": "The DOI \"%s\" in output record %s must be unique."
+    },
+    "doiNotResolvable": {
+      "sr": "DOI \"%s\" u izlaznom zapisu %s nije razrešiv putem DOI sistema.",
+      "sr-cyr": "DOI \"%s\" у излазном запису %s није разрешив путем DOI система.",
+      "en": "The DOI \"%s\" in output record %s must be resolvable through DOI.org."
+    },
+    "noHandlePresent": {
+      "sr": "Handle identifikator nedostaje u izlaznom zapisu %s. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "Handle идентификатор недостаје у излазном запису %s. Иако није обавезан, препоручен је.",
+      "en": "The Handle field is missing in output record %s. Although the Handle field is not mandatory, it is recommended."
+    },
+    "invalidHandleFormat": {
+      "sr": "Handle \"%s\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "Handle \"%s\" у излазном запису %s није у исправном формату.",
+      "en": "The Handle \"%s\" in output record %s is not in a valid format."
+    },
+    "duplicateHandle": {
+      "sr": "Handle \"%s\" u izlaznom zapisu %s mora biti jedinstven.",
+      "sr-cyr": "Handle \"%s\" у излазном запису %s мора бити јединствен.",
+      "en": "The Handle \"%s\" in output record %s must be unique."
+    },
+    "handleNotResolvable": {
+      "sr": "Handle \"%s\" u izlaznom zapisu %s nije razrešiv.",
+      "sr-cyr": "Handle \"%s\" у излазном запису %s није разрешив.",
+      "en": "The Handle \"%s\" in output record %s must be resolvable."
+    },
+    "noIdentifierPresent": {
       "sr": "Izlazni zapis %s mora sadržati najmanje jedan identifikator.",
       "sr-cyr": "Излазни запис %s мора садржати најмање један идентификатор.",
       "en": "The output record %s must contain at least one identifier."
     },
-    "researchAreaMissing": {
-      "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom %s. Iako istraživačka oblast nije obavezna, preporučuje se.",
-      "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом %s. Иако истраживачка област није обавезна, препоручује се.",
-      "en": "There is no any research area linked with the output record %s. Although the research area(s) is not mandatory, it is recommended."
-    },
     "openAccessMissing": {
-      "sr": "Polje otvorenog pristupa nedostaje u izlaznom zapisu %s. Iako polje otvorenog pristupa nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље отвореног приступа недостаје у излазном запису %s. Иако поље отвореног приступа није обавезно, препоручује се.",
-      "en": "The open access field is missing in output record %s. Although the open access field is not mandatory, it is recommended."
-    },
-    "openAccessInvalidValue": {
-      "sr": "Vrednost otvorenog pristupa \"%s\" u izlaznom zapisu %s je neispravna. Dozvoljene vrednosti su TRUE, FALSE.",
-      "sr-cyr": "Вредност отвореног приступа \"%s\" у излазном запису %s је неисправна. Дозвољене вредности су TRUE, FALSE.",
-      "en": "The open access value \"%s\" in output record %s is invalid. Allowed values are TRUE, FALSE."
-    },
-    "contributorsMissing": {
-      "sr": "Polje saradnika nedostaje u izlaznom zapisu %s. Polje saradnika je obavezno.",
-      "sr-cyr": "Поље сарадника недостаје у излазном запису %s. Поље сарадника је обавезно.",
-      "en": "The contributors field is missing in output record %s. The contributors field is mandatory."
-    },
-    "managedPersonMissing": {
-      "sr": "Najmanje jedna rukovođena osoba treba da bude povezana sa izlaznim zapisom %s, uzimajući u obzir da nije izvor za drugi dokument (npr. zbornik radova, uređena monografija, itd.).",
-      "sr-cyr": "Најмање једна руководјена особа треба да буде повезана са излазним записом %s, узимајући у обзир да није извор за други документ (нпр. зборник радова, уређена монографија, итд.).",
-      "en": "At least one managed person should be linked with output record %s, taking into account it is not a source for other document (for instance proceedings, edited monograph, etc.)"
-    },
-    "publicationUnitPagesMin": {
-      "sr": "Broj stranica \"%s\" u zapisu publikacione jedinice %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број страница \"%s\" у запису публикационе јединице %s мора бити већи или једнак 1.",
-      "en": "The number of pages \"%s\" in publication unit record %s must be greater than or equal to 1."
-    },
-    "publicationUnitPagesMax": {
-      "sr": "Broj stranica \"%s\" u zapisu publikacione jedinice %s mora biti manji ili jednak 5000.",
-      "sr-cyr": "Број страница \"%s\" у запису публикационе јединице %s мора бити мањи или једнак 5000.",
-      "en": "The number of pages \"%s\" in publication unit record %s must be less than or equal to 5000."
-    },
-    "publicationUnitPartPagesMin": {
-      "sr": "Broj stranica \"%s\" u zapisu dela publikacione jedinice %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број страница \"%s\" у запису дела публикационе јединице %s мора бити већи или једнак 1.",
-      "en": "The number of pages \"%s\" in publication unit part record %s must be greater than or equal to 1."
-    },
-    "publicationUnitPartPagesMax": {
-      "sr": "Broj stranica \"%s\" u zapisu dela publikacione jedinice %s mora biti manji ili jednak 200.",
-      "sr-cyr": "Број страница \"%s\" у запису дела публикационе јединице %s мора бити мањи или једнак 200.",
-      "en": "The number of pages \"%s\" in publication unit part record %s must be less than or equal to 200."
-    },
-    "thesisPagesMin": {
-      "sr": "Broj stranica \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број страница \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of pages \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisPagesMax": {
-      "sr": "Broj stranica \"%s\" u zapisu teze %s mora biti manji ili jednak 5000.",
-      "sr-cyr": "Број страница \"%s\" у запису тезе %s мора бити мањи или једнак 5000.",
-      "en": "The number of pages \"%s\" in thesis record %s must be less than or equal to 5000."
-    },
-    "thesisChaptersMin": {
-      "sr": "Broj poglavlja \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број поглавља \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of chapters \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisChaptersMax": {
-      "sr": "Broj poglavlja \"%s\" u zapisu teze %s mora biti manji ili jednak 30.",
-      "sr-cyr": "Број поглавља \"%s\" у запису тезе %s мора бити мањи или једнак 30.",
-      "en": "The number of chapters \"%s\" in thesis record %s must be less than or equal to 30."
-    },
-    "thesisReferencesMin": {
-      "sr": "Broj referenci \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број референци \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of references \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisReferencesMax": {
-      "sr": "Broj referenci \"%s\" u zapisu teze %s mora biti manji ili jednak 5000.",
-      "sr-cyr": "Број референци \"%s\" у запису тезе %s мора бити мањи или једнак 5000.",
-      "en": "The number of references \"%s\" in thesis record %s must be less than or equal to 5000."
-    },
-    "thesisTablesMin": {
-      "sr": "Broj tabela \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број табела \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of tables \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisTablesMax": {
-      "sr": "Broj tabela \"%s\" u zapisu teze %s mora biti manji ili jednak 200.",
-      "sr-cyr": "Број табела \"%s\" у запису тезе %s мора бити мањи или једнак 200.",
-      "en": "The number of tables \"%s\" in thesis record %s must be less than or equal to 200."
-    },
-    "thesisIllustrationsMin": {
-      "sr": "Broj ilustracija \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број илустрација \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of illustrations \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisIllustrationsMax": {
-      "sr": "Broj ilustracija \"%s\" u zapisu teze %s mora biti manji ili jednak 200.",
-      "sr-cyr": "Број илустрација \"%s\" у запису тезе %s мора бити мањи или једнак 200.",
-      "en": "The number of illustrations \"%s\" in thesis record %s must be less than or equal to 200."
-    },
-    "thesisGraphsMin": {
-      "sr": "Broj grafikona \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број графика \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of graphs \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisGraphsMax": {
-      "sr": "Broj grafikona \"%s\" u zapisu teze %s mora biti manji ili jednak 200.",
-      "sr-cyr": "Број графика \"%s\" у запису тезе %s мора бити мањи или једнак 200.",
-      "en": "The number of graphs \"%s\" in thesis record %s must be less than or equal to 200."
-    },
-    "thesisAppendicesMin": {
-      "sr": "Broj priloga \"%s\" u zapisu teze %s mora biti veći ili jednak 1.",
-      "sr-cyr": "Број прилога \"%s\" у запису тезе %s мора бити већи или једнак 1.",
-      "en": "The number of appendices \"%s\" in thesis record %s must be greater than or equal to 1."
-    },
-    "thesisAppendicesMax": {
-      "sr": "Broj priloga \"%s\" u zapisu teze %s mora biti manji ili jednak 30.",
-      "sr-cyr": "Број прилога \"%s\" у запису тезе %s мора бити мањи или једнак 30.",
-      "en": "The number of appendices \"%s\" in thesis record %s must be less than or equal to 30."
+      "sr": "Polje otvoreni pristup nije definisano za izlazni zapis %s.",
+      "sr-cyr": "Поље отворени приступ није дефинисано за излазни запис %s.",
+      "en": "The open access field is missing in output record %s. Although not mandatory, it is recommended."
     },
     "topicAcceptanceDateMissing": {
-      "sr": "Polje datuma prihvatanja teme nedostaje u zapisu teze %s. Iako polje datuma prihvatanja teme nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума прихватања теме недостаје у запису тезе %s. Иако поље датума прихватања теме није обавезно, препоручује се.",
-      "en": "The topic acceptance date field is missing in thesis record %s. Although the topic acceptance date field is not mandatory, it is recommended."
+      "sr": "Datum prihvatanja teme nedostaje za tezu %s.",
+      "sr-cyr": "Датум прихватања теме недостаје за тезу %s.",
+      "en": "The topic acceptance date field is missing in thesis record %s."
     },
     "topicAcceptanceDateBefore1950": {
-      "sr": "Datum prihvatanja teme (%s) u zapisu teze %s ne može biti pre 1950. godine.",
-      "sr-cyr": "Датум прихватања теме (%s) у запису тезе %s не може бити пре 1950. године.",
-      "en": "The topic acceptance date (%s) in thesis record %s can't be before the year 1950."
+      "sr": "Datum prihvatanja teme (%s) za tezu %s ne može biti pre 1950. godine.",
+      "sr-cyr": "Датум прихватања теме (%s) за тезу %s не може бити пре 1950. године.",
+      "en": "The topic acceptance date (%s) in thesis record %s cannot be before the year 1950."
     },
-    "topicAcceptanceDateInFuture": {
-      "sr": "Datum prihvatanja teme (%s) u zapisu teze %s ne može biti u budućnosti (posle trenutnog datuma).",
-      "sr-cyr": "Датум прихватања теме (%s) у запису тезе %s не може бити у будућности (после тренутног датума).",
-      "en": "The topic acceptance date (%s) in thesis record %s can't be in the future (after the current date)."
+    "topicAcceptanceDateFuture": {
+      "sr": "Datum prihvatanja teme (%s) za tezu %s ne može biti u budućnosti.",
+      "sr-cyr": "Датум прихватања теме (%s) за тезу %s не може бити у будућности.",
+      "en": "The topic acceptance date (%s) in thesis record %s cannot be in the future."
     },
     "thesisDefenceDateMissing": {
-      "sr": "Polje datuma odbrane teze nedostaje u zapisu teze %s. Iako polje datuma odbrane teze nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума одбране тезе недостаје у запису тезе %s. Иако поље датума одбране тезе није обавезно, препоручује се.",
-      "en": "The thesis defence date field is missing in thesis record %s. Although the thesis defence date field is not mandatory, it is recommended."
+      "sr": "Datum odbrane teze nedostaje za tezu %s.",
+      "sr-cyr": "Датум одбране тезе недостаје за тезу %s.",
+      "en": "The thesis defence date field is missing in thesis record %s."
     },
-    "thesisDefenceDateBeforeTopicAcceptance": {
-      "sr": "Datum odbrane teze (%s) u zapisu teze %s ne može biti pre datuma prihvatanja teme (%s).",
-      "sr-cyr": "Датум одбране тезе (%s) у запису тезе %s не може бити пре датума прихватања теме (%s).",
-      "en": "The thesis defence date (%s) in thesis record %s can't be before the topic acceptance date (%s)."
+    "defenceBeforeAcceptance": {
+      "sr": "Datum odbrane (%s) ne može biti pre datuma prihvatanja teme za tezu %s.",
+      "sr-cyr": "Датум одбране (%s) не може бити пре датума прихватања теме за тезу %s.",
+      "en": "The thesis defence date (%s) cannot be before the topic acceptance date."
     },
-    "thesisDefenceDateTooFarInFuture": {
-      "sr": "Datum odbrane teze (%s) u zapisu teze %s može biti samo u bliskoj budućnosti (maksimalno +1 godina od sada).",
-      "sr-cyr": "Датум одбране тезе (%s) у запису тезе %s може бити само у блиској будућности (максимално +1 година од сада).",
-      "en": "The thesis defence date (%s) in thesis record %s can be only in the near future (+1 year from right now)."
+    "defenceTooFarInFuture": {
+      "sr": "Datum odbrane (%s) može biti najviše godinu dana u budućnosti za tezu %s.",
+      "sr-cyr": "Датум одбране (%s) може бити највише годину дана у будућности за тезу %s.",
+      "en": "The thesis defence date (%s) can only be in the near future (+1 year)."
     },
-    "ipDateRequestedMissing": {
-      "sr": "Polje datuma podnošenja zahteva nedostaje u zapisu intelektualne svojine %s. Iako polje datuma podnošenja zahteva nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума подношења захтева недостаје у запису интелектуалне својине %s. Иако поље датума подношења захтева није обавезно, препоручује се.",
-      "en": "The date requested field is missing in intellectual property record %s. Although the date requested field is not mandatory, it is recommended."
+    "numberOfPagesBelowMinimum": {
+      "sr": "Broj strana (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број страна (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of pages (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "ipDateRequestedBefore1950": {
-      "sr": "Datum podnošenja zahteva (%s) u zapisu intelektualne svojine %s ne može biti pre 1950. godine.",
-      "sr-cyr": "Датум подношења захтева (%s) у запису интелектуалне својине %s не може бити пре 1950. године.",
-      "en": "The date requested (%s) in intellectual property record %s can't be before the year 1950."
+    "numberOfPagesAboveMaximum": {
+      "sr": "Broj strana (%s) u tezi %s mora biti manji ili jednak 5000.",
+      "sr-cyr": "Број страна (%s) у тези %s мора бити мањи или једнак 5000.",
+      "en": "The number of pages (%s) in thesis record %s must be less than or equal to 5000."
     },
-    "ipDateRequestedAfterCurrent": {
-      "sr": "Datum podnošenja zahteva (%s) u zapisu intelektualne svojine %s ne može biti posle trenutnog datuma.",
-      "sr-cyr": "Датум подношења захтева (%s) у запису интелектуалне својине %s не може бити после тренутног датума.",
-      "en": "The date requested (%s) in intellectual property record %s can't be after the current date."
+    "numberOfChaptersBelowMinimum": {
+      "sr": "Broj poglavlja (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број поглавља (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of chapters (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "ipDateFilingPriorityMissing": {
-      "sr": "Polje datuma podnošenja prioriteta nedostaje u zapisu intelektualne svojine %s. Iako polje datuma podnošenja prioriteta nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума подношења приоритета недостаје у запису интелектуалне својине %s. Иако поље датума подношења приоритета није обавезно, препоручује се.",
-      "en": "The date filing priority field is missing in intellectual property record %s. Although the date filing priority field is not mandatory, it is recommended."
+    "numberOfChaptersAboveMaximum": {
+      "sr": "Broj poglavlja (%s) u tezi %s mora biti manji ili jednak 30.",
+      "sr-cyr": "Број поглавља (%s) у тези %s мора бити мањи или једнак 30.",
+      "en": "The number of chapters (%s) in thesis record %s must be less than or equal to 30."
     },
-    "ipDateFilingPriorityBefore1950": {
-      "sr": "Datum podnošenja prioriteta (%s) u zapisu intelektualne svojine %s ne može biti pre 1950. godine.",
-      "sr-cyr": "Датум подношења приоритета (%s) у запису интелектуалне својине %s не може бити пре 1950. године.",
-      "en": "The date filing priority (%s) in intellectual property record %s can't be before the year 1950."
+    "numberOfReferencesBelowMinimum": {
+      "sr": "Broj referenci (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број референци (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of references (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "ipDateFilingPriorityAfterRequest": {
-      "sr": "Datum podnošenja prioriteta (%s) u zapisu intelektualne svojine %s ne može biti posle datuma podnošenja zahteva (%s).",
-      "sr-cyr": "Датум подношења приоритета (%s) у запису интелектуалне својине %s не може бити после датума подношења захтева (%s).",
-      "en": "The date filing priority (%s) in intellectual property record %s can't be after the request date (%s)."
+    "numberOfReferencesAboveMaximum": {
+      "sr": "Broj referenci (%s) u tezi %s mora biti manji ili jednak 5000.",
+      "sr-cyr": "Број референци (%s) у тези %s мора бити мањи или једнак 5000.",
+      "en": "The number of references (%s) in thesis record %s must be less than or equal to 5000."
     },
-    "ipDateEndTermMissing": {
-      "sr": "Polje datuma isteka roka nedostaje u zapisu intelektualne svojine %s. Iako polje datuma isteka roka nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума истека рока недостаје у запису интелектуалне својине %s. Иако поље датума истека рока није обавезно, препоручује се.",
-      "en": "The date end term field is missing in intellectual property record %s. Although the date end term field is not mandatory, it is recommended."
+    "numberOfTablesBelowMinimum": {
+      "sr": "Broj tabela (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број табела (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of tables (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "ipDateEndTermBefore1950": {
-      "sr": "Datum isteka roka (%s) u zapisu intelektualne svojine %s ne može biti pre 1950. godine.",
-      "sr-cyr": "Датум истека рока (%s) у запису интелектуалне својине %s не може бити пре 1950. године.",
-      "en": "The date end term (%s) in intellectual property record %s can't be before the year 1950."
+    "numberOfTablesAboveMaximum": {
+      "sr": "Broj tabela (%s) u tezi %s mora biti manji ili jednak 200.",
+      "sr-cyr": "Број табела (%s) у тези %s мора бити мањи или једнак 200.",
+      "en": "The number of tables (%s) in thesis record %s must be less than or equal to 200."
     },
-    "publisherRelationStartDateMissing": {
-      "sr": "Polje datuma početka nedostaje u zapisu publikacione serije %s u vezi sa izdavačem. Iako polje datuma početka nije obavezno, preporučuje se.",
-      "sr-cyr": "Поље датума почетка недостаје у запису публикационе серије %s у вези са издавачем. Иако поље датума почетка није обавезно, препоручује се.",
-      "en": "The start date field is missing in publication series record %s relation with publisher. Although the start date field is not mandatory, it is recommended."
+    "numberOfIllustrationsBelowMinimum": {
+      "sr": "Broj ilustracija (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број илустрација (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of illustrations (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "publisherRelationStartDateBefore1990": {
-      "sr": "Datum početka (%s) u zapisu publikacione serije %s u vezi sa izdavačem ne može biti pre 1990. godine.",
-      "sr-cyr": "Датум почетка (%s) у запису публикационе серије %s у вези са издавачем не може бити пре 1990. године.",
-      "en": "The start date (%s) in publication series record %s relation with publisher can't be before the year 1990."
+    "numberOfIllustrationsAboveMaximum": {
+      "sr": "Broj ilustracija (%s) u tezi %s mora biti manji ili jednak 200.",
+      "sr-cyr": "Број илустрација (%s) у тези %s мора бити мањи или једнак 200.",
+      "en": "The number of illustrations (%s) in thesis record %s must be less than or equal to 200."
     },
-    "publisherRelationStartDateTooFarInFuture": {
-      "sr": "Datum početka (%s) u zapisu publikacione serije %s u vezi sa izdavačem može biti samo u bliskoj budućnosti (maksimalno +3 godine od sada).",
-      "sr-cyr": "Датум почетка (%s) у запису публикационе серије %s у вези са издавачем може бити само у блиској будућности (максимално +3 године од сада).",
-      "en": "The from date (%s) in publication series record %s relation with publisher can be only in the near future (+3 years from right now)."
+    "numberOfGraphsBelowMinimum": {
+      "sr": "Broj grafikona (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број графикона (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of graphs (%s) in thesis record %s must be greater than or equal to 1."
     },
-    "publisherRelationEndDateBeforeStart": {
-      "sr": "Datum završetka (%s) u zapisu publikacione serije %s u vezi sa izdavačem ne može biti pre datuma početka (%s).",
-      "sr-cyr": "Датум завршетка (%s) у запису публикационе серије %s у вези са издавачем не може бити пре датума почетка (%s).",
-      "en": "The end date (%s) in publication series record %s relation with publisher can't be before the start date (%s)."
+    "numberOfGraphsAboveMaximum": {
+      "sr": "Broj grafikona (%s) u tezi %s mora biti manji ili jednak 200.",
+      "sr-cyr": "Број графикона (%s) у тези %s мора бити мањи или једнак 200.",
+      "en": "The number of graphs (%s) in thesis record %s must be less than or equal to 200."
+    },
+    "numberOfAppendicesBelowMinimum": {
+      "sr": "Broj priloga (%s) u tezi %s mora biti veći ili jednak 1.",
+      "sr-cyr": "Број прилога (%s) у тези %s мора бити већи или једнак 1.",
+      "en": "The number of appendices (%s) in thesis record %s must be greater than or equal to 1."
+    },
+    "numberOfAppendicesAboveMaximum": {
+      "sr": "Broj priloga (%s) u tezi %s mora biti manji ili jednak 30.",
+      "sr-cyr": "Број прилога (%s) у тези %s мора бити мањи или једнак 30.",
+      "en": "The number of appendices (%s) in thesis record %s must be less than or equal to 30."
+    },
+    "researchAreasMissing": {
+      "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom %s. Iako nije obavezna, preporučena je.",
+      "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом %s. Иако није обавезна, препоручена је.",
+      "en": "There is no research area linked with output record %s. Although research areas are not mandatory, they are recommended."
+    },
+    "metadataLicenseMissing": {
+      "sr": "Licenca metapodataka mora biti definisana za zapis %s radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Лиценца метаподатака мора бити дефинисана за запис %s ради усклађености са FAIR принципима.",
+      "en": "The metadata license for record %s must be informed to comply with the FAIR Principles."
+    },
+    "handleTooShort": {
+      "sr": "Handle \"%s\" u zapisu %s mora sadržati najmanje 8 karaktera.",
+      "sr-cyr": "Handle \"%s\" у запису %s мора садржати најмање 8 карактера.",
+      "en": "The Handle \"%s\" in output record %s must contain at least 8 characters."
+    },
+    "handleTooLong": {
+      "sr": "Handle \"%s\" u zapisu %s prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+      "sr-cyr": "Handle \"%s\" у запису %s прелази максималну дозвољену дужину од 255 карактера.",
+      "en": "The Handle \"%s\" in output record %s exceeds the maximum allowed length of 255 characters."
     }
   }
 }
