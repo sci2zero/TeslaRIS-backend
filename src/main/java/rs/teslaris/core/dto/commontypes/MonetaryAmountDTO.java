@@ -20,4 +20,8 @@ public class MonetaryAmountDTO {
     @NotNull(message = "You have to provide amount.")
     @Positive(message = "Amount must be a positive number.")
     private double amount;
+
+    private String currencyCode;
+
+    private String currencySymbol;
 }
