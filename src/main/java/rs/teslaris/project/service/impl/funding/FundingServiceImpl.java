@@ -93,7 +93,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     public Funding createFunding(FundingDTO fundingDTO) {
         var newFunding = new Funding();
 
-        setCommonFields(newFunding, fundingDTO);
+        setCommonFields(newFunding, fundingDTO, true);
 
         var savedFundingCall = save(newFunding);
 
@@ -110,7 +110,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var fundingToUpdate = findOne(fundingId);
 
         clearCommonFields(fundingToUpdate);
-        setCommonFields(fundingToUpdate, fundingDTO);
+        setCommonFields(fundingToUpdate, fundingDTO, false);
 
         fundingIndexRepository.findFundingIndexByDatabaseId(fundingId)
             .ifPresent(index -> {
@@ -158,7 +158,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         save(fundingCall);
     }
 
-    private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
+    private void setCommonFields(Funding funding, FundingDTO fundingDTO, boolean isCreate) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
             fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
@@ -231,7 +231,9 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
 
-        buildFundingParts(funding, fundingDTO);
+        if (isCreate) {
+            buildFundingParts(funding, fundingDTO);
+        }
     }
 
     private void buildFundingParts(Funding funding,
