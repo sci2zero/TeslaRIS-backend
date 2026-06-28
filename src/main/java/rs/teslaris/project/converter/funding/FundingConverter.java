@@ -74,6 +74,8 @@ public class FundingConverter {
         if (Objects.nonNull(funding.getAmount())) {
             dto.getAmount().setAmount(funding.getAmount().getAmount());
             dto.getAmount().setCurrencyId(funding.getAmount().getCurrency().getId());
+            dto.getAmount().setCurrencyCode(funding.getAmount().getCurrency().getCode());
+            dto.getAmount().setCurrencySymbol(funding.getAmount().getCurrency().getSymbol());
         }
     }
 

@@ -24,4 +24,10 @@ public class MonetaryAmountDTO {
     private String currencyCode;
 
     private String currencySymbol;
+
+    public MonetaryAmountDTO(Integer currencyId, double amount) {
+        this.currencyId = currencyId;
+        this.amount = amount;
+    }
+
 }
