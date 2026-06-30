@@ -490,7 +490,7 @@ public class MergeServiceImpl implements MergeService {
             dto -> new String[] {
                 dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor(),
                 dto.getRinggold(), dto.getFundref(), dto.getIsni(), dto.getTaxNumber(),
-                dto.getFctId()},
+                dto.getFctId(), dto.getGrid(), dto.getWikidata(), dto.getNationalId()},
             (dto, values) -> {
                 dto.setScopusAfid(values[0]);
                 dto.setOpenAlexId(values[1]);
@@ -500,6 +500,9 @@ public class MergeServiceImpl implements MergeService {
                 dto.setIsni(values[5]);
                 dto.setTaxNumber(values[6]);
                 dto.setFctId(values[7]);
+                dto.setGrid(values[8]);
+                dto.setWikidata(values[9]);
+                dto.setNationalId(values[10]);
             });
     }
 

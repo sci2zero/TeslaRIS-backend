@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -25,9 +26,13 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
@@ -40,13 +45,60 @@ public class DataQualityCalculatorPtCris {
     private static final Pattern TITLE_PATTERN = Pattern.compile(
         "^[\\p{L}\\p{N}\\s\\-.,;:!?()'\"/&]+$"
     );
-    private final RevisionHydratorRegistry revisionHydratorRegistry;
-    private final DocumentRepository documentRepository;
-    private final RestTemplateProvider restTemplateProvider;
+
+    private static final Pattern PERSON_NAME_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{M}\\p{N} .,'\\-]+$");
+
+    private static final Pattern ORGANISATION_NAME_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{M}\\p{N} .,'()&/\\-]+$");
+
+    private static final Pattern ORCID_PATTERN =
+        Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$");
+
+    private static final Pattern WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN =
+        Pattern.compile("^[A-Z]{1,2}-\\d{4}-\\d{4}$");
+
+    private static final Pattern SCOPUS_AUTHOR_ID_PATTERN =
+        Pattern.compile("^\\d{10,12}$");
+
+    private static final Pattern ROR_PATTERN =
+        Pattern.compile("^0[a-z0-9]{6}\\d{2}$");
+
+    private static final Pattern ISNI_PATTERN =
+        Pattern.compile("^\\d{4}\\s?\\d{4}\\s?\\d{4}\\s?[\\dX]{4}$");
+
+    private static final Pattern SCOPUS_AFID_PATTERN =
+        Pattern.compile("^\\d{6,15}$");
+
+    private static final Pattern GOOGLE_SCHOLAR_PATTERN =
+        Pattern.compile("^[A-Za-z0-9_-]{12}$");
+
+    private static final Pattern LATTES_PATTERN =
+        Pattern.compile("^\\d{16}$");
+
+    private static final Pattern OPENALEX_PATTERN =
+        Pattern.compile("^A\\d{4,10}$");
+
+    private static final Pattern CIENCIA_ID_PATTERN = Pattern.compile("^[A-Za-z0-9-]{4,50}$");
+    private static final Pattern RINGGOLD_PATTERN =
+        Pattern.compile("^\\d{1,10}$");
+    private static final Pattern GRID_PATTERN =
+        Pattern.compile("^grid\\.\\d+\\.[0-9a-f]{1,2}$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern FUNDREF_PATTERN = Pattern.compile("^10\\.13039/\\d{6,12}$");
     private final Pattern DOI_PATTERN =
         Pattern.compile("^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$");
     private final Pattern HANDLE_PATTERN =
         Pattern.compile("^\\d{2}\\.\\d{3,5}(\\.\\d+)?/\\S+$");
+    private final RevisionHydratorRegistry revisionHydratorRegistry;
+
+    private final DocumentRepository documentRepository;
+
+    private final PersonRepository personRepository;
+
+    private final OrganisationUnitRepository organisationUnitRepository;
+
+    private final RestTemplateProvider restTemplateProvider;
+
     private final Map<Class<?>, BiConsumer<Object, EntityRevision>> assessors = Map.ofEntries(
         Map.entry(ThesisResponseDTO.class,
             (dto, rev) -> assessEntity((ThesisResponseDTO) dto, rev)),
@@ -300,10 +352,245 @@ public class DataQualityCalculatorPtCris {
         // TODO: metadataLicenseMissing
     }
 
-    private void assessEntity(PersonalInfoDTO dto, EntityRevision entityRevision) {
-        if (!StringUtil.valueExists(dto.getOrcid())) {
-            System.out.println("OrcidIsRecommended");
+    private void assessEntity(Set<PersonNameDTO> dto, EntityRevision entityRevision) {
+        if (!CollectionOperations.containsValues(dto)) {
+            reportIssue(entityRevision, "nameMissing");
+        } else {
+            dto.forEach(name -> {
+                if (!StringUtil.valueExists(name.getFirstname())) {
+                    reportIssue(entityRevision, "firstNameMissing");
+                }
+
+                if (!StringUtil.valueExists(name.getLastname())) {
+                    reportIssue(entityRevision, "lastNameMissing");
+                }
+
+                if (StringUtil.valueExists(name.getFirstname()) &&
+                    name.getFirstname().length() > 100) {
+                    reportIssue(entityRevision, "firstNameTooLong");
+                }
+
+                if (StringUtil.valueExists(name.getLastname()) &&
+                    name.getLastname().length() > 100) {
+                    reportIssue(entityRevision, "lastNameTooLong");
+                }
+
+                if (!PERSON_NAME_PATTERN.matcher(name.getFirstname()).matches()) {
+                    reportIssue(entityRevision, "invalidFirstNameFormat");
+                }
+
+                if (!PERSON_NAME_PATTERN.matcher(name.getLastname()).matches()) {
+                    reportIssue(entityRevision, "invalidLastNameFormat");
+                }
+            });
         }
+    }
+
+    private void assessEntity(PersonalInfoDTO dto, EntityRevision entityRevision) {
+        if (Objects.isNull(dto.getLocalBirthDate())) {
+            reportIssue(entityRevision, "birthDateMissing");
+        } else {
+            var birthDate = dto.getLocalBirthDate();
+
+            if (birthDate.isBefore(LocalDate.of(1900, 1, 1))) {
+                reportIssue(entityRevision, "birthDateBefore1900");
+            }
+
+            if (birthDate.isAfter(LocalDate.now())) {
+                reportIssue(entityRevision, "birthDateInFuture");
+            }
+        }
+
+        if (!StringUtil.valueExists(dto.getOrcid())) {
+            reportIssue(entityRevision, "noOrcidPresent");
+        } else {
+
+            if (!ORCID_PATTERN.matcher(dto.getOrcid()).matches()) {
+                reportIssue(entityRevision, "invalidOrcidFormat");
+            }
+
+            if (personRepository.existsByOrcid(dto.getOrcid(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateOrcid");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getWebOfScienceResearcherId())) {
+            var rid = dto.getWebOfScienceResearcherId();
+
+            if (rid.length() < 11) {
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort");
+            }
+
+            if (rid.length() > 11) {
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong");
+            }
+
+            if (!WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN.matcher(rid).matches()) {
+                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat");
+            }
+
+            if (personRepository.existsByWebOfScienceId(rid, dto.getId())) {
+                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getScopusAuthorId())) {
+            var id = dto.getScopusAuthorId();
+
+            if (!SCOPUS_AUTHOR_ID_PATTERN.matcher(id).matches()) {
+                reportIssue(entityRevision, "invalidScopusAuthorIdFormat");
+            }
+
+            if (personRepository.existsByScopusAuthorId(id, dto.getId())) {
+                reportIssue(entityRevision, "duplicateScopusAuthorId");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getOpenAlexId())) {
+            if (!OPENALEX_PATTERN.matcher(dto.getOpenAlexId()).matches()) {
+                reportIssue(entityRevision, "invalidOpenAlexIdFormat");
+            }
+
+            if (personRepository.existsByOpenAlexId(dto.getOpenAlexId(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateOpenAlexId");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getScholarId())) {
+            if (!GOOGLE_SCHOLAR_PATTERN.matcher(dto.getScholarId()).matches()) {
+                reportIssue(entityRevision, "invalidGoogleScholarIdFormat");
+            }
+
+            if (personRepository.existsByScholarId(dto.getScholarId(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateGoogleScholarId");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getLattesId())) {
+            if (!LATTES_PATTERN.matcher(dto.getLattesId()).matches()) {
+                reportIssue(entityRevision, "invalidLattesIdFormat");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getNationalScienceId())) {
+            if (!CIENCIA_ID_PATTERN.matcher(dto.getNationalScienceId()).matches()) {
+                reportIssue(entityRevision, "invalidCienciaIdFormat");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getAuthenticusId())) {
+            if (personRepository.existsByAuthenticusId(dto.getAuthenticusId(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateAuthenticusId");
+            }
+        }
+
+//        if (!CollectionOperations.containsValues(dto.getBiography())) {
+//            reportIssue(entityRevision, "biographyMissing");
+//        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(OrganisationUnitDTO dto, EntityRevision entityRevision) {
+        if (!CollectionOperations.containsValues(dto.getName())) {
+            reportIssue(entityRevision, "organisationUnitNameMissing");
+        } else {
+            dto.getName().forEach(name -> {
+
+                String value = name.getContent();
+
+                if (!StringUtil.valueExists(value)) {
+                    reportIssue(entityRevision, "organisationUnitNameMissing");
+                    return;
+                }
+
+                if (value.length() > 255) {
+                    reportIssue(entityRevision, "organisationUnitNameTooLong");
+                }
+
+                if (!ORGANISATION_NAME_PATTERN.matcher(value).matches()) {
+                    reportIssue(entityRevision, "invalidOrganisationUnitNameFormat");
+                }
+            });
+        }
+
+        if (!CollectionOperations.containsValues(dto.getDescription())) {
+            reportIssue(entityRevision, "organisationUnitDescriptionMissing");
+        }
+
+        if (StringUtil.valueExists(dto.getRor())) {
+
+            if (!ROR_PATTERN.matcher(dto.getRor()).matches()) {
+                reportIssue(entityRevision, "invalidRorFormat");
+            }
+
+            if (organisationUnitRepository.existsByROR(dto.getRor(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateRor");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getIsni())) {
+
+            if (!ISNI_PATTERN.matcher(dto.getIsni()).matches()) {
+                reportIssue(entityRevision, "invalidIsniFormat");
+            }
+
+            if (organisationUnitRepository.existsByIsni(dto.getIsni(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateIsni");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getScopusAfid())) {
+
+            if (!SCOPUS_AFID_PATTERN.matcher(dto.getScopusAfid()).matches()) {
+                reportIssue(entityRevision, "invalidScopusAfidFormat");
+            }
+
+            if (organisationUnitRepository.existsByScopusAfid(dto.getScopusAfid(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateScopusAfid");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getGrid())) {
+            if (!GRID_PATTERN.matcher(dto.getGrid()).matches()) {
+                reportIssue(entityRevision, "invalidGridFormat");
+            }
+
+            if (organisationUnitRepository.existsByGrid(dto.getGrid(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateGrid");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getRinggold())) {
+            if (!RINGGOLD_PATTERN.matcher(dto.getRinggold()).matches()) {
+                reportIssue(entityRevision, "invalidRinggoldFormat");
+            }
+
+            if (organisationUnitRepository.existsByRinggold(dto.getRinggold(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateRinggold");
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getFundref())) {
+            if (!FUNDREF_PATTERN.matcher(dto.getFundref()).matches()) {
+                reportIssue(entityRevision, "invalidFundrefFormat");
+            }
+        }
+
+        if (Objects.nonNull(dto.getDateEstablished()) &&
+            Objects.nonNull(dto.getDateDissolved()) &&
+            dto.getDateDissolved().isBefore(dto.getDateEstablished())) {
+
+            reportIssue(entityRevision, "dateDissolvedBeforeEstablished");
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
     }
 
     private boolean isResolvableDoi(String doi) {

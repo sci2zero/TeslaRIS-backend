@@ -56,6 +56,12 @@ public class OrganisationUnitRequestDTO {
 
     private String fctId;
 
+    private String grid;
+
+    private String wikidata;
+
+    private String nationalId;
+
     private String taxNumber;
 
     private Integer oldId;
@@ -88,5 +94,11 @@ public class OrganisationUnitRequestDTO {
 
     private LocalDate dateEstablished;
 
+    private LocalDate dateDissolved;
+
     private PostalAddressDTO postalAddress;
+
+    private String numberOfEmployees;
+
+    private Boolean active;
 }

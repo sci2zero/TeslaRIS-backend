@@ -2,9 +2,12 @@ package rs.teslaris.core.converter.person;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -19,12 +22,14 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.util.functional.Pair;
@@ -56,7 +61,9 @@ public class PersonConverter {
         setExpertisesAndSkills(person, expertisesOrSkills);
 
         var prizes = new ArrayList<PrizeResponseDTO>();
-        person.getPrizes().forEach(prize -> prizes.add(PrizeConverter.toDTO(prize)));
+        person.getPrizes().stream()
+            .sorted(Comparator.comparing(Prize::getId))
+            .forEach(prize -> prizes.add(PrizeConverter.toDTO(prize)));
 
         var personResponse = new PersonResponseDTO(
             person.getId(),
@@ -110,7 +117,8 @@ public class PersonConverter {
             person.getPersonalInfo().getUris(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 person.getPersonalInfo().getDisplayTitle()
-            )
+            ),
+            person.getId()
         );
     }
 
@@ -150,14 +158,20 @@ public class PersonConverter {
     }
 
     private static ArrayList<PersonNameDTO> getPersonOtherNamesDTO(Set<PersonName> otherNames) {
-        var otherNamesDTO = new ArrayList<PersonNameDTO>();
+        if (Objects.isNull(otherNames)) {
+            return new ArrayList<>();
+        }
 
-        otherNames.forEach(otherName -> otherNamesDTO.add(
-            new PersonNameDTO(otherName.getId(), otherName.getFirstname(), otherName.getOtherName(),
-                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo(),
-                Objects.requireNonNullElse(otherName.getNameType(), PersonNameType.DISPLAY_NAME))));
-
-        return otherNamesDTO;
+        return otherNames.stream()
+            .sorted(Comparator.comparing(
+                PersonName::getId,
+                Comparator.nullsFirst(Integer::compareTo)
+            ))
+            .map(otherName -> new PersonNameDTO(otherName.getId(), otherName.getFirstname(),
+                otherName.getOtherName(), otherName.getLastname(), otherName.getDateFrom(),
+                otherName.getDateTo(),
+                Objects.requireNonNullElse(otherName.getNameType(), PersonNameType.DISPLAY_NAME)))
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private static void setPersonInvolvementIds(Person person, ArrayList<Integer> employmentIds,
@@ -174,20 +188,23 @@ public class PersonConverter {
 
     private static void setExpertisesAndSkills(Person person,
                                                ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
-        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
-            var dto = new ExpertiseOrSkillResponseDTO();
-            dto.setId(expertiseOrSkill.getId());
-            dto.setName(
-                MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()));
-            dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                expertiseOrSkill.getDescription()));
+        person.getExpertisesAndSkills().stream()
+            .sorted(Comparator.comparing(ExpertiseOrSkill::getId))
+            .forEach(expertiseOrSkill -> {
+                var dto = new ExpertiseOrSkillResponseDTO();
+                dto.setId(expertiseOrSkill.getId());
+                dto.setName(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        expertiseOrSkill.getName()));
+                dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+                    expertiseOrSkill.getDescription()));
 
-            dto.setProofs(new ArrayList<>());
-            expertiseOrSkill.getProofs().forEach(proof -> {
-                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
+                dto.setProofs(new ArrayList<>());
+                expertiseOrSkill.getProofs().forEach(proof -> {
+                    dto.getProofs().add(DocumentFileConverter.toDTO(proof));
+                });
+                expertisesOrSkills.add(dto);
             });
-            expertisesOrSkills.add(dto);
-        });
     }
 
     public static PersonUserResponseDTO toDTOWithUser(Person person) {
@@ -204,29 +221,9 @@ public class PersonConverter {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
-        var professionalContact = new ContactDTO();
-        if (Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
-            professionalContact.setContactEmail(
-                person.getPersonalInfo().getProfessionalContact().getContactEmail());
-            professionalContact.setPhoneNumber(
-                person.getPersonalInfo().getProfessionalContact().getPhoneNumber());
-            professionalContact.setFaxNumber(
-                person.getPersonalInfo().getProfessionalContact().getFaxNumber());
-            professionalContact.setMobilePhoneNumber(
-                person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber());
-        }
+        var professionalContact = getContactDTO(person.getPersonalInfo().getProfessionalContact());
 
-        var privateContact = new ContactDTO();
-        if (Objects.nonNull(person.getPersonalInfo().getPrivateContact())) {
-            privateContact.setContactEmail(
-                person.getPersonalInfo().getPrivateContact().getContactEmail());
-            privateContact.setPhoneNumber(
-                person.getPersonalInfo().getPrivateContact().getPhoneNumber());
-            privateContact.setFaxNumber(
-                person.getPersonalInfo().getPrivateContact().getFaxNumber());
-            privateContact.setMobilePhoneNumber(
-                person.getPersonalInfo().getPrivateContact().getMobilePhoneNumber());
-        }
+        var privateContact = getContactDTO(person.getPersonalInfo().getPrivateContact());
 
         var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
         person.getInvolvements().stream().filter(i ->
@@ -258,11 +255,26 @@ public class PersonConverter {
                 person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
-                    person.getPersonalInfo().getDisplayTitle())),
+                    person.getPersonalInfo().getDisplayTitle()), person.getId()),
             MultilingualContentConverter.getMultilingualContentDTO(person.getBiography()),
             MultilingualContentConverter.getMultilingualContentDTO(person.getKeyword()),
             person.getApproveStatus(), userDTO, instituion.b, instituion.a
         );
+    }
+
+    private static @NotNull ContactDTO getContactDTO(Contact person) {
+        var professionalContact = new ContactDTO();
+        if (Objects.nonNull(person)) {
+            professionalContact.setContactEmail(
+                person.getContactEmail());
+            professionalContact.setPhoneNumber(
+                person.getPhoneNumber());
+            professionalContact.setFaxNumber(
+                person.getFaxNumber());
+            professionalContact.setMobilePhoneNumber(
+                person.getMobilePhoneNumber());
+        }
+        return professionalContact;
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse, Person person) {

@@ -285,6 +285,221 @@
       "sr": "Handle \"%s\" u zapisu %s prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
       "sr-cyr": "Handle \"%s\" у запису %s прелази максималну дозвољену дужину од 255 карактера.",
       "en": "The Handle \"%s\" in output record %s exceeds the maximum allowed length of 255 characters."
+    },
+    "nameMissing": {
+      "sr": "Ime osobe nedostaje u zapisu %s. Polje je obavezno.",
+      "sr-cyr": "Име особе недостаје у запису %s. Поље је обавезно.",
+      "en": "The person's name is missing in record %s. The field is mandatory."
+    },
+    "firstNameMissing": {
+      "sr": "Lično ime nedostaje u zapisu osobe %s.",
+      "sr-cyr": "Лично име недостаје у запису особе %s.",
+      "en": "The first name is missing in person record %s."
+    },
+    "firstNameTooLong": {
+      "sr": "Lično ime \"%s\" u zapisu osobe %s prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+      "sr-cyr": "Лично име \"%s\" у запису особе %s прелази максималну дозвољену дужину од 100 карактера.",
+      "en": "The first name \"%s\" in person record %s exceeds the maximum allowed length of 100 characters."
+    },
+    "invalidFirstNameFormat": {
+      "sr": "Lično ime \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Лично име \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The first name \"%s\" in person record %s is not in a valid format."
+    },
+    "lastNameMissing": {
+      "sr": "Prezime nedostaje u zapisu osobe %s.",
+      "sr-cyr": "Презиме недостаје у запису особе %s.",
+      "en": "The last name is missing in person record %s."
+    },
+    "lastNameTooLong": {
+      "sr": "Prezime \"%s\" u zapisu osobe %s prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+      "sr-cyr": "Презиме \"%s\" у запису особе %s прелази максималну дозвољену дужину од 100 карактера.",
+      "en": "The last name \"%s\" in person record %s exceeds the maximum allowed length of 100 characters."
+    },
+    "invalidLastNameFormat": {
+      "sr": "Prezime \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Презиме \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The last name \"%s\" in person record %s is not in a valid format."
+    },
+    "birthDateMissing": {
+      "sr": "Datum rođenja nedostaje u zapisu osobe %s.",
+      "sr-cyr": "Датум рођења недостаје у запису особе %s.",
+      "en": "The birth date is missing in person record %s."
+    },
+    "birthDateBefore1900": {
+      "sr": "Datum rođenja (%s) u zapisu osobe %s ne može biti pre 1900. godine.",
+      "sr-cyr": "Датум рођења (%s) у запису особе %s не може бити пре 1900. године.",
+      "en": "The birth date (%s) in person record %s cannot be before the year 1900."
+    },
+    "birthDateInFuture": {
+      "sr": "Datum rođenja (%s) u zapisu osobe %s ne može biti u budućnosti.",
+      "sr-cyr": "Датум рођења (%s) у запису особе %s не може бити у будућности.",
+      "en": "The birth date (%s) in person record %s cannot be in the future."
+    },
+    "noOrcidPresent": {
+      "sr": "ORCID identifikator nije unet za osobu %s. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "ORCID идентификатор није унет за особу %s. Иако није обавезан, препоручен је.",
+      "en": "The ORCID identifier is missing in person record %s. Although it is not mandatory, it is recommended."
+    },
+    "invalidOrcidFormat": {
+      "sr": "ORCID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "ORCID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The ORCID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateOrcid": {
+      "sr": "ORCID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "ORCID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The ORCID \"%s\" in person record %s must be unique."
+    },
+    "webOfScienceResearcherIdTooShort": {
+      "sr": "Web of Science Researcher ID \"%s\" u zapisu osobe %s mora sadržati tačno 11 karaktera.",
+      "sr-cyr": "Web of Science Researcher ID \"%s\" у запису особе %s мора садржати тачно 11 карактера.",
+      "en": "The Web of Science Researcher ID \"%s\" in person record %s must contain exactly 11 characters."
+    },
+    "webOfScienceResearcherIdTooLong": {
+      "sr": "Web of Science Researcher ID \"%s\" u zapisu osobe %s mora sadržati tačno 11 karaktera.",
+      "sr-cyr": "Web of Science Researcher ID \"%s\" у запису особе %s мора садржати тачно 11 карактера.",
+      "en": "The Web of Science Researcher ID \"%s\" in person record %s must contain exactly 11 characters."
+    },
+    "invalidWebOfScienceResearcherIdFormat": {
+      "sr": "Web of Science Researcher ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Web of Science Researcher ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The Web of Science Researcher ID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateWebOfScienceResearcherId": {
+      "sr": "Web of Science Researcher ID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Web of Science Researcher ID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The Web of Science Researcher ID \"%s\" in person record %s must be unique."
+    },
+    "invalidScopusAuthorIdFormat": {
+      "sr": "Scopus Author ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Scopus Author ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The Scopus Author ID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateScopusAuthorId": {
+      "sr": "Scopus Author ID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Scopus Author ID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The Scopus Author ID \"%s\" in person record %s must be unique."
+    },
+    "invalidOpenAlexIdFormat": {
+      "sr": "OpenAlex ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "OpenAlex ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The OpenAlex ID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateOpenAlexId": {
+      "sr": "OpenAlex ID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "OpenAlex ID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The OpenAlex ID \"%s\" in person record %s must be unique."
+    },
+    "invalidGoogleScholarIdFormat": {
+      "sr": "Google Scholar ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Google Scholar ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The Google Scholar ID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateGoogleScholarId": {
+      "sr": "Google Scholar ID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Google Scholar ID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The Google Scholar ID \"%s\" in person record %s must be unique."
+    },
+    "invalidLattesIdFormat": {
+      "sr": "Lattes ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Lattes ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The Lattes ID \"%s\" in person record %s is not in a valid format."
+    },
+    "invalidCienciaIdFormat": {
+      "sr": "Ciência ID \"%s\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Ciência ID \"%s\" у запису особе %s није у исправном формату.",
+      "en": "The Ciência ID \"%s\" in person record %s is not in a valid format."
+    },
+    "duplicateAuthenticusId": {
+      "sr": "AuthentiCUS ID \"%s\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "AuthentiCUS ID \"%s\" у запису особе %s мора бити јединствен.",
+      "en": "The AuthentiCUS ID \"%s\" in person record %s must be unique."
+    },
+    "biographyMissing": {
+      "sr": "Biografija osobe mora biti uneta radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Биографија особе мора бити унета ради усклађености са FAIR принципима.",
+      "en": "The person's biography must be informed to comply with the FAIR Principles."
+    },
+    "organisationUnitNameMissing": {
+      "sr": "Naziv organizacione jedinice nedostaje.",
+      "sr-cyr": "Назив организационе јединице недостаје.",
+      "en": "The organisation unit name is missing."
+    },
+    "organisationUnitNameTooLong": {
+      "sr": "Naziv organizacione jedinice \"%s\" prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+      "sr-cyr": "Назив организационе јединице \"%s\" прелази максималну дозвољену дужину од 255 карактера.",
+      "en": "The organisation unit name \"%s\" exceeds the maximum allowed length of 255 characters."
+    },
+    "invalidOrganisationUnitNameFormat": {
+      "sr": "Naziv organizacione jedinice \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "Назив организационе јединице \"%s\" није у исправном формату.",
+      "en": "The organisation unit name \"%s\" is not in a valid format."
+    },
+    "organisationUnitDescriptionMissing": {
+      "sr": "Opis organizacione jedinice mora biti unet radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Опис организационе јединице мора бити унет ради усклађености са FAIR принципима.",
+      "en": "The organisation unit description must be informed to comply with the FAIR Principles."
+    },
+    "invalidRorFormat": {
+      "sr": "ROR identifikator \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "ROR идентификатор \"%s\" није у исправном формату.",
+      "en": "The ROR identifier \"%s\" is not in a valid format."
+    },
+    "duplicateRor": {
+      "sr": "ROR identifikator \"%s\" mora biti jedinstven.",
+      "sr-cyr": "ROR идентификатор \"%s\" мора бити јединствен.",
+      "en": "The ROR identifier \"%s\" must be unique."
+    },
+    "invalidIsniFormat": {
+      "sr": "ISNI \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "ISNI \"%s\" није у исправном формату.",
+      "en": "The ISNI \"%s\" is not in a valid format."
+    },
+    "duplicateIsni": {
+      "sr": "ISNI \"%s\" mora biti jedinstven.",
+      "sr-cyr": "ISNI \"%s\" мора бити јединствен.",
+      "en": "The ISNI \"%s\" must be unique."
+    },
+    "invalidScopusAfidFormat": {
+      "sr": "Scopus AFID \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "Scopus AFID \"%s\" није у исправном формату.",
+      "en": "The Scopus AFID \"%s\" is not in a valid format."
+    },
+    "duplicateScopusAfid": {
+      "sr": "Scopus AFID \"%s\" mora biti jedinstven.",
+      "sr-cyr": "Scopus AFID \"%s\" мора бити јединствен.",
+      "en": "The Scopus AFID \"%s\" must be unique."
+    },
+    "invalidGridFormat": {
+      "sr": "GRID identifikator \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "GRID идентификатор \"%s\" није у исправном формату.",
+      "en": "The GRID identifier \"%s\" is not in a valid format."
+    },
+    "duplicateGrid": {
+      "sr": "GRID identifikator \"%s\" mora biti jedinstven.",
+      "sr-cyr": "GRID идентификатор \"%s\" мора бити јединствен.",
+      "en": "The GRID identifier \"%s\" must be unique."
+    },
+    "invalidRinggoldFormat": {
+      "sr": "Ringgold identifikator \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "Ringgold идентификатор \"%s\" није у исправном формату.",
+      "en": "The Ringgold identifier \"%s\" is not in a valid format."
+    },
+    "duplicateRinggold": {
+      "sr": "Ringgold identifikator \"%s\" mora biti jedinstven.",
+      "sr-cyr": "Ringgold идентификатор \"%s\" мора бити јединствен.",
+      "en": "The Ringgold identifier \"%s\" must be unique."
+    },
+    "invalidFundrefFormat": {
+      "sr": "FundRef identifikator \"%s\" nije u ispravnom formatu.",
+      "sr-cyr": "FundRef идентификатор \"%s\" није у исправном формату.",
+      "en": "The FundRef identifier \"%s\" is not in a valid format."
+    },
+    "dateDissolvedBeforeEstablished": {
+      "sr": "Datum gašenja organizacione jedinice (%s) ne može biti pre datuma osnivanja (%s).",
+      "sr-cyr": "Датум гашења организационе јединице (%s) не може бити пре датума оснивања (%s).",
+      "en": "The organisation unit dissolution date (%s) cannot be before the establishment date (%s)."
     }
   }
 }

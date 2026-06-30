@@ -223,14 +223,17 @@ public class PersonServiceTest {
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
-        MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
-        mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
+        try (MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class)) {
 
-        // when
-        var personDto = personService.readPersonWithBasicInfo(1);
+            mocked.when(() -> PersonConverter.toDTO(expectedPerson))
+                .thenReturn(expectedResponse);
 
-        // then
-        assertEquals(personDto, expectedResponse);
+            // when
+            var personDto = personService.readPersonWithBasicInfo(1);
+
+            // then
+            assertEquals(personDto, expectedResponse);
+        }
     }
 
     @Test
@@ -468,7 +471,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(3)).save(personToUpdate);
+        verify(personRepository, times(1)).save(personToUpdate);
     }
 
     @Test

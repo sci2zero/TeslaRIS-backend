@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -686,6 +687,36 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "taxNumberExistsError"
         );
 
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getGrid(),
+            organisationUnit.getId(),
+            "^grid\\.\\d{4,6}\\.[0-9a-f]{1,2}$",
+            organisationUnitRepository::existsByGrid,
+            organisationUnit::setGrid,
+            "gridFormatError",
+            "gridExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getWikidata(),
+            organisationUnit.getId(),
+            "^Q[1-9]\\d*$",
+            organisationUnitRepository::existsByWikidata,
+            organisationUnit::setWikidata,
+            "wikidataFormatError",
+            "wikidataExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getNationalId(),
+            organisationUnit.getId(),
+            ".*",
+            organisationUnitRepository::existsByNationalId,
+            organisationUnit::setNationalId,
+            "nationalIdFormatError",
+            "nationalIdExistsError"
+        );
+
         if (Objects.nonNull(organisationUnitDTO.getOldId())) {
             organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
         }
@@ -730,7 +761,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setSector(organisationUnitDTO.getSector());
         organisationUnit.setStartup(
             Objects.requireNonNullElse(organisationUnitDTO.getStartup(), false));
+        organisationUnit.setNumberOfEmployees(organisationUnitDTO.getNumberOfEmployees());
         organisationUnit.setDateEstablished(organisationUnitDTO.getDateEstablished());
+        organisationUnit.setDateDissolved(organisationUnitDTO.getDateDissolved());
+
+        if (Objects.nonNull(organisationUnit.getDateDissolved()) &&
+            organisationUnit.getDateDissolved().isBefore(LocalDate.now())) {
+            organisationUnit.setActive(false);
+        } else {
+            organisationUnit.setActive(
+                Objects.requireNonNullElse(organisationUnitDTO.getActive(), false));
+        }
 
         if (Objects.nonNull(organisationUnitDTO.getUris())) {
             IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
