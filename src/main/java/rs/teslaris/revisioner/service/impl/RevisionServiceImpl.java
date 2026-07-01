@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,9 +56,10 @@ public class RevisionServiceImpl implements RevisionService {
 
 
     @Override
+    @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public boolean createRevisionIfChanged(RevisionCreateEvent event) {
+    public void createRevisionIfChanged(RevisionCreateEvent event) {
         try {
             var newJson = canonicalize(objectMapper.writeValueAsString(event.newObject()),
                 event.entityType());
@@ -73,7 +75,7 @@ public class RevisionServiceImpl implements RevisionService {
                 newHash = sha256(newJson);
 
                 if (oldHash.equals(newHash)) {
-                    return false;
+                    return;
                 }
             }
 
@@ -90,8 +92,6 @@ public class RevisionServiceImpl implements RevisionService {
 
             dataQualityCalculatorPtCris.assessDataQuality(revision, newJson, objectMapper);
             repository.save(revision);
-
-            return true;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

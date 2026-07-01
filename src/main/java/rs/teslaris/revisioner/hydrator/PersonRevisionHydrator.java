@@ -2,12 +2,12 @@ package rs.teslaris.revisioner.hydrator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 
 @Component
-public class PersonRevisionHydrator extends RevisionHydrator<PersonalInfoDTO> {
+public class PersonRevisionHydrator extends RevisionHydrator<PersonResponseDTO> {
 
     @Autowired
     public PersonRevisionHydrator(CountryService countryService) {
@@ -20,7 +20,7 @@ public class PersonRevisionHydrator extends RevisionHydrator<PersonalInfoDTO> {
     }
 
     @Override
-    public void hydrate(PersonalInfoDTO dto) {
+    public void hydrate(PersonResponseDTO dto) {
         // Nothing to hydrate
     }
 }

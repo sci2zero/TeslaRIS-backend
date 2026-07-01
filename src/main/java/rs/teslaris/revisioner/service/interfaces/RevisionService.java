@@ -7,7 +7,7 @@ import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 public interface RevisionService {
 
-    boolean createRevisionIfChanged(RevisionCreateEvent event);
+    void createRevisionIfChanged(RevisionCreateEvent event);
 
     List<Instant> getRevisionTimestamps(String entityType, Integer entityId);
 

@@ -3,14 +3,16 @@ package rs.teslaris.revisioner.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -27,8 +29,7 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
@@ -121,10 +122,11 @@ public class DataQualityCalculatorPtCris {
             (dto, rev) -> assessEntity((IntangibleProductDTO) dto, rev)),
         Map.entry(PerformanceRelatedOutputDTO.class,
             (dto, rev) -> assessEntity((PerformanceRelatedOutputDTO) dto, rev)),
-        Map.entry(PersonalInfoDTO.class, (dto, rev) -> assessEntity((PersonalInfoDTO) dto, rev))
+        Map.entry(PersonResponseDTO.class, (dto, rev) -> assessEntity((PersonResponseDTO) dto, rev))
     );
 
 
+    @Async
     public void assessDataQuality(EntityRevision entityRevision, String json,
                                   ObjectMapper objectMapper)
         throws JsonProcessingException {
@@ -352,11 +354,114 @@ public class DataQualityCalculatorPtCris {
         // TODO: metadataLicenseMissing
     }
 
-    private void assessEntity(Set<PersonNameDTO> dto, EntityRevision entityRevision) {
-        if (!CollectionOperations.containsValues(dto)) {
+    private void assessEntity(PersonResponseDTO dto, EntityRevision entityRevision) {
+        var personalInfoDTO = dto.getPersonalInfo();
+
+        if (Objects.isNull(personalInfoDTO.getLocalBirthDate())) {
+            reportIssue(entityRevision, "birthDateMissing");
+        } else {
+            var birthDate = personalInfoDTO.getLocalBirthDate();
+
+            if (birthDate.isBefore(LocalDate.of(1900, 1, 1))) {
+                reportIssue(entityRevision, "birthDateBefore1900");
+            }
+
+            if (birthDate.isAfter(LocalDate.now())) {
+                reportIssue(entityRevision, "birthDateInFuture");
+            }
+        }
+
+        if (!StringUtil.valueExists(personalInfoDTO.getOrcid())) {
+            reportIssue(entityRevision, "noOrcidPresent");
+        } else {
+
+            if (!ORCID_PATTERN.matcher(personalInfoDTO.getOrcid()).matches()) {
+                reportIssue(entityRevision, "invalidOrcidFormat");
+            }
+
+            if (personRepository.existsByOrcid(personalInfoDTO.getOrcid(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateOrcid");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getWebOfScienceResearcherId())) {
+            var rid = personalInfoDTO.getWebOfScienceResearcherId();
+
+            if (rid.length() < 11) {
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort");
+            }
+
+            if (rid.length() > 11) {
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong");
+            }
+
+            if (!WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN.matcher(rid).matches()) {
+                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat");
+            }
+
+            if (personRepository.existsByWebOfScienceId(rid, dto.getId())) {
+                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getScopusAuthorId())) {
+            var id = personalInfoDTO.getScopusAuthorId();
+
+            if (!SCOPUS_AUTHOR_ID_PATTERN.matcher(id).matches()) {
+                reportIssue(entityRevision, "invalidScopusAuthorIdFormat");
+            }
+
+            if (personRepository.existsByScopusAuthorId(id, dto.getId())) {
+                reportIssue(entityRevision, "duplicateScopusAuthorId");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getOpenAlexId())) {
+            if (!OPENALEX_PATTERN.matcher(personalInfoDTO.getOpenAlexId()).matches()) {
+                reportIssue(entityRevision, "invalidOpenAlexIdFormat");
+            }
+
+            if (personRepository.existsByOpenAlexId(personalInfoDTO.getOpenAlexId(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateOpenAlexId");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getScholarId())) {
+            if (!GOOGLE_SCHOLAR_PATTERN.matcher(personalInfoDTO.getScholarId()).matches()) {
+                reportIssue(entityRevision, "invalidGoogleScholarIdFormat");
+            }
+
+            if (personRepository.existsByScholarId(personalInfoDTO.getScholarId(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateGoogleScholarId");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getLattesId())) {
+            if (!LATTES_PATTERN.matcher(personalInfoDTO.getLattesId()).matches()) {
+                reportIssue(entityRevision, "invalidLattesIdFormat");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getNationalScienceId())) {
+            if (!CIENCIA_ID_PATTERN.matcher(personalInfoDTO.getNationalScienceId()).matches()) {
+                reportIssue(entityRevision, "invalidCienciaIdFormat");
+            }
+        }
+
+        if (StringUtil.valueExists(personalInfoDTO.getAuthenticusId())) {
+            if (personRepository.existsByAuthenticusId(personalInfoDTO.getAuthenticusId(),
+                dto.getId())) {
+                reportIssue(entityRevision, "duplicateAuthenticusId");
+            }
+        }
+
+        var personNames = new ArrayList<>(List.of(dto.getPersonName()));
+        personNames.addAll(dto.getPersonOtherNames());
+
+        if (!CollectionOperations.containsValues(personNames)) {
             reportIssue(entityRevision, "nameMissing");
         } else {
-            dto.forEach(name -> {
+            personNames.forEach(name -> {
                 if (!StringUtil.valueExists(name.getFirstname())) {
                     reportIssue(entityRevision, "firstNameMissing");
                 }
@@ -384,109 +489,10 @@ public class DataQualityCalculatorPtCris {
                 }
             });
         }
-    }
 
-    private void assessEntity(PersonalInfoDTO dto, EntityRevision entityRevision) {
-        if (Objects.isNull(dto.getLocalBirthDate())) {
-            reportIssue(entityRevision, "birthDateMissing");
-        } else {
-            var birthDate = dto.getLocalBirthDate();
-
-            if (birthDate.isBefore(LocalDate.of(1900, 1, 1))) {
-                reportIssue(entityRevision, "birthDateBefore1900");
-            }
-
-            if (birthDate.isAfter(LocalDate.now())) {
-                reportIssue(entityRevision, "birthDateInFuture");
-            }
+        if (!CollectionOperations.containsValues(dto.getBiography())) {
+            reportIssue(entityRevision, "biographyMissing");
         }
-
-        if (!StringUtil.valueExists(dto.getOrcid())) {
-            reportIssue(entityRevision, "noOrcidPresent");
-        } else {
-
-            if (!ORCID_PATTERN.matcher(dto.getOrcid()).matches()) {
-                reportIssue(entityRevision, "invalidOrcidFormat");
-            }
-
-            if (personRepository.existsByOrcid(dto.getOrcid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOrcid");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getWebOfScienceResearcherId())) {
-            var rid = dto.getWebOfScienceResearcherId();
-
-            if (rid.length() < 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort");
-            }
-
-            if (rid.length() > 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong");
-            }
-
-            if (!WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN.matcher(rid).matches()) {
-                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat");
-            }
-
-            if (personRepository.existsByWebOfScienceId(rid, dto.getId())) {
-                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getScopusAuthorId())) {
-            var id = dto.getScopusAuthorId();
-
-            if (!SCOPUS_AUTHOR_ID_PATTERN.matcher(id).matches()) {
-                reportIssue(entityRevision, "invalidScopusAuthorIdFormat");
-            }
-
-            if (personRepository.existsByScopusAuthorId(id, dto.getId())) {
-                reportIssue(entityRevision, "duplicateScopusAuthorId");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getOpenAlexId())) {
-            if (!OPENALEX_PATTERN.matcher(dto.getOpenAlexId()).matches()) {
-                reportIssue(entityRevision, "invalidOpenAlexIdFormat");
-            }
-
-            if (personRepository.existsByOpenAlexId(dto.getOpenAlexId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOpenAlexId");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getScholarId())) {
-            if (!GOOGLE_SCHOLAR_PATTERN.matcher(dto.getScholarId()).matches()) {
-                reportIssue(entityRevision, "invalidGoogleScholarIdFormat");
-            }
-
-            if (personRepository.existsByScholarId(dto.getScholarId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateGoogleScholarId");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getLattesId())) {
-            if (!LATTES_PATTERN.matcher(dto.getLattesId()).matches()) {
-                reportIssue(entityRevision, "invalidLattesIdFormat");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getNationalScienceId())) {
-            if (!CIENCIA_ID_PATTERN.matcher(dto.getNationalScienceId()).matches()) {
-                reportIssue(entityRevision, "invalidCienciaIdFormat");
-            }
-        }
-
-        if (StringUtil.valueExists(dto.getAuthenticusId())) {
-            if (personRepository.existsByAuthenticusId(dto.getAuthenticusId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateAuthenticusId");
-            }
-        }
-
-//        if (!CollectionOperations.containsValues(dto.getBiography())) {
-//            reportIssue(entityRevision, "biographyMissing");
-//        }
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
