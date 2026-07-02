@@ -4,16 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -30,7 +33,6 @@ import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -38,9 +40,11 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.revisioner.model.EntityRevision;
+import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataQualityCalculatorPtCris {
 
     private static final Pattern TITLE_PATTERN = Pattern.compile(
@@ -126,14 +130,21 @@ public class DataQualityCalculatorPtCris {
     );
 
 
-    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void assessDataQuality(EntityRevision entityRevision, String json,
-                                  ObjectMapper objectMapper)
-        throws JsonProcessingException {
+                                  ObjectMapper objectMapper, EntityRevisionRepository repository) {
         Class<?> dtoClass = revisionHydratorRegistry.getDtoClass(entityRevision.getEntityType());
 
-        Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
-        assessEntity(dto, entityRevision);
+        try {
+            Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
+
+            assessEntity(dto, entityRevision);
+
+            repository.save(entityRevision);
+        } catch (JsonProcessingException e) {
+            log.error("Unable to complete data quality assessment for {} with ID {}. Reason: {}",
+                entityRevision.getEntityType(), entityRevision.getId(), e.getMessage());
+        }
     }
 
     private void assessEntity(Object dto, EntityRevision entityRevision) {
@@ -637,32 +648,11 @@ public class DataQualityCalculatorPtCris {
     }
 
     private void reportIssue(EntityRevision entityRevision, String remarkKey, Object... params) {
-        var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(remarkKey, params);
-
-        Map<String, MultiLingualContent> existingRemarks =
-            entityRevision.getQualityDataReport()
-                .stream()
-                .collect(Collectors.toMap(
-                    mc -> mc.getLanguage().getLanguageTag(),
-                    Function.identity(),
-                    (left, right) -> left));
-
-        for (var newRemark : newRemarks) {
-            var languageTag = newRemark.getLanguage().getLanguageTag();
-
-            var existing = existingRemarks.get(languageTag);
-
-            if (Objects.isNull(existing)) {
-                entityRevision.getQualityDataReport().add(newRemark);
-                existingRemarks.put(languageTag, newRemark);
-            } else {
-                existing.setContent(
-                    existing.getContent()
-                        + System.lineSeparator()
-                        + System.lineSeparator()
-                        + newRemark.getContent()
-                );
-            }
+        if (Objects.isNull(entityRevision.getQualityDataReport())) {
+            entityRevision.setQualityDataReport(new HashSet<>());
         }
+
+        entityRevision.getQualityDataReport()
+            .add(remarkKey + ":" + Strings.join(Arrays.asList(params), ','));
     }
 }

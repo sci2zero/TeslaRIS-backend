@@ -1,38 +1,41 @@
 package rs.teslaris.revisioner.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
+import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
-import rs.teslaris.revisioner.util.DataQualityCalculatorPtCris;
+import rs.teslaris.revisioner.util.ObjectMapperProvider;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 
@@ -44,15 +47,9 @@ public class RevisionServiceImpl implements RevisionService {
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
 
-    private final DataQualityCalculatorPtCris dataQualityCalculatorPtCris;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final ObjectMapper objectMapper =
-        JsonMapper.builder()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .addModule(new JavaTimeModule())
-            .build();
+    private final ObjectMapper objectMapper = ObjectMapperProvider.provideObjectmapper();
 
 
     @Override
@@ -88,9 +85,12 @@ public class RevisionServiceImpl implements RevisionService {
                     .compressedContent(
                         CompressionUtil.compress(newJson)
                     )
+                    .qualityDataReport(new HashSet<>())
+                    .qualityDataScore(0.0)
                     .build();
 
-            dataQualityCalculatorPtCris.assessDataQuality(revision, newJson, objectMapper);
+            applicationEventPublisher.publishEvent(
+                new DataQualityAssessmentEvent(revision, newJson));
             repository.save(revision);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -141,6 +141,62 @@ public class RevisionServiceImpl implements RevisionService {
                         "Unable to load revisions at given timestamp. Reason: " + e.getMessage());
                 }
             });
+    }
+
+    @Override
+    public List<MultilingualContentDTO> getQualityReportAtTimestamp(String entityType,
+                                                                    Integer entityId,
+                                                                    Instant timestamp) {
+        var entityRevision = repository
+            .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
+                entityType, entityId, timestamp);
+
+        if (entityRevision.isEmpty()) {
+            return List.of();
+        }
+
+        var qualityReport = new ArrayList<MultilingualContentDTO>();
+
+        entityRevision.get().getQualityDataReport().forEach(reportEntry -> {
+            var keyParams = reportEntry.split(":");
+            var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(keyParams[0],
+                (Object) keyParams[1].split(","));
+
+            Map<String, MultilingualContentDTO> existingRemarks =
+                qualityReport
+                    .stream()
+                    .collect(Collectors.toMap(
+                        MultilingualContentDTO::getLanguageTag,
+                        Function.identity(),
+                        (left, right) -> left));
+
+            for (var newRemark : newRemarks) {
+                var languageTag = newRemark.getLanguage().getLanguageTag();
+
+                var existing = existingRemarks.get(languageTag);
+
+                if (Objects.isNull(existing)) {
+                    var dto = new MultilingualContentDTO(
+                        newRemark.getLanguage().getId(),
+                        newRemark.getLanguage().getLanguageTag(),
+                        newRemark.getContent(),
+                        newRemark.getPriority()
+                    );
+
+                    qualityReport.add(dto);
+                    existingRemarks.put(languageTag, dto);
+                } else {
+                    existing.setContent(
+                        existing.getContent()
+                            + System.lineSeparator()
+                            + System.lineSeparator()
+                            + newRemark.getContent()
+                    );
+                }
+            }
+        });
+
+        return List.of();
     }
 
     private String canonicalize(String json, String entityType)
