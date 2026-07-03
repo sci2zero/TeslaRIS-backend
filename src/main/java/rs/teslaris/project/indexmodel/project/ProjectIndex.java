@@ -2,6 +2,7 @@ package rs.teslaris.project.indexmodel.project;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,4 +39,10 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
+
+    @Field(type = FieldType.Date, name = "date_from")
+    private LocalDate dateFrom;
+
+    @Field(type = FieldType.Date, name = "date_to")
+    private LocalDate dateTo;
 }

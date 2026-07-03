@@ -26,6 +26,7 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
@@ -42,6 +43,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceCons
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -140,6 +143,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         setBookSeriesFields(bookSeries, bookSeriesDTO, oldContributorIds);
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.BOOK_SERIES.name(),
+                newBookSeries.getId(),
+                null,
+                PublicationSeriesConverter.toDTO(newBookSeries),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexBookSeries(newBookSeries, new BookSeriesIndex());
         }
@@ -151,6 +165,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Transactional
     public void updateBookSeries(Integer bookSeriesId, BookSeriesDTO bookSeriesDTO) {
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.BOOK_SERIES.name(),
+                bookSeriesId,
+                PublicationSeriesConverter.toDTO(bookSeriesToUpdate),
+                bookSeriesDTO,
+                RevisionType.UPDATE
+            )
+        );
+
         bookSeriesToUpdate.getLanguages().clear();
 
         var oldContributorIds = clearPublicationSeriesCommonFields(bookSeriesToUpdate);

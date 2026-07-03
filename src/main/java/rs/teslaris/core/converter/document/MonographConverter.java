@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -39,6 +40,9 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(monograph.getPublisher())) {
             monographResponseDTO.setPublisherId(monograph.getPublisher().getId());
+            monographResponseDTO.setPublisherName(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    monograph.getPublisher().getName()));
         } else {
             monographResponseDTO.setAuthorReprint(monograph.getAuthorReprint());
         }
@@ -63,6 +67,8 @@ public class MonographConverter extends DocumentPublicationConverter {
         }
 
         monographResponseDTO.setPublicationSeriesId(publicationSeries.getId());
+        monographResponseDTO.setPublicationSeriesName(
+            MultilingualContentConverter.getMultilingualContentDTO(publicationSeries.getTitle()));
     }
 
     public static BibTeXEntry toBibTexEntry(Monograph monograph, String defaultLanguageTag) {

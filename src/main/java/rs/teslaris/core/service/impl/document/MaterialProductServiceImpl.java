@@ -42,6 +42,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -131,6 +133,16 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
         var savedProduct = materialProductJPAService.save(newProduct);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                savedProduct.getId(),
+                null,
+                MaterialProductConverter.toDTO(savedProduct),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
         }
@@ -145,6 +157,16 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
     public void editMaterialProduct(Integer materialProductId,
                                     MaterialProductDTO materialProductDTO) {
         var materialProductToUpdate = materialProductJPAService.findOne(materialProductId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                materialProductId,
+                MaterialProductConverter.toDTO(materialProductToUpdate),
+                materialProductDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkForDocumentDate(materialProductDTO);
         var oldContributorIds = clearCommonFields(materialProductToUpdate);

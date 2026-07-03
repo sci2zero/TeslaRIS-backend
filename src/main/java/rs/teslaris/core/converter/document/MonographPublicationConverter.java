@@ -31,6 +31,9 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         monographPublicationDTO.setNumberOfPages(monographPublication.getNumberOfPages());
         monographPublicationDTO.setArticleNumber(monographPublication.getArticleNumber());
         monographPublicationDTO.setMonographId(monographPublication.getMonograph().getId());
+        monographPublicationDTO.setMonographName(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                monographPublication.getMonograph().getTitle()));
 
         monographPublicationDTO.setSection(
             MultilingualContentConverter.getMultilingualContentDTO(

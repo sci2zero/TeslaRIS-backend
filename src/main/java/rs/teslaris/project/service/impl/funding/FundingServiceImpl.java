@@ -27,7 +27,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
@@ -166,7 +165,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             var project = projectService.findOne(fundingDTO.getProjectId());
             funding.setProject(project);
         } else {
-            throw new ReferenceConstraintException("Funding must be bound to a project.");
+            funding.setProject(null);
         }
 
         if (Objects.nonNull(fundingDTO.getFundingCallId())) {

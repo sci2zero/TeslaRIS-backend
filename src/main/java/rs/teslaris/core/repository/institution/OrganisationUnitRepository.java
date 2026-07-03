@@ -56,6 +56,18 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     boolean existsByScopusAfid(String scopusAfid, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.grid = :grid AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByGrid(String grid, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.wikidata = :wikidata AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByWikidata(String wikidata, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.nationalId = :nationalId AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByNationalId(String nationalId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
         "FROM OrganisationUnit ou WHERE ou.openAlexId = :openAlexId AND (:id IS NULL OR ou.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 

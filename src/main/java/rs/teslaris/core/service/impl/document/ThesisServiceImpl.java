@@ -104,6 +104,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -281,6 +283,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedThesis = thesisJPAService.save(newThesis);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                savedThesis.getId(),
+                null,
+                ThesisConverter.toDTO(savedThesis),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }
@@ -294,6 +306,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                thesisId,
+                ThesisConverter.toDTO(thesisToUpdate),
+                thesisDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkIfAvailableForEditing(thesisToUpdate);
 

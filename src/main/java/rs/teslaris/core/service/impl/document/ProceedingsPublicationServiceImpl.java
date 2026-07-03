@@ -52,6 +52,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -183,6 +185,16 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                savedPublication.getId(),
+                null,
+                ProceedingsPublicationConverter.toDTO(savedPublication),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
@@ -204,6 +216,16 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                            ProceedingsPublicationDTO publicationDTO) {
         var publicationToUpdate =
             proceedingPublicationJPAService.findOne(publicationId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                publicationId,
+                ProceedingsPublicationConverter.toDTO(publicationToUpdate),
+                publicationDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var oldConferenceId = publicationToUpdate.getEvent().getId();
 

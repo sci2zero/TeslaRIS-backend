@@ -42,6 +42,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -138,6 +140,16 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedPatent = patentJPAService.save(newPatent);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PATENT.name(),
+                savedPatent.getId(),
+                null,
+                PatentConverter.toDTO(savedPatent),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }
@@ -151,6 +163,16 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PATENT.name(),
+                patentId,
+                PatentConverter.toDTO(patentToUpdate),
+                patentDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkForDocumentDate(patentDTO);
         var oldContributorIds = clearCommonFields(patentToUpdate);

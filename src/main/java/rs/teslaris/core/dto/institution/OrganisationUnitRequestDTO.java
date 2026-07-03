@@ -3,6 +3,7 @@ package rs.teslaris.core.dto.institution;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -35,7 +36,7 @@ public class OrganisationUnitRequestDTO {
     private List<MultilingualContentDTO> keyword;
 
     @NotNull(message = "You have to provide research areas.")
-    private List<Integer> researchAreasId;
+    private List<Integer> researchAreasId = new ArrayList<>();
 
     private GeoLocationDTO location;
 
@@ -54,6 +55,12 @@ public class OrganisationUnitRequestDTO {
     private String isni;
 
     private String fctId;
+
+    private String grid;
+
+    private String wikidata;
+
+    private String nationalId;
 
     private String taxNumber;
 
@@ -87,5 +94,11 @@ public class OrganisationUnitRequestDTO {
 
     private LocalDate dateEstablished;
 
+    private LocalDate dateDissolved;
+
     private PostalAddressDTO postalAddress;
+
+    private String numberOfEmployees;
+
+    private Boolean active;
 }

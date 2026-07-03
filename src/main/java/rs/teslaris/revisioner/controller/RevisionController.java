@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 
 @RestController
@@ -34,5 +35,12 @@ public class RevisionController {
             .getRevisionAtTimestamp(entityType, entityId, timestamp)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping(value = "/quality-report/{entityType}/{entityId}/at", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<MultilingualContentDTO> getQualityReportAtDate(@PathVariable String entityType,
+                                                               @PathVariable Integer entityId,
+                                                               @RequestParam Instant timestamp) {
+        return revisionService.getQualityReportAtTimestamp(entityType, entityId, timestamp);
     }
 }

@@ -178,6 +178,7 @@ public class JournalPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        publicationToUpdate.setJournal(new Journal());
 
         when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publicationToUpdate);
         when(journalService.findJournalById(any())).thenReturn(new Journal() {{

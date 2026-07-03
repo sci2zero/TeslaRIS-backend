@@ -1,14 +1,505 @@
 {
   "fieldExclusions": {
     "DATASET": [],
+    "PATENT": [
+      "publisherName"
+    ],
     "INTANGIBLE_PRODUCT": [
       "researchAreas"
-    ]
+    ],
+    "MONOGRAPH": [
+      "publicationSeriesName",
+      "publisherName"
+    ],
+    "MONOGRAPH_PUBLICATION": [
+      "monographName"
+    ],
+    "PROCEEDINGS": [],
+    "PROCEEDINGS_PUBLICATION": [
+      "proceedingsName"
+    ],
+    "JOURNAL_PUBLICATION": [],
+    "THESIS": [
+      "languageCode"
+    ],
+    "GENETIC_MATERIAL": [],
+    "MATERIAL_PRODUCT": [
+      "researchAreas"
+    ],
+    "PERFORMANCE_RELATED_OUTPUT": [
+      "researchAreas",
+      "languageTags"
+    ],
+    "ORGANISATION_UNIT": [
+      "researchAreas",
+      "logoServerFilename",
+      "logoBackgroundHex",
+      "superInstitutionId",
+      "superInstitutionName"
+    ],
+    "JOURNAL": [
+      "languageTagNames"
+    ],
+    "BOOK_SERIES": [
+      "languageTagNames"
+    ],
+    "PERSON": [],
+    "CONFERENCE": [],
+    "COURSE": [],
+    "EXHIBITION": [],
+    "OTHER_EVENT": [],
+    "PUBLISHER": []
   },
   "migrationMappings": {
     "DATASET": {
-      "doi": "grabbahand",
-      "asdasda": "asda"
+      "oldFieldNameExample": "newFieldNameExample"
+    }
+  },
+  "dataQualityRemarks": {
+    "titleMissing": {
+      "sr": "Polje naslov nedostaje u izlaznom zapisu {0}. Polje naslov je obavezno.",
+      "sr-cyr": "Поље наслов недостаје у излазном запису {0}. Поље наслов је обавезно.",
+      "en": "The title field is missing in output record {0}. The title field is mandatory."
+    },
+    "titleTooLong": {
+      "sr": "Naslov \"{0}\" u izlaznom zapisu %s prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+      "sr-cyr": "Наслов \"{0}\" у излазном запису %s прелази максималну дозвољену дужину од 255 карактера.",
+      "en": "The title \"{0}\" in output record %s exceeds the maximum allowed length of 255 characters."
+    },
+    "invalidTitleFormat": {
+      "sr": "Naslov \"{0}\" u izlaznom zapisu %s sadrži nedozvoljene karaktere.",
+      "sr-cyr": "Наслов \"{0}\" у излазном запису %s садржи недозвољене карактере.",
+      "en": "The title \"{0}\" in output record %s contains invalid characters."
+    },
+    "descriptionMissing": {
+      "sr": "Opis izlaznog zapisa {0} mora biti unet radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Опис излазног записа {0} мора бити унет ради усклађености са FAIR принципима.",
+      "en": "The output description for record {0} must be informed to comply with the FAIR Principles."
+    },
+    "contributorsMissing": {
+      "sr": "Polje autori/saradnici nedostaje u izlaznom zapisu {0}. Polje je obavezno.",
+      "sr-cyr": "Поље аутори/сарадници недостаје у излазном запису {0}. Поље је обавезно.",
+      "en": "The contributors field is missing in output record {0}. The contributors field is mandatory."
+    },
+    "noManagedContributor": {
+      "sr": "Najmanje jedna upravljana osoba mora biti povezana sa izlaznim zapisom {0}.",
+      "sr-cyr": "Најмање једна управљана особа мора бити повезана са излазним записом {0}.",
+      "en": "At least one managed person should be linked with output record {0}."
+    },
+    "documentDateMissing": {
+      "sr": "Datum publikovanja nedostaje u izlaznom zapisu {0}. Polje je obavezno.",
+      "sr-cyr": "Датум публиковања недостаје у излазном запису {0}. Поље је обавезно.",
+      "en": "The output publication date is missing in output record {0}. The publication date field is mandatory."
+    },
+    "documentDateBefore1950": {
+      "sr": "Datum publikovanja ({0}) u izlaznom zapisu {1} ne može biti pre 1950. godine.",
+      "sr-cyr": "Датум публиковања ({0}) у излазном запису {1} не може бити пре 1950. године.",
+      "en": "The output publication date ({0}) in output record {1} cannot be before the year 1950."
+    },
+    "documentDateTooFarInFuture": {
+      "sr": "Datum publikovanja ({0}) u izlaznom zapisu {1} može biti najviše tri godine u budućnosti.",
+      "sr-cyr": "Датум публиковања ({0}) у излазном запису {1} може бити највише три године у будућности.",
+      "en": "The output publication date ({0}) in output record {1} can only be in the near future (+3 years)."
+    },
+    "invalidDocumentDateFormat": {
+      "sr": "Datum publikovanja \"{0}\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "Датум публиковања \"{0}\" у излазном запису %s није у исправном формату.",
+      "en": "The publication date \"{0}\" in output record %s is not in a valid format."
+    },
+    "noDoiPresent": {
+      "sr": "DOI nedostaje u izlaznom zapisu {0}. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "DOI недостаје у излазном запису {0}. Иако није обавезан, препоручен је.",
+      "en": "The DOI field is missing in output record {0}. Although the DOI field is not mandatory, it is recommended."
+    },
+    "doiTooShort": {
+      "sr": "DOI \"{0}\" u izlaznom zapisu %s mora sadržati najmanje 9 karaktera.",
+      "sr-cyr": "DOI \"{0}\" у излазном запису %s мора садржати најмање 9 карактера.",
+      "en": "The DOI \"{0}\" in output record %s must contain at least 9 characters."
+    },
+    "doiTooLong": {
+      "sr": "DOI \"{0}\" u izlaznom zapisu %s prelazi maksimalnu dužinu od 255 karaktera.",
+      "sr-cyr": "DOI \"{0}\" у излазном запису %s прелази максималну дужину од 255 карактера.",
+      "en": "The DOI \"{0}\" in output record %s exceeds the maximum allowed length of 255 characters."
+    },
+    "invalidDoiFormat": {
+      "sr": "DOI \"{0}\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "DOI \"{0}\" у излазном запису %s није у исправном формату.",
+      "en": "The DOI \"{0}\" in output record %s is not in a valid format."
+    },
+    "duplicateDoi": {
+      "sr": "DOI \"{0}\" u izlaznom zapisu %s već postoji u drugom zapisu.",
+      "sr-cyr": "DOI \"{0}\" у излазном запису %s већ постоји у другом запису.",
+      "en": "The DOI \"{0}\" in output record %s must be unique."
+    },
+    "doiNotResolvable": {
+      "sr": "DOI \"{0}\" u izlaznom zapisu %s nije razrešiv putem DOI sistema.",
+      "sr-cyr": "DOI \"{0}\" у излазном запису %s није разрешив путем DOI система.",
+      "en": "The DOI \"{0}\" in output record %s must be resolvable through DOI.org."
+    },
+    "noHandlePresent": {
+      "sr": "Handle identifikator nedostaje u izlaznom zapisu {0}. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "Handle идентификатор недостаје у излазном запису {0}. Иако није обавезан, препоручен је.",
+      "en": "The Handle field is missing in output record {0}. Although the Handle field is not mandatory, it is recommended."
+    },
+    "invalidHandleFormat": {
+      "sr": "Handle \"{0}\" u izlaznom zapisu %s nije u ispravnom formatu.",
+      "sr-cyr": "Handle \"{0}\" у излазном запису %s није у исправном формату.",
+      "en": "The Handle \"{0}\" in output record %s is not in a valid format."
+    },
+    "duplicateHandle": {
+      "sr": "Handle \"{0}\" u izlaznom zapisu %s mora biti jedinstven.",
+      "sr-cyr": "Handle \"{0}\" у излазном запису %s мора бити јединствен.",
+      "en": "The Handle \"{0}\" in output record %s must be unique."
+    },
+    "handleNotResolvable": {
+      "sr": "Handle \"{0}\" u izlaznom zapisu %s nije razrešiv.",
+      "sr-cyr": "Handle \"{0}\" у излазном запису %s није разрешив.",
+      "en": "The Handle \"{0}\" in output record %s must be resolvable."
+    },
+    "noIdentifierPresent": {
+      "sr": "Izlazni zapis {0} mora sadržati najmanje jedan identifikator.",
+      "sr-cyr": "Излазни запис {0} мора садржати најмање један идентификатор.",
+      "en": "The output record {0} must contain at least one identifier."
+    },
+    "openAccessMissing": {
+      "sr": "Polje otvoreni pristup nije definisano za izlazni zapis {0}.",
+      "sr-cyr": "Поље отворени приступ није дефинисано за излазни запис {0}.",
+      "en": "The open access field is missing in output record {0}. Although not mandatory, it is recommended."
+    },
+    "topicAcceptanceDateMissing": {
+      "sr": "Datum prihvatanja teme nedostaje za tezu {0}.",
+      "sr-cyr": "Датум прихватања теме недостаје за тезу {0}.",
+      "en": "The topic acceptance date field is missing in thesis record {0}."
+    },
+    "topicAcceptanceDateBefore1950": {
+      "sr": "Datum prihvatanja teme ({0}) za tezu {1} ne može biti pre 1950. godine.",
+      "sr-cyr": "Датум прихватања теме ({0}) за тезу {1} не може бити пре 1950. године.",
+      "en": "The topic acceptance date ({0}) in thesis record {1} cannot be before the year 1950."
+    },
+    "topicAcceptanceDateFuture": {
+      "sr": "Datum prihvatanja teme ({0}) za tezu {1} ne može biti u budućnosti.",
+      "sr-cyr": "Датум прихватања теме ({0}) за тезу {1} не може бити у будућности.",
+      "en": "The topic acceptance date ({0}) in thesis record {1} cannot be in the future."
+    },
+    "thesisDefenceDateMissing": {
+      "sr": "Datum odbrane teze nedostaje za tezu {0}.",
+      "sr-cyr": "Датум одбране тезе недостаје за тезу {0}.",
+      "en": "The thesis defence date field is missing in thesis record {0}."
+    },
+    "defenceBeforeAcceptance": {
+      "sr": "Datum odbrane ({0}) ne može biti pre datuma prihvatanja teme za tezu {1}.",
+      "sr-cyr": "Датум одбране ({0}) не може бити пре датума прихватања теме за тезу {1}.",
+      "en": "The thesis defence date ({0}) cannot be before the topic acceptance date."
+    },
+    "defenceTooFarInFuture": {
+      "sr": "Datum odbrane ({0}) može biti najviše godinu dana u budućnosti za tezu {1}.",
+      "sr-cyr": "Датум одбране ({0}) може бити највише годину дана у будућности за тезу {1}.",
+      "en": "The thesis defence date ({0}) can only be in the near future (+1 year)."
+    },
+    "numberOfPagesBelowMinimum": {
+      "sr": "Broj strana ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број страна ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of pages ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfPagesAboveMaximum": {
+      "sr": "Broj strana ({0}) u tezi {1} mora biti manji ili jednak 5000.",
+      "sr-cyr": "Број страна ({0}) у тези {1} мора бити мањи или једнак 5000.",
+      "en": "The number of pages ({0}) in thesis record {1} must be less than or equal to 5000."
+    },
+    "numberOfChaptersBelowMinimum": {
+      "sr": "Broj poglavlja ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број поглавља ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of chapters ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfChaptersAboveMaximum": {
+      "sr": "Broj poglavlja ({0}) u tezi {1} mora biti manji ili jednak 30.",
+      "sr-cyr": "Број поглавља ({0}) у тези {1} мора бити мањи или једнак 30.",
+      "en": "The number of chapters ({0}) in thesis record {1} must be less than or equal to 30."
+    },
+    "numberOfReferencesBelowMinimum": {
+      "sr": "Broj referenci ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број референци ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of references ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfReferencesAboveMaximum": {
+      "sr": "Broj referenci ({0}) u tezi {1} mora biti manji ili jednak 5000.",
+      "sr-cyr": "Број референци ({0}) у тези {1} мора бити мањи или једнак 5000.",
+      "en": "The number of references ({0}) in thesis record {1} must be less than or equal to 5000."
+    },
+    "numberOfTablesBelowMinimum": {
+      "sr": "Broj tabela ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број табела ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of tables ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfTablesAboveMaximum": {
+      "sr": "Broj tabela ({0}) u tezi {1} mora biti manji ili jednak 200.",
+      "sr-cyr": "Број табела ({0}) у тези {1} мора бити мањи или једнак 200.",
+      "en": "The number of tables ({0}) in thesis record {1} must be less than or equal to 200."
+    },
+    "numberOfIllustrationsBelowMinimum": {
+      "sr": "Broj ilustracija ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број илустрација ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of illustrations ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfIllustrationsAboveMaximum": {
+      "sr": "Broj ilustracija ({0}) u tezi {1} mora biti manji ili jednak 200.",
+      "sr-cyr": "Број илустрација ({0}) у тези {1} мора бити мањи или једнак 200.",
+      "en": "The number of illustrations ({0}) in thesis record {1} must be less than or equal to 200."
+    },
+    "numberOfGraphsBelowMinimum": {
+      "sr": "Broj grafikona ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број графикона ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of graphs ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfGraphsAboveMaximum": {
+      "sr": "Broj grafikona ({0}) u tezi {1} mora biti manji ili jednak 200.",
+      "sr-cyr": "Број графикона ({0}) у тези {1} мора бити мањи или једнак 200.",
+      "en": "The number of graphs ({0}) in thesis record {1} must be less than or equal to 200."
+    },
+    "numberOfAppendicesBelowMinimum": {
+      "sr": "Broj priloga ({0}) u tezi {1} mora biti veći ili jednak 1.",
+      "sr-cyr": "Број прилога ({0}) у тези {1} мора бити већи или једнак 1.",
+      "en": "The number of appendices ({0}) in thesis record {1} must be greater than or equal to 1."
+    },
+    "numberOfAppendicesAboveMaximum": {
+      "sr": "Broj priloga ({0}) u tezi {1} mora biti manji ili jednak 30.",
+      "sr-cyr": "Број прилога ({0}) у тези {1} мора бити мањи или једнак 30.",
+      "en": "The number of appendices ({0}) in thesis record {1} must be less than or equal to 30."
+    },
+    "researchAreasMissing": {
+      "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom {0}. Iako nije obavezna, preporučena je.",
+      "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом {0}. Иако није обавезна, препоручена је.",
+      "en": "There is no research area linked with output record {0}. Although research areas are not mandatory, they are recommended."
+    },
+    "metadataLicenseMissing": {
+      "sr": "Licenca metapodataka mora biti definisana za zapis {0} radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Лиценца метаподатака мора бити дефинисана за запис {0} ради усклађености са FAIR принципима.",
+      "en": "The metadata license for record {0} must be informed to comply with the FAIR Principles."
+    },
+    "handleTooShort": {
+      "sr": "Handle \"{0}\" u zapisu %s mora sadržati najmanje 8 karaktera.",
+      "sr-cyr": "Handle \"{0}\" у запису %s мора садржати најмање 8 карактера.",
+      "en": "The Handle \"{0}\" in output record %s must contain at least 8 characters."
+    },
+    "handleTooLong": {
+      "sr": "Handle \"{0}\" u zapisu %s prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+      "sr-cyr": "Handle \"{0}\" у запису %s прелази максималну дозвољену дужину од 255 карактера.",
+      "en": "The Handle \"{0}\" in output record %s exceeds the maximum allowed length of 255 characters."
+    },
+    "nameMissing": {
+      "sr": "Ime osobe nedostaje u zapisu {0}. Polje je obavezno.",
+      "sr-cyr": "Име особе недостаје у запису {0}. Поље је обавезно.",
+      "en": "The person's name is missing in record {0}. The field is mandatory."
+    },
+    "firstNameMissing": {
+      "sr": "Lično ime nedostaje u zapisu osobe {0}.",
+      "sr-cyr": "Лично име недостаје у запису особе {0}.",
+      "en": "The first name is missing in person record {0}."
+    },
+    "firstNameTooLong": {
+      "sr": "Lično ime \"{0}\" u zapisu osobe %s prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+      "sr-cyr": "Лично име \"{0}\" у запису особе %s прелази максималну дозвољену дужину од 100 карактера.",
+      "en": "The first name \"{0}\" in person record %s exceeds the maximum allowed length of 100 characters."
+    },
+    "invalidFirstNameFormat": {
+      "sr": "Lično ime \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Лично име \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The first name \"{0}\" in person record %s is not in a valid format."
+    },
+    "lastNameMissing": {
+      "sr": "Prezime nedostaje u zapisu osobe {0}.",
+      "sr-cyr": "Презиме недостаје у запису особе {0}.",
+      "en": "The last name is missing in person record {0}."
+    },
+    "lastNameTooLong": {
+      "sr": "Prezime \"{0}\" u zapisu osobe %s prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+      "sr-cyr": "Презиме \"{0}\" у запису особе %s прелази максималну дозвољену дужину од 100 карактера.",
+      "en": "The last name \"{0}\" in person record %s exceeds the maximum allowed length of 100 characters."
+    },
+    "invalidLastNameFormat": {
+      "sr": "Prezime \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Презиме \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The last name \"{0}\" in person record %s is not in a valid format."
+    },
+    "birthDateMissing": {
+      "sr": "Datum rođenja nedostaje u zapisu osobe {0}.",
+      "sr-cyr": "Датум рођења недостаје у запису особе {0}.",
+      "en": "The birth date is missing in person record {0}."
+    },
+    "birthDateBefore1900": {
+      "sr": "Datum rođenja ({0}) u zapisu osobe {1} ne može biti pre 1900. godine.",
+      "sr-cyr": "Датум рођења ({0}) у запису особе {1} не може бити пре 1900. године.",
+      "en": "The birth date ({0}) in person record {1} cannot be before the year 1900."
+    },
+    "birthDateInFuture": {
+      "sr": "Datum rođenja ({0}) u zapisu osobe {1} ne može biti u budućnosti.",
+      "sr-cyr": "Датум рођења ({0}) у запису особе {1} не може бити у будућности.",
+      "en": "The birth date ({0}) in person record {1} cannot be in the future."
+    },
+    "noOrcidPresent": {
+      "sr": "ORCID identifikator nije unet za osobu {0}. Iako nije obavezan, preporučen je.",
+      "sr-cyr": "ORCID идентификатор није унет за особу {0}. Иако није обавезан, препоручен је.",
+      "en": "The ORCID identifier is missing in person record {0}. Although it is not mandatory, it is recommended."
+    },
+    "invalidOrcidFormat": {
+      "sr": "ORCID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "ORCID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The ORCID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateOrcid": {
+      "sr": "ORCID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "ORCID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The ORCID \"{0}\" in person record %s must be unique."
+    },
+    "webOfScienceResearcherIdTooShort": {
+      "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe %s mora sadržati tačno 11 karaktera.",
+      "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе %s мора садржати тачно 11 карактера.",
+      "en": "The Web of Science Researcher ID \"{0}\" in person record %s must contain exactly 11 characters."
+    },
+    "webOfScienceResearcherIdTooLong": {
+      "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe %s mora sadržati tačno 11 karaktera.",
+      "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе %s мора садржати тачно 11 карактера.",
+      "en": "The Web of Science Researcher ID \"{0}\" in person record %s must contain exactly 11 characters."
+    },
+    "invalidWebOfScienceResearcherIdFormat": {
+      "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The Web of Science Researcher ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateWebOfScienceResearcherId": {
+      "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The Web of Science Researcher ID \"{0}\" in person record %s must be unique."
+    },
+    "invalidScopusAuthorIdFormat": {
+      "sr": "Scopus Author ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Scopus Author ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The Scopus Author ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateScopusAuthorId": {
+      "sr": "Scopus Author ID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Scopus Author ID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The Scopus Author ID \"{0}\" in person record %s must be unique."
+    },
+    "invalidOpenAlexIdFormat": {
+      "sr": "OpenAlex ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "OpenAlex ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The OpenAlex ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateOpenAlexId": {
+      "sr": "OpenAlex ID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "OpenAlex ID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The OpenAlex ID \"{0}\" in person record %s must be unique."
+    },
+    "invalidGoogleScholarIdFormat": {
+      "sr": "Google Scholar ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Google Scholar ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The Google Scholar ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateGoogleScholarId": {
+      "sr": "Google Scholar ID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "Google Scholar ID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The Google Scholar ID \"{0}\" in person record %s must be unique."
+    },
+    "invalidLattesIdFormat": {
+      "sr": "Lattes ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Lattes ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The Lattes ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "invalidCienciaIdFormat": {
+      "sr": "Ciência ID \"{0}\" u zapisu osobe %s nije u ispravnom formatu.",
+      "sr-cyr": "Ciência ID \"{0}\" у запису особе %s није у исправном формату.",
+      "en": "The Ciência ID \"{0}\" in person record %s is not in a valid format."
+    },
+    "duplicateAuthenticusId": {
+      "sr": "AuthentiCUS ID \"{0}\" u zapisu osobe %s mora biti jedinstven.",
+      "sr-cyr": "AuthentiCUS ID \"{0}\" у запису особе %s мора бити јединствен.",
+      "en": "The AuthentiCUS ID \"{0}\" in person record %s must be unique."
+    },
+    "biographyMissing": {
+      "sr": "Biografija osobe mora biti uneta radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Биографија особе мора бити унета ради усклађености са FAIR принципима.",
+      "en": "The person's biography must be informed to comply with the FAIR Principles."
+    },
+    "organisationUnitNameMissing": {
+      "sr": "Naziv organizacione jedinice nedostaje.",
+      "sr-cyr": "Назив организационе јединице недостаје.",
+      "en": "The organisation unit name is missing."
+    },
+    "organisationUnitNameTooLong": {
+      "sr": "Naziv organizacione jedinice \"{0}\" prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+      "sr-cyr": "Назив организационе јединице \"{0}\" прелази максималну дозвољену дужину од 255 карактера.",
+      "en": "The organisation unit name \"{0}\" exceeds the maximum allowed length of 255 characters."
+    },
+    "invalidOrganisationUnitNameFormat": {
+      "sr": "Naziv organizacione jedinice \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "Назив организационе јединице \"{0}\" није у исправном формату.",
+      "en": "The organisation unit name \"{0}\" is not in a valid format."
+    },
+    "organisationUnitDescriptionMissing": {
+      "sr": "Opis organizacione jedinice mora biti unet radi usklađenosti sa FAIR principima.",
+      "sr-cyr": "Опис организационе јединице мора бити унет ради усклађености са FAIR принципима.",
+      "en": "The organisation unit description must be informed to comply with the FAIR Principles."
+    },
+    "invalidRorFormat": {
+      "sr": "ROR identifikator \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "ROR идентификатор \"{0}\" није у исправном формату.",
+      "en": "The ROR identifier \"{0}\" is not in a valid format."
+    },
+    "duplicateRor": {
+      "sr": "ROR identifikator \"{0}\" mora biti jedinstven.",
+      "sr-cyr": "ROR идентификатор \"{0}\" мора бити јединствен.",
+      "en": "The ROR identifier \"{0}\" must be unique."
+    },
+    "invalidIsniFormat": {
+      "sr": "ISNI \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "ISNI \"{0}\" није у исправном формату.",
+      "en": "The ISNI \"{0}\" is not in a valid format."
+    },
+    "duplicateIsni": {
+      "sr": "ISNI \"{0}\" mora biti jedinstven.",
+      "sr-cyr": "ISNI \"{0}\" мора бити јединствен.",
+      "en": "The ISNI \"{0}\" must be unique."
+    },
+    "invalidScopusAfidFormat": {
+      "sr": "Scopus AFID \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "Scopus AFID \"{0}\" није у исправном формату.",
+      "en": "The Scopus AFID \"{0}\" is not in a valid format."
+    },
+    "duplicateScopusAfid": {
+      "sr": "Scopus AFID \"{0}\" mora biti jedinstven.",
+      "sr-cyr": "Scopus AFID \"{0}\" мора бити јединствен.",
+      "en": "The Scopus AFID \"{0}\" must be unique."
+    },
+    "invalidGridFormat": {
+      "sr": "GRID identifikator \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "GRID идентификатор \"{0}\" није у исправном формату.",
+      "en": "The GRID identifier \"{0}\" is not in a valid format."
+    },
+    "duplicateGrid": {
+      "sr": "GRID identifikator \"{0}\" mora biti jedinstven.",
+      "sr-cyr": "GRID идентификатор \"{0}\" мора бити јединствен.",
+      "en": "The GRID identifier \"{0}\" must be unique."
+    },
+    "invalidRinggoldFormat": {
+      "sr": "Ringgold identifikator \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "Ringgold идентификатор \"{0}\" није у исправном формату.",
+      "en": "The Ringgold identifier \"{0}\" is not in a valid format."
+    },
+    "duplicateRinggold": {
+      "sr": "Ringgold identifikator \"{0}\" mora biti jedinstven.",
+      "sr-cyr": "Ringgold идентификатор \"{0}\" мора бити јединствен.",
+      "en": "The Ringgold identifier \"{0}\" must be unique."
+    },
+    "invalidFundrefFormat": {
+      "sr": "FundRef identifikator \"{0}\" nije u ispravnom formatu.",
+      "sr-cyr": "FundRef идентификатор \"{0}\" није у исправном формату.",
+      "en": "The FundRef identifier \"{0}\" is not in a valid format."
+    },
+    "dateDissolvedBeforeEstablished": {
+      "sr": "Datum gašenja organizacione jedinice ({0}) ne može biti pre datuma osnivanja ({1}).",
+      "sr-cyr": "Датум гашења организационе јединице ({0}) не може бити пре датума оснивања ({1}).",
+      "en": "The organisation unit dissolution date ({0}) cannot be before the establishment date ({1})."
     }
   }
 }

@@ -195,6 +195,9 @@ public class ProceedingsPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        publicationToUpdate.setProceedings(new Proceedings() {{
+            setEvent(new Conference());
+        }});
 
         var conference = new Conference();
         conference.setId(1);

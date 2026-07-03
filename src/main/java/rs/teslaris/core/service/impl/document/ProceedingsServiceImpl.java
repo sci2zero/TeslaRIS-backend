@@ -57,6 +57,8 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -187,6 +189,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                savedProceedings.getId(),
+                null,
+                ProceedingsConverter.toDTO(savedProceedings),
+                RevisionType.CREATE
+            )
+        );
+
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
         sendNotifications(savedProceedings, Collections.emptySet());
@@ -198,6 +210,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Transactional
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                proceedingsId,
+                ProceedingsConverter.toDTO(proceedingsToUpdate),
+                proceedingsDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());

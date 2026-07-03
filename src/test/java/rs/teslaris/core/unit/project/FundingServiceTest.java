@@ -46,7 +46,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
@@ -352,30 +351,6 @@ public class FundingServiceTest extends BaseTest {
         verify(fundingCallService).findOne(1);
         verify(currencyService).findOne(1);
         verify(fundingRepository).save(any(Funding.class));
-    }
-
-    @Test
-    public void shouldThrowWhenProjectIdIsNull() {
-        // given
-        var fundingDTO = new FundingDTO();
-        fundingDTO.setName(List.of());
-        fundingDTO.setDescription(List.of());
-        fundingDTO.setNameAbbreviation(List.of());
-        fundingDTO.setKeywords(List.of());
-        fundingDTO.setDisplayCall(List.of());
-        fundingDTO.setDisplayProgram(List.of());
-        fundingDTO.setDisplayFunder(List.of());
-        fundingDTO.setResearchAreasId(Set.of());
-        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
-        fundingDTO.setDateFrom(LocalDate.now());
-        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
-
-        // when & then
-        assertThrows(ReferenceConstraintException.class,
-            () -> fundingService.createFunding(fundingDTO));
-
-        verify(projectService, never()).findOne(any());
-        verify(fundingRepository, never()).save(any());
     }
 
     @Test

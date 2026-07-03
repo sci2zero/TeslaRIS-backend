@@ -20,4 +20,12 @@ public class ContactDTO {
     private String faxNumber;
 
     private String mobilePhoneNumber;
+
+
+    public ContactDTO(ContactDTO other) {
+        this.contactEmail = other.contactEmail;
+        this.phoneNumber = other.phoneNumber;
+        this.faxNumber = other.faxNumber;
+        this.mobilePhoneNumber = other.mobilePhoneNumber;
+    }
 }

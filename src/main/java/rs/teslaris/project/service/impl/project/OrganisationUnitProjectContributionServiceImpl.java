@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -21,5 +22,10 @@ public class OrganisationUnitProjectContributionServiceImpl
     @Override
     protected JpaRepository<OrganisationUnitProjectContribution, Integer> getEntityRepository() {
         return organisationUnitProjectContributionRepository;
+    }
+
+    @Override
+    public List<OrganisationUnitProjectContribution> getOrganisationUnitsByIds(List<Integer> id) {
+        return organisationUnitProjectContributionRepository.findAllById(id);
     }
 }
