@@ -32,4 +32,8 @@ public interface CountryRepository extends JpaRepository<Country, Integer> {
                 "(LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%')) OR " +
                 "c.processedName LIKE CONCAT('%', :searchExpression, '%')))")
     Page<Country> searchCountries(String searchExpression, String languageTag, Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Country c WHERE c.code = :code AND (:id IS NULL OR c.id <> :id)")
+    boolean existsByCode(String code, Integer id);
 }

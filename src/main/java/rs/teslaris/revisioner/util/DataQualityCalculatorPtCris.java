@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -18,6 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
+import rs.teslaris.core.dto.commontypes.CountryDTO;
+import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
+import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -31,8 +35,13 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.dto.identifier.IdentifierResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.institution.ResearchAreaDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.repository.commontypes.CountryRepository;
+import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -85,11 +94,32 @@ public class DataQualityCalculatorPtCris {
         Pattern.compile("^A\\d{4,10}$");
 
     private static final Pattern CIENCIA_ID_PATTERN = Pattern.compile("^[A-Za-z0-9-]{4,50}$");
+
     private static final Pattern RINGGOLD_PATTERN =
         Pattern.compile("^\\d{1,10}$");
+
     private static final Pattern GRID_PATTERN =
         Pattern.compile("^grid\\.\\d+\\.[0-9a-f]{1,2}$", Pattern.CASE_INSENSITIVE);
+
     private static final Pattern FUNDREF_PATTERN = Pattern.compile("^10\\.13039/\\d{6,12}$");
+    private static final Pattern COUNTRY_CODE_PATTERN =
+        Pattern.compile("^[a-z]{2}$");
+    private static final Pattern COUNTRY_NAME_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{N}\\p{M} .,'()\\-/&]+$");
+    private static final Pattern LANGUAGE_TAG_PATTERN =
+        Pattern.compile("^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$");
+    private static final Pattern LANGUAGE_NAME_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{M}\\p{N} .,'()\\-/&]+$");
+    private static final Pattern RESEARCH_AREA_NAME_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{M}\\p{N} .,'():/&-]+$");
+    private static final Pattern URI_PATTERN =
+        Pattern.compile("^(https?|ftp)://\\S+$");
+    private static final Pattern EMAIL_PATTERN =
+        Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern PHONE_NUMBER_PATTERN =
+        Pattern.compile("^[+]?[0-9()\\- /]{5,30}$");
+    private static final Pattern ADDRESS_PATTERN =
+        Pattern.compile("^[\\p{L}\\p{M}\\p{N} .,'()/#:&\\-]+$");
     private final Pattern DOI_PATTERN =
         Pattern.compile("^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$");
     private final Pattern HANDLE_PATTERN =
@@ -101,6 +131,10 @@ public class DataQualityCalculatorPtCris {
     private final PersonRepository personRepository;
 
     private final OrganisationUnitRepository organisationUnitRepository;
+
+    private final CountryRepository countryRepository;
+
+    private final LanguageRepository languageRepository;
 
     private final RestTemplateProvider restTemplateProvider;
 
@@ -165,26 +199,26 @@ public class DataQualityCalculatorPtCris {
                 var value = title.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "invalidTitleFormat");
+                    reportIssue(entityRevision, "invalidTitleFormat", value);
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "titleTooLong");
+                    reportIssue(entityRevision, "titleTooLong", value);
                 }
 
                 if (!TITLE_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidTitleFormat");
+                    reportIssue(entityRevision, "invalidTitleFormat", value);
                 }
             });
         }
 
         if (!CollectionOperations.containsValues(dto.getDescription())) {
-            reportIssue(entityRevision, "descriptionMissing");
+            reportIssue(entityRevision, "descriptionMissing", dto.getId());
         }
 
         if (!CollectionOperations.containsValues(dto.getContributions())) {
-            reportIssue(entityRevision, "contributorsMissing");
+            reportIssue(entityRevision, "contributorsMissing", dto.getId());
         } else {
             boolean hasManagedPerson =
                 dto.getContributions()
@@ -192,77 +226,78 @@ public class DataQualityCalculatorPtCris {
                     .anyMatch(c -> Objects.nonNull(c.getPersonId()));
 
             if (!hasManagedPerson) {
-                reportIssue(entityRevision, "noManagedContributor");
+                reportIssue(entityRevision, "noManagedContributor", dto.getId());
             }
         }
 
         if (!StringUtil.valueExists(dto.getDocumentDate())) {
-            reportIssue(entityRevision, "documentDateMissing");
+            reportIssue(entityRevision, "documentDateMissing", dto.getId());
         } else {
             try {
                 LocalDate date = StringUtil.parseDocumentDate(dto.getDocumentDate());
 
                 if (date.isBefore(LocalDate.of(1950, 1, 1))) {
-                    reportIssue(entityRevision, "documentDateBefore1950");
+                    reportIssue(entityRevision, "documentDateBefore1950", dto.getDocumentDate());
                 }
 
                 if (date.isAfter(LocalDate.now().plusYears(3))) {
-                    reportIssue(entityRevision, "documentDateTooFarInFuture");
+                    reportIssue(entityRevision, "documentDateTooFarInFuture",
+                        dto.getDocumentDate());
                 }
             } catch (Exception e) {
-                reportIssue(entityRevision, "invalidDocumentDateFormat");
+                reportIssue(entityRevision, "invalidDocumentDateFormat", dto.getDocumentDate());
             }
         }
 
         if (!StringUtil.valueExists(dto.getDoi())) {
-            reportIssue(entityRevision, "noDoiPresent");
+            reportIssue(entityRevision, "noDoiPresent", dto.getId());
         } else {
             var doi = dto.getDoi();
 
             if (doi.length() < 9) {
-                reportIssue(entityRevision, "doiTooShort");
+                reportIssue(entityRevision, "doiTooShort", doi);
             }
 
             if (doi.length() > 255) {
-                reportIssue(entityRevision, "doiTooLong");
+                reportIssue(entityRevision, "doiTooLong", doi);
             }
 
             if (!DOI_PATTERN.matcher(doi).matches()) {
-                reportIssue(entityRevision, "invalidDoiFormat");
+                reportIssue(entityRevision, "invalidDoiFormat", doi);
             }
 
             if (documentRepository.existsByDoi(doi, dto.getId())) {
-                reportIssue(entityRevision, "duplicateDoi");
+                reportIssue(entityRevision, "duplicateDoi", doi);
             }
 
             if (!isResolvableDoi(doi)) {
-                reportIssue(entityRevision, "doiNotResolvable");
+                reportIssue(entityRevision, "doiNotResolvable", doi);
             }
         }
 
         if (!StringUtil.valueExists(dto.getHandleId())) {
-            reportIssue(entityRevision, "noHandlePresent");
+            reportIssue(entityRevision, "noHandlePresent", dto.getId());
         } else {
             var handle = dto.getHandleId();
 
             if (handle.length() < 8) {
-                reportIssue(entityRevision, "handleTooShort");
+                reportIssue(entityRevision, "handleTooShort", handle);
             }
 
             if (handle.length() > 255) {
-                reportIssue(entityRevision, "handleTooLong");
+                reportIssue(entityRevision, "handleTooLong", handle);
             }
 
             if (!HANDLE_PATTERN.matcher(handle).matches()) {
-                reportIssue(entityRevision, "invalidHandleFormat");
+                reportIssue(entityRevision, "invalidHandleFormat", handle);
             }
 
             if (documentRepository.existsByHandleId(handle, dto.getId())) {
-                reportIssue(entityRevision, "duplicateHandle");
+                reportIssue(entityRevision, "duplicateHandle", handle);
             }
 
             if (!isResolvableHandle(handle)) {
-                reportIssue(entityRevision, "handleNotResolvable");
+                reportIssue(entityRevision, "handleNotResolvable", handle);
             }
         }
 
@@ -337,14 +372,18 @@ public class DataQualityCalculatorPtCris {
             if (Objects.isNull(thesis.getTopicAcceptanceDate())) {
                 reportIssue(entityRevision, "topicAcceptanceDateMissing");
             } else {
-                if (thesis.getTopicAcceptanceDate()
-                    .isBefore(LocalDate.of(1950, 1, 1))) {
-                    reportIssue(entityRevision, "topicAcceptanceDateBefore1950");
+                if (thesis.getTopicAcceptanceDate().isBefore(LocalDate.of(1950, 1, 1))) {
+                    reportIssue(
+                        entityRevision,
+                        "topicAcceptanceDateBefore1950",
+                        thesis.getTopicAcceptanceDate());
                 }
 
-                if (thesis.getTopicAcceptanceDate()
-                    .isAfter(LocalDate.now())) {
-                    reportIssue(entityRevision, "topicAcceptanceDateFuture");
+                if (thesis.getTopicAcceptanceDate().isAfter(LocalDate.now())) {
+                    reportIssue(
+                        entityRevision,
+                        "topicAcceptanceDateFuture",
+                        thesis.getTopicAcceptanceDate());
                 }
             }
 
@@ -353,11 +392,18 @@ public class DataQualityCalculatorPtCris {
             } else {
                 if (Objects.nonNull(thesis.getTopicAcceptanceDate()) &&
                     thesis.getThesisDefenceDate().isBefore(thesis.getTopicAcceptanceDate())) {
-                    reportIssue(entityRevision, "defenceBeforeAcceptance");
+                    reportIssue(
+                        entityRevision,
+                        "defenceBeforeAcceptance",
+                        thesis.getTopicAcceptanceDate(),
+                        thesis.getThesisDefenceDate());
                 }
 
                 if (thesis.getThesisDefenceDate().isAfter(LocalDate.now().plusYears(1))) {
-                    reportIssue(entityRevision, "defenceTooFarInFuture");
+                    reportIssue(
+                        entityRevision,
+                        "defenceTooFarInFuture",
+                        thesis.getThesisDefenceDate());
                 }
             }
         }
@@ -374,24 +420,23 @@ public class DataQualityCalculatorPtCris {
             var birthDate = personalInfoDTO.getLocalBirthDate();
 
             if (birthDate.isBefore(LocalDate.of(1900, 1, 1))) {
-                reportIssue(entityRevision, "birthDateBefore1900");
+                reportIssue(entityRevision, "birthDateBefore1900", birthDate);
             }
 
             if (birthDate.isAfter(LocalDate.now())) {
-                reportIssue(entityRevision, "birthDateInFuture");
+                reportIssue(entityRevision, "birthDateInFuture", birthDate);
             }
         }
 
         if (!StringUtil.valueExists(personalInfoDTO.getOrcid())) {
             reportIssue(entityRevision, "noOrcidPresent");
         } else {
-
             if (!ORCID_PATTERN.matcher(personalInfoDTO.getOrcid()).matches()) {
-                reportIssue(entityRevision, "invalidOrcidFormat");
+                reportIssue(entityRevision, "invalidOrcidFormat", personalInfoDTO.getOrcid());
             }
 
             if (personRepository.existsByOrcid(personalInfoDTO.getOrcid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOrcid");
+                reportIssue(entityRevision, "duplicateOrcid", personalInfoDTO.getOrcid());
             }
         }
 
@@ -399,19 +444,19 @@ public class DataQualityCalculatorPtCris {
             var rid = personalInfoDTO.getWebOfScienceResearcherId();
 
             if (rid.length() < 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort");
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort", rid);
             }
 
             if (rid.length() > 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong");
+                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong", rid);
             }
 
             if (!WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN.matcher(rid).matches()) {
-                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat");
+                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat", rid);
             }
 
             if (personRepository.existsByWebOfScienceId(rid, dto.getId())) {
-                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId");
+                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId", rid);
             }
         }
 
@@ -419,50 +464,55 @@ public class DataQualityCalculatorPtCris {
             var id = personalInfoDTO.getScopusAuthorId();
 
             if (!SCOPUS_AUTHOR_ID_PATTERN.matcher(id).matches()) {
-                reportIssue(entityRevision, "invalidScopusAuthorIdFormat");
+                reportIssue(entityRevision, "invalidScopusAuthorIdFormat", id);
             }
 
             if (personRepository.existsByScopusAuthorId(id, dto.getId())) {
-                reportIssue(entityRevision, "duplicateScopusAuthorId");
+                reportIssue(entityRevision, "duplicateScopusAuthorId", id);
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getOpenAlexId())) {
             if (!OPENALEX_PATTERN.matcher(personalInfoDTO.getOpenAlexId()).matches()) {
-                reportIssue(entityRevision, "invalidOpenAlexIdFormat");
+                reportIssue(entityRevision, "invalidOpenAlexIdFormat",
+                    personalInfoDTO.getOpenAlexId());
             }
 
             if (personRepository.existsByOpenAlexId(personalInfoDTO.getOpenAlexId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOpenAlexId");
+                reportIssue(entityRevision, "duplicateOpenAlexId", personalInfoDTO.getOpenAlexId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getScholarId())) {
             if (!GOOGLE_SCHOLAR_PATTERN.matcher(personalInfoDTO.getScholarId()).matches()) {
-                reportIssue(entityRevision, "invalidGoogleScholarIdFormat");
+                reportIssue(entityRevision, "invalidGoogleScholarIdFormat",
+                    personalInfoDTO.getScholarId());
             }
 
             if (personRepository.existsByScholarId(personalInfoDTO.getScholarId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateGoogleScholarId");
+                reportIssue(entityRevision, "duplicateGoogleScholarId",
+                    personalInfoDTO.getScholarId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getLattesId())) {
             if (!LATTES_PATTERN.matcher(personalInfoDTO.getLattesId()).matches()) {
-                reportIssue(entityRevision, "invalidLattesIdFormat");
+                reportIssue(entityRevision, "invalidLattesIdFormat", personalInfoDTO.getLattesId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getNationalScienceId())) {
             if (!CIENCIA_ID_PATTERN.matcher(personalInfoDTO.getNationalScienceId()).matches()) {
-                reportIssue(entityRevision, "invalidCienciaIdFormat");
+                reportIssue(entityRevision, "invalidCienciaIdFormat",
+                    personalInfoDTO.getNationalScienceId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getAuthenticusId())) {
             if (personRepository.existsByAuthenticusId(personalInfoDTO.getAuthenticusId(),
                 dto.getId())) {
-                reportIssue(entityRevision, "duplicateAuthenticusId");
+                reportIssue(entityRevision, "duplicateAuthenticusId",
+                    personalInfoDTO.getAuthenticusId());
             }
         }
 
@@ -483,20 +533,22 @@ public class DataQualityCalculatorPtCris {
 
                 if (StringUtil.valueExists(name.getFirstname()) &&
                     name.getFirstname().length() > 100) {
-                    reportIssue(entityRevision, "firstNameTooLong");
+                    reportIssue(entityRevision, "firstNameTooLong", name.getFirstname());
                 }
 
                 if (StringUtil.valueExists(name.getLastname()) &&
                     name.getLastname().length() > 100) {
-                    reportIssue(entityRevision, "lastNameTooLong");
+                    reportIssue(entityRevision, "lastNameTooLong", name.getLastname());
                 }
 
-                if (!PERSON_NAME_PATTERN.matcher(name.getFirstname()).matches()) {
-                    reportIssue(entityRevision, "invalidFirstNameFormat");
+                if (StringUtil.valueExists(name.getFirstname()) &&
+                    !PERSON_NAME_PATTERN.matcher(name.getFirstname()).matches()) {
+                    reportIssue(entityRevision, "invalidFirstNameFormat", name.getFirstname());
                 }
 
-                if (!PERSON_NAME_PATTERN.matcher(name.getLastname()).matches()) {
-                    reportIssue(entityRevision, "invalidLastNameFormat");
+                if (StringUtil.valueExists(name.getLastname()) &&
+                    !PERSON_NAME_PATTERN.matcher(name.getLastname()).matches()) {
+                    reportIssue(entityRevision, "invalidLastNameFormat", name.getLastname());
                 }
             });
         }
@@ -525,11 +577,11 @@ public class DataQualityCalculatorPtCris {
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "organisationUnitNameTooLong");
+                    reportIssue(entityRevision, "organisationUnitNameTooLong", value);
                 }
 
                 if (!ORGANISATION_NAME_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidOrganisationUnitNameFormat");
+                    reportIssue(entityRevision, "invalidOrganisationUnitNameFormat", value);
                 }
             });
         }
@@ -541,59 +593,59 @@ public class DataQualityCalculatorPtCris {
         if (StringUtil.valueExists(dto.getRor())) {
 
             if (!ROR_PATTERN.matcher(dto.getRor()).matches()) {
-                reportIssue(entityRevision, "invalidRorFormat");
+                reportIssue(entityRevision, "invalidRorFormat", dto.getRor());
             }
 
             if (organisationUnitRepository.existsByROR(dto.getRor(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateRor");
+                reportIssue(entityRevision, "duplicateRor", dto.getRor());
             }
         }
 
         if (StringUtil.valueExists(dto.getIsni())) {
 
             if (!ISNI_PATTERN.matcher(dto.getIsni()).matches()) {
-                reportIssue(entityRevision, "invalidIsniFormat");
+                reportIssue(entityRevision, "invalidIsniFormat", dto.getIsni());
             }
 
             if (organisationUnitRepository.existsByIsni(dto.getIsni(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateIsni");
+                reportIssue(entityRevision, "duplicateIsni", dto.getIsni());
             }
         }
 
         if (StringUtil.valueExists(dto.getScopusAfid())) {
 
             if (!SCOPUS_AFID_PATTERN.matcher(dto.getScopusAfid()).matches()) {
-                reportIssue(entityRevision, "invalidScopusAfidFormat");
+                reportIssue(entityRevision, "invalidScopusAfidFormat", dto.getScopusAfid());
             }
 
             if (organisationUnitRepository.existsByScopusAfid(dto.getScopusAfid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateScopusAfid");
+                reportIssue(entityRevision, "duplicateScopusAfid", dto.getScopusAfid());
             }
         }
 
         if (StringUtil.valueExists(dto.getGrid())) {
             if (!GRID_PATTERN.matcher(dto.getGrid()).matches()) {
-                reportIssue(entityRevision, "invalidGridFormat");
+                reportIssue(entityRevision, "invalidGridFormat", dto.getGrid());
             }
 
             if (organisationUnitRepository.existsByGrid(dto.getGrid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateGrid");
+                reportIssue(entityRevision, "duplicateGrid", dto.getGrid());
             }
         }
 
         if (StringUtil.valueExists(dto.getRinggold())) {
             if (!RINGGOLD_PATTERN.matcher(dto.getRinggold()).matches()) {
-                reportIssue(entityRevision, "invalidRinggoldFormat");
+                reportIssue(entityRevision, "invalidRinggoldFormat", dto.getRinggold());
             }
 
             if (organisationUnitRepository.existsByRinggold(dto.getRinggold(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateRinggold");
+                reportIssue(entityRevision, "duplicateRinggold", dto.getRinggold());
             }
         }
 
         if (StringUtil.valueExists(dto.getFundref())) {
             if (!FUNDREF_PATTERN.matcher(dto.getFundref()).matches()) {
-                reportIssue(entityRevision, "invalidFundrefFormat");
+                reportIssue(entityRevision, "invalidFundrefFormat", dto.getFundref());
             }
         }
 
@@ -601,7 +653,261 @@ public class DataQualityCalculatorPtCris {
             Objects.nonNull(dto.getDateDissolved()) &&
             dto.getDateDissolved().isBefore(dto.getDateEstablished())) {
 
-            reportIssue(entityRevision, "dateDissolvedBeforeEstablished");
+            reportIssue(
+                entityRevision,
+                "dateDissolvedBeforeEstablished",
+                dto.getDateEstablished(),
+                dto.getDateDissolved()
+            );
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(CountryDTO dto, EntityRevision entityRevision) {
+        if (!StringUtil.valueExists(dto.getCode())) {
+            reportIssue(entityRevision, "countryCodeMissing");
+        } else {
+            if (dto.getCode().length() != 2) {
+                reportIssue(entityRevision, "countryCodeInvalidLength", dto.getCode());
+            }
+
+            if (!COUNTRY_CODE_PATTERN.matcher(dto.getCode()).matches()) {
+                reportIssue(entityRevision, "invalidCountryCodeFormat", dto.getCode());
+            }
+
+            if (countryRepository.existsByCode(dto.getCode(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateCountryCode", dto.getCode());
+            }
+        }
+
+        if (!CollectionOperations.containsValues(dto.getName())) {
+            reportIssue(entityRevision, "countryNameMissing");
+        } else {
+            dto.getName().forEach(name -> {
+                var value = name.getContent();
+
+                if (!StringUtil.valueExists(value)) {
+                    reportIssue(entityRevision, "countryNameMissing");
+                    return;
+                }
+
+                if (value.length() > 255) {
+                    reportIssue(entityRevision, "countryNameTooLong", value);
+                }
+
+                if (!COUNTRY_NAME_PATTERN.matcher(value).matches()) {
+                    reportIssue(entityRevision, "invalidCountryNameFormat", value);
+                }
+            });
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(ContactDTO dto, EntityRevision entityRevision) {
+        if (StringUtil.valueExists(dto.getContactEmail())) {
+            if (dto.getContactEmail().length() > 255) {
+                reportIssue(entityRevision, "contactEmailTooLong", dto.getContactEmail());
+            }
+
+            if (!EMAIL_PATTERN.matcher(dto.getContactEmail()).matches()) {
+                reportIssue(entityRevision, "invalidContactEmailFormat", dto.getContactEmail());
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getPhoneNumber())) {
+            if (dto.getPhoneNumber().length() > 30) {
+                reportIssue(entityRevision, "phoneNumberTooLong", dto.getPhoneNumber());
+            }
+
+            if (!PHONE_NUMBER_PATTERN.matcher(dto.getPhoneNumber()).matches()) {
+                reportIssue(entityRevision, "invalidPhoneNumberFormat", dto.getPhoneNumber());
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getMobilePhoneNumber())) {
+            if (dto.getMobilePhoneNumber().length() > 30) {
+                reportIssue(entityRevision, "mobilePhoneNumberTooLong", dto.getMobilePhoneNumber());
+            }
+
+            if (!PHONE_NUMBER_PATTERN.matcher(dto.getMobilePhoneNumber()).matches()) {
+                reportIssue(entityRevision, "invalidMobilePhoneNumberFormat",
+                    dto.getMobilePhoneNumber());
+            }
+        }
+
+        if (StringUtil.valueExists(dto.getFaxNumber())) {
+            if (dto.getFaxNumber().length() > 30) {
+                reportIssue(entityRevision, "faxNumberTooLong", dto.getFaxNumber());
+            }
+
+            if (!PHONE_NUMBER_PATTERN.matcher(dto.getFaxNumber()).matches()) {
+                reportIssue(entityRevision, "invalidFaxNumberFormat", dto.getFaxNumber());
+            }
+        }
+
+        // TODO: what website?
+//    if (StringUtil.valueExists(dto.getWebsite())) {
+//        if (dto.getWebsite().length() > 255) {
+//            reportIssue(entityRevision, "contactWebsiteTooLong", dto.getWebsite());
+//        }
+//
+//        if (!URL_PATTERN.matcher(dto.getWebsite()).matches()) {
+//            reportIssue(entityRevision, "invalidContactWebsiteFormat", dto.getWebsite());
+//        }
+//    }
+    }
+
+    private void assessEntity(LanguageResponseDTO dto, EntityRevision entityRevision) {
+        if (!StringUtil.valueExists(dto.getLanguageCode())) {
+            reportIssue(entityRevision, "languageTagMissing");
+        } else {
+            if (dto.getLanguageCode().length() > 10) {
+                reportIssue(entityRevision, "languageTagTooLong", dto.getLanguageCode());
+            }
+
+            if (!LANGUAGE_TAG_PATTERN.matcher(dto.getLanguageCode()).matches()) {
+                reportIssue(entityRevision, "invalidLanguageTagFormat", dto.getLanguageCode());
+            }
+
+            if (languageRepository.existsByCode(dto.getLanguageCode(), dto.getId())) {
+                reportIssue(entityRevision, "duplicateLanguageTag", dto.getLanguageCode());
+            }
+        }
+
+        if (!CollectionOperations.containsValues(dto.getName())) {
+            reportIssue(entityRevision, "languageNameMissing");
+        } else {
+            dto.getName().forEach(name -> {
+                var value = name.getContent();
+
+                if (!StringUtil.valueExists(value)) {
+                    reportIssue(entityRevision, "languageNameMissing");
+                    return;
+                }
+
+                if (value.length() > 255) {
+                    reportIssue(entityRevision, "languageNameTooLong", value);
+                }
+
+                if (!LANGUAGE_NAME_PATTERN.matcher(value).matches()) {
+                    reportIssue(entityRevision, "invalidLanguageNameFormat", value);
+                }
+            });
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(ResearchAreaDTO dto, EntityRevision entityRevision) {
+        if (!CollectionOperations.containsValues(dto.getName())) {
+            reportIssue(entityRevision, "researchAreaNameMissing");
+        } else {
+            dto.getName().forEach(name -> {
+                var value = name.getContent();
+
+                if (!StringUtil.valueExists(value)) {
+                    reportIssue(entityRevision, "researchAreaNameMissing");
+                    return;
+                }
+
+                if (value.length() > 255) {
+                    reportIssue(entityRevision, "researchAreaNameTooLong", value);
+                }
+
+                if (!RESEARCH_AREA_NAME_PATTERN.matcher(value).matches()) {
+                    reportIssue(entityRevision, "invalidResearchAreaNameFormat", value);
+                }
+            });
+        }
+
+        // TODO: What URI?
+//    if (StringUtil.valueExists(dto.getUri())) {
+//        if (dto.getUri().length() > 255) {
+//            reportIssue(entityRevision, "researchAreaUriTooLong", dto.getUri());
+//        }
+//
+//        if (!URI_PATTERN.matcher(dto.getUri()).matches()) {
+//            reportIssue(entityRevision, "invalidResearchAreaUriFormat", dto.getUri());
+//        }
+//
+//        if (researchAreaRepository.existsByUri(dto.getUri(), dto.getId())) {
+//            reportIssue(entityRevision, "duplicateResearchAreaUri", dto.getUri());
+//        }
+//    }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(GeoLocationDTO dto, EntityRevision entityRevision) {
+        if (Objects.isNull(dto.getLatitude())) {
+            reportIssue(entityRevision, "latitudeMissing");
+        } else if (dto.getLatitude() < -90 || dto.getLatitude() > 90) {
+            reportIssue(entityRevision, "latitudeOutOfRange", dto.getLatitude());
+        }
+
+        if (Objects.isNull(dto.getLongitude())) {
+            reportIssue(entityRevision, "longitudeMissing");
+        } else if (dto.getLongitude() < -180 || dto.getLongitude() > 180) {
+            reportIssue(entityRevision, "longitudeOutOfRange", dto.getLongitude());
+        }
+
+        if (StringUtil.valueExists(dto.getAddress())) {
+
+            if (dto.getAddress().length() > 500) {
+                reportIssue(entityRevision, "addressTooLong", dto.getAddress());
+            }
+
+            if (!ADDRESS_PATTERN.matcher(dto.getAddress()).matches()) {
+                reportIssue(entityRevision, "invalidAddressFormat", dto.getAddress());
+            }
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(IdentifierResponseDTO dto, EntityRevision entityRevision) {
+        //TODO: Identifier does not hold value
+        // TODO: Type not needed as it is modeled using inheritance
+
+        if (StringUtil.valueExists(dto.regularExpression())) {
+            if (dto.regularExpression().length() > 255) {
+                reportIssue(entityRevision, "identifierRegularExpressionTooLong",
+                    dto.regularExpression());
+            }
+
+            try {
+                Pattern.compile(dto.regularExpression());
+            } catch (PatternSyntaxException ex) {
+                reportIssue(entityRevision, "invalidIdentifierRegularExpression",
+                    dto.regularExpression());
+            }
+        }
+
+        if (StringUtil.valueExists(dto.uriPrefix())) {
+            if (dto.uriPrefix().length() > 255) {
+                reportIssue(entityRevision, "identifierUriTooLong", dto.uriPrefix());
+            }
+
+            if (!URI_PATTERN.matcher(dto.uriPrefix()).matches()) {
+                reportIssue(entityRevision, "invalidIdentifierUriFormat", dto.uriPrefix());
+            }
         }
 
         // TODO metadataLicenseMissing
@@ -652,7 +958,8 @@ public class DataQualityCalculatorPtCris {
             entityRevision.setQualityDataReport(new HashSet<>());
         }
 
+        var stringParams = Strings.join(Arrays.asList(params), ',');
         entityRevision.getQualityDataReport()
-            .add(remarkKey + ":" + Strings.join(Arrays.asList(params), ','));
+            .add(remarkKey + ":" + (!stringParams.isBlank() ? stringParams : "N/A"));
     }
 }

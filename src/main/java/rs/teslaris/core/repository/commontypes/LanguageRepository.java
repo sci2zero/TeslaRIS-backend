@@ -11,4 +11,8 @@ public interface LanguageRepository extends JpaRepository<Language, Integer> {
 
     @Query("SELECT l FROM Language l WHERE l.languageCode = :code")
     Optional<Language> getLanguageByLanguageCode(String code);
+
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Language l WHERE l.languageCode = :code AND (:id IS NULL OR l.id <> :id)")
+    boolean existsByCode(String code, Integer id);
 }

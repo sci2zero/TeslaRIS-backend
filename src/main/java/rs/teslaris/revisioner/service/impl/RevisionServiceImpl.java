@@ -144,6 +144,7 @@ public class RevisionServiceImpl implements RevisionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MultilingualContentDTO> getQualityReportAtTimestamp(String entityType,
                                                                     Integer entityId,
                                                                     Instant timestamp) {
@@ -160,7 +161,7 @@ public class RevisionServiceImpl implements RevisionService {
         entityRevision.get().getQualityDataReport().forEach(reportEntry -> {
             var keyParams = reportEntry.split(":");
             var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(keyParams[0],
-                (Object) keyParams[1].split(","));
+                (Object[]) keyParams[1].split(","));
 
             Map<String, MultilingualContentDTO> existingRemarks =
                 qualityReport
@@ -196,7 +197,7 @@ public class RevisionServiceImpl implements RevisionService {
             }
         });
 
-        return List.of();
+        return qualityReport;
     }
 
     private String canonicalize(String json, String entityType)
