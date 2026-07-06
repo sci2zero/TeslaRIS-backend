@@ -8,6 +8,7 @@ import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -21,17 +22,18 @@ public class PersonFundingCallContributionServiceImpl extends PersonContribution
     implements PersonFundingCallContributionService {
 
     @Autowired
-    public PersonFundingCallContributionServiceImpl(
-        PersonService personService,
-        OrganisationUnitService organisationUnitService,
-        MultilingualContentService multilingualContentService,
-        PersonContributionRepository personContributionRepository,
-        UserRepository userRepository,
-        NotificationRepository notificationRepository,
-        InvolvementService involvementService) {
+    public PersonFundingCallContributionServiceImpl(PersonService personService,
+                                                    OrganisationUnitService organisationUnitService,
+                                                    MultilingualContentService multilingualContentService,
+                                                    PersonContributionRepository personContributionRepository,
+                                                    UserRepository userRepository,
+                                                    NotificationRepository notificationRepository,
+                                                    InvolvementService involvementService,
+                                                    ResearchAreaService researchAreaService) {
         super(personService, organisationUnitService, multilingualContentService,
             personContributionRepository, userRepository, notificationRepository,
-            involvementService);
+            involvementService,
+            researchAreaService);
     }
 
     @Override

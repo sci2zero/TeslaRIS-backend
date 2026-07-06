@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 
@@ -73,4 +75,13 @@ public class PersonContribution extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    @Column(name = "date_from")
+    private LocalDate dateFrom;
+
+    @Column(name = "date_to")
+    private LocalDate dateTo;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
 }

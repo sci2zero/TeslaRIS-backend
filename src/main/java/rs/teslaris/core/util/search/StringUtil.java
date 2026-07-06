@@ -472,6 +472,10 @@ public class StringUtil {
     }
 
     public static LocalDate parseDocumentDate(String value) {
+        if (!valueExists(value)) {
+            return null;
+        }
+
         if (value.matches("\\d{4}")) {
             return LocalDate.of(Integer.parseInt(value), 1, 1);
         }

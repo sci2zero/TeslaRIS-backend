@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
@@ -36,6 +37,13 @@ public class PersonContributionConverter {
                 contribution.setIsBoardPresident(c.getIsBoardPresident());
                 contribution.setPersonalTitle(c.getPersonalTitle());
                 contribution.setEmploymentTitle(c.getEmploymentTitle());
+                contribution.setDateFrom(c.getDateFrom());
+                contribution.setDateTo(c.getDateTo());
+
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
 
                 contributionDTOs.add(contribution);
             });

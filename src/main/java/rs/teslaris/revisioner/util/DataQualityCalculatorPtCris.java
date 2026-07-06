@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +25,19 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
+import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -40,6 +46,12 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.EventContributionType;
+import rs.teslaris.core.model.document.OtherEventType;
+import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -160,7 +172,19 @@ public class DataQualityCalculatorPtCris {
             (dto, rev) -> assessEntity((IntangibleProductDTO) dto, rev)),
         Map.entry(PerformanceRelatedOutputDTO.class,
             (dto, rev) -> assessEntity((PerformanceRelatedOutputDTO) dto, rev)),
-        Map.entry(PersonResponseDTO.class, (dto, rev) -> assessEntity((PersonResponseDTO) dto, rev))
+        Map.entry(PersonResponseDTO.class,
+            (dto, rev) -> assessEntity((PersonResponseDTO) dto, rev)),
+        Map.entry(EventDTO.class, (dto, rev) -> assessEntity((EventDTO) dto, rev)),
+        Map.entry(OrganisationUnitDTO.class,
+            (dto, rev) -> assessEntity((OrganisationUnitDTO) dto, rev)),
+        Map.entry(CountryDTO.class, (dto, rev) -> assessEntity((CountryDTO) dto, rev)),
+        Map.entry(ContactDTO.class, (dto, rev) -> assessEntity((ContactDTO) dto, rev)),
+        Map.entry(LanguageResponseDTO.class,
+            (dto, rev) -> assessEntity((LanguageResponseDTO) dto, rev)),
+        Map.entry(ResearchAreaDTO.class, (dto, rev) -> assessEntity((ResearchAreaDTO) dto, rev)),
+        Map.entry(IdentifierResponseDTO.class,
+            (dto, rev) -> assessEntity((IdentifierResponseDTO) dto, rev)),
+        Map.entry(InvolvementDTO.class, (dto, rev) -> assessEntity((InvolvementDTO) dto, rev))
     );
 
 
@@ -175,18 +199,47 @@ public class DataQualityCalculatorPtCris {
             assessEntity(dto, entityRevision);
 
             repository.save(entityRevision);
+
+            log.info(
+                "Successfully completed data quality assessment. revisionId={}, entityType={}, score={}, remarks={}",
+                entityRevision.getId(),
+                entityRevision.getEntityType(),
+                entityRevision.getQualityDataScore(),
+                entityRevision.getQualityDataReport().size()
+            );
         } catch (JsonProcessingException e) {
-            log.error("Unable to complete data quality assessment for {} with ID {}. Reason: {}",
-                entityRevision.getEntityType(), entityRevision.getId(), e.getMessage());
+            log.error(
+                "Failed to deserialize revision {} of type {} into DTO {}.",
+                entityRevision.getId(),
+                entityRevision.getEntityType(),
+                dtoClass.getName(),
+                e
+            );
+        } catch (Exception e) {
+            log.error(
+                "Unexpected error while assessing data quality. revisionId={}, entityType={}, dtoClass={}",
+                entityRevision.getId(),
+                entityRevision.getEntityType(),
+                dtoClass.getName(),
+                e
+            );
         }
     }
 
     private void assessEntity(Object dto, EntityRevision entityRevision) {
         BiConsumer<Object, EntityRevision> assessor = assessors.get(dto.getClass());
 
-        if (Objects.nonNull(assessor)) {
-            assessor.accept(dto, entityRevision);
+        if (Objects.isNull(assessor)) {
+            log.warn(
+                "No data quality assessor registered for DTO class {} (entityType={}, revisionId={}).",
+                dto.getClass().getName(),
+                entityRevision.getEntityType(),
+                entityRevision.getId()
+            );
+            return;
         }
+
+        assessor.accept(dto, entityRevision);
     }
 
     private void assessEntity(DocumentDTO dto, EntityRevision entityRevision) {
@@ -228,13 +281,20 @@ public class DataQualityCalculatorPtCris {
             if (!hasManagedPerson) {
                 reportIssue(entityRevision, "noManagedContributor", dto.getId());
             }
+
+            dto.getContributions().forEach(
+                contribution ->
+                    assessEntity(contribution, entityRevision,
+                        null, null, dto.getId(),
+                        StringUtil.parseDocumentDate(dto.getDocumentDate()))
+            );
         }
 
         if (!StringUtil.valueExists(dto.getDocumentDate())) {
             reportIssue(entityRevision, "documentDateMissing", dto.getId());
         } else {
             try {
-                LocalDate date = StringUtil.parseDocumentDate(dto.getDocumentDate());
+                var date = StringUtil.parseDocumentDate(dto.getDocumentDate());
 
                 if (date.isBefore(LocalDate.of(1950, 1, 1))) {
                     reportIssue(entityRevision, "documentDateBefore1950", dto.getDocumentDate());
@@ -411,6 +471,16 @@ public class DataQualityCalculatorPtCris {
         // TODO: metadataLicenseMissing
     }
 
+    private void assessEntity(EventDTO dto, EntityRevision entityRevision) {
+        dto.getContributions().forEach(
+            contribution ->
+                assessEntity(contribution, entityRevision,
+                    dto.getEventType(), dto.getEventType().equals(EventType.OTHER_EVENT) ?
+                        ((OtherEventDTO) dto).getType() : null,
+                    null, null)
+        );
+    }
+
     private void assessEntity(PersonResponseDTO dto, EntityRevision entityRevision) {
         var personalInfoDTO = dto.getPersonalInfo();
 
@@ -557,6 +627,9 @@ public class DataQualityCalculatorPtCris {
             reportIssue(entityRevision, "biographyMissing");
         }
 
+        assessEntity(personalInfoDTO.getContact(), entityRevision);
+        assessEntity(personalInfoDTO.getPrivateContact(), entityRevision);
+
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
@@ -660,6 +733,9 @@ public class DataQualityCalculatorPtCris {
                 dto.getDateDissolved()
             );
         }
+
+        assessEntity(dto.getContact(), entityRevision);
+        assessEntity(dto.getLocation(), entityRevision);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -909,6 +985,221 @@ public class DataQualityCalculatorPtCris {
                 reportIssue(entityRevision, "invalidIdentifierUriFormat", dto.uriPrefix());
             }
         }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(InvolvementDTO dto, EntityRevision entityRevision) {
+        if (Objects.isNull(dto.getDateFrom())) {
+            reportIssue(entityRevision, "activityStartDateMissing");
+        } else {
+            if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateBefore1950",
+                    dto.getDateFrom()
+                );
+            }
+
+            if (Objects.nonNull(dto.getPersonBirthDate()) &&
+                dto.getDateFrom().isBefore(dto.getPersonBirthDate().plusYears(15))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateBeforePersonTurned15",
+                    dto.getDateFrom(),
+                    dto.getPersonBirthDate()
+                );
+            }
+
+            if (dto.getDateFrom().isAfter(LocalDate.now().plusYears(3))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateTooFarInFuture",
+                    dto.getDateFrom()
+                );
+            }
+        }
+
+        if (Objects.isNull(dto.getDateTo())) {
+            reportIssue(entityRevision, "activityEndDateMissing");
+        } else if (Objects.nonNull(dto.getDateFrom()) &&
+            dto.getDateTo().isBefore(dto.getDateFrom())) {
+            reportIssue(
+                entityRevision,
+                "activityEndDateBeforeStartDate",
+                dto.getDateTo(),
+                dto.getDateFrom()
+            );
+        }
+
+        if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
+            reportIssue(entityRevision, "activityResearchAreasMissing");
+        }
+
+        // TODO metadataLicenseMissing
+        // TODO metadataAccessLevelMissing
+        // TODO createDateMissing
+        // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(PersonContributionDTO dto, EntityRevision entityRevision,
+                              EventType eventType, OtherEventType otherEventType,
+                              Integer documentId, LocalDate documentDate) {
+        var person = personRepository.findById(dto.getPersonId());
+        if (person.isEmpty()) {
+            return;
+        }
+
+        var birthDate =
+            Objects.requireNonNullElse(person.get().getPersonalInfo(), new PersonalInfo())
+                .getLocalBirthDate();
+
+        if (Objects.isNull(dto.getDateFrom())) {
+            reportIssue(entityRevision, "activityStartDateMissing");
+        } else {
+            if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateBefore1950",
+                    dto.getDateFrom()
+                );
+            }
+
+            if (Objects.nonNull(birthDate) && dto.getDateFrom().isBefore(birthDate.plusYears(15))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateBeforePersonTurned15",
+                    dto.getDateFrom(),
+                    birthDate
+                );
+            }
+
+            if (dto.getDateFrom().isAfter(LocalDate.now().plusYears(3))) {
+                reportIssue(
+                    entityRevision,
+                    "activityStartDateTooFarInFuture",
+                    dto.getDateFrom()
+                );
+            }
+        }
+
+        if (Objects.isNull(dto.getDateTo())) {
+            reportIssue(entityRevision, "activityEndDateMissing");
+        } else if (Objects.nonNull(dto.getDateFrom()) &&
+            dto.getDateTo().isBefore(dto.getDateFrom())) {
+            reportIssue(
+                entityRevision,
+                "activityEndDateBeforeStartDate",
+                dto.getDateTo(), dto.getDateFrom()
+            );
+        }
+
+        if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
+            reportIssue(entityRevision, "activityResearchAreasMissing");
+        }
+
+        if (dto instanceof PersonEventContributionDTO eventContribution) {
+            boolean linkedWithCourse = eventType.equals(EventType.COURSE);
+
+            if (!linkedWithCourse) {
+                if (Objects.nonNull(eventContribution.getLectureHoursPerWeek())) {
+                    reportIssue(entityRevision,
+                        "lectureHoursOnlyForCourse");
+                }
+
+                if (Objects.nonNull(eventContribution.getTutorialHoursPerWeek())) {
+                    reportIssue(entityRevision,
+                        "tutorialHoursOnlyForCourse");
+                }
+
+                if (Objects.nonNull(eventContribution.getLabHoursPerWeek())) {
+                    reportIssue(entityRevision,
+                        "labHoursOnlyForCourse");
+                }
+
+                if (Objects.nonNull(eventContribution.getOtherContactHoursPerWeek())) {
+                    reportIssue(entityRevision,
+                        "otherContactHoursOnlyForCourse");
+                }
+            }
+
+            boolean reviewerContribution =
+                eventContribution.getEventContributionType().equals(EventContributionType.REVIEWER);
+
+            boolean linkedWithConference = eventType.equals(EventType.CONFERENCE);
+
+            if (Objects.nonNull(eventContribution.getNumberOfReviewsOrAssessment())) {
+                if (eventContribution.getNumberOfReviewsOrAssessment() > 20) {
+                    reportIssue(
+                        entityRevision,
+                        "numberOfReviewsTooHigh",
+                        eventContribution.getNumberOfReviewsOrAssessment()
+                    );
+                }
+
+                if (!(linkedWithConference && reviewerContribution)) {
+                    reportIssue(entityRevision, "numberOfReviewsOnlyForConferenceReviewer");
+                }
+            }
+
+            boolean trial = eventType.equals(EventType.OTHER_EVENT) &&
+                otherEventType.equals(OtherEventType.TRIAL);
+
+            if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
+                reportIssue(entityRevision, "caseOnlyForTrial");
+            }
+
+            if (CollectionOperations.containsValues(eventContribution.getLocationJurisdiction()) &&
+                !trial) {
+                reportIssue(entityRevision, "locationJurisdictionOnlyForTrial");
+            }
+        }
+
+        if (dto instanceof PersonDocumentContributionDTO documentContribution) {
+            if (Objects.nonNull(documentDate) && Objects.nonNull(birthDate) &&
+                documentDate.isBefore(birthDate)) {
+                reportIssue(
+                    entityRevision,
+                    "documentBeforePersonBirth",
+                    documentId,
+                    documentContribution.getPersonId()
+                );
+            }
+
+            if (Boolean.TRUE.equals(documentContribution.getIsMainContributor()) &&
+                !EnumSet.of(
+                        DocumentContributionType.AUTHOR,
+                        DocumentContributionType.PRESENTER,
+                        DocumentContributionType.EDITOR,
+                        DocumentContributionType.ADVISOR,
+                        DocumentContributionType.ARGUER,
+                        DocumentContributionType.BOARD_MEMBER)
+                    .contains(documentContribution.getContributionType())) {
+                reportIssue(
+                    entityRevision,
+                    "invalidMainContributorFlag",
+                    documentContribution.getContributionType().name()
+                );
+            }
+
+            if (Boolean.TRUE.equals(documentContribution.getIsCorrespondingContributor()) &&
+                !EnumSet.of(
+                        DocumentContributionType.AUTHOR,
+                        DocumentContributionType.PRESENTER,
+                        DocumentContributionType.EDITOR)
+                    .contains(documentContribution.getContributionType())) {
+                reportIssue(
+                    entityRevision,
+                    "invalidCorrespondingContributorFlag",
+                    documentContribution.getContributionType().name()
+                );
+            }
+        }
+
+        assessEntity(dto.getContact(), entityRevision);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing

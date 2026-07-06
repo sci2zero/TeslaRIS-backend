@@ -72,21 +72,22 @@ public class Education extends Involvement {
                      Set<MultiLingualContent> affiliationStatement, Person personInvolved,
                      OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
                      Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
-                     Set<MultiLingualContent> title, Set<MultiLingualContent> abbreviationTitle,
-                     DegreeType degreeType, EducationStatus educationStatus,
-                     Set<MultiLingualContent> degreeCode,
+                     Set<ResearchArea> researchAreas, Set<MultiLingualContent> title,
+                     Set<MultiLingualContent> abbreviationTitle, DegreeType degreeType,
+                     EducationStatus educationStatus, Set<MultiLingualContent> degreeCode,
                      Set<MultiLingualContent> degreeClassification,
-                     Set<ResearchArea> researchAreas, Thesis thesis, Set<Person> supervisors,
+                     Set<ResearchArea> researchAreas1,
+                     Thesis thesis, Set<Person> supervisors,
                      Set<MultiLingualContent> displayThesisSupervisors) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite, uris, description, keywords);
+            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas);
         this.title = title;
         this.abbreviationTitle = abbreviationTitle;
         this.degreeType = degreeType;
         this.educationStatus = educationStatus;
         this.degreeCode = degreeCode;
         this.degreeClassification = degreeClassification;
-        this.researchAreas = researchAreas;
+        this.researchAreas = researchAreas1;
         this.thesis = thesis;
         this.supervisors = supervisors;
         this.displayThesisSupervisors = displayThesisSupervisors;

@@ -13,6 +13,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 public class InvolvementConverter {
@@ -115,6 +116,14 @@ public class InvolvementConverter {
             involvement.getDescription()));
         dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
             involvement.getKeywords()));
+        dto.setPersonBirthDate(
+            Objects.requireNonNullElse(involvement.getPersonInvolved().getPersonalInfo(),
+                new PersonalInfo()).getLocalBirthDate());
+
+        involvement.getResearchAreas().forEach(researchArea -> {
+            dto.getResearchAreasId().add(researchArea.getId());
+            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
 
         if (Objects.nonNull(involvement.getUris())) {
             dto.setUris(involvement.getUris());

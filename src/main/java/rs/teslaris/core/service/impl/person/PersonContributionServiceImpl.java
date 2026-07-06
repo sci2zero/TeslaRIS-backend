@@ -52,6 +52,7 @@ import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -82,6 +83,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     private final NotificationRepository notificationRepository;
 
     private final InvolvementService involvementService;
+
+    private final ResearchAreaService researchAreaService;
 
     @Value("${contribution.approved_by_default}")
     private Boolean contributionApprovedByDefault;
@@ -344,6 +347,13 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         contribution.setOrderNumber(contributionDTO.getOrderNumber());
         contribution.setApproveStatus(
             contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+
+        contribution.setDateFrom(contributionDTO.getDateFrom());
+        contribution.setDateTo(contributionDTO.getDateTo());
+
+        var researchAreas = researchAreaService.getResearchAreasByIds(
+            contributionDTO.getResearchAreasId().stream().toList());
+        contribution.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     protected boolean compareContributions(PersonContribution previousContribution,

@@ -17,6 +17,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
@@ -45,11 +46,12 @@ public class Membership extends Involvement {
                       Set<MultiLingualContent> affiliationStatement, Person personInvolved,
                       OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
+                      Set<ResearchArea> researchAreas,
                       Set<MultiLingualContent> contributionDescription,
                       Set<MultiLingualContent> role,
                       MembershipType membershipType) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite, uris, description, keywords);
+            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas);
         this.contributionDescription = contributionDescription;
         this.role = role;
         this.membershipType = membershipType;

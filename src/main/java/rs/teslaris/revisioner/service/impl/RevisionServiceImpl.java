@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -41,6 +42,7 @@ import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RevisionServiceImpl implements RevisionService {
 
     private final EntityRevisionRepository repository;
@@ -58,12 +60,15 @@ public class RevisionServiceImpl implements RevisionService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void createRevisionIfChanged(RevisionCreateEvent event) {
         try {
-            var newJson = canonicalize(objectMapper.writeValueAsString(event.newObject()),
+            var newJson = canonicalize(
+                objectMapper.writeValueAsString(event.newObject()),
                 event.entityType());
+
             var newHash = sha256(newJson);
 
             if (event.revisionType().equals(RevisionType.UPDATE)) {
-                var oldJson = canonicalize(objectMapper.writeValueAsString(event.oldObject()),
+                var oldJson = canonicalize(
+                    objectMapper.writeValueAsString(event.oldObject()),
                     event.entityType());
 
                 newJson = normalizeIds(oldJson, newJson);
@@ -82,18 +87,42 @@ public class RevisionServiceImpl implements RevisionService {
                     .entityId(event.entityId())
                     .revisionTimestamp(Instant.now())
                     .contentHash(newHash)
-                    .compressedContent(
-                        CompressionUtil.compress(newJson)
-                    )
+                    .compressedContent(CompressionUtil.compress(newJson))
                     .qualityDataReport(new HashSet<>())
                     .qualityDataScore(0.0)
                     .build();
 
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, newJson));
+
             repository.save(revision);
+
+            log.info(
+                "Created {} revision for entity '{}' (ID={}), revisionId={}, hash={}.",
+                event.revisionType(),
+                event.entityType(),
+                event.entityId(),
+                revision.getId(),
+                newHash
+            );
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error(
+                "Failed to create {} revision for entity '{}' (ID={}).",
+                event.revisionType(),
+                event.entityType(),
+                event.entityId(),
+                e
+            );
+
+            throw new IllegalStateException(
+                String.format(
+                    "Unable to create %s revision for %s with ID %d.",
+                    event.revisionType(),
+                    event.entityType(),
+                    event.entityId()
+                ),
+                e
+            );
         }
     }
 

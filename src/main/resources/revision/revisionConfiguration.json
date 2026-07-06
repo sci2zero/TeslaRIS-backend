@@ -650,6 +650,96 @@
       "sr": "Veb adresa \"{0}\" nije u ispravnom formatu.",
       "sr-cyr": "Веб адреса \"{0}\" није у исправном формату.",
       "en": "The website URL \"{0}\" is not in a valid format."
+    },
+    "activityStartDateMissing": {
+      "sr": "Datum početka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+      "sr-cyr": "Датум почетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+      "en": "The activity start date is missing. Although the activity start date field is not mandatory, it is recommended."
+    },
+    "activityStartDateBefore1950": {
+      "sr": "Datum početka aktivnosti ({0}) ne može biti pre 1950. godine.",
+      "sr-cyr": "Датум почетка активности ({0}) не може бити пре 1950. године.",
+      "en": "The activity start date ({0}) cannot be before the year 1950."
+    },
+    "activityStartDateBeforePersonTurned15": {
+      "sr": "Datum početka aktivnosti ({0}) ne može biti pre nego što je povezana osoba navršila 15 godina (datum rođenja: {1}).",
+      "sr-cyr": "Датум почетка активности ({0}) не може бити пре него што је повезана особа навршила 15 година (датум рођења: {1}).",
+      "en": "The activity start date ({0}) cannot be before the linked person turned 15 (birth date: {1})."
+    },
+    "activityStartDateTooFarInFuture": {
+      "sr": "Datum početka aktivnosti ({0}) može biti najviše tri godine u budućnosti.",
+      "sr-cyr": "Датум почетка активности ({0}) може бити највише три године у будућности.",
+      "en": "The activity start date ({0}) can be at most three years in the future."
+    },
+    "activityEndDateMissing": {
+      "sr": "Datum završetka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+      "sr-cyr": "Датум завршетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+      "en": "The activity end date is missing. Although the activity end date field is not mandatory, it is recommended."
+    },
+    "activityEndDateBeforeStartDate": {
+      "sr": "Datum završetka aktivnosti ({0}) ne može biti pre datuma početka aktivnosti ({1}).",
+      "sr-cyr": "Датум завршетка активности ({0}) не може бити пре датума почетка активности ({1}).",
+      "en": "The activity end date ({0}) cannot be before the activity start date ({1})."
+    },
+    "activityResearchAreasMissing": {
+      "sr": "Za zapis aktivnosti nije povezana nijedna istraživačka oblast. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+      "sr-cyr": "За запис активности није повезана ниједна истраживачка област. Иако поље није обавезно, његово попуњавање је препоручено.",
+      "en": "There are no research areas linked with the activity record. Although the research area field is not mandatory, it is recommended."
+    },
+    "lectureHoursOnlyForCourse": {
+      "sr": "Broj časova predavanja može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+      "sr-cyr": "Број часова предавања може бити унет само за наставне активности повезане са предметом.",
+      "en": "Lecture hours can only be specified for teaching activities linked to a course."
+    },
+    "tutorialHoursOnlyForCourse": {
+      "sr": "Broj časova vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+      "sr-cyr": "Број часова вежби може бити унет само за наставне активности повезане са предметом.",
+      "en": "Tutorial hours can only be specified for teaching activities linked to a course."
+    },
+    "labHoursOnlyForCourse": {
+      "sr": "Broj časova laboratorijskih vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+      "sr-cyr": "Број часова лабораторијских вежби може бити унет само за наставне активности повезане са предметом.",
+      "en": "Laboratory hours can only be specified for teaching activities linked to a course."
+    },
+    "otherContactHoursOnlyForCourse": {
+      "sr": "Broj ostalih kontakt časova može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+      "sr-cyr": "Број осталих контакт часова може бити унет само за наставне активности повезане са предметом.",
+      "en": "Other contact hours can only be specified for teaching activities linked to a course."
+    },
+    "numberOfReviewsTooHigh": {
+      "sr": "Broj recenzija ili ocena ({0}) ne može biti veći od 20.",
+      "sr-cyr": "Број рецензија или оцена ({0}) не може бити већи од 20.",
+      "en": "The number of reviews or assessments ({0}) cannot exceed 20."
+    },
+    "numberOfReviewsOnlyForConferenceReviewer": {
+      "sr": "Broj recenzija ili ocena može biti unet samo za recenzente konferencija.",
+      "sr-cyr": "Број рецензија или оцена може бити унет само за рецензенте конференција.",
+      "en": "The number of reviews or assessments can only be specified for conference reviewers."
+    },
+    "caseOnlyForTrial": {
+      "sr": "Predmet može biti povezan samo sa aktivnostima koje predstavljaju suđenje.",
+      "sr-cyr": "Предмет може бити повезан само са активностима које представљају суђење.",
+      "en": "A case can only be associated with trial activities."
+    },
+    "locationJurisdictionOnlyForTrial": {
+      "sr": "Nadležnost može biti povezana samo sa aktivnostima koje predstavljaju suđenje.",
+      "sr-cyr": "Надлежност може бити повезана само са активностима које представљају суђење.",
+      "en": "A jurisdiction can only be associated with trial activities."
+    },
+    "documentBeforePersonBirth": {
+      "sr": "Datum dokumenta povezanog sa doprinosom ne može biti pre datuma rođenja povezane osobe (dokument {0}, osoba {1}).",
+      "sr-cyr": "Датум документа повезаног са доприносом не може бити пре датума рођења повезане особе (документ {0}, особа {1}).",
+      "en": "The document date cannot be before the linked person's birth date (document {0}, person {1})."
+    },
+    "invalidMainContributorFlag": {
+      "sr": "Oznaka glavnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
+      "sr-cyr": "Ознака главног аутора није дозвољена за изабрану врсту доприноса ({0}).",
+      "en": "The main contributor flag is not allowed for the selected contribution type ({0})."
+    },
+    "invalidCorrespondingContributorFlag": {
+      "sr": "Oznaka korespondentnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
+      "sr-cyr": "Ознака кореспондентног аутора није дозвољена за изабрану врсту доприноса ({0}).",
+      "en": "The corresponding contributor flag is not allowed for the selected contribution type ({0})."
     }
   }
 }
