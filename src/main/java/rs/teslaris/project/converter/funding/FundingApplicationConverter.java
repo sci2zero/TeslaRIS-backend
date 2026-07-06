@@ -60,6 +60,10 @@ public class FundingApplicationConverter {
         fundingApplication.getDocuments().forEach(
             document -> dto.getDocuments().add(DocumentFileConverter.toDTO(document)));
 
+        if (Objects.nonNull(fundingApplication.getSubmitter())) {
+            dto.setSubmitterId(fundingApplication.getSubmitter().getId());
+        }
+
         return dto;
     }
 }
