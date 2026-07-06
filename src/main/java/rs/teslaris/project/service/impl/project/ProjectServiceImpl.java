@@ -21,6 +21,7 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
@@ -210,6 +211,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         rebuildTeam(project, projectDTO);
+        rebuildRelations(project, projectDTO);
     }
 
     private void clearCommonFields(Project project) {
@@ -219,6 +221,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getKeywords().clear();
         project.getResearchAreas().clear();
         project.getTeam().clear();
+        project.getRelatedProjects().clear();
     }
 
     private void rebuildTeam(Project project, ProjectDTO projectDTO) {
@@ -228,6 +231,31 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         projectDTO.getTeam().forEach(memberDto ->
                 project.getTeam().add(
                         personProjectContributionService.createContribution(memberDto, project)));
+    }
+
+    private void rebuildRelations(Project project, ProjectDTO projectDTO) {
+        if (Objects.isNull(project.getRelatedProjects())) {
+            project.setRelatedProjects(new HashSet<>());
+        }
+        projectDTO.getRelations().forEach(relationDto -> {
+            var relation = new ProjectsRelation();
+            relation.setRelationType(relationDto.getRelationType());
+            relation.setDateFrom(relationDto.getDateFrom());
+            relation.setDateTo(relationDto.getDateTo());
+            relation.setSourceProjectDescription(
+                    multilingualContentService.getMultilingualContent(
+                            relationDto.getSourceProjectDescription()));
+            relation.setTargetProjectDescription(
+                    multilingualContentService.getMultilingualContent(
+                            relationDto.getTargetProjectDescription()));
+
+            relation.setSourceProject(project);
+            if (Objects.nonNull(relationDto.getTargetProjectId())) {
+                relation.setTargetProject(findOne(relationDto.getTargetProjectId()));
+            }
+
+            project.getRelatedProjects().add(relation);
+        });
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {

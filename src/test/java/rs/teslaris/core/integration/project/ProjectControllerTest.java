@@ -14,6 +14,7 @@ import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.model.project.*;
 
 import java.time.LocalDate;
@@ -67,6 +68,13 @@ public class ProjectControllerTest extends BaseTest {
                 "University of Novi Sad"
         )));
 
+        dto.setRelations(List.of(buildRelation(
+                2,
+                ProjectsRelationType.PART_OF,
+                "This project is part of the parent project",
+                "Parent project"
+        )));
+
         return dto;
     }
 
@@ -100,6 +108,22 @@ public class ProjectControllerTest extends BaseTest {
         member.setDisplayAffiliationStatement(List.of(buildMultilingualContent(affiliation)));
         member.setInstitutionIds(List.of(1));
         return member;
+    }
+
+    private static ProjectsRelationDTO buildRelation(
+            Integer targetProjectId,
+            ProjectsRelationType relationType,
+            String sourceDescription,
+            String targetDescription) {
+
+        var relation = new ProjectsRelationDTO();
+        relation.setTargetProjectId(targetProjectId);
+        relation.setRelationType(relationType);
+        relation.setDateFrom(LocalDate.of(2025, 1, 1));
+        relation.setDateTo(LocalDate.of(2026, 3, 1));
+        relation.setSourceProjectDescription(List.of(buildMultilingualContent(sourceDescription)));
+        relation.setTargetProjectDescription(List.of(buildMultilingualContent(targetDescription)));
+        return relation;
     }
 
     @Test

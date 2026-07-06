@@ -51,6 +51,9 @@ public class ProjectConverter {
         project.getTeam().forEach(member ->
                 dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
 
+        project.getRelatedProjects().forEach(relation ->
+                dto.getRelations().add(ProjectsRelationConverter.toDTO(relation)));
+
         return dto;
     }
 

@@ -73,4 +73,7 @@ public class ProjectDTO {
 
     @Valid
     private List<PersonProjectContributionDTO> team = new ArrayList<>();
+
+    @Valid
+    private List<ProjectsRelationDTO> relations = new ArrayList<>();
 }
