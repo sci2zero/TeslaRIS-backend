@@ -72,7 +72,7 @@ public class ProjectDTO {
     private MonetaryAmountDTO costs;
 
     @Valid
-    private List<PersonProjectContributionDTO> team = new ArrayList<>();
+    private List<PersonProjectContributionDTO> persons = new ArrayList<>();
 
     @Valid
     private List<ProjectsRelationDTO> relations = new ArrayList<>();

@@ -459,7 +459,7 @@ public class ProjectServiceTest {
 
         var member1 = new PersonProjectContributionDTO();
         var member2 = new PersonProjectContributionDTO();
-        projectDTO.setTeam(List.of(member1, member2));
+        projectDTO.setPersons(List.of(member1, member2));
 
         when(multilingualContentService.getMultilingualContent(anyList()))
                 .thenReturn(Set.of(new MultiLingualContent()));
@@ -489,7 +489,7 @@ public class ProjectServiceTest {
         existingProject.setNameAbbreviation(new HashSet<>());
         existingProject.setKeywords(new HashSet<>());
         existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setTeam(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
         existingProject.setStatus(ProjectStatus.ONGOING);
         existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
         existingProject.setResearchType(ProjectResearchType.INNOVATION);
@@ -505,7 +505,7 @@ public class ProjectServiceTest {
         projectDTO.setResearchType(ProjectResearchType.INNOVATION);
         projectDTO.setDateFrom(LocalDate.now());
         projectDTO.setDateTo(LocalDate.now().plusYears(1));
-        projectDTO.setTeam(List.of(
+        projectDTO.setPersons(List.of(
                 new PersonProjectContributionDTO(),
                 new PersonProjectContributionDTO()
         ));
@@ -545,7 +545,7 @@ public class ProjectServiceTest {
         existingProject.setNameAbbreviation(new HashSet<>());
         existingProject.setKeywords(new HashSet<>());
         existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setTeam(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
         existingProject.setStatus(ProjectStatus.ONGOING);
         existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
         existingProject.setResearchType(ProjectResearchType.INNOVATION);
@@ -561,7 +561,7 @@ public class ProjectServiceTest {
         projectDTO.setResearchType(ProjectResearchType.INNOVATION);
         projectDTO.setDateFrom(LocalDate.now());
         projectDTO.setDateTo(LocalDate.now().plusYears(1));
-        projectDTO.setTeam(List.of());
+        projectDTO.setPersons(List.of());
 
         when(projectRepository.findById(projectId))
                 .thenReturn(Optional.of(existingProject));
@@ -637,7 +637,7 @@ public class ProjectServiceTest {
         existingProject.setNameAbbreviation(new HashSet<>());
         existingProject.setKeywords(new HashSet<>());
         existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setTeam(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
         existingProject.setRelatedProjects(new HashSet<>());
         existingProject.setStatus(ProjectStatus.ONGOING);
         existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);

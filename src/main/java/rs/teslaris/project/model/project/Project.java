@@ -80,11 +80,11 @@ public class Project extends BaseEntity {
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
-    private Set<OrganisationUnitProjectContribution> consortium = new HashSet<>();
+    private Set<OrganisationUnitProjectContribution> organisations = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
-    private Set<PersonProjectContribution> team = new HashSet<>();
+    private Set<PersonProjectContribution> persons = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private Set<ProjectDocument> documents = new HashSet<>();

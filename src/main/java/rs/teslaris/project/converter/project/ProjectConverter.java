@@ -31,7 +31,7 @@ public class ProjectConverter {
         project.getResearchAreas().forEach(researchArea ->
                 dto.getResearchAreasId().add(researchArea.getId()));
 
-        project.getConsortium().forEach(organisation ->
+        project.getOrganisations().forEach(organisation ->
                 dto.getConsortiumIds().add(organisation.getId()));
 
         dto.setUris(project.getUris());
@@ -48,8 +48,8 @@ public class ProjectConverter {
             dto.getCosts().setCurrencyId(project.getCosts().getCurrency().getId());
         }
 
-        project.getTeam().forEach(member ->
-                dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
+        project.getPersons().forEach(member ->
+                dto.getPersons().add(PersonProjectContributionConverter.toDTO(member)));
 
         project.getRelatedProjects().forEach(relation ->
                 dto.getRelations().add(ProjectsRelationConverter.toDTO(relation)));

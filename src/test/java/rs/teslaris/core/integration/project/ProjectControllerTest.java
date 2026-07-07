@@ -60,7 +60,7 @@ public class ProjectControllerTest extends BaseTest {
         dto.setNotFunded(true);
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
 
-        dto.setTeam(List.of(buildTeamMember(
+        dto.setPersons(List.of(buildTeamMember(
                 1, 1,
                 PersonProjectContributionType.TEAM_MEMBER,
                 PersonProjectInvestigationRole.RESEARCHER,
@@ -195,7 +195,7 @@ public class ProjectControllerTest extends BaseTest {
                 "Project supervisor",
                 "Faculty of Technical Sciences"
         );
-        payload.setTeam(List.of(payload.getTeam().getFirst(), secondMember));
+        payload.setPersons(List.of(payload.getPersons().getFirst(), secondMember));
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(
@@ -212,7 +212,7 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = getTestPayload();
-        payload.setTeam(List.of());
+        payload.setPersons(List.of());
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(

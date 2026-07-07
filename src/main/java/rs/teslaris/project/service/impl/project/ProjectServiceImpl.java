@@ -184,9 +184,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 projectDTO.getResearchAreasId().stream().toList());
         project.setResearchAreas(new HashSet<>(researchAreas));
 
-        var consortium = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
+        var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
                 projectDTO.getConsortiumIds().stream().toList());
-        project.setConsortium(new HashSet<>(consortium));
+        project.setOrganisations(new HashSet<>(organisations));
 
         project.setUris(projectDTO.getUris());
         project.setDoi(projectDTO.getDoi());
@@ -220,16 +220,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getNameAbbreviation().clear();
         project.getKeywords().clear();
         project.getResearchAreas().clear();
-        project.getTeam().clear();
+        project.getPersons().clear();
         project.getRelatedProjects().clear();
     }
 
     private void rebuildTeam(Project project, ProjectDTO projectDTO) {
-        if (Objects.isNull(project.getTeam())) {
-            project.setTeam(new HashSet<>());
+        if (Objects.isNull(project.getPersons())) {
+            project.setPersons(new HashSet<>());
         }
-        projectDTO.getTeam().forEach(memberDto ->
-                project.getTeam().add(
+        projectDTO.getPersons().forEach(memberDto ->
+                project.getPersons().add(
                         personProjectContributionService.createContribution(memberDto, project)));
     }
 
