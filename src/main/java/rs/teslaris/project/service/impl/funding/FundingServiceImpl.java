@@ -237,7 +237,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
-
+        funding.setInternalInvestment(fundingDTO.getInternalInvestment());
+        
         buildFundingParts(funding, fundingDTO);
     }
 

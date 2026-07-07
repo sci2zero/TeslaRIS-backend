@@ -111,7 +111,7 @@ public class FundingControllerTest extends BaseTest {
         dto.setProjectId(1);
         dto.setFundingCallId(1);
         dto.setInvolvementId(1);
-        
+
         var fundingTypes = new HashSet<FundingType>();
         fundingTypes.add(FundingType.GRANT);
         dto.setFundingTypes(fundingTypes);

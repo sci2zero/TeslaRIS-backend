@@ -136,4 +136,7 @@ public class Funding extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "involvement_id")
     private Involvement involvement;
+
+    @Column(name = "internal_investment")
+    private Boolean internalInvestment;
 }

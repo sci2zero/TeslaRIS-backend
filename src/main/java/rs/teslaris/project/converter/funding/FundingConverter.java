@@ -29,6 +29,7 @@ public class FundingConverter {
         dto.setDateTo(funding.getDateTo());
         dto.setOaMandated(funding.getOaMandated());
         dto.setOaMandateUrl(funding.getOaMandateUrl());
+        dto.setInternalInvestment(funding.getInternalInvestment());
 
         if (Objects.nonNull(funding.getProject())) {
             dto.setProjectId(funding.getProject().getId());
