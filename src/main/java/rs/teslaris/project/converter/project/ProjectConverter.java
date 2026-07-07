@@ -18,6 +18,7 @@ public class ProjectConverter {
         dto.setMergedIds(project.getMergedIds());
         dto.setDoi(project.getDoi());
         dto.setRaid(project.getRaid());
+        dto.setNationalId(project.getNationalId());
 
         dto.setName(
                 MultilingualContentConverter.getMultilingualContentDTO(project.getName()));
@@ -32,7 +33,7 @@ public class ProjectConverter {
                 dto.getResearchAreasId().add(researchArea.getId()));
 
         project.getOrganisations().forEach(organisation ->
-                dto.getConsortiumIds().add(organisation.getId()));
+                dto.getOrganisationsIds().add(organisation.getId()));
 
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());

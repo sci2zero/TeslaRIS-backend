@@ -55,6 +55,9 @@ public class Project extends BaseEntity {
     @Column(name = "raid")
     private String raid;
 
+    @Column(name = "national_id")
+    private String nationalId;
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 

@@ -37,6 +37,8 @@ public class ProjectDTO {
 
     private String raid;
 
+    private String nationalId;
+
     @Valid
     @NotNull(message = "You have to provide a project name.")
     @NotEmpty(message = "You have to provide a project name.")
@@ -50,7 +52,7 @@ public class ProjectDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    private Set<Integer> consortiumIds = new HashSet<>();
+    private Set<Integer> organisationsIds = new HashSet<>();
 
     private Set<String> uris = new HashSet<>();
 
