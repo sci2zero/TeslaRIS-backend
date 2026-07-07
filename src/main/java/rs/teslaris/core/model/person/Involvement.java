@@ -27,6 +27,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.project.model.funding.Funding;
 
 @Getter
 @Setter
@@ -88,6 +89,27 @@ public class Involvement extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keywords = new HashSet<>();
 
+    @OneToMany(mappedBy = "involvement", fetch = FetchType.LAZY)
+    private Set<Funding> fundings = new HashSet<>();
+
+    public Involvement(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
+                       Set<DocumentFile> proofs, InvolvementType involvementType,
+                       Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                       OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
+                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords) {
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+        this.approveStatus = approveStatus;
+        this.proofs = proofs;
+        this.involvementType = involvementType;
+        this.affiliationStatement = affiliationStatement;
+        this.personInvolved = personInvolved;
+        this.organisationUnit = organisationUnit;
+        this.favorite = favorite;
+        this.uris = uris;
+        this.description = description;
+        this.keywords = keywords;
+    }
 
     @Override
     public boolean equals(Object o) {
