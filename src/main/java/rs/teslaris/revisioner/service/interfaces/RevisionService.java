@@ -3,7 +3,7 @@ package rs.teslaris.revisioner.service.interfaces;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 public interface RevisionService {
@@ -14,6 +14,6 @@ public interface RevisionService {
 
     Optional<String> getRevisionAtTimestamp(String entityType, Integer entityId, Instant timestamp);
 
-    List<MultilingualContentDTO> getQualityReportAtTimestamp(String entityType, Integer entityId,
-                                                             Instant timestamp);
+    List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType, Integer entityId,
+                                                               Instant timestamp);
 }

@@ -1,23 +1,24 @@
 package rs.teslaris.revisioner.model;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 
 @Entity
 @Table(
@@ -52,15 +53,28 @@ public class EntityRevision extends BaseEntity {
     @Column(name = "content_hash", nullable = false, length = 64)
     private String contentHash;
 
-    @Column(name = "quality_data_score", nullable = false)
-    private Double qualityDataScore = 0.0;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", name = "uris")
-    private Set<String> qualityDataReport = new HashSet<>();
+    @OneToMany(
+        mappedBy = "revision",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<DataQualityAssessment> assessments = new ArrayList<>();
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "compressed_content", nullable = false)
     private byte[] compressedContent;
+
+
+    public void addAssessment(DataQualityAssessment assessment) {
+        assessment.setRevision(this);
+        assessments.add(assessment);
+    }
+
+    public void removeAssessment(DataQualityAssessment assessment) {
+        assessments.remove(assessment);
+        assessment.setRevision(null);
+    }
 }

@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +27,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
@@ -88,8 +88,6 @@ public class RevisionServiceImpl implements RevisionService {
                     .revisionTimestamp(Instant.now())
                     .contentHash(newHash)
                     .compressedContent(CompressionUtil.compress(newJson))
-                    .qualityDataReport(new HashSet<>())
-                    .qualityDataScore(0.0)
                     .build();
 
             applicationEventPublisher.publishEvent(
@@ -174,9 +172,9 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MultilingualContentDTO> getQualityReportAtTimestamp(String entityType,
-                                                                    Integer entityId,
-                                                                    Instant timestamp) {
+    public List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType,
+                                                                      Integer entityId,
+                                                                      Instant timestamp) {
         var entityRevision = repository
             .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
                 entityType, entityId, timestamp);
@@ -185,45 +183,54 @@ public class RevisionServiceImpl implements RevisionService {
             return List.of();
         }
 
-        var qualityReport = new ArrayList<MultilingualContentDTO>();
+        var qualityReport = new ArrayList<QualityReportResponseDTO>();
 
-        entityRevision.get().getQualityDataReport().forEach(reportEntry -> {
-            var keyParams = reportEntry.split(":");
-            var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(keyParams[0],
-                (Object[]) keyParams[1].split(","));
+        entityRevision.get().getAssessments().forEach(assessment -> {
+            var currentReportText = new ArrayList<MultilingualContentDTO>();
 
-            Map<String, MultilingualContentDTO> existingRemarks =
-                qualityReport
-                    .stream()
-                    .collect(Collectors.toMap(
-                        MultilingualContentDTO::getLanguageTag,
-                        Function.identity(),
-                        (left, right) -> left));
+            assessment.getIssues().forEach(issue -> {
+                var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(issue.getKey(),
+                    issue.getParameters().toArray());
 
-            for (var newRemark : newRemarks) {
-                var languageTag = newRemark.getLanguage().getLanguageTag();
+                Map<String, MultilingualContentDTO> existingRemarks =
+                    currentReportText
+                        .stream()
+                        .collect(Collectors.toMap(
+                            MultilingualContentDTO::getLanguageTag,
+                            Function.identity(),
+                            (left, right) -> left));
 
-                var existing = existingRemarks.get(languageTag);
+                for (var newRemark : newRemarks) {
+                    var languageTag = newRemark.getLanguage().getLanguageTag();
 
-                if (Objects.isNull(existing)) {
-                    var dto = new MultilingualContentDTO(
-                        newRemark.getLanguage().getId(),
-                        newRemark.getLanguage().getLanguageTag(),
-                        newRemark.getContent(),
-                        newRemark.getPriority()
-                    );
+                    var existing = existingRemarks.get(languageTag);
 
-                    qualityReport.add(dto);
-                    existingRemarks.put(languageTag, dto);
-                } else {
-                    existing.setContent(
-                        existing.getContent()
-                            + System.lineSeparator()
-                            + System.lineSeparator()
-                            + newRemark.getContent()
-                    );
+                    if (Objects.isNull(existing)) {
+                        var dto = new MultilingualContentDTO(
+                            newRemark.getLanguage().getId(),
+                            newRemark.getLanguage().getLanguageTag(),
+                            newRemark.getContent(),
+                            newRemark.getPriority()
+                        );
+
+                        qualityReport.add(
+                            new QualityReportResponseDTO(
+                                assessment.getProfileName() + " (" +
+                                    assessment.getProfileVersion() + ")",
+                                currentReportText
+                            )
+                        );
+                        existingRemarks.put(languageTag, dto);
+                    } else {
+                        existing.setContent(
+                            existing.getContent()
+                                + System.lineSeparator()
+                                + System.lineSeparator()
+                                + newRemark.getContent()
+                        );
+                    }
                 }
-            }
+            });
         });
 
         return qualityReport;

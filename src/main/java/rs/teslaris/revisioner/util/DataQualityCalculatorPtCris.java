@@ -2,11 +2,11 @@ package rs.teslaris.revisioner.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,13 +59,20 @@ import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.revisioner.model.EntityRevision;
-import rs.teslaris.revisioner.repository.EntityRevisionRepository;
+import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
+import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
+import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
+import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataQualityCalculatorPtCris {
+
+    private static final String PROFILE_NAME = "PTCRIS";
+
+    private static final String PROFILE_VERSION = "1.0.0";
 
     private static final Pattern TITLE_PATTERN = Pattern.compile(
         "^[\\p{L}\\p{N}\\s\\-.,;:!?()'\"/&]+$"
@@ -150,128 +156,139 @@ public class DataQualityCalculatorPtCris {
 
     private final RestTemplateProvider restTemplateProvider;
 
-    private final Map<Class<?>, BiConsumer<Object, EntityRevision>> assessors = Map.ofEntries(
-        Map.entry(ThesisResponseDTO.class,
-            (dto, rev) -> assessEntity((ThesisResponseDTO) dto, rev)),
-        Map.entry(DatasetDTO.class, (dto, rev) -> assessEntity((DatasetDTO) dto, rev)),
-        Map.entry(PatentDTO.class, (dto, rev) -> assessEntity((PatentDTO) dto, rev)),
-        Map.entry(JournalPublicationResponseDTO.class,
-            (dto, rev) -> assessEntity((JournalPublicationResponseDTO) dto, rev)),
-        Map.entry(MonographDTO.class, (dto, rev) -> assessEntity((MonographDTO) dto, rev)),
-        Map.entry(MonographPublicationDTO.class,
-            (dto, rev) -> assessEntity((MonographPublicationDTO) dto, rev)),
-        Map.entry(ProceedingsResponseDTO.class,
-            (dto, rev) -> assessEntity((ProceedingsResponseDTO) dto, rev)),
-        Map.entry(ProceedingsPublicationDTO.class,
-            (dto, rev) -> assessEntity((ProceedingsPublicationDTO) dto, rev)),
-        Map.entry(GeneticMaterialDTO.class,
-            (dto, rev) -> assessEntity((GeneticMaterialDTO) dto, rev)),
-        Map.entry(MaterialProductDTO.class,
-            (dto, rev) -> assessEntity((MaterialProductDTO) dto, rev)),
-        Map.entry(IntangibleProductDTO.class,
-            (dto, rev) -> assessEntity((IntangibleProductDTO) dto, rev)),
-        Map.entry(PerformanceRelatedOutputDTO.class,
-            (dto, rev) -> assessEntity((PerformanceRelatedOutputDTO) dto, rev)),
-        Map.entry(PersonResponseDTO.class,
-            (dto, rev) -> assessEntity((PersonResponseDTO) dto, rev)),
-        Map.entry(EventDTO.class, (dto, rev) -> assessEntity((EventDTO) dto, rev)),
-        Map.entry(OrganisationUnitDTO.class,
-            (dto, rev) -> assessEntity((OrganisationUnitDTO) dto, rev)),
-        Map.entry(CountryDTO.class, (dto, rev) -> assessEntity((CountryDTO) dto, rev)),
-        Map.entry(ContactDTO.class, (dto, rev) -> assessEntity((ContactDTO) dto, rev)),
-        Map.entry(LanguageResponseDTO.class,
-            (dto, rev) -> assessEntity((LanguageResponseDTO) dto, rev)),
-        Map.entry(ResearchAreaDTO.class, (dto, rev) -> assessEntity((ResearchAreaDTO) dto, rev)),
-        Map.entry(IdentifierResponseDTO.class,
-            (dto, rev) -> assessEntity((IdentifierResponseDTO) dto, rev)),
-        Map.entry(InvolvementDTO.class, (dto, rev) -> assessEntity((InvolvementDTO) dto, rev))
-    );
+    private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
+        Map.ofEntries(
+            Map.entry(ThesisResponseDTO.class,
+                (dto, assessment) -> assessEntity((ThesisResponseDTO) dto, assessment)),
+            Map.entry(DatasetDTO.class,
+                (dto, assessment) -> assessEntity((DatasetDTO) dto, assessment)),
+            Map.entry(PatentDTO.class,
+                (dto, assessment) -> assessEntity((PatentDTO) dto, assessment)),
+            Map.entry(JournalPublicationResponseDTO.class,
+                (dto, assessment) -> assessEntity((JournalPublicationResponseDTO) dto, assessment)),
+            Map.entry(MonographDTO.class,
+                (dto, assessment) -> assessEntity((MonographDTO) dto, assessment)),
+            Map.entry(MonographPublicationDTO.class,
+                (dto, assessment) -> assessEntity((MonographPublicationDTO) dto, assessment)),
+            Map.entry(ProceedingsResponseDTO.class,
+                (dto, assessment) -> assessEntity((ProceedingsResponseDTO) dto, assessment)),
+            Map.entry(ProceedingsPublicationDTO.class,
+                (dto, assessment) -> assessEntity((ProceedingsPublicationDTO) dto, assessment)),
+            Map.entry(GeneticMaterialDTO.class,
+                (dto, assessment) -> assessEntity((GeneticMaterialDTO) dto, assessment)),
+            Map.entry(MaterialProductDTO.class,
+                (dto, assessment) -> assessEntity((MaterialProductDTO) dto, assessment)),
+            Map.entry(IntangibleProductDTO.class,
+                (dto, assessment) -> assessEntity((IntangibleProductDTO) dto, assessment)),
+            Map.entry(PerformanceRelatedOutputDTO.class,
+                (dto, assessment) -> assessEntity((PerformanceRelatedOutputDTO) dto, assessment)),
+            Map.entry(PersonResponseDTO.class,
+                (dto, assessment) -> assessEntity((PersonResponseDTO) dto, assessment)),
+            Map.entry(EventDTO.class,
+                (dto, assessment) -> assessEntity((EventDTO) dto, assessment)),
+            Map.entry(OrganisationUnitDTO.class,
+                (dto, assessment) -> assessEntity((OrganisationUnitDTO) dto, assessment)),
+            Map.entry(CountryDTO.class,
+                (dto, assessment) -> assessEntity((CountryDTO) dto, assessment)),
+            Map.entry(ContactDTO.class,
+                (dto, assessment) -> assessEntity((ContactDTO) dto, assessment)),
+            Map.entry(LanguageResponseDTO.class,
+                (dto, assessment) -> assessEntity((LanguageResponseDTO) dto, assessment)),
+            Map.entry(ResearchAreaDTO.class,
+                (dto, assessment) -> assessEntity((ResearchAreaDTO) dto, assessment)),
+            Map.entry(IdentifierResponseDTO.class,
+                (dto, assessment) -> assessEntity((IdentifierResponseDTO) dto, assessment)),
+            Map.entry(InvolvementDTO.class,
+                (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment))
+        );
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void assessDataQuality(EntityRevision entityRevision, String json,
-                                  ObjectMapper objectMapper, EntityRevisionRepository repository) {
-        Class<?> dtoClass = revisionHydratorRegistry.getDtoClass(entityRevision.getEntityType());
+    public void assessDataQuality(DataQualityAssessment assessment, String json,
+                                  ObjectMapper objectMapper,
+                                  DataQualityAssessmentRepository repository) {
+        Class<?> dtoClass =
+            revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, entityRevision);
+            assessEntity(dto, assessment);
 
-            repository.save(entityRevision);
+            repository.save(assessment);
 
             log.info(
                 "Successfully completed data quality assessment. revisionId={}, entityType={}, score={}, remarks={}",
-                entityRevision.getId(),
-                entityRevision.getEntityType(),
-                entityRevision.getQualityDataScore(),
-                entityRevision.getQualityDataReport().size()
+                assessment.getId(),
+                assessment.getRevision().getEntityType(),
+                assessment.getQualityScore(),
+                assessment.getIssues().size()
             );
         } catch (JsonProcessingException e) {
             log.error(
                 "Failed to deserialize revision {} of type {} into DTO {}.",
-                entityRevision.getId(),
-                entityRevision.getEntityType(),
+                assessment.getId(),
+                assessment.getRevision().getEntityType(),
                 dtoClass.getName(),
                 e
             );
         } catch (Exception e) {
             log.error(
                 "Unexpected error while assessing data quality. revisionId={}, entityType={}, dtoClass={}",
-                entityRevision.getId(),
-                entityRevision.getEntityType(),
+                assessment.getId(),
+                assessment.getRevision().getEntityType(),
                 dtoClass.getName(),
                 e
             );
         }
     }
 
-    private void assessEntity(Object dto, EntityRevision entityRevision) {
-        BiConsumer<Object, EntityRevision> assessor = assessors.get(dto.getClass());
+    private void assessEntity(Object dto, DataQualityAssessment assessment) {
+        BiConsumer<Object, DataQualityAssessment> assessor = assessors.get(dto.getClass());
 
         if (Objects.isNull(assessor)) {
             log.warn(
                 "No data quality assessor registered for DTO class {} (entityType={}, revisionId={}).",
                 dto.getClass().getName(),
-                entityRevision.getEntityType(),
-                entityRevision.getId()
+                assessment.getRevision().getEntityType(),
+                assessment.getRevision().getId()
             );
             return;
         }
 
-        assessor.accept(dto, entityRevision);
+        assessor.accept(dto, assessment);
     }
 
-    private void assessEntity(DocumentDTO dto, EntityRevision entityRevision) {
-        entityRevision.setQualityDataScore(0.0);
+    private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
+        assessment.setQualityScore(0.0); // TODO: Update score
 
         if (!CollectionOperations.containsValues(dto.getTitle())) {
-            reportIssue(entityRevision, "titleMissing");
+            reportIssue(assessment, "titleMissing");
         } else {
             dto.getTitle().forEach(title -> {
                 var value = title.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "invalidTitleFormat", value);
+                    reportIssue(assessment, "invalidTitleFormat", value);
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "titleTooLong", value);
+                    reportIssue(assessment, "titleTooLong", value);
                 }
 
                 if (!TITLE_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidTitleFormat", value);
+                    reportIssue(assessment, "invalidTitleFormat", value);
                 }
             });
         }
 
         if (!CollectionOperations.containsValues(dto.getDescription())) {
-            reportIssue(entityRevision, "descriptionMissing", dto.getId());
+            reportIssue(assessment, "descriptionMissing", dto.getId());
         }
 
         if (!CollectionOperations.containsValues(dto.getContributions())) {
-            reportIssue(entityRevision, "contributorsMissing", dto.getId());
+            reportIssue(assessment, "contributorsMissing", dto.getId());
         } else {
             boolean hasManagedPerson =
                 dto.getContributions()
@@ -279,85 +296,85 @@ public class DataQualityCalculatorPtCris {
                     .anyMatch(c -> Objects.nonNull(c.getPersonId()));
 
             if (!hasManagedPerson) {
-                reportIssue(entityRevision, "noManagedContributor", dto.getId());
+                reportIssue(assessment, "noManagedContributor", dto.getId());
             }
 
             dto.getContributions().forEach(
                 contribution ->
-                    assessEntity(contribution, entityRevision,
+                    assessEntity(contribution, assessment,
                         null, null, dto.getId(),
                         StringUtil.parseDocumentDate(dto.getDocumentDate()))
             );
         }
 
         if (!StringUtil.valueExists(dto.getDocumentDate())) {
-            reportIssue(entityRevision, "documentDateMissing", dto.getId());
+            reportIssue(assessment, "documentDateMissing", dto.getId());
         } else {
             try {
                 var date = StringUtil.parseDocumentDate(dto.getDocumentDate());
 
                 if (date.isBefore(LocalDate.of(1950, 1, 1))) {
-                    reportIssue(entityRevision, "documentDateBefore1950", dto.getDocumentDate());
+                    reportIssue(assessment, "documentDateBefore1950", dto.getDocumentDate());
                 }
 
                 if (date.isAfter(LocalDate.now().plusYears(3))) {
-                    reportIssue(entityRevision, "documentDateTooFarInFuture",
+                    reportIssue(assessment, "documentDateTooFarInFuture",
                         dto.getDocumentDate());
                 }
             } catch (Exception e) {
-                reportIssue(entityRevision, "invalidDocumentDateFormat", dto.getDocumentDate());
+                reportIssue(assessment, "invalidDocumentDateFormat", dto.getDocumentDate());
             }
         }
 
         if (!StringUtil.valueExists(dto.getDoi())) {
-            reportIssue(entityRevision, "noDoiPresent", dto.getId());
+            reportIssue(assessment, "noDoiPresent", dto.getId());
         } else {
             var doi = dto.getDoi();
 
             if (doi.length() < 9) {
-                reportIssue(entityRevision, "doiTooShort", doi);
+                reportIssue(assessment, "doiTooShort", doi);
             }
 
             if (doi.length() > 255) {
-                reportIssue(entityRevision, "doiTooLong", doi);
+                reportIssue(assessment, "doiTooLong", doi);
             }
 
             if (!DOI_PATTERN.matcher(doi).matches()) {
-                reportIssue(entityRevision, "invalidDoiFormat", doi);
+                reportIssue(assessment, "invalidDoiFormat", doi);
             }
 
             if (documentRepository.existsByDoi(doi, dto.getId())) {
-                reportIssue(entityRevision, "duplicateDoi", doi);
+                reportIssue(assessment, "duplicateDoi", doi);
             }
 
             if (!isResolvableDoi(doi)) {
-                reportIssue(entityRevision, "doiNotResolvable", doi);
+                reportIssue(assessment, "doiNotResolvable", doi);
             }
         }
 
         if (!StringUtil.valueExists(dto.getHandleId())) {
-            reportIssue(entityRevision, "noHandlePresent", dto.getId());
+            reportIssue(assessment, "noHandlePresent", dto.getId());
         } else {
             var handle = dto.getHandleId();
 
             if (handle.length() < 8) {
-                reportIssue(entityRevision, "handleTooShort", handle);
+                reportIssue(assessment, "handleTooShort", handle);
             }
 
             if (handle.length() > 255) {
-                reportIssue(entityRevision, "handleTooLong", handle);
+                reportIssue(assessment, "handleTooLong", handle);
             }
 
             if (!HANDLE_PATTERN.matcher(handle).matches()) {
-                reportIssue(entityRevision, "invalidHandleFormat", handle);
+                reportIssue(assessment, "invalidHandleFormat", handle);
             }
 
             if (documentRepository.existsByHandleId(handle, dto.getId())) {
-                reportIssue(entityRevision, "duplicateHandle", handle);
+                reportIssue(assessment, "duplicateHandle", handle);
             }
 
             if (!isResolvableHandle(handle)) {
-                reportIssue(entityRevision, "handleNotResolvable", handle);
+                reportIssue(assessment, "handleNotResolvable", handle);
             }
         }
 
@@ -372,18 +389,18 @@ public class DataQualityCalculatorPtCris {
                 StringUtil.valueExists(dto.getSsrnId());
 
         if (!hasIdentifier) {
-            reportIssue(entityRevision, "noIdentifierPresent");
+            reportIssue(assessment, "noIdentifierPresent");
         }
 
         if (Objects.isNull(dto.getOpenAccess())) {
-            reportIssue(entityRevision, "openAccessMissing");
+            reportIssue(assessment, "openAccessMissing");
         }
 
         if ((dto instanceof IntangibleProductDTO intangibleProduct &&
             !CollectionOperations.containsValues(intangibleProduct.getResearchAreasId())) ||
             (dto instanceof MaterialProductDTO materialProduct &&
                 !CollectionOperations.containsValues(materialProduct.getResearchAreasId()))) {
-            reportIssue(entityRevision, "researchAreasMissing");
+            reportIssue(assessment, "researchAreasMissing");
         }
 
         if (dto instanceof ThesisResponseDTO thesis) {
@@ -391,69 +408,69 @@ public class DataQualityCalculatorPtCris {
                 thesis.getNumberOfPages(),
                 1, 5000,
                 "numberOfPages",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfChapters(),
                 1, 30,
                 "numberOfChapters",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfReferences(),
                 1, 5000,
                 "numberOfReferences",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfTables(),
                 1, 200,
                 "numberOfTables",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfIllustrations(),
                 1, 200,
                 "numberOfIllustrations",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfGraphs(),
                 1, 200,
                 "numberOfGraphs",
-                entityRevision);
+                assessment);
 
             validateRange(
                 thesis.getNumberOfAppendices(),
                 1, 30,
                 "numberOfAppendices",
-                entityRevision);
+                assessment);
 
             if (Objects.isNull(thesis.getTopicAcceptanceDate())) {
-                reportIssue(entityRevision, "topicAcceptanceDateMissing");
+                reportIssue(assessment, "topicAcceptanceDateMissing");
             } else {
                 if (thesis.getTopicAcceptanceDate().isBefore(LocalDate.of(1950, 1, 1))) {
                     reportIssue(
-                        entityRevision,
+                        assessment,
                         "topicAcceptanceDateBefore1950",
                         thesis.getTopicAcceptanceDate());
                 }
 
                 if (thesis.getTopicAcceptanceDate().isAfter(LocalDate.now())) {
                     reportIssue(
-                        entityRevision,
+                        assessment,
                         "topicAcceptanceDateFuture",
                         thesis.getTopicAcceptanceDate());
                 }
             }
 
             if (Objects.isNull(thesis.getThesisDefenceDate())) {
-                reportIssue(entityRevision, "thesisDefenceDateMissing");
+                reportIssue(assessment, "thesisDefenceDateMissing");
             } else {
                 if (Objects.nonNull(thesis.getTopicAcceptanceDate()) &&
                     thesis.getThesisDefenceDate().isBefore(thesis.getTopicAcceptanceDate())) {
                     reportIssue(
-                        entityRevision,
+                        assessment,
                         "defenceBeforeAcceptance",
                         thesis.getTopicAcceptanceDate(),
                         thesis.getThesisDefenceDate());
@@ -461,52 +478,71 @@ public class DataQualityCalculatorPtCris {
 
                 if (thesis.getThesisDefenceDate().isAfter(LocalDate.now().plusYears(1))) {
                     reportIssue(
-                        entityRevision,
+                        assessment,
                         "defenceTooFarInFuture",
                         thesis.getThesisDefenceDate());
                 }
             }
         }
 
+        // TODO: Make this into a helper method
+        assessment.setFinishedAt(Instant.now());
+
+        assessment.setFailedRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
+                .count());
+
+        assessment.setWarningRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity() == IssueSeverity.WARNING)
+                .count());
+
+        assessment.setPassedRules(100 // TODO: Read total rules from JSON
+            - assessment.getFailedRules()
+            - assessment.getWarningRules());
+
+        assessment.setValid(assessment.getFailedRules() == 0);
+
         // TODO: metadataLicenseMissing
     }
 
-    private void assessEntity(EventDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(EventDTO dto, DataQualityAssessment assessment) {
         dto.getContributions().forEach(
             contribution ->
-                assessEntity(contribution, entityRevision,
+                assessEntity(contribution, assessment,
                     dto.getEventType(), dto.getEventType().equals(EventType.OTHER_EVENT) ?
                         ((OtherEventDTO) dto).getType() : null,
                     null, null)
         );
     }
 
-    private void assessEntity(PersonResponseDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(PersonResponseDTO dto, DataQualityAssessment assessment) {
         var personalInfoDTO = dto.getPersonalInfo();
 
         if (Objects.isNull(personalInfoDTO.getLocalBirthDate())) {
-            reportIssue(entityRevision, "birthDateMissing");
+            reportIssue(assessment, "birthDateMissing");
         } else {
             var birthDate = personalInfoDTO.getLocalBirthDate();
 
             if (birthDate.isBefore(LocalDate.of(1900, 1, 1))) {
-                reportIssue(entityRevision, "birthDateBefore1900", birthDate);
+                reportIssue(assessment, "birthDateBefore1900", birthDate);
             }
 
             if (birthDate.isAfter(LocalDate.now())) {
-                reportIssue(entityRevision, "birthDateInFuture", birthDate);
+                reportIssue(assessment, "birthDateInFuture", birthDate);
             }
         }
 
         if (!StringUtil.valueExists(personalInfoDTO.getOrcid())) {
-            reportIssue(entityRevision, "noOrcidPresent");
+            reportIssue(assessment, "noOrcidPresent");
         } else {
             if (!ORCID_PATTERN.matcher(personalInfoDTO.getOrcid()).matches()) {
-                reportIssue(entityRevision, "invalidOrcidFormat", personalInfoDTO.getOrcid());
+                reportIssue(assessment, "invalidOrcidFormat", personalInfoDTO.getOrcid());
             }
 
             if (personRepository.existsByOrcid(personalInfoDTO.getOrcid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOrcid", personalInfoDTO.getOrcid());
+                reportIssue(assessment, "duplicateOrcid", personalInfoDTO.getOrcid());
             }
         }
 
@@ -514,19 +550,19 @@ public class DataQualityCalculatorPtCris {
             var rid = personalInfoDTO.getWebOfScienceResearcherId();
 
             if (rid.length() < 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooShort", rid);
+                reportIssue(assessment, "webOfScienceResearcherIdTooShort", rid);
             }
 
             if (rid.length() > 11) {
-                reportIssue(entityRevision, "webOfScienceResearcherIdTooLong", rid);
+                reportIssue(assessment, "webOfScienceResearcherIdTooLong", rid);
             }
 
             if (!WEB_OF_SCIENCE_RESEARCHER_ID_PATTERN.matcher(rid).matches()) {
-                reportIssue(entityRevision, "invalidWebOfScienceResearcherIdFormat", rid);
+                reportIssue(assessment, "invalidWebOfScienceResearcherIdFormat", rid);
             }
 
             if (personRepository.existsByWebOfScienceId(rid, dto.getId())) {
-                reportIssue(entityRevision, "duplicateWebOfScienceResearcherId", rid);
+                reportIssue(assessment, "duplicateWebOfScienceResearcherId", rid);
             }
         }
 
@@ -534,46 +570,46 @@ public class DataQualityCalculatorPtCris {
             var id = personalInfoDTO.getScopusAuthorId();
 
             if (!SCOPUS_AUTHOR_ID_PATTERN.matcher(id).matches()) {
-                reportIssue(entityRevision, "invalidScopusAuthorIdFormat", id);
+                reportIssue(assessment, "invalidScopusAuthorIdFormat", id);
             }
 
             if (personRepository.existsByScopusAuthorId(id, dto.getId())) {
-                reportIssue(entityRevision, "duplicateScopusAuthorId", id);
+                reportIssue(assessment, "duplicateScopusAuthorId", id);
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getOpenAlexId())) {
             if (!OPENALEX_PATTERN.matcher(personalInfoDTO.getOpenAlexId()).matches()) {
-                reportIssue(entityRevision, "invalidOpenAlexIdFormat",
+                reportIssue(assessment, "invalidOpenAlexIdFormat",
                     personalInfoDTO.getOpenAlexId());
             }
 
             if (personRepository.existsByOpenAlexId(personalInfoDTO.getOpenAlexId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateOpenAlexId", personalInfoDTO.getOpenAlexId());
+                reportIssue(assessment, "duplicateOpenAlexId", personalInfoDTO.getOpenAlexId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getScholarId())) {
             if (!GOOGLE_SCHOLAR_PATTERN.matcher(personalInfoDTO.getScholarId()).matches()) {
-                reportIssue(entityRevision, "invalidGoogleScholarIdFormat",
+                reportIssue(assessment, "invalidGoogleScholarIdFormat",
                     personalInfoDTO.getScholarId());
             }
 
             if (personRepository.existsByScholarId(personalInfoDTO.getScholarId(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateGoogleScholarId",
+                reportIssue(assessment, "duplicateGoogleScholarId",
                     personalInfoDTO.getScholarId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getLattesId())) {
             if (!LATTES_PATTERN.matcher(personalInfoDTO.getLattesId()).matches()) {
-                reportIssue(entityRevision, "invalidLattesIdFormat", personalInfoDTO.getLattesId());
+                reportIssue(assessment, "invalidLattesIdFormat", personalInfoDTO.getLattesId());
             }
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getNationalScienceId())) {
             if (!CIENCIA_ID_PATTERN.matcher(personalInfoDTO.getNationalScienceId()).matches()) {
-                reportIssue(entityRevision, "invalidCienciaIdFormat",
+                reportIssue(assessment, "invalidCienciaIdFormat",
                     personalInfoDTO.getNationalScienceId());
             }
         }
@@ -581,7 +617,7 @@ public class DataQualityCalculatorPtCris {
         if (StringUtil.valueExists(personalInfoDTO.getAuthenticusId())) {
             if (personRepository.existsByAuthenticusId(personalInfoDTO.getAuthenticusId(),
                 dto.getId())) {
-                reportIssue(entityRevision, "duplicateAuthenticusId",
+                reportIssue(assessment, "duplicateAuthenticusId",
                     personalInfoDTO.getAuthenticusId());
             }
         }
@@ -590,45 +626,45 @@ public class DataQualityCalculatorPtCris {
         personNames.addAll(dto.getPersonOtherNames());
 
         if (!CollectionOperations.containsValues(personNames)) {
-            reportIssue(entityRevision, "nameMissing");
+            reportIssue(assessment, "nameMissing");
         } else {
             personNames.forEach(name -> {
                 if (!StringUtil.valueExists(name.getFirstname())) {
-                    reportIssue(entityRevision, "firstNameMissing");
+                    reportIssue(assessment, "firstNameMissing");
                 }
 
                 if (!StringUtil.valueExists(name.getLastname())) {
-                    reportIssue(entityRevision, "lastNameMissing");
+                    reportIssue(assessment, "lastNameMissing");
                 }
 
                 if (StringUtil.valueExists(name.getFirstname()) &&
                     name.getFirstname().length() > 100) {
-                    reportIssue(entityRevision, "firstNameTooLong", name.getFirstname());
+                    reportIssue(assessment, "firstNameTooLong", name.getFirstname());
                 }
 
                 if (StringUtil.valueExists(name.getLastname()) &&
                     name.getLastname().length() > 100) {
-                    reportIssue(entityRevision, "lastNameTooLong", name.getLastname());
+                    reportIssue(assessment, "lastNameTooLong", name.getLastname());
                 }
 
                 if (StringUtil.valueExists(name.getFirstname()) &&
                     !PERSON_NAME_PATTERN.matcher(name.getFirstname()).matches()) {
-                    reportIssue(entityRevision, "invalidFirstNameFormat", name.getFirstname());
+                    reportIssue(assessment, "invalidFirstNameFormat", name.getFirstname());
                 }
 
                 if (StringUtil.valueExists(name.getLastname()) &&
                     !PERSON_NAME_PATTERN.matcher(name.getLastname()).matches()) {
-                    reportIssue(entityRevision, "invalidLastNameFormat", name.getLastname());
+                    reportIssue(assessment, "invalidLastNameFormat", name.getLastname());
                 }
             });
         }
 
         if (!CollectionOperations.containsValues(dto.getBiography())) {
-            reportIssue(entityRevision, "biographyMissing");
+            reportIssue(assessment, "biographyMissing");
         }
 
-        assessEntity(personalInfoDTO.getContact(), entityRevision);
-        assessEntity(personalInfoDTO.getPrivateContact(), entityRevision);
+        assessEntity(personalInfoDTO.getContact(), assessment);
+        assessEntity(personalInfoDTO.getPrivateContact(), assessment);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -636,89 +672,89 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(OrganisationUnitDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(OrganisationUnitDTO dto, DataQualityAssessment assessment) {
         if (!CollectionOperations.containsValues(dto.getName())) {
-            reportIssue(entityRevision, "organisationUnitNameMissing");
+            reportIssue(assessment, "organisationUnitNameMissing");
         } else {
             dto.getName().forEach(name -> {
 
                 String value = name.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "organisationUnitNameMissing");
+                    reportIssue(assessment, "organisationUnitNameMissing");
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "organisationUnitNameTooLong", value);
+                    reportIssue(assessment, "organisationUnitNameTooLong", value);
                 }
 
                 if (!ORGANISATION_NAME_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidOrganisationUnitNameFormat", value);
+                    reportIssue(assessment, "invalidOrganisationUnitNameFormat", value);
                 }
             });
         }
 
         if (!CollectionOperations.containsValues(dto.getDescription())) {
-            reportIssue(entityRevision, "organisationUnitDescriptionMissing");
+            reportIssue(assessment, "organisationUnitDescriptionMissing");
         }
 
         if (StringUtil.valueExists(dto.getRor())) {
 
             if (!ROR_PATTERN.matcher(dto.getRor()).matches()) {
-                reportIssue(entityRevision, "invalidRorFormat", dto.getRor());
+                reportIssue(assessment, "invalidRorFormat", dto.getRor());
             }
 
             if (organisationUnitRepository.existsByROR(dto.getRor(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateRor", dto.getRor());
+                reportIssue(assessment, "duplicateRor", dto.getRor());
             }
         }
 
         if (StringUtil.valueExists(dto.getIsni())) {
 
             if (!ISNI_PATTERN.matcher(dto.getIsni()).matches()) {
-                reportIssue(entityRevision, "invalidIsniFormat", dto.getIsni());
+                reportIssue(assessment, "invalidIsniFormat", dto.getIsni());
             }
 
             if (organisationUnitRepository.existsByIsni(dto.getIsni(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateIsni", dto.getIsni());
+                reportIssue(assessment, "duplicateIsni", dto.getIsni());
             }
         }
 
         if (StringUtil.valueExists(dto.getScopusAfid())) {
 
             if (!SCOPUS_AFID_PATTERN.matcher(dto.getScopusAfid()).matches()) {
-                reportIssue(entityRevision, "invalidScopusAfidFormat", dto.getScopusAfid());
+                reportIssue(assessment, "invalidScopusAfidFormat", dto.getScopusAfid());
             }
 
             if (organisationUnitRepository.existsByScopusAfid(dto.getScopusAfid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateScopusAfid", dto.getScopusAfid());
+                reportIssue(assessment, "duplicateScopusAfid", dto.getScopusAfid());
             }
         }
 
         if (StringUtil.valueExists(dto.getGrid())) {
             if (!GRID_PATTERN.matcher(dto.getGrid()).matches()) {
-                reportIssue(entityRevision, "invalidGridFormat", dto.getGrid());
+                reportIssue(assessment, "invalidGridFormat", dto.getGrid());
             }
 
             if (organisationUnitRepository.existsByGrid(dto.getGrid(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateGrid", dto.getGrid());
+                reportIssue(assessment, "duplicateGrid", dto.getGrid());
             }
         }
 
         if (StringUtil.valueExists(dto.getRinggold())) {
             if (!RINGGOLD_PATTERN.matcher(dto.getRinggold()).matches()) {
-                reportIssue(entityRevision, "invalidRinggoldFormat", dto.getRinggold());
+                reportIssue(assessment, "invalidRinggoldFormat", dto.getRinggold());
             }
 
             if (organisationUnitRepository.existsByRinggold(dto.getRinggold(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateRinggold", dto.getRinggold());
+                reportIssue(assessment, "duplicateRinggold", dto.getRinggold());
             }
         }
 
         if (StringUtil.valueExists(dto.getFundref())) {
             if (!FUNDREF_PATTERN.matcher(dto.getFundref()).matches()) {
-                reportIssue(entityRevision, "invalidFundrefFormat", dto.getFundref());
+                reportIssue(assessment, "invalidFundrefFormat", dto.getFundref());
             }
         }
 
@@ -727,15 +763,15 @@ public class DataQualityCalculatorPtCris {
             dto.getDateDissolved().isBefore(dto.getDateEstablished())) {
 
             reportIssue(
-                entityRevision,
+                assessment,
                 "dateDissolvedBeforeEstablished",
                 dto.getDateEstablished(),
                 dto.getDateDissolved()
             );
         }
 
-        assessEntity(dto.getContact(), entityRevision);
-        assessEntity(dto.getLocation(), entityRevision);
+        assessEntity(dto.getContact(), assessment);
+        assessEntity(dto.getLocation(), assessment);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -743,40 +779,40 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(CountryDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(CountryDTO dto, DataQualityAssessment assessment) {
         if (!StringUtil.valueExists(dto.getCode())) {
-            reportIssue(entityRevision, "countryCodeMissing");
+            reportIssue(assessment, "countryCodeMissing");
         } else {
             if (dto.getCode().length() != 2) {
-                reportIssue(entityRevision, "countryCodeInvalidLength", dto.getCode());
+                reportIssue(assessment, "countryCodeInvalidLength", dto.getCode());
             }
 
             if (!COUNTRY_CODE_PATTERN.matcher(dto.getCode()).matches()) {
-                reportIssue(entityRevision, "invalidCountryCodeFormat", dto.getCode());
+                reportIssue(assessment, "invalidCountryCodeFormat", dto.getCode());
             }
 
             if (countryRepository.existsByCode(dto.getCode(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateCountryCode", dto.getCode());
+                reportIssue(assessment, "duplicateCountryCode", dto.getCode());
             }
         }
 
         if (!CollectionOperations.containsValues(dto.getName())) {
-            reportIssue(entityRevision, "countryNameMissing");
+            reportIssue(assessment, "countryNameMissing");
         } else {
             dto.getName().forEach(name -> {
                 var value = name.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "countryNameMissing");
+                    reportIssue(assessment, "countryNameMissing");
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "countryNameTooLong", value);
+                    reportIssue(assessment, "countryNameTooLong", value);
                 }
 
                 if (!COUNTRY_NAME_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidCountryNameFormat", value);
+                    reportIssue(assessment, "invalidCountryNameFormat", value);
                 }
             });
         }
@@ -787,94 +823,94 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(ContactDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(ContactDTO dto, DataQualityAssessment assessment) {
         if (StringUtil.valueExists(dto.getContactEmail())) {
             if (dto.getContactEmail().length() > 255) {
-                reportIssue(entityRevision, "contactEmailTooLong", dto.getContactEmail());
+                reportIssue(assessment, "contactEmailTooLong", dto.getContactEmail());
             }
 
             if (!EMAIL_PATTERN.matcher(dto.getContactEmail()).matches()) {
-                reportIssue(entityRevision, "invalidContactEmailFormat", dto.getContactEmail());
+                reportIssue(assessment, "invalidContactEmailFormat", dto.getContactEmail());
             }
         }
 
         if (StringUtil.valueExists(dto.getPhoneNumber())) {
             if (dto.getPhoneNumber().length() > 30) {
-                reportIssue(entityRevision, "phoneNumberTooLong", dto.getPhoneNumber());
+                reportIssue(assessment, "phoneNumberTooLong", dto.getPhoneNumber());
             }
 
             if (!PHONE_NUMBER_PATTERN.matcher(dto.getPhoneNumber()).matches()) {
-                reportIssue(entityRevision, "invalidPhoneNumberFormat", dto.getPhoneNumber());
+                reportIssue(assessment, "invalidPhoneNumberFormat", dto.getPhoneNumber());
             }
         }
 
         if (StringUtil.valueExists(dto.getMobilePhoneNumber())) {
             if (dto.getMobilePhoneNumber().length() > 30) {
-                reportIssue(entityRevision, "mobilePhoneNumberTooLong", dto.getMobilePhoneNumber());
+                reportIssue(assessment, "mobilePhoneNumberTooLong", dto.getMobilePhoneNumber());
             }
 
             if (!PHONE_NUMBER_PATTERN.matcher(dto.getMobilePhoneNumber()).matches()) {
-                reportIssue(entityRevision, "invalidMobilePhoneNumberFormat",
+                reportIssue(assessment, "invalidMobilePhoneNumberFormat",
                     dto.getMobilePhoneNumber());
             }
         }
 
         if (StringUtil.valueExists(dto.getFaxNumber())) {
             if (dto.getFaxNumber().length() > 30) {
-                reportIssue(entityRevision, "faxNumberTooLong", dto.getFaxNumber());
+                reportIssue(assessment, "faxNumberTooLong", dto.getFaxNumber());
             }
 
             if (!PHONE_NUMBER_PATTERN.matcher(dto.getFaxNumber()).matches()) {
-                reportIssue(entityRevision, "invalidFaxNumberFormat", dto.getFaxNumber());
+                reportIssue(assessment, "invalidFaxNumberFormat", dto.getFaxNumber());
             }
         }
 
         // TODO: what website?
 //    if (StringUtil.valueExists(dto.getWebsite())) {
 //        if (dto.getWebsite().length() > 255) {
-//            reportIssue(entityRevision, "contactWebsiteTooLong", dto.getWebsite());
+//            reportIssue(assessment, "contactWebsiteTooLong", dto.getWebsite());
 //        }
 //
 //        if (!URL_PATTERN.matcher(dto.getWebsite()).matches()) {
-//            reportIssue(entityRevision, "invalidContactWebsiteFormat", dto.getWebsite());
+//            reportIssue(assessment, "invalidContactWebsiteFormat", dto.getWebsite());
 //        }
 //    }
     }
 
-    private void assessEntity(LanguageResponseDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(LanguageResponseDTO dto, DataQualityAssessment assessment) {
         if (!StringUtil.valueExists(dto.getLanguageCode())) {
-            reportIssue(entityRevision, "languageTagMissing");
+            reportIssue(assessment, "languageTagMissing");
         } else {
             if (dto.getLanguageCode().length() > 10) {
-                reportIssue(entityRevision, "languageTagTooLong", dto.getLanguageCode());
+                reportIssue(assessment, "languageTagTooLong", dto.getLanguageCode());
             }
 
             if (!LANGUAGE_TAG_PATTERN.matcher(dto.getLanguageCode()).matches()) {
-                reportIssue(entityRevision, "invalidLanguageTagFormat", dto.getLanguageCode());
+                reportIssue(assessment, "invalidLanguageTagFormat", dto.getLanguageCode());
             }
 
             if (languageRepository.existsByCode(dto.getLanguageCode(), dto.getId())) {
-                reportIssue(entityRevision, "duplicateLanguageTag", dto.getLanguageCode());
+                reportIssue(assessment, "duplicateLanguageTag", dto.getLanguageCode());
             }
         }
 
         if (!CollectionOperations.containsValues(dto.getName())) {
-            reportIssue(entityRevision, "languageNameMissing");
+            reportIssue(assessment, "languageNameMissing");
         } else {
             dto.getName().forEach(name -> {
                 var value = name.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "languageNameMissing");
+                    reportIssue(assessment, "languageNameMissing");
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "languageNameTooLong", value);
+                    reportIssue(assessment, "languageNameTooLong", value);
                 }
 
                 if (!LANGUAGE_NAME_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidLanguageNameFormat", value);
+                    reportIssue(assessment, "invalidLanguageNameFormat", value);
                 }
             });
         }
@@ -885,24 +921,24 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(ResearchAreaDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(ResearchAreaDTO dto, DataQualityAssessment assessment) {
         if (!CollectionOperations.containsValues(dto.getName())) {
-            reportIssue(entityRevision, "researchAreaNameMissing");
+            reportIssue(assessment, "researchAreaNameMissing");
         } else {
             dto.getName().forEach(name -> {
                 var value = name.getContent();
 
                 if (!StringUtil.valueExists(value)) {
-                    reportIssue(entityRevision, "researchAreaNameMissing");
+                    reportIssue(assessment, "researchAreaNameMissing");
                     return;
                 }
 
                 if (value.length() > 255) {
-                    reportIssue(entityRevision, "researchAreaNameTooLong", value);
+                    reportIssue(assessment, "researchAreaNameTooLong", value);
                 }
 
                 if (!RESEARCH_AREA_NAME_PATTERN.matcher(value).matches()) {
-                    reportIssue(entityRevision, "invalidResearchAreaNameFormat", value);
+                    reportIssue(assessment, "invalidResearchAreaNameFormat", value);
                 }
             });
         }
@@ -910,15 +946,15 @@ public class DataQualityCalculatorPtCris {
         // TODO: What URI?
 //    if (StringUtil.valueExists(dto.getUri())) {
 //        if (dto.getUri().length() > 255) {
-//            reportIssue(entityRevision, "researchAreaUriTooLong", dto.getUri());
+//            reportIssue(assessment, "researchAreaUriTooLong", dto.getUri());
 //        }
 //
 //        if (!URI_PATTERN.matcher(dto.getUri()).matches()) {
-//            reportIssue(entityRevision, "invalidResearchAreaUriFormat", dto.getUri());
+//            reportIssue(assessment, "invalidResearchAreaUriFormat", dto.getUri());
 //        }
 //
 //        if (researchAreaRepository.existsByUri(dto.getUri(), dto.getId())) {
-//            reportIssue(entityRevision, "duplicateResearchAreaUri", dto.getUri());
+//            reportIssue(assessment, "duplicateResearchAreaUri", dto.getUri());
 //        }
 //    }
 
@@ -928,27 +964,27 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(GeoLocationDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(GeoLocationDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getLatitude())) {
-            reportIssue(entityRevision, "latitudeMissing");
+            reportIssue(assessment, "latitudeMissing");
         } else if (dto.getLatitude() < -90 || dto.getLatitude() > 90) {
-            reportIssue(entityRevision, "latitudeOutOfRange", dto.getLatitude());
+            reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude());
         }
 
         if (Objects.isNull(dto.getLongitude())) {
-            reportIssue(entityRevision, "longitudeMissing");
+            reportIssue(assessment, "longitudeMissing");
         } else if (dto.getLongitude() < -180 || dto.getLongitude() > 180) {
-            reportIssue(entityRevision, "longitudeOutOfRange", dto.getLongitude());
+            reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude());
         }
 
         if (StringUtil.valueExists(dto.getAddress())) {
 
             if (dto.getAddress().length() > 500) {
-                reportIssue(entityRevision, "addressTooLong", dto.getAddress());
+                reportIssue(assessment, "addressTooLong", dto.getAddress());
             }
 
             if (!ADDRESS_PATTERN.matcher(dto.getAddress()).matches()) {
-                reportIssue(entityRevision, "invalidAddressFormat", dto.getAddress());
+                reportIssue(assessment, "invalidAddressFormat", dto.getAddress());
             }
         }
 
@@ -958,31 +994,31 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(IdentifierResponseDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(IdentifierResponseDTO dto, DataQualityAssessment assessment) {
         //TODO: Identifier does not hold value
         // TODO: Type not needed as it is modeled using inheritance
 
         if (StringUtil.valueExists(dto.regularExpression())) {
             if (dto.regularExpression().length() > 255) {
-                reportIssue(entityRevision, "identifierRegularExpressionTooLong",
+                reportIssue(assessment, "identifierRegularExpressionTooLong",
                     dto.regularExpression());
             }
 
             try {
                 Pattern.compile(dto.regularExpression());
             } catch (PatternSyntaxException ex) {
-                reportIssue(entityRevision, "invalidIdentifierRegularExpression",
+                reportIssue(assessment, "invalidIdentifierRegularExpression",
                     dto.regularExpression());
             }
         }
 
         if (StringUtil.valueExists(dto.uriPrefix())) {
             if (dto.uriPrefix().length() > 255) {
-                reportIssue(entityRevision, "identifierUriTooLong", dto.uriPrefix());
+                reportIssue(assessment, "identifierUriTooLong", dto.uriPrefix());
             }
 
             if (!URI_PATTERN.matcher(dto.uriPrefix()).matches()) {
-                reportIssue(entityRevision, "invalidIdentifierUriFormat", dto.uriPrefix());
+                reportIssue(assessment, "invalidIdentifierUriFormat", dto.uriPrefix());
             }
         }
 
@@ -992,13 +1028,13 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(InvolvementDTO dto, EntityRevision entityRevision) {
+    private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(entityRevision, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateBefore1950",
                     dto.getDateFrom()
                 );
@@ -1007,7 +1043,7 @@ public class DataQualityCalculatorPtCris {
             if (Objects.nonNull(dto.getPersonBirthDate()) &&
                 dto.getDateFrom().isBefore(dto.getPersonBirthDate().plusYears(15))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateBeforePersonTurned15",
                     dto.getDateFrom(),
                     dto.getPersonBirthDate()
@@ -1016,7 +1052,7 @@ public class DataQualityCalculatorPtCris {
 
             if (dto.getDateFrom().isAfter(LocalDate.now().plusYears(3))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateTooFarInFuture",
                     dto.getDateFrom()
                 );
@@ -1024,11 +1060,11 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(entityRevision, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
-                entityRevision,
+                assessment,
                 "activityEndDateBeforeStartDate",
                 dto.getDateTo(),
                 dto.getDateFrom()
@@ -1036,7 +1072,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(entityRevision, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing");
         }
 
         // TODO metadataLicenseMissing
@@ -1045,7 +1081,7 @@ public class DataQualityCalculatorPtCris {
         // TODO lastModificationDateMissing
     }
 
-    private void assessEntity(PersonContributionDTO dto, EntityRevision entityRevision,
+    private void assessEntity(PersonContributionDTO dto, DataQualityAssessment assessment,
                               EventType eventType, OtherEventType otherEventType,
                               Integer documentId, LocalDate documentDate) {
         var person = personRepository.findById(dto.getPersonId());
@@ -1058,11 +1094,11 @@ public class DataQualityCalculatorPtCris {
                 .getLocalBirthDate();
 
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(entityRevision, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateBefore1950",
                     dto.getDateFrom()
                 );
@@ -1070,7 +1106,7 @@ public class DataQualityCalculatorPtCris {
 
             if (Objects.nonNull(birthDate) && dto.getDateFrom().isBefore(birthDate.plusYears(15))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateBeforePersonTurned15",
                     dto.getDateFrom(),
                     birthDate
@@ -1079,7 +1115,7 @@ public class DataQualityCalculatorPtCris {
 
             if (dto.getDateFrom().isAfter(LocalDate.now().plusYears(3))) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "activityStartDateTooFarInFuture",
                     dto.getDateFrom()
                 );
@@ -1087,18 +1123,18 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(entityRevision, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
-                entityRevision,
+                assessment,
                 "activityEndDateBeforeStartDate",
                 dto.getDateTo(), dto.getDateFrom()
             );
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(entityRevision, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing");
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1106,22 +1142,22 @@ public class DataQualityCalculatorPtCris {
 
             if (!linkedWithCourse) {
                 if (Objects.nonNull(eventContribution.getLectureHoursPerWeek())) {
-                    reportIssue(entityRevision,
+                    reportIssue(assessment,
                         "lectureHoursOnlyForCourse");
                 }
 
                 if (Objects.nonNull(eventContribution.getTutorialHoursPerWeek())) {
-                    reportIssue(entityRevision,
+                    reportIssue(assessment,
                         "tutorialHoursOnlyForCourse");
                 }
 
                 if (Objects.nonNull(eventContribution.getLabHoursPerWeek())) {
-                    reportIssue(entityRevision,
+                    reportIssue(assessment,
                         "labHoursOnlyForCourse");
                 }
 
                 if (Objects.nonNull(eventContribution.getOtherContactHoursPerWeek())) {
-                    reportIssue(entityRevision,
+                    reportIssue(assessment,
                         "otherContactHoursOnlyForCourse");
                 }
             }
@@ -1134,14 +1170,14 @@ public class DataQualityCalculatorPtCris {
             if (Objects.nonNull(eventContribution.getNumberOfReviewsOrAssessment())) {
                 if (eventContribution.getNumberOfReviewsOrAssessment() > 20) {
                     reportIssue(
-                        entityRevision,
+                        assessment,
                         "numberOfReviewsTooHigh",
                         eventContribution.getNumberOfReviewsOrAssessment()
                     );
                 }
 
                 if (!(linkedWithConference && reviewerContribution)) {
-                    reportIssue(entityRevision, "numberOfReviewsOnlyForConferenceReviewer");
+                    reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer");
                 }
             }
 
@@ -1149,12 +1185,12 @@ public class DataQualityCalculatorPtCris {
                 otherEventType.equals(OtherEventType.TRIAL);
 
             if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
-                reportIssue(entityRevision, "caseOnlyForTrial");
+                reportIssue(assessment, "caseOnlyForTrial");
             }
 
             if (CollectionOperations.containsValues(eventContribution.getLocationJurisdiction()) &&
                 !trial) {
-                reportIssue(entityRevision, "locationJurisdictionOnlyForTrial");
+                reportIssue(assessment, "locationJurisdictionOnlyForTrial");
             }
         }
 
@@ -1162,7 +1198,7 @@ public class DataQualityCalculatorPtCris {
             if (Objects.nonNull(documentDate) && Objects.nonNull(birthDate) &&
                 documentDate.isBefore(birthDate)) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "documentBeforePersonBirth",
                     documentId,
                     documentContribution.getPersonId()
@@ -1179,7 +1215,7 @@ public class DataQualityCalculatorPtCris {
                         DocumentContributionType.BOARD_MEMBER)
                     .contains(documentContribution.getContributionType())) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "invalidMainContributorFlag",
                     documentContribution.getContributionType().name()
                 );
@@ -1192,14 +1228,14 @@ public class DataQualityCalculatorPtCris {
                         DocumentContributionType.EDITOR)
                     .contains(documentContribution.getContributionType())) {
                 reportIssue(
-                    entityRevision,
+                    assessment,
                     "invalidCorrespondingContributorFlag",
                     documentContribution.getContributionType().name()
                 );
             }
         }
 
-        assessEntity(dto.getContact(), entityRevision);
+        assessEntity(dto.getContact(), assessment);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1230,27 +1266,41 @@ public class DataQualityCalculatorPtCris {
     }
 
     private void validateRange(Integer value, int min, int max, String fieldName,
-                               EntityRevision entityRevision) {
+                               DataQualityAssessment assessment) {
         if (Objects.isNull(value)) {
             return;
         }
 
         if (value < min) {
-            reportIssue(entityRevision, fieldName + "BelowMinimum");
+            reportIssue(assessment, fieldName + "BelowMinimum");
         }
 
         if (value > max) {
-            reportIssue(entityRevision, fieldName + "AboveMaximum");
+            reportIssue(assessment, fieldName + "AboveMaximum");
         }
     }
 
-    private void reportIssue(EntityRevision entityRevision, String remarkKey, Object... params) {
-        if (Objects.isNull(entityRevision.getQualityDataReport())) {
-            entityRevision.setQualityDataReport(new HashSet<>());
+    private void reportIssue(DataQualityAssessment assessment,
+                             String issueKey, Object... params) {
+
+        if (Objects.isNull(assessment.getIssues())) {
+            assessment.setIssues(new ArrayList<>());
         }
 
-        var stringParams = Strings.join(Arrays.asList(params), ',');
-        entityRevision.getQualityDataReport()
-            .add(remarkKey + ":" + (!stringParams.isBlank() ? stringParams : "N/A"));
+        assessment.getIssues().add(
+            DataQualityIssue.builder()
+                .key(issueKey)
+                .parameters(Arrays.stream(params)
+                    .map(String::valueOf)
+                    .toList())
+                .severity(IssueSeverity.ERROR) // TODO: Severity should be read from JSON
+                .dimension(resolveDimension(issueKey))
+                .blocking(true)
+                .build()
+        );
+    }
+
+    private QualityDimension resolveDimension(String issueKey) {
+        return QualityDimension.CONFORMITY; // TODO: Dimension should be read from JSON
     }
 }
