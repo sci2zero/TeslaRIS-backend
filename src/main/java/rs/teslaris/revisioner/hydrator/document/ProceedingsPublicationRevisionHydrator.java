@@ -1,6 +1,5 @@
-package rs.teslaris.revisioner.hydrator;
+package rs.teslaris.revisioner.hydrator.document;
 
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +8,7 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
 public class ProceedingsPublicationRevisionHydrator
@@ -34,6 +34,7 @@ public class ProceedingsPublicationRevisionHydrator
     public void hydrate(ProceedingsPublicationDTO dto) {
         hydrateCommonFields(dto);
 
-        dto.setProceedingsName(MultilingualContentConverter.getMultilingualContentDTO(proceedingsService.findProceedingsById(dto.getProceedingsId()).getTitle()));
+        dto.setProceedingsName(MultilingualContentConverter.getMultilingualContentDTO(
+            proceedingsService.findProceedingsById(dto.getProceedingsId()).getTitle()));
     }
 }

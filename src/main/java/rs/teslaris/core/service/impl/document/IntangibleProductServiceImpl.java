@@ -43,6 +43,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -132,6 +133,16 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
 
         var savedIntangibleProduct = intangibleProductJPAService.save(newIntangibleProduct);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                savedIntangibleProduct.getId(),
+                null,
+                IntangibleProductConverter.toDTO(savedIntangibleProduct),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
         }
@@ -152,7 +163,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                 DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                 intangibleProductId,
                 IntangibleProductConverter.toDTO(intangibleProductToUpdate),
-                intangibleProductDTO
+                intangibleProductDTO,
+                RevisionType.UPDATE
             )
         );
 

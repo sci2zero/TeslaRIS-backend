@@ -105,6 +105,7 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -282,6 +283,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedThesis = thesisJPAService.save(newThesis);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                savedThesis.getId(),
+                null,
+                ThesisConverter.toDTO(savedThesis),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }
@@ -301,7 +312,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 DocumentPublicationType.THESIS.name(),
                 thesisId,
                 ThesisConverter.toDTO(thesisToUpdate),
-                thesisDTO
+                thesisDTO,
+                RevisionType.UPDATE
             )
         );
 
@@ -1024,7 +1036,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                     return;
                 }
 
-                updateThesisAndIndex(thesis);
+                updateThesisAndIndex(thesis, publicReviewLengthDays);
 
                 var institutionId = thesis.getOrganisationUnit().getId();
                 thesesByInstitution.putIfAbsent(institutionId, new ArrayList<>());
@@ -1052,11 +1064,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             .orElse(false);
     }
 
-    private void updateThesisAndIndex(Thesis thesis) {
+    private void updateThesisAndIndex(Thesis thesis, Integer publicReviewLengthDays) {
         thesis.setIsOnPublicReview(false);
         thesis.setIsShortenedReview(false);
         thesis.setPublicReviewCompleted(true);
-        thesis.getPublicReviewEndDates().add(LocalDate.now());
+
+        var publicReviewStartDate = thesis.getPublicReviewStartDates().stream()
+            .max(Comparator.naturalOrder()).get();
+        var publicReviewEndDate = publicReviewStartDate.plusDays(publicReviewLengthDays);
+
+        thesis.getPublicReviewEndDates().add(publicReviewEndDate);
         thesis.setPublicationStatus(PublicationStatus.IN_PRINT);
         thesisJPAService.save(thesis);
 
@@ -1065,7 +1082,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 index.setIsOnPublicReview(false);
                 index.setIsOnPublicReviewShortened(false);
                 index.setIsPublicReviewCompleted(true);
-                index.getPublicReviewEndDates().add(LocalDate.now());
+                index.getPublicReviewEndDates().add(publicReviewEndDate);
                 documentPublicationIndexRepository.save(index);
             });
     }

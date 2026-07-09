@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ExhibitionConverter;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -35,6 +36,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -156,6 +159,16 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     @Transactional
     public void updateExhibition(Integer exhibitionId, ExhibitionDTO exhibitionDTO) {
         var exhibitionToUpdate = findExhibitionById(exhibitionId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.EXHIBITION.name(),
+                exhibitionId,
+                ExhibitionConverter.toDTO(exhibitionToUpdate),
+                exhibitionDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var oldContributorIds = clearEventCommonFields(exhibitionToUpdate);
         setEventCommonFields(exhibitionToUpdate, EventType.EXHIBITION, exhibitionDTO,

@@ -76,8 +76,8 @@ public class ProjectServiceTest {
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(ProjectIndex.class), eq("project")))
-                .thenReturn(Page.empty());
+            eq(ProjectIndex.class), eq("project")))
+            .thenReturn(Page.empty());
 
         // when
         var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
@@ -86,7 +86,7 @@ public class ProjectServiceTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(ProjectIndex.class), eq("project"));
+            eq(ProjectIndex.class), eq("project"));
     }
 
     @Test
@@ -103,11 +103,11 @@ public class ProjectServiceTest {
         projectIndex.setNameOther("Test Project");
 
         var expectedPage = new PageImpl<>(
-                List.of(projectIndex), pageable, 1);
+            List.of(projectIndex), pageable, 1);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(ProjectIndex.class), eq("project")))
-                .thenReturn(expectedPage);
+            eq(ProjectIndex.class), eq("project")))
+            .thenReturn(expectedPage);
 
         // when
         var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
@@ -119,7 +119,7 @@ public class ProjectServiceTest {
         assertEquals(1, result.getContent().getFirst().getDatabaseId());
         assertEquals("Test Project", result.getContent().getFirst().getNameSr());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(ProjectIndex.class), eq("project"));
+            eq(ProjectIndex.class), eq("project"));
     }
 
     @Test
@@ -133,7 +133,7 @@ public class ProjectServiceTest {
         project.setResearchType(ProjectResearchType.INNOVATION);
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(project));
+            .thenReturn(Optional.of(project));
 
         // when
         var result = projectService.readProject(projectId);
@@ -150,11 +150,11 @@ public class ProjectServiceTest {
         var projectId = 999;
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                projectService.readProject(projectId));
+            projectService.readProject(projectId));
         verify(projectRepository).findById(projectId);
     }
 
@@ -186,17 +186,17 @@ public class ProjectServiceTest {
         savedProject.setResearchType(ProjectResearchType.INNOVATION);
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(currencyService.findOne(1))
-                .thenReturn(null);
+            .thenReturn(null);
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(savedProject);
+            .thenReturn(savedProject);
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         var result = projectService.createProject(projectDTO);
@@ -235,11 +235,11 @@ public class ProjectServiceTest {
         savedProject.setResearchType(ProjectResearchType.INNOVATION);
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(savedProject);
+            .thenReturn(savedProject);
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         var result = projectService.createProject(projectDTO);
@@ -269,7 +269,7 @@ public class ProjectServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> projectService.createProject(projectDTO));
+            () -> projectService.createProject(projectDTO));
 
         verify(projectRepository, never()).save(any());
     }
@@ -305,15 +305,15 @@ public class ProjectServiceTest {
         projectIndex.setDatabaseId(projectId);
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
+            .thenReturn(Optional.of(existingProject));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-                .thenReturn(Optional.of(projectIndex));
+            .thenReturn(Optional.of(projectIndex));
 
         // when
         projectService.updateProject(projectId, projectDTO);
@@ -363,17 +363,17 @@ public class ProjectServiceTest {
         projectIndex.setDatabaseId(projectId);
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
+            .thenReturn(Optional.of(existingProject));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(currencyService.findOne(1))
-                .thenReturn(null);
+            .thenReturn(null);
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-                .thenReturn(Optional.of(projectIndex));
+            .thenReturn(Optional.of(projectIndex));
 
         // when
         projectService.updateProject(projectId, projectDTO);
@@ -395,11 +395,11 @@ public class ProjectServiceTest {
         var projectDTO = new ProjectDTO();
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                projectService.updateProject(projectId, projectDTO));
+            projectService.updateProject(projectId, projectDTO));
         verify(projectRepository).findById(projectId);
         verify(projectIndexRepository, never()).findProjectIndexByDatabaseId(anyInt());
     }
@@ -432,11 +432,11 @@ public class ProjectServiceTest {
         projectDTO.setDateFrom(LocalDate.now().plusYears(1));
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
+            .thenReturn(Optional.of(existingProject));
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> projectService.updateProject(projectId, projectDTO));
+            () -> projectService.updateProject(projectId, projectDTO));
 
         verify(projectRepository).findById(projectId);
         verify(projectIndexRepository, never()).findProjectIndexByDatabaseId(anyInt());
@@ -462,20 +462,20 @@ public class ProjectServiceTest {
         projectDTO.setPersons(List.of(member1, member2));
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(personProjectContributionService.createContribution(any(), any()))
-                .thenReturn(new PersonProjectContribution());
+            .thenReturn(new PersonProjectContribution());
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(new Project());
+            .thenReturn(new Project());
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         projectService.createProject(projectDTO);
 
         // then
         verify(personProjectContributionService, times(2))
-                .createContribution(any(), any());
+            .createContribution(any(), any());
     }
 
     @Test
@@ -514,24 +514,24 @@ public class ProjectServiceTest {
         projectIndex.setDatabaseId(projectId);
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
+            .thenReturn(Optional.of(existingProject));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(personProjectContributionService.createContribution(any(), any()))
-                .thenReturn(new PersonProjectContribution());
+            .thenReturn(new PersonProjectContribution());
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-                .thenReturn(Optional.of(projectIndex));
+            .thenReturn(Optional.of(projectIndex));
 
         // when
         projectService.updateProject(projectId, projectDTO);
 
         // then
         verify(personProjectContributionService, times(2))
-                .createContribution(any(), any());
+            .createContribution(any(), any());
     }
 
     @Test
@@ -564,22 +564,22 @@ public class ProjectServiceTest {
         projectDTO.setPersons(List.of());
 
         when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
+            .thenReturn(Optional.of(existingProject));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-                .thenReturn(Optional.of(projectIndex()));
+            .thenReturn(Optional.of(projectIndex()));
 
         // when
         projectService.updateProject(projectId, projectDTO);
 
         // then
         verify(personProjectContributionService, never())
-                .createContribution(any(), any());
+            .createContribution(any(), any());
     }
 
     @Test

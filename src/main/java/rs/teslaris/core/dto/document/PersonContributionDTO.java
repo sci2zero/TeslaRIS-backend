@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
@@ -54,6 +55,7 @@ public class PersonContributionDTO {
     @Valid
     private List<MultilingualContentDTO> keywords = new ArrayList<>();
 
+    @NotNull(message = "You have to provide research area IDs.")
     private Set<Integer> researchAreasId = new HashSet<>();
 
     private LocalDate dateFrom;
@@ -65,5 +67,7 @@ public class PersonContributionDTO {
     private Boolean isMainContributor;
 
     private Boolean isInvitedContributor;
+
+    private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
 
 }

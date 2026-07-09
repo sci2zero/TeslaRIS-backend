@@ -40,6 +40,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -145,6 +146,9 @@ public class PersonServiceTest {
     @Mock
     private PersonFieldVisibilityRepository personFieldVisibilityRepository;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -219,14 +223,17 @@ public class PersonServiceTest {
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
-        MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
-        mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
+        try (MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class)) {
 
-        // when
-        var personDto = personService.readPersonWithBasicInfo(1);
+            mocked.when(() -> PersonConverter.toDTO(expectedPerson))
+                .thenReturn(expectedResponse);
 
-        // then
-        assertEquals(personDto, expectedResponse);
+            // when
+            var personDto = personService.readPersonWithBasicInfo(1);
+
+            // then
+            assertEquals(personDto, expectedResponse);
+        }
     }
 
     @Test
@@ -371,7 +378,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonBiographyWithAnyData() {
         // given
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         var bio1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var bio2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
@@ -390,7 +400,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonKeywordWithAnyData() {
         // given
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         var keyword1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var keyword2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
@@ -464,7 +477,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(3)).save(personToUpdate);
+        verify(personRepository, times(1)).save(personToUpdate);
     }
 
     @Test
@@ -952,7 +965,10 @@ public class PersonServiceTest {
         var personId = 2;
         var personNameDTO =
             new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null, PersonNameType.FULL_NAME);
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         person.setId(personId);
         person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
             PersonNameType.FULL_NAME));
@@ -1413,7 +1429,10 @@ public class PersonServiceTest {
         var personNameDTO =
             new PersonNameDTO(null, "Jane", null, "Smith", null, null, PersonNameType.FULL_NAME);
 
-        var existingPerson = new Person();
+        var existingPerson = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         existingPerson.setId(personId);
         existingPerson.setOtherNames(new HashSet<>());
         existingPerson.setApproveStatus(ApproveStatus.REQUESTED); // Not approved

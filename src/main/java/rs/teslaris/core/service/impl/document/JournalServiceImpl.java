@@ -31,6 +31,7 @@ import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
@@ -52,6 +53,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstra
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -185,6 +188,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         var savedJournal = journalJPAService.save(journal);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.JOURNAL.name(),
+                savedJournal.getId(),
+                null,
+                PublicationSeriesConverter.toDTO(savedJournal),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexJournal(journal, new JournalIndex());
         }
@@ -213,6 +226,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Transactional
     public void updateJournal(Integer journalId, JournalDTO journalDTO) {
         var journalToUpdate = journalJPAService.findOne(journalId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.JOURNAL.name(),
+                journalId,
+                PublicationSeriesConverter.toDTO(journalToUpdate),
+                journalDTO,
+                RevisionType.UPDATE
+            )
+        );
+
         journalToUpdate.getLanguages().clear();
 
         var oldContributorIds = clearPublicationSeriesCommonFields(journalToUpdate);

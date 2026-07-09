@@ -1,5 +1,8 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -21,12 +24,7 @@ import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
-import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
-
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,12 +59,12 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setApproveStatus(ApproveStatus.APPROVED);
 
         contribution.setContributionDescription(
-                multilingualContentService.getMultilingualContent(dto.getContributionDescription()));
+            multilingualContentService.getMultilingualContent(dto.getContributionDescription()));
 
         if (Objects.nonNull(dto.getInstitutionIds())) {
             var institutions = dto.getInstitutionIds().stream()
-                    .map(organisationUnitService::findOne)
-                    .collect(Collectors.toSet());
+                .map(organisationUnitService::findOne)
+                .collect(Collectors.toSet());
             contribution.setInstitutions(institutions);
         }
 
@@ -76,11 +74,12 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setInvestigationRole(dto.getInvestigationRole());
 
         contribution.setOtherRoleDescription(
-                multilingualContentService.getMultilingualContent(dto.getOtherRoleDescription()));
+            multilingualContentService.getMultilingualContent(dto.getOtherRoleDescription()));
 
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
-                contribution.getFundingParts().add(buildContributionFundingPart(partDto, contribution)));
+            contribution.getFundingParts()
+                .add(buildContributionFundingPart(partDto, contribution)));
 
         contribution.setProject(parent);
         contribution.setFavorite(dto.getFavorite());
@@ -109,7 +108,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         var affiliation = new AffiliationStatement();
 
         affiliation.setDisplayAffiliationStatement(
-                multilingualContentService.getMultilingualContent(dto.getDisplayAffiliationStatement()));
+            multilingualContentService.getMultilingualContent(
+                dto.getDisplayAffiliationStatement()));
 
         if (Objects.nonNull(dto.getPersonName())) {
             var personName = new PersonName();
@@ -127,15 +127,16 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         return affiliation;
     }
 
-    private FundingPart buildContributionFundingPart(FundingPartDTO partDto, PersonProjectContribution contribution) {
+    private FundingPart buildContributionFundingPart(FundingPartDTO partDto,
+                                                     PersonProjectContribution contribution) {
         var part = new FundingPart();
 
         part.setDescription(
-                multilingualContentService.getMultilingualContent(partDto.getDescription()));
+            multilingualContentService.getMultilingualContent(partDto.getDescription()));
 
         part.setAmount(new MonetaryAmount());
         part.getAmount().setCurrency(
-                currencyService.findOne(partDto.getAmount().getCurrencyId()));
+            currencyService.findOne(partDto.getAmount().getCurrencyId()));
         part.getAmount().setAmount(partDto.getAmount().getAmount());
 
         if (Objects.nonNull(partDto.getFundingId())) {

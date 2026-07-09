@@ -12,7 +12,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
@@ -20,12 +23,14 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +45,9 @@ import org.jbibtex.BibTeXFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.WebDataBinder;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 
 @Component
 @Slf4j
@@ -462,5 +469,77 @@ public class StringUtil {
             .trim();
 
         return normalized;
+    }
+
+    public static LocalDate parseDocumentDate(String value) {
+        if (!valueExists(value)) {
+            return null;
+        }
+
+        if (value.matches("\\d{4}")) {
+            return LocalDate.of(Integer.parseInt(value), 1, 1);
+        }
+
+        if (value.matches("\\d{4}-\\d{2}")) {
+            return YearMonth.parse(value).atDay(1);
+        }
+
+        return LocalDate.parse(value);
+    }
+
+    public static Set<MultiLingualContent> buildMultilingualContent(
+        LanguageTagService languageTagService, Map<String, String> localizedContent,
+        Object... params) {
+        var result = new HashSet<MultiLingualContent>();
+        var priority = new AtomicInteger(1);
+
+        localizedContent.forEach((languageCode, template) -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(languageCode.toUpperCase());
+
+            if (Objects.isNull(languageTag) || Objects.isNull(languageTag.getLanguageTag())) {
+                return;
+            }
+
+            Object[] processedParams =
+                processParamsForLanguage(languageCode, params);
+
+            MultiLingualContent content = new MultiLingualContent();
+            content.setLanguage(languageTag);
+            content.setContent(
+                MessageFormat.format(template, processedParams));
+            content.setPriority(priority.getAndIncrement());
+
+            result.add(content);
+        });
+
+        return result;
+    }
+
+    private static Object[] processParamsForLanguage(
+        String languageCode,
+        Object... params) {
+
+        return Arrays.stream(params)
+            .map(param -> {
+                if (param instanceof List<?> list) {
+                    return list.stream()
+                        .filter(MultilingualContentDTO.class::isInstance)
+                        .map(MultilingualContentDTO.class::cast)
+                        .filter(dto ->
+                            dto.getLanguageTag()
+                                .equalsIgnoreCase(languageCode))
+                        .map(MultilingualContentDTO::getContent)
+                        .findFirst()
+                        .orElse("");
+                }
+
+                if (param instanceof Integer) {
+                    return String.valueOf(param);
+                }
+
+                return param;
+            })
+            .toArray();
     }
 }

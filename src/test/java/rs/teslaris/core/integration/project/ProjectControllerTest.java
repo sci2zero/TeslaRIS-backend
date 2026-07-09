@@ -36,11 +36,12 @@ public class ProjectControllerTest extends BaseTest {
         var dto = new ProjectDTO();
 
         dto.setName(List.of(buildMultilingualContent("Test Project")));
-        dto.setDescription(List.of(buildMultilingualContent("This is a test project description.")));
+        dto.setDescription(
+            List.of(buildMultilingualContent("This is a test project description.")));
         dto.setNameAbbreviation(List.of(buildMultilingualContent("TFP")));
         dto.setKeywords(List.of(
-                buildMultilingualContent("research", 1),
-                buildMultilingualContent("innovation", 2)
+            buildMultilingualContent("research", 1),
+            buildMultilingualContent("innovation", 2)
         ));
 
         dto.setResearchAreasId(new HashSet<>(Set.of(1, 2)));
@@ -50,8 +51,8 @@ public class ProjectControllerTest extends BaseTest {
         dto.setDateTo(LocalDate.of(2026, 3, 1));
 
         dto.setUris(new HashSet<>(Set.of(
-                "https://example.com/project",
-                "https://example.com/guidelines"
+            "https://example.com/project",
+            "https://example.com/guidelines"
         )));
 
         dto.setStatus(ProjectStatus.SUBMITTED);
@@ -92,19 +93,20 @@ public class ProjectControllerTest extends BaseTest {
     }
 
     private static PersonProjectContributionDTO buildTeamMember(
-            Integer personId,
-            Integer orderNumber,
-            PersonProjectContributionType contributionType,
-            PersonProjectInvestigationRole investigationRole,
-            String contributionDescription,
-            String affiliation) {
+        Integer personId,
+        Integer orderNumber,
+        PersonProjectContributionType contributionType,
+        PersonProjectInvestigationRole investigationRole,
+        String contributionDescription,
+        String affiliation) {
 
         var member = new PersonProjectContributionDTO();
         member.setPersonId(personId);
         member.setOrderNumber(orderNumber);
         member.setContributionType(contributionType);
         member.setInvestigationRole(investigationRole);
-        member.setContributionDescription(List.of(buildMultilingualContent(contributionDescription)));
+        member.setContributionDescription(
+            List.of(buildMultilingualContent(contributionDescription)));
         member.setDisplayAffiliationStatement(List.of(buildMultilingualContent(affiliation)));
         member.setInstitutionIds(List.of(1));
 
@@ -142,11 +144,11 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.get(
-                                "http://localhost:8081/api/project/search?tokens=Test*&dateFrom=2026-03-01&dateTo=2027-04-30")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isOk());
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/project/search?tokens=Test*&dateFrom=2026-03-01&dateTo=2027-04-30")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 
     @Test
@@ -155,11 +157,11 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.get(
-                                        "http://localhost:8081/api/project/{projectId}", 1)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isOk());
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/project/{projectId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 
     @Test
@@ -171,10 +173,10 @@ public class ProjectControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/project")
-                        .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT"))
-                .andExpect(status().isCreated());
+                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT"))
+            .andExpect(status().isCreated());
     }
 
     @Test
@@ -186,10 +188,10 @@ public class ProjectControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
         mockMvc.perform(MockMvcRequestBuilders.put(
-                                "http://localhost:8081/api/project/{project}", 1)
-                        .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{project}", 1)
+                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -199,21 +201,21 @@ public class ProjectControllerTest extends BaseTest {
 
         var payload = getTestPayload();
         var secondMember = buildTeamMember(
-                2, 2,
-                PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
-                PersonProjectInvestigationRole.SUPERVISOR,
-                "Project supervisor",
-                "Faculty of Technical Sciences"
+            2, 2,
+            PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
+            PersonProjectInvestigationRole.SUPERVISOR,
+            "Project supervisor",
+            "Faculty of Technical Sciences"
         );
         payload.setPersons(List.of(payload.getPersons().getFirst(), secondMember));
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(
-                                "http://localhost:8081/api/project/{projectId}", 1)
-                        .content(requestBody)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}", 1)
+                .content(requestBody)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -226,11 +228,11 @@ public class ProjectControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(
-                                "http://localhost:8081/api/project/{projectId}", 1)
-                        .content(requestBody)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}", 1)
+                .content(requestBody)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -240,10 +242,10 @@ public class ProjectControllerTest extends BaseTest {
 
         // project id set to 3 to avoid dependencies between test cases
         mockMvc.perform(MockMvcRequestBuilders.delete(
-                                    "http://localhost:8081/api/project/{projectId}", 3)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}", 3)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
 }

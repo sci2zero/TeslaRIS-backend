@@ -58,6 +58,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.person.InvolvementServiceImpl;
 import rs.teslaris.core.service.impl.person.worker.EmploymentMigrationWorker;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -98,6 +99,9 @@ public class InvolvementServiceTest {
     @Mock
     private ThesisRepository thesisRepository;
 
+    @Mock
+    private ResearchAreaService researchAreaService;
+
     @InjectMocks
     private InvolvementServiceImpl involvementService;
 
@@ -136,6 +140,7 @@ public class InvolvementServiceTest {
         education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
+        education.setPersonInvolved(new Person());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
 
@@ -392,9 +397,15 @@ public class InvolvementServiceTest {
 
         var employment1 = new Employment();
         employment1.setOrganisationUnit(organisationUnit1);
+        employment1.setPersonInvolved(new Person() {{
+            setId(personId);
+        }});
 
         var employment2 = new Employment();
         employment2.setOrganisationUnit(organisationUnit2);
+        employment2.setPersonInvolved(new Person() {{
+            setId(personId);
+        }});
 
         when(employmentRepository.findByPersonInvolvedId(personId))
             .thenReturn(List.of(employment1, employment2));
@@ -507,13 +518,14 @@ public class InvolvementServiceTest {
     }
 
     @Test
-    void should_MigrateEmployment_When_ValidRequestProvided() {
+    void shouldMigrateEmploymentWhenValidRequestProvided() {
         // Given
         var migrationRequest = new EmploymentMigrationDTO(123, 1, EmploymentPosition.FULL_PROFESSOR,
             LocalDate.of(2022, 1, 1), "123", "321");
 
         var employment = new Employment();
         employment.setId(123);
+        employment.setPersonInvolved(new Person());
 
         var expectedDTO = new EmploymentDTO();
         expectedDTO.setId(123);
@@ -540,6 +552,7 @@ public class InvolvementServiceTest {
         var employment = new Employment();
         employment.setId(456);
         employment.setEmploymentPosition(EmploymentPosition.RESEARCHER);
+        employment.setPersonInvolved(new Person());
 
         when(employmentMigrationWorker.performLegacyMigration(migrationRequest))
             .thenReturn(employment);
@@ -564,6 +577,7 @@ public class InvolvementServiceTest {
 
         var employment = new Employment();
         employment.setId(789);
+        employment.setPersonInvolved(new Person());
 
         when(employmentMigrationWorker.performLegacyMigration(migrationRequest))
             .thenReturn(employment);

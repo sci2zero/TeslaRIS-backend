@@ -17,6 +17,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -39,6 +40,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceCons
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -186,6 +189,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Transactional
     public void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO) {
         var conferenceToUpdate = findConferenceById(conferenceId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.CONFERENCE.name(),
+                conferenceId,
+                ConferenceConverter.toDTO(conferenceToUpdate),
+                conferenceDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var oldContributorIds = clearEventCommonFields(conferenceToUpdate);
         setEventCommonFields(conferenceToUpdate, EventType.CONFERENCE, conferenceDTO,

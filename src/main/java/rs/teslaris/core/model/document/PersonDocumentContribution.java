@@ -50,6 +50,7 @@ public class PersonDocumentContribution extends PersonContribution {
     @Column(name = "personal_title")
     private PersonalTitle personalTitle;
 
+
     public PersonDocumentContribution(PersonDocumentContribution other, Document newDocument) {
         super(
             other.getPerson(),
@@ -64,7 +65,10 @@ public class PersonDocumentContribution extends PersonContribution {
                 : new AffiliationStatement(other.getAffiliationStatement()),
             new HashSet<>(other.getInstitutions()),
             other.getOrderNumber(),
-            other.getApproveStatus()
+            other.getApproveStatus(),
+            other.getDateFrom(),
+            other.getDateTo(),
+            new HashSet<>(other.getResearchAreas())
         );
 
         this.document = newDocument;

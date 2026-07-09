@@ -2,6 +2,8 @@ package rs.teslaris.project.dto.project;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,9 +13,6 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter

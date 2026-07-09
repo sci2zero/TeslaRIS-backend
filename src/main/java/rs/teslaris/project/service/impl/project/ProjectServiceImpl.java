@@ -51,7 +51,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final SearchService<ProjectIndex> searchService;
 
-    private final OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
+    private final OrganisationUnitProjectContributionService
+        organisationUnitProjectContributionService;
     private final ProjectDocumentRepository projectDocumentRepository;
     private final IndexBulkUpdateService indexBulkUpdateService;
     private final ProjectEventRepository projectEventRepository;
@@ -65,9 +66,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     @Override
     public Page<ProjectIndex> searchProjects(List<String> tokens, LocalDate dateFrom,
-                                                     LocalDate dateTo, Pageable pageable) {
+                                             LocalDate dateTo, Pageable pageable) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo),
-                pageable, ProjectIndex.class, "project");
+            pageable, ProjectIndex.class, "project");
     }
 
     @Override
@@ -86,7 +87,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var savedProject = save(newProject);
 
         projectIndexRepository.save(
-                indexCommonFields(savedProject, new ProjectIndex()));
+            indexCommonFields(savedProject, new ProjectIndex()));
 
         return savedProject;
     }
@@ -94,17 +95,17 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Override
     @Transactional
     public void updateProject(Integer projectId,
-                                  ProjectDTO projectDTO) {
+                              ProjectDTO projectDTO) {
         var projectToUpdate = findOne(projectId);
 
         clearCommonFields(projectToUpdate);
         setCommonFields(projectToUpdate, projectDTO);
 
         projectIndexRepository.findProjectIndexByDatabaseId(projectId)
-                .ifPresent(index -> {
-                    indexCommonFields(projectToUpdate, index);
-                    projectIndexRepository.save(index);
-                });
+            .ifPresent(index -> {
+                indexCommonFields(projectToUpdate, index);
+                projectIndexRepository.save(index);
+            });
     }
 
     @Override
@@ -117,14 +118,14 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexProject() {
         FunctionalUtil.processAllPages(
-                100,
-                Sort.by(Sort.Direction.ASC, "id"),
-                this::findAll,
-                project -> {
-                    indexProject(project, new ProjectIndex());
-                    indexProjectDocuments(project.getId());
-                    indexProjectEvents(project.getId());
-                }
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            this::findAll,
+            project -> {
+                indexProject(project, new ProjectIndex());
+                indexProjectDocuments(project.getId());
+                indexProjectEvents(project.getId());
+            }
         );
 
         return CompletableFuture.completedFuture(null);
@@ -140,48 +141,48 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private void indexProjectDocuments(Integer projectId) {
         List<Integer> documentIds = projectDocumentRepository.findDocumentIdsByProjectId(projectId);
         documentIds.forEach(documentId ->
-                indexBulkUpdateService.setIdFieldForRecord(
-                        "document_publication",
-                        "databaseId",
-                        documentId,
-                        "project_id",
-                        projectId
-                )
+            indexBulkUpdateService.setIdFieldForRecord(
+                "document_publication",
+                "databaseId",
+                documentId,
+                "project_id",
+                projectId
+            )
         );
     }
 
     private void indexProjectEvents(Integer projectId) {
         List<Integer> eventIds = projectEventRepository.findEventIdsByProjectId(projectId);
         eventIds.forEach(eventId ->
-                indexBulkUpdateService.setIdFieldForRecord(
-                        "events",
-                        "databaseId",
-                        eventId,
-                        "project_id",
-                        projectId
-                )
+            indexBulkUpdateService.setIdFieldForRecord(
+                "events",
+                "databaseId",
+                eventId,
+                "project_id",
+                projectId
+            )
         );
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
         if (Objects.nonNull(projectDTO.getDateFrom()) &&
-                Objects.nonNull(projectDTO.getDateTo()) &&
-                projectDTO.getDateTo().isBefore(projectDTO.getDateFrom())) {
+            Objects.nonNull(projectDTO.getDateTo()) &&
+            projectDTO.getDateTo().isBefore(projectDTO.getDateFrom())) {
             throw new DateRangeException(
-                    "Project must start before it ends.");
+                "Project must start before it ends.");
         }
 
         project.setName(
-                multilingualContentService.getMultilingualContent(projectDTO.getName()));
+            multilingualContentService.getMultilingualContent(projectDTO.getName()));
         project.setDescription(
-                multilingualContentService.getMultilingualContent(projectDTO.getDescription()));
+            multilingualContentService.getMultilingualContent(projectDTO.getDescription()));
         project.setNameAbbreviation(
-                multilingualContentService.getMultilingualContent(projectDTO.getNameAbbreviation()));
+            multilingualContentService.getMultilingualContent(projectDTO.getNameAbbreviation()));
         project.setKeywords(
-                multilingualContentService.getMultilingualContent(projectDTO.getKeywords()));
+            multilingualContentService.getMultilingualContent(projectDTO.getKeywords()));
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
-                projectDTO.getResearchAreasId().stream().toList());
+            projectDTO.getResearchAreasId().stream().toList());
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
@@ -205,7 +206,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 project.setCosts(new MonetaryAmount());
             }
             project.getCosts().setCurrency(
-                    currencyService.findOne(projectDTO.getCosts().getCurrencyId()));
+                currencyService.findOne(projectDTO.getCosts().getCurrencyId()));
             project.getCosts().setAmount(projectDTO.getCosts().getAmount());
         } else {
             project.setCosts(null);
@@ -264,7 +265,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                project.getName(), true);
+            project.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -273,13 +274,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                project.getNameAbbreviation(), false);
+            project.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOther(
-                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
         index.setDateFrom(project.getDateFrom());
@@ -292,8 +293,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
                                          LocalDate dateTo) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
-                ? 0
-                : (int) Math.ceil(tokens.size() * 0.8);
+            ? 0
+            : (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             if (Objects.nonNull(tokens) && !tokens.isEmpty()) {
@@ -302,49 +303,49 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                         tokens.forEach(token -> {
                             if (token.startsWith("\"") && token.endsWith("\"")) {
                                 eq.must(mp ->
-                                        mp.bool(m -> m
-                                                .should(sb -> sb.matchPhrase(
-                                                        mq -> mq.field("name_sr")
-                                                                .query(token.replace("\"", ""))))
-                                                .should(sb -> sb.matchPhrase(
-                                                        mq -> mq.field("name_other")
-                                                                .query(token.replace("\"", ""))))
-                                        )
+                                    mp.bool(m -> m
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_sr")
+                                                .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("name_other")
+                                                .query(token.replace("\"", ""))))
+                                    )
                                 );
                             } else if (token.endsWith("*")) {
                                 var wildcard = token.replace("*", "").replace(".", "");
 
                                 eq.should(mp -> mp.bool(m -> m
-                                        .should(sb -> sb.wildcard(
-                                                mq -> mq.field("name_sr")
-                                                        .value(StringUtil.performSimpleLatinPreprocessing(
-                                                                wildcard) + "*")
-                                                        .caseInsensitive(true)))
-                                        .should(sb -> sb.wildcard(
-                                                mq -> mq.field("name_other")
-                                                        .value(wildcard + "*")
-                                                        .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
                                 ));
                             } else {
                                 var wildcard = token + "*";
 
                                 eq.should(mp -> mp.bool(m -> m
-                                        .should(sb -> sb.wildcard(
-                                                mq -> mq.field("name_sr")
-                                                        .value(
-                                                                StringUtil.performSimpleLatinPreprocessing(token) +
-                                                                        "*")
-                                                        .caseInsensitive(true)))
-                                        .should(sb -> sb.wildcard(
-                                                mq -> mq.field("name_other")
-                                                        .value(wildcard)
-                                                        .caseInsensitive(true)))
-                                        .should(sb -> sb.match(
-                                                mq -> mq.field("name_sr")
-                                                        .query(token)))
-                                        .should(sb -> sb.match(
-                                                mq -> mq.field("name_other")
-                                                        .query(token)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("name_sr")
+                                            .value(
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                    "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("name_other")
+                                            .value(wildcard)
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("name_sr")
+                                            .query(token)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("name_other")
+                                            .query(token)))
                                 ));
                             }
                         });
@@ -359,14 +360,14 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                                r.field("date_from")
-                                        .gte(JsonData.of(dateFrom.toString()))
+                            r.field("date_from")
+                                .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                                r.field("date_to")
-                                        .lte(JsonData.of(dateTo.toString()))
+                            r.field("date_to")
+                                .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
                     return dateBool;

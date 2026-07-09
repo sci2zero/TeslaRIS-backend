@@ -43,6 +43,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -132,6 +133,16 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
         var savedProduct = materialProductJPAService.save(newProduct);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                savedProduct.getId(),
+                null,
+                MaterialProductConverter.toDTO(savedProduct),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
         }
@@ -152,7 +163,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                 DocumentPublicationType.MATERIAL_PRODUCT.name(),
                 materialProductId,
                 MaterialProductConverter.toDTO(materialProductToUpdate),
-                materialProductDTO
+                materialProductDTO,
+                RevisionType.UPDATE
             )
         );
 

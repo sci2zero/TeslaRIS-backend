@@ -8,6 +8,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -25,6 +26,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.project.model.funding.Funding;
@@ -88,6 +90,9 @@ public class Involvement extends BaseEntity {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keywords = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
 
     @OneToMany(mappedBy = "involvement", fetch = FetchType.LAZY)
     private Set<Funding> fundings = new HashSet<>();

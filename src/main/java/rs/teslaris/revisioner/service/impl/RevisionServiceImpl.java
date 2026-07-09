@@ -1,87 +1,126 @@
 package rs.teslaris.revisioner.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.context.event.EventListener;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
+import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
+import rs.teslaris.revisioner.util.ObjectMapperProvider;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RevisionServiceImpl implements RevisionService {
 
     private final EntityRevisionRepository repository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
 
-    private final ObjectMapper objectMapper =
-        JsonMapper.builder()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .addModule(new JavaTimeModule())
-            .build();
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final ObjectMapper objectMapper = ObjectMapperProvider.provideObjectmapper();
 
 
     @Override
-    @EventListener
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
-    public boolean createRevisionIfChanged(RevisionCreateEvent event) {
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void createRevisionIfChanged(RevisionCreateEvent event) {
         try {
-            var oldJson = canonicalize(objectMapper.writeValueAsString(event.oldObject()),
-                event.entityType());
-            var newJson = canonicalize(objectMapper.writeValueAsString(event.newObject()),
+            var newJson = canonicalize(
+                objectMapper.writeValueAsString(event.newObject()),
                 event.entityType());
 
-            var oldHash = sha256(oldJson);
             var newHash = sha256(newJson);
 
-            if (oldHash.equals(newHash)) {
-                return false;
+            if (event.revisionType().equals(RevisionType.UPDATE)) {
+                var oldJson = canonicalize(
+                    objectMapper.writeValueAsString(event.oldObject()),
+                    event.entityType());
+
+                newJson = normalizeIds(oldJson, newJson);
+
+                var oldHash = sha256(oldJson);
+                newHash = sha256(newJson);
+
+                if (oldHash.equals(newHash)) {
+                    return;
+                }
             }
 
-            repository.save(
+            var revision =
                 EntityRevision.builder()
                     .entityType(event.entityType())
                     .entityId(event.entityId())
                     .revisionTimestamp(Instant.now())
                     .contentHash(newHash)
-                    .compressedContent(
-                        CompressionUtil.compress(newJson)
-                    )
-                    .build()
+                    .compressedContent(CompressionUtil.compress(newJson))
+                    .build();
+
+            applicationEventPublisher.publishEvent(
+                new DataQualityAssessmentEvent(revision, newJson));
+
+            repository.save(revision);
+
+            log.info(
+                "Created {} revision for entity '{}' (ID={}), revisionId={}, hash={}.",
+                event.revisionType(),
+                event.entityType(),
+                event.entityId(),
+                revision.getId(),
+                newHash
+            );
+        } catch (Exception e) {
+            log.error(
+                "Failed to create {} revision for entity '{}' (ID={}).",
+                event.revisionType(),
+                event.entityType(),
+                event.entityId(),
+                e
             );
 
-            return true;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(
+                String.format(
+                    "Unable to create %s revision for %s with ID %d.",
+                    event.revisionType(),
+                    event.entityType(),
+                    event.entityId()
+                ),
+                e
+            );
         }
     }
 
@@ -131,6 +170,72 @@ public class RevisionServiceImpl implements RevisionService {
             });
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType,
+                                                                      Integer entityId,
+                                                                      Instant timestamp) {
+        var entityRevision = repository
+            .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
+                entityType, entityId, timestamp);
+
+        if (entityRevision.isEmpty()) {
+            return List.of();
+        }
+
+        var qualityReport = new ArrayList<QualityReportResponseDTO>();
+
+        entityRevision.get().getAssessments().forEach(assessment -> {
+            var currentReportText = new ArrayList<MultilingualContentDTO>();
+
+            assessment.getIssues().forEach(issue -> {
+                var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(issue.getKey(),
+                    issue.getParameters().toArray());
+
+                Map<String, MultilingualContentDTO> existingRemarks =
+                    currentReportText
+                        .stream()
+                        .collect(Collectors.toMap(
+                            MultilingualContentDTO::getLanguageTag,
+                            Function.identity(),
+                            (left, right) -> left));
+
+                for (var newRemark : newRemarks) {
+                    var languageTag = newRemark.getLanguage().getLanguageTag();
+
+                    var existing = existingRemarks.get(languageTag);
+
+                    if (Objects.isNull(existing)) {
+                        var dto = new MultilingualContentDTO(
+                            newRemark.getLanguage().getId(),
+                            newRemark.getLanguage().getLanguageTag(),
+                            newRemark.getContent(),
+                            newRemark.getPriority()
+                        );
+
+                        qualityReport.add(
+                            new QualityReportResponseDTO(
+                                assessment.getProfileName() + " (" +
+                                    assessment.getProfileVersion() + ")",
+                                currentReportText
+                            )
+                        );
+                        existingRemarks.put(languageTag, dto);
+                    } else {
+                        existing.setContent(
+                            existing.getContent()
+                                + System.lineSeparator()
+                                + System.lineSeparator()
+                                + newRemark.getContent()
+                        );
+                    }
+                }
+            });
+        });
+
+        return qualityReport;
+    }
+
     private String canonicalize(String json, String entityType)
         throws JsonProcessingException {
 
@@ -140,6 +245,22 @@ public class RevisionServiceImpl implements RevisionService {
             RevisionConfigurationLoader.listExcludedFieldsForType(entityType));
 
         return objectMapper.writeValueAsString(tree);
+    }
+
+    private String normalizeIds(String oldJson, String newJson) throws JsonProcessingException {
+        JsonNode oldNode = objectMapper.readTree(oldJson);
+        JsonNode newNode = objectMapper.readTree(newJson);
+
+        if (oldNode instanceof ObjectNode oldObject &&
+            newNode instanceof ObjectNode newObject &&
+            oldObject.has("id")) {
+
+            newObject.set("id", oldObject.get("id"));
+
+            return objectMapper.writeValueAsString(newObject);
+        }
+
+        return newJson;
     }
 
     private String sha256(String value) {

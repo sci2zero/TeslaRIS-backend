@@ -1,5 +1,19 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -19,15 +33,6 @@ import rs.teslaris.project.model.project.ProjectEventType;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.service.impl.project.ProjectEventServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class ProjectEventServiceTest {
@@ -89,7 +94,8 @@ public class ProjectEventServiceTest {
         verify(projectService).findOne(1);
         verify(eventService).findOne(2);
         verify(projectEventRepository).save(any(ProjectEvent.class));
-        verify(indexBulkUpdateService).setIdFieldForRecord("events", "databaseId", 2, "project_id", 1);
+        verify(indexBulkUpdateService).setIdFieldForRecord("events", "databaseId", 2, "project_id",
+            1);
     }
 
     @Test
@@ -211,7 +217,7 @@ public class ProjectEventServiceTest {
 
         // then
         verify(indexBulkUpdateService).setIdFieldForRecord(
-                "events", "databaseId", 2, "project_id", 1);
+            "events", "databaseId", 2, "project_id", 1);
     }
 
     @Test
@@ -236,7 +242,7 @@ public class ProjectEventServiceTest {
         // then
         verify(projectEventRepository).save(argThat(pe -> pe.getDeleted().equals(true)));
         verify(indexBulkUpdateService).setIdFieldForRecord(
-                "events", "databaseId", 2, "project_id", null);
+            "events", "databaseId", 2, "project_id", null);
     }
 
     @Test
@@ -246,10 +252,11 @@ public class ProjectEventServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class,
-                () -> projectEventService.deleteProjectEvent(999));
+            () -> projectEventService.deleteProjectEvent(999));
 
         verify(projectEventRepository, never()).save(any());
-        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(),
+            any());
     }
 
     @Test
@@ -267,13 +274,15 @@ public class ProjectEventServiceTest {
         projectEvent.setEvent(event);
 
         when(projectEventRepository.findById(10)).thenReturn(Optional.of(projectEvent));
-        when(projectEventRepository.save(any(ProjectEvent.class))).thenThrow(RuntimeException.class);
+        when(projectEventRepository.save(any(ProjectEvent.class))).thenThrow(
+            RuntimeException.class);
 
         // when & then
         assertThrows(RuntimeException.class,
-                () -> projectEventService.deleteProjectEvent(10));
+            () -> projectEventService.deleteProjectEvent(10));
 
-        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(),
+            any());
     }
 
 }

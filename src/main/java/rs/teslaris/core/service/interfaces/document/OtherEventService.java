@@ -22,9 +22,9 @@ public interface OtherEventService {
 
     OtherEvent createOtherEvent(OtherEventDTO dto, Boolean index);
 
-    void updateOtherEvent(Integer id, OtherEventDTO dto);
+    void updateOtherEvent(Integer otherEventId, OtherEventDTO dto);
 
-    void deleteOtherEvent(Integer id);
+    void deleteOtherEvent(Integer otherEventId);
 
     void forceDeleteOtherEvent(Integer otherEventId);
 

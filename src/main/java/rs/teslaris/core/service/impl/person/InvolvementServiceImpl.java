@@ -502,6 +502,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             multilingualContentService.getMultilingualContent(commonFields.getKeywords());
         involvement.setDescription(description);
         involvement.setKeywords(keywords);
+
+        var researchAreas = researchAreaService.getResearchAreasByIds(
+            commonFields.getResearchAreasId().stream().toList());
+        involvement.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     private void clearCommonCollections(Involvement involvement) {

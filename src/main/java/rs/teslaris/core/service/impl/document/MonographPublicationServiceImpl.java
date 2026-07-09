@@ -48,6 +48,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -156,6 +157,16 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var savedMonographPublication =
             monographPublicationJPAService.save(newMonographPublication);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                savedMonographPublication.getId(),
+                null,
+                MonographPublicationConverter.toDTO(savedMonographPublication),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
         }
@@ -198,7 +209,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                 DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
                 monographPublicationId,
                 MonographPublicationConverter.toDTO(monographPublicationToUpdate),
-                monographPublicationDTO
+                monographPublicationDTO,
+                RevisionType.UPDATE
             )
         );
 

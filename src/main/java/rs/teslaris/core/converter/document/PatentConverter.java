@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -19,6 +20,8 @@ public class PatentConverter extends DocumentPublicationConverter {
         patentDTO.setNumber(patent.getNumber());
         if (Objects.nonNull(patent.getPublisher())) {
             patentDTO.setPublisherId(patent.getPublisher().getId());
+            patentDTO.setPublisherName(MultilingualContentConverter.getMultilingualContentDTO(
+                patent.getPublisher().getName()));
         } else {
             patentDTO.setAuthorReprint(patent.getAuthorReprint());
         }

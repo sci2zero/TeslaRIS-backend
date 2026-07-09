@@ -49,6 +49,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -163,6 +164,16 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var savedPublication = journalPublicationJPAService.save(publication);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                savedPublication.getId(),
+                null,
+                JournalPublicationConverter.toDTO(savedPublication),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
@@ -187,7 +198,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                 DocumentPublicationType.JOURNAL_PUBLICATION.name(),
                 publicationId,
                 JournalPublicationConverter.toDTO(publicationToUpdate),
-                publicationDTO
+                publicationDTO,
+                RevisionType.UPDATE
             )
         );
 

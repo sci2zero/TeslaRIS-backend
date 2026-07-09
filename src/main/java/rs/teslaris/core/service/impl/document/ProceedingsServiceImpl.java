@@ -58,6 +58,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -188,6 +189,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                savedProceedings.getId(),
+                null,
+                ProceedingsConverter.toDTO(savedProceedings),
+                RevisionType.CREATE
+            )
+        );
+
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
         sendNotifications(savedProceedings, Collections.emptySet());
@@ -205,7 +216,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                 DocumentPublicationType.PROCEEDINGS.name(),
                 proceedingsId,
                 ProceedingsConverter.toDTO(proceedingsToUpdate),
-                proceedingsDTO
+                proceedingsDTO,
+                RevisionType.UPDATE
             )
         );
 

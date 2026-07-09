@@ -1,4 +1,4 @@
-package rs.teslaris.revisioner.hydrator;
+package rs.teslaris.revisioner.hydrator.document;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -6,34 +6,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
-import rs.teslaris.core.dto.document.MaterialProductDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.impl.commontypes.ResearchAreaServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.util.search.CollectionOperations;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
-public class MaterialProductRevisionHydrator extends RevisionHydrator<MaterialProductDTO> {
+public class IntangibleProductRevisionHydrator extends RevisionHydrator<IntangibleProductDTO> {
 
     private final ResearchAreaServiceImpl researchAreaService;
 
 
     @Autowired
-    public MaterialProductRevisionHydrator(
+    public IntangibleProductRevisionHydrator(
         CountryService countryService, ResearchAreaServiceImpl researchAreaService) {
         super(countryService);
         this.researchAreaService = researchAreaService;
     }
 
-
     @Override
     public String entityType() {
-        return DocumentPublicationType.MATERIAL_PRODUCT.name();
+        return DocumentPublicationType.INTANGIBLE_PRODUCT.name();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void hydrate(MaterialProductDTO dto) {
+    public void hydrate(IntangibleProductDTO dto) {
         hydrateCommonFields(dto);
 
         if (CollectionOperations.containsValues(dto.getResearchAreasId())) {
