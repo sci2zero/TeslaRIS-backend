@@ -107,6 +107,16 @@ public class ProjectControllerTest extends BaseTest {
         member.setContributionDescription(List.of(buildMultilingualContent(contributionDescription)));
         member.setDisplayAffiliationStatement(List.of(buildMultilingualContent(affiliation)));
         member.setInstitutionIds(List.of(1));
+
+        member.setFavorite(true);
+        member.setKeywords(List.of(buildMultilingualContent("machine learning")));
+        member.setDateFrom(LocalDate.of(2025, 1, 1));
+        member.setDateTo(LocalDate.of(2026, 3, 1));
+        member.setUris(Set.of("https://example.com/contribution-proof"));
+        member.setIsMainContributor(true);
+        member.setIsInvitedContributor(false);
+        member.setDisplayProject(List.of(buildMultilingualContent("Test Project Display")));
+
         return member;
     }
 

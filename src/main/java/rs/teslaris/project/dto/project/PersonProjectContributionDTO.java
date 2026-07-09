@@ -32,4 +32,8 @@ public class PersonProjectContributionDTO extends PersonContributionDTO {
 
     @Valid
     private List<FundingPartDTO> fundingParts = new ArrayList<>();
+
+    @Valid
+    private List<MultilingualContentDTO> displayProject = new ArrayList<>();
+
 }

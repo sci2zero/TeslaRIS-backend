@@ -34,9 +34,6 @@ public class PersonDocumentContribution extends PersonContribution {
     @Column(name = "contribution_type", nullable = false)
     private DocumentContributionType contributionType;
 
-    @Column(name = "main_contributor", nullable = false)
-    private Boolean isMainContributor;
-
     @Column(name = "corresponding_contributor", nullable = false)
     private Boolean isCorrespondingContributor;
 
@@ -72,7 +69,7 @@ public class PersonDocumentContribution extends PersonContribution {
 
         this.document = newDocument;
         this.contributionType = other.getContributionType();
-        this.isMainContributor = other.getIsMainContributor();
+        this.setIsMainContributor(other.getIsMainContributor());
         this.isCorrespondingContributor = other.getIsCorrespondingContributor();
         this.isBoardPresident = other.getIsBoardPresident();
         this.employmentTitle = other.getEmploymentTitle();

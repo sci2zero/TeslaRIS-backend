@@ -57,6 +57,19 @@ public class PersonProjectContributionConverter {
         contribution.getFundingParts().forEach(fundingPart ->
                 dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
 
+        dto.setFavorite(contribution.getFavorite());
+        dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getKeywords()));
+        contribution.getResearchAreas().forEach(ra ->
+                dto.getResearchAreasId().add(ra.getId()));
+        dto.setDateFrom(contribution.getDateFrom());
+        dto.setDateTo(contribution.getDateTo());
+        dto.setUris(contribution.getUris());
+        dto.setIsMainContributor(contribution.getIsMainContributor());
+        dto.setIsInvitedContributor(contribution.getIsInvitedContributor());
+        dto.setDisplayProject(MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getDisplayProject()));
+
         return dto;
     }
 }

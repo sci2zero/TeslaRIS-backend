@@ -105,10 +105,10 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
             fundingPart.setProjectDocument(
                 projectDocumentService.findOne(dto.getProjectDocumentId()));
         } else if (Objects.nonNull(dto.getPersonProjectContributionId())) {
-            fundingPart.setPersonProjectContribution(
+            fundingPart.setPersonContribution(
                 personProjectContributionService.findOne(dto.getPersonProjectContributionId()));
         } else if (Objects.nonNull(dto.getOrganisationUnitProjectContributionId())) {
-            fundingPart.setOrganisationUnitProjectContribution(
+            fundingPart.setOrganisationUnitContribution(
                 organisationUnitProjectContributionService.findOne(
                     dto.getOrganisationUnitProjectContributionId()));
         } else {
@@ -122,7 +122,7 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
         fundingPart.setProjectEvent(null);
         fundingPart.setProjectDocument(null);
         fundingPart.setFundingApplication(null);
-        fundingPart.setPersonProjectContribution(null);
-        fundingPart.setOrganisationUnitProjectContribution(null);
+        fundingPart.setPersonContribution(null);
+        fundingPart.setOrganisationUnitContribution(null);
     }
 }

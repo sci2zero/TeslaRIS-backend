@@ -71,7 +71,8 @@ public class OrganisationUnitContribution extends BaseEntity {
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "organisationUnitContribution", cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private Set<FundingPart> fundingParts = new HashSet<>();
 
 }

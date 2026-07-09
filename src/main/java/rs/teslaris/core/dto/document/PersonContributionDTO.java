@@ -1,9 +1,8 @@
 package rs.teslaris.core.dto.document;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +11,12 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -43,4 +48,22 @@ public class PersonContributionDTO {
 
     // only for responses
     private List<List<MultilingualContentDTO>> displayInstitutionNames = new ArrayList<>();
+
+    private Boolean favorite;
+
+    @Valid
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
+
+    private Set<Integer> researchAreasId = new HashSet<>();
+
+    private LocalDate dateFrom;
+
+    private LocalDate dateTo;
+
+    private Set<String> uris = new HashSet<>();
+
+    private Boolean isMainContributor;
+
+    private Boolean isInvitedContributor;
+
 }

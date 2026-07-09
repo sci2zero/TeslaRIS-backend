@@ -41,9 +41,7 @@ public class PersonProjectContribution extends PersonContribution {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @OneToMany(mappedBy = "personProjectContribution",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private Set<FundingPart> fundingParts = new HashSet<>();
-    // must be funding allocated only to this person
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> displayProject = new HashSet<>();
+
 }
