@@ -53,27 +53,37 @@ public class PersonDocumentContribution extends PersonContribution {
 
     public PersonDocumentContribution(PersonDocumentContribution other, Document newDocument) {
         super(
-            other.getPerson(),
-            other.getContributionDescription().stream()
-                .map(mt -> new MultiLingualContent(
-                    mt.getLanguage(),
-                    mt.getContent(),
-                    mt.getPriority()))
-                .collect(Collectors.toCollection(HashSet::new)),
-            Objects.isNull(other.getAffiliationStatement())
-                ? new AffiliationStatement()
-                : new AffiliationStatement(other.getAffiliationStatement()),
-            new HashSet<>(other.getInstitutions()),
-            other.getOrderNumber(),
-            other.getApproveStatus(),
-            other.getDateFrom(),
-            other.getDateTo(),
-            new HashSet<>(other.getResearchAreas())
+                other.getPerson(),
+                other.getContributionDescription().stream()
+                        .map(mt -> new MultiLingualContent(
+                                mt.getLanguage(),
+                                mt.getContent(),
+                                mt.getPriority()))
+                        .collect(Collectors.toCollection(HashSet::new)),
+                Objects.isNull(other.getAffiliationStatement())
+                        ? new AffiliationStatement()
+                        : new AffiliationStatement(other.getAffiliationStatement()),
+                new HashSet<>(other.getInstitutions()),
+                other.getOrderNumber(),
+                other.getApproveStatus()
         );
+
+        this.setDateFrom(other.getDateFrom());
+        this.setDateTo(other.getDateTo());
+        this.setResearchAreas(new HashSet<>(other.getResearchAreas()));
+        this.setKeywords(other.getKeywords().stream()
+                .map(mt -> new MultiLingualContent(
+                        mt.getLanguage(),
+                        mt.getContent(),
+                        mt.getPriority()))
+                .collect(Collectors.toCollection(HashSet::new)));
+        this.setUris(new HashSet<>(other.getUris()));
+        this.setFavorite(other.getFavorite());
+        this.setIsMainContributor(other.getIsMainContributor());
+        this.setIsInvitedContributor(other.getIsInvitedContributor());
 
         this.document = newDocument;
         this.contributionType = other.getContributionType();
-        this.setIsMainContributor(other.getIsMainContributor());
         this.isCorrespondingContributor = other.getIsCorrespondingContributor();
         this.isBoardPresident = other.getIsBoardPresident();
         this.employmentTitle = other.getEmploymentTitle();

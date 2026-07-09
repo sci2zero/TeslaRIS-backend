@@ -101,7 +101,8 @@ public class Involvement extends BaseEntity {
                        Set<DocumentFile> proofs, InvolvementType involvementType,
                        Set<MultiLingualContent> affiliationStatement, Person personInvolved,
                        OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
-                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords) {
+                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
+                       Set<ResearchArea> researchAreas) {
         this.dateFrom = dateFrom;
         this.dateTo = dateTo;
         this.approveStatus = approveStatus;
@@ -114,6 +115,7 @@ public class Involvement extends BaseEntity {
         this.uris = uris;
         this.description = description;
         this.keywords = keywords;
+        this.researchAreas = researchAreas;
     }
 
     @Override
