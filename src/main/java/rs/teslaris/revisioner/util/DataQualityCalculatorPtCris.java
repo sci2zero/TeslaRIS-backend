@@ -62,7 +62,6 @@ import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
-import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 
 @Component
@@ -257,6 +256,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         assessor.accept(dto, assessment);
+        finishUpAssessment(assessment);
     }
 
     private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
@@ -484,25 +484,6 @@ public class DataQualityCalculatorPtCris {
                 }
             }
         }
-
-        // TODO: Make this into a helper method
-        assessment.setFinishedAt(Instant.now());
-
-        assessment.setFailedRules(
-            (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
-                .count());
-
-        assessment.setWarningRules(
-            (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity() == IssueSeverity.WARNING)
-                .count());
-
-        assessment.setPassedRules(100 // TODO: Read total rules from JSON
-            - assessment.getFailedRules()
-            - assessment.getWarningRules());
-
-        assessment.setValid(assessment.getFailedRules() == 0);
 
         // TODO: metadataLicenseMissing
     }
@@ -1287,20 +1268,42 @@ public class DataQualityCalculatorPtCris {
             assessment.setIssues(new ArrayList<>());
         }
 
+        var severityAndDimension =
+            RevisionConfigurationLoader.getIssueSeverityAndDimension(issueKey);
+
         assessment.getIssues().add(
             DataQualityIssue.builder()
                 .key(issueKey)
                 .parameters(Arrays.stream(params)
                     .map(String::valueOf)
                     .toList())
-                .severity(IssueSeverity.ERROR) // TODO: Severity should be read from JSON
-                .dimension(resolveDimension(issueKey))
-                .blocking(true)
+                .severity(severityAndDimension.a)
+                .dimension(severityAndDimension.b)
+                .blocking(severityAndDimension.c)
                 .build()
         );
     }
 
-    private QualityDimension resolveDimension(String issueKey) {
-        return QualityDimension.CONFORMITY; // TODO: Dimension should be read from JSON
+    private void finishUpAssessment(DataQualityAssessment assessment) {
+        assessment.setFinishedAt(Instant.now());
+
+        assessment.setFailedRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity().equals(IssueSeverity.ERROR))
+                .count());
+
+        assessment.setWarningRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity().equals(IssueSeverity.WARNING))
+                .count());
+
+        assessment.setPassedRules(
+            RevisionConfigurationLoader.getTotalRuleCount()
+                - assessment.getFailedRules()
+                - assessment.getWarningRules());
+
+        assessment.setValid(
+            assessment.getIssues().stream().anyMatch(DataQualityIssue::isBlocking)
+        );
     }
 }
