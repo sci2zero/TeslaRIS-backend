@@ -1526,6 +1526,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         saveAll(institutionsToSave);
     }
 
+    @Override
+    public List<OrganisationUnit> getOrganisationUnitsByIds(List<Integer> institutionIds) {
+        return organisationUnitRepository.findAllById(institutionIds);
+    }
+
     private void collectIndexesRecursive(
         Integer organisationUnitId,
         boolean onlyOnesThatHaveLibrary,

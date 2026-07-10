@@ -67,7 +67,7 @@ public class Involvement extends BaseEntity {
     private InvolvementType involvementType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> affiliationStatement = new HashSet<>();
+    private Set<MultiLingualContent> displayOrganisationUnit = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
@@ -92,6 +92,9 @@ public class Involvement extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<OrganisationUnit> hostInstitutions = new HashSet<>();
 
 
     @Override

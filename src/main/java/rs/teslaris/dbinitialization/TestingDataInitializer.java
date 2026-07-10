@@ -480,7 +480,8 @@ public class TestingDataInitializer {
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                dummyOU, false, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 EmploymentPosition.TEACHING_ASSISTANT,
                 Set.of(new MultiLingualContent(englishTag,
                     "Courses: Digital Documents Management, Secure IntangibleProduct Development",
@@ -488,7 +489,8 @@ public class TestingDataInitializer {
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null,
-                sci2zero, true, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                sci2zero, true, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 EmploymentPosition.COLLABORATOR,
                 Set.of(new MultiLingualContent(englishTag,
                     "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
@@ -496,7 +498,7 @@ public class TestingDataInitializer {
             new Membership(LocalDate.of(2021, 10, 3), null,
                 ApproveStatus.APPROVED, new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(),
                 null, sci2zero, false, new HashSet<>(),
-                new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag,
                     "I just wanted to be around cool kids...", 1)),
                 Set.of(new MultiLingualContent(englishTag,
@@ -505,7 +507,8 @@ public class TestingDataInitializer {
             new Education(LocalDate.of(2018, 10, 1), LocalDate.of(2023, 9, 1),
                 ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null,
-                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                dummyOU, false, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
@@ -521,13 +524,19 @@ public class TestingDataInitializer {
                     new HashSet<>(), "application/pdf", 200L, ResourceType.SUPPLEMENT,
                     AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false, false, null, null, person1, false)), person1));
+                    false, false, null, null, person1, false)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Web exploitation\nReverse engineering", 1)),
+            new HashSet<>(), false, person1));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
                 "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
                 1)),
-            new HashSet<>(), person1));
+            new HashSet<>(),
+            Set.of(new MultiLingualContent(englishTag,
+                "VIVO\nVitro\nTeslaRIS", 1)),
+            new HashSet<>(), false, person1));
         person1.getPrizes().add(new Prize(
             Set.of(
                 new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",

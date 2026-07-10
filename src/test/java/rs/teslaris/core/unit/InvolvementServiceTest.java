@@ -137,7 +137,7 @@ public class InvolvementServiceTest {
         var mc1 = new MultiLingualContent(new LanguageTag(), "aaa", 1);
         var education = new Education();
         education.setOrganisationUnit(new OrganisationUnit());
-        education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        education.setDisplayOrganisationUnit(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
         education.setPersonInvolved(new Person());
@@ -169,11 +169,11 @@ public class InvolvementServiceTest {
         var person = new Person();
         var educationDTO = new EducationDTO();
         var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
-        educationDTO.setAffiliationStatement(List.of(mc));
+        educationDTO.setDisplayOrganisationUnit(List.of(mc));
         educationDTO.setThesisTitle(List.of(mc));
         educationDTO.setTitle(List.of(mc));
         educationDTO.setAbbreviationTitle(List.of(mc));
-        educationDTO.setDegreeCode(List.of());
+        educationDTO.setCourseCode(List.of());
         educationDTO.setDegreeClassification(List.of());
         educationDTO.setDescription(List.of(mc));
         educationDTO.setKeywords(List.of());
@@ -195,7 +195,7 @@ public class InvolvementServiceTest {
         var person = new Person();
         var membershipDTO = new MembershipDTO();
         var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
-        membershipDTO.setAffiliationStatement(List.of(mc));
+        membershipDTO.setDisplayOrganisationUnit(List.of(mc));
         membershipDTO.setRole(List.of(mc));
         membershipDTO.setContributionDescription(List.of(mc));
 
@@ -216,7 +216,7 @@ public class InvolvementServiceTest {
         var person = new Person();
         var employmentDTO = new EmploymentDTO();
         var mc = new MultilingualContentDTO(1, "EN", "aaa", 1);
-        employmentDTO.setAffiliationStatement(List.of(mc));
+        employmentDTO.setDisplayOrganisationUnit(List.of(mc));
         employmentDTO.setRole(List.of(mc));
 
         when(personService.findOne(1)).thenReturn(person);
@@ -235,18 +235,18 @@ public class InvolvementServiceTest {
         // given
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var education = new Education();
-        education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        education.setDisplayOrganisationUnit(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
         education.setPersonInvolved(new Person());
         var educationDTO = new EducationDTO();
         var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
-        educationDTO.setAffiliationStatement(List.of(mc2));
+        educationDTO.setDisplayOrganisationUnit(List.of(mc2));
         educationDTO.setThesisTitle(List.of(mc2));
         educationDTO.setTitle(List.of(mc2));
         educationDTO.setThesisId(1);
         educationDTO.setAbbreviationTitle(List.of(mc2));
-        educationDTO.setDegreeCode(List.of(mc2));
+        educationDTO.setCourseCode(List.of(mc2));
         educationDTO.setDegreeClassification(List.of(mc2));
         educationDTO.setDescription(List.of());
         educationDTO.setKeywords(List.of());
@@ -271,13 +271,13 @@ public class InvolvementServiceTest {
         // given
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var membership = new Membership();
-        membership.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        membership.setDisplayOrganisationUnit(new HashSet<>(Set.of(mc1)));
         membership.setContributionDescription(new HashSet<>(Set.of(mc1)));
         membership.setRole(new HashSet<>(Set.of(mc1)));
         membership.setPersonInvolved(new Person());
         var membershipDTO = new MembershipDTO();
         var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
-        membershipDTO.setAffiliationStatement(List.of(mc2));
+        membershipDTO.setDisplayOrganisationUnit(List.of(mc2));
         membershipDTO.setRole(List.of(mc2));
         membershipDTO.setContributionDescription(List.of(mc2));
 
@@ -298,13 +298,13 @@ public class InvolvementServiceTest {
         // given
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var employment = new Employment();
-        employment.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
+        employment.setDisplayOrganisationUnit(new HashSet<>(Set.of(mc1)));
         employment.setRole(new HashSet<>(Set.of(mc1)));
         employment.setPersonInvolved(new Person());
         var employmentDTO = new EmploymentDTO();
         employmentDTO.setEmploymentPosition(EmploymentPosition.ASSISTANT);
         var mc2 = new MultilingualContentDTO(1, "EN", "bbb", 1);
-        employmentDTO.setAffiliationStatement(List.of(mc2));
+        employmentDTO.setDisplayOrganisationUnit(List.of(mc2));
         employmentDTO.setRole(List.of(mc2));
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
@@ -978,7 +978,7 @@ public class InvolvementServiceTest {
         mlc.setContent("University of Test");
         mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
 
-        existingEmployment.setAffiliationStatement(Set.of(mlc));
+        existingEmployment.setDisplayOrganisationUnit(Set.of(mlc));
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
@@ -1008,7 +1008,7 @@ public class InvolvementServiceTest {
         mlc.setContent("Old University");
         mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
 
-        existingEmployment.setAffiliationStatement(Set.of(mlc));
+        existingEmployment.setDisplayOrganisationUnit(Set.of(mlc));
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
@@ -1064,7 +1064,7 @@ public class InvolvementServiceTest {
         mlc.setContent("UNIVERSITY"); // uppercase
         mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
 
-        existingEmployment.setAffiliationStatement(Set.of(mlc));
+        existingEmployment.setDisplayOrganisationUnit(Set.of(mlc));
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
@@ -1091,7 +1091,7 @@ public class InvolvementServiceTest {
             setLanguageTag(LanguageAbbreviations.ENGLISH);
         }});
 
-        employment1.setAffiliationStatement(Set.of(mlc1));
+        employment1.setDisplayOrganisationUnit(Set.of(mlc1));
 
         var employment2 = new Employment();
         var mlc2 = new MultiLingualContent();
@@ -1100,7 +1100,7 @@ public class InvolvementServiceTest {
             setLanguageTag(LanguageAbbreviations.SERBIAN);
         }});
 
-        employment2.setAffiliationStatement(Set.of(mlc2));
+        employment2.setDisplayOrganisationUnit(Set.of(mlc2));
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(employment1, employment2));

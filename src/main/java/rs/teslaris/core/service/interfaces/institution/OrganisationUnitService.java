@@ -130,4 +130,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         Integer rootOuId, boolean onlyOnesThatHaveLibrary);
 
     void migrateInstitutionInternalIdentifiers(InternalIdentifierMigrationDTO dto);
+
+    List<OrganisationUnit> getOrganisationUnitsByIds(List<Integer> institutionIds);
 }

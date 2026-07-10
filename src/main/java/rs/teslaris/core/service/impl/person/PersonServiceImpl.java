@@ -367,7 +367,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 null, null, status, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
                 institution, false, new HashSet<>(),
-                new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 personDTO.getEmploymentPosition(), new HashSet<>()
             );
             person.addInvolvement(employment);
@@ -1271,7 +1271,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             if (Objects.nonNull(employment.getOrganisationUnit())) {
                 name = employment.getOrganisationUnit().getName();
             } else {
-                name = employment.getAffiliationStatement();
+                name = employment.getDisplayOrganisationUnit();
             }
 
             name.stream()

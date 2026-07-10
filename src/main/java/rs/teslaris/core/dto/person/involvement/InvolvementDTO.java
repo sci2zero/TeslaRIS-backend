@@ -34,7 +34,7 @@ public class InvolvementDTO {
     private InvolvementType involvementType;
 
     @Valid
-    private List<MultilingualContentDTO> affiliationStatement;
+    private List<MultilingualContentDTO> displayOrganisationUnit;
 
     @Valid
     private List<MultilingualContentDTO> description;
@@ -51,10 +51,15 @@ public class InvolvementDTO {
     @NotNull(message = "You have to provide research area IDs.")
     private Set<Integer> researchAreasId = new HashSet<>();
 
+    @NotNull(message = "You have to provide host institution IDs.")
+    private Set<Integer> hostInstitutionIds = new HashSet<>();
+
     // Only for responses
     private List<MultilingualContentDTO> organisationUnitName = new ArrayList<>();
 
     private LocalDate personBirthDate;
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
+    private List<List<MultilingualContentDTO>> hostInstitutionNames = new ArrayList<>();
 }

@@ -414,7 +414,7 @@ public class RoCrateConverter {
             .forEach(employment -> {
                 if (Objects.isNull(employment.getOrganisationUnit())) {
                     personMetadata.getAffiliations().add(new ContextualEntity(
-                        StringUtil.getStringContent(employment.getAffiliationStatement(),
+                        StringUtil.getStringContent(employment.getDisplayOrganisationUnit(),
                             DEFAULT_RO_CRATE_LANGUAGE),
                         "Organization")
                     );

@@ -43,15 +43,16 @@ public class Membership extends Involvement {
 
     public Membership(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
                       Set<DocumentFile> proofs, InvolvementType involvementType,
-                      Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                      Set<MultiLingualContent> displayOrganisationUnit, Person personInvolved,
                       OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
-                      Set<ResearchArea> researchAreas,
+                      Set<ResearchArea> researchAreas, Set<OrganisationUnit> hostInstitutions,
                       Set<MultiLingualContent> contributionDescription,
                       Set<MultiLingualContent> role,
                       MembershipType membershipType) {
-        super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas);
+        super(dateFrom, dateTo, approveStatus, proofs, involvementType, displayOrganisationUnit,
+            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas,
+            hostInstitutions);
         this.contributionDescription = contributionDescription;
         this.role = role;
         this.membershipType = membershipType;
