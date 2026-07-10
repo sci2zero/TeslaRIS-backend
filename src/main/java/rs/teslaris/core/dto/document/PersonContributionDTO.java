@@ -52,7 +52,8 @@ public class PersonContributionDTO {
     @NotNull(message = "You have to provide research area IDs.")
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    // only for responses
+    // used only for responses
+
     private List<List<MultilingualContentDTO>> displayInstitutionNames = new ArrayList<>();
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
