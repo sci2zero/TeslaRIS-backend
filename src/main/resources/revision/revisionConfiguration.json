@@ -1034,6 +1034,28 @@
       "dimension": "CONSISTENCY",
       "blocking": true,
       "weight": 8
+    },
+    "startDateMissing": {
+      "message": {
+        "sr": "Datum početka nedostaje u zapisu.",
+        "sr-cyr": "Датум почетка недостаје у запису.",
+        "en": "The start date is missing in record."
+      },
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "weight": 3
+    },
+    "endDateMissing": {
+      "message": {
+        "sr": "Datum završetka nedostaje u zapisu.",
+        "sr-cyr": "Датум завршетка недостаје у запису.",
+        "en": "The end date is missing in record."
+      },
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "weight": 3
     }
   }
 }

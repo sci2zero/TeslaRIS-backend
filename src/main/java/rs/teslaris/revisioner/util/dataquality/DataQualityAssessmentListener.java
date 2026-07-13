@@ -30,6 +30,7 @@ public class DataQualityAssessmentListener {
         var ptCrisAssessment = DataQualityAssessment
             .builder()
             .revision(event.entityRevision())
+            .engineVersion("1.0.0")
             .startedAt(Instant.now())
             .build();
 

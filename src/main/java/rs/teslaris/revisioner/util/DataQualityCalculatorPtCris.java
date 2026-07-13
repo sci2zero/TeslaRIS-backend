@@ -1011,7 +1011,7 @@ public class DataQualityCalculatorPtCris {
 
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "startDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
@@ -1041,7 +1041,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "endDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
@@ -1053,7 +1053,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "researchAreasMissing");
         }
 
         // TODO metadataLicenseMissing
@@ -1075,7 +1075,7 @@ public class DataQualityCalculatorPtCris {
                 .getLocalBirthDate();
 
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "startDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
@@ -1104,7 +1104,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "endDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
@@ -1115,7 +1115,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "researchAreasMissing");
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1271,6 +1271,10 @@ public class DataQualityCalculatorPtCris {
         var severityAndDimension =
             RevisionConfigurationLoader.getIssueSeverityAndDimension(issueKey);
 
+        if (Objects.isNull(severityAndDimension)) {
+            return;
+        }
+
         assessment.getIssues().add(
             DataQualityIssue.builder()
                 .key(issueKey)
@@ -1286,6 +1290,8 @@ public class DataQualityCalculatorPtCris {
 
     private void finishUpAssessment(DataQualityAssessment assessment) {
         assessment.setFinishedAt(Instant.now());
+        assessment.setProfileVersion(PROFILE_VERSION);
+        assessment.setProfileName(PROFILE_NAME);
 
         assessment.setFailedRules(
             (int) assessment.getIssues().stream()

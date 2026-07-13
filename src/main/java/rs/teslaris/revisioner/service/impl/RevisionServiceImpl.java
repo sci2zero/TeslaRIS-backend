@@ -8,13 +8,12 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -27,12 +26,14 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
+import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
@@ -172,12 +173,12 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType,
-                                                                      Integer entityId,
-                                                                      Instant timestamp) {
+    public List<QualityReportResponseDTO> getQualityReportAtTimestamp(
+        String entityType,
+        Integer entityId
+    ) {
         var entityRevision = repository
-            .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
-                entityType, entityId, timestamp);
+            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
 
         if (entityRevision.isEmpty()) {
             return List.of();
@@ -186,51 +187,41 @@ public class RevisionServiceImpl implements RevisionService {
         var qualityReport = new ArrayList<QualityReportResponseDTO>();
 
         entityRevision.get().getAssessments().forEach(assessment -> {
-            var currentReportText = new ArrayList<MultilingualContentDTO>();
+
+            Map<IssueSeverity, List<MultilingualContentDTO>> report =
+                new EnumMap<>(IssueSeverity.class);
 
             assessment.getIssues().forEach(issue -> {
-                var newRemarks = RevisionConfigurationLoader.getDataQualityRemark(issue.getKey(),
-                    issue.getParameters().toArray());
 
-                Map<String, MultilingualContentDTO> existingRemarks =
-                    currentReportText
-                        .stream()
-                        .collect(Collectors.toMap(
-                            MultilingualContentDTO::getLanguageTag,
-                            Function.identity(),
-                            (left, right) -> left));
+                var remarks = RevisionConfigurationLoader.getDataQualityRemark(
+                    issue.getKey(),
+                    issue.getParameters().toArray()
+                );
 
-                for (var newRemark : newRemarks) {
-                    var languageTag = newRemark.getLanguage().getLanguageTag();
+                var multilingualContents = remarks.stream()
+                    .map(r -> new MultilingualContentDTO(
+                        r.getLanguage().getId(),
+                        r.getLanguage().getLanguageTag(),
+                        r.getContent(),
+                        r.getPriority()
+                    ))
+                    .toList();
 
-                    var existing = existingRemarks.get(languageTag);
-
-                    if (Objects.isNull(existing)) {
-                        var dto = new MultilingualContentDTO(
-                            newRemark.getLanguage().getId(),
-                            newRemark.getLanguage().getLanguageTag(),
-                            newRemark.getContent(),
-                            newRemark.getPriority()
-                        );
-
-                        qualityReport.add(
-                            new QualityReportResponseDTO(
-                                assessment.getProfileName() + " (" +
-                                    assessment.getProfileVersion() + ")",
-                                currentReportText
-                            )
-                        );
-                        existingRemarks.put(languageTag, dto);
-                    } else {
-                        existing.setContent(
-                            existing.getContent()
-                                + System.lineSeparator()
-                                + System.lineSeparator()
-                                + newRemark.getContent()
-                        );
-                    }
-                }
+                report.computeIfAbsent(issue.getSeverity(), k -> new ArrayList<>())
+                    .addAll(multilingualContents);
             });
+
+            var reportList = report.entrySet()
+                .stream()
+                .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
+                .toList();
+
+            qualityReport.add(
+                new QualityReportResponseDTO(
+                    assessment.getProfileName() + " (" + assessment.getProfileVersion() + ")",
+                    reportList
+                )
+            );
         });
 
         return qualityReport;

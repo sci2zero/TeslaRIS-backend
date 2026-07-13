@@ -1,12 +1,15 @@
 package rs.teslaris.revisioner.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,6 +24,7 @@ import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 
 @Component
+@Slf4j
 public class RevisionConfigurationLoader {
 
     private static String externalOverrideConfiguration;
@@ -67,9 +71,16 @@ public class RevisionConfigurationLoader {
             revisionConfig.dataQualityRemarks.get(issueKey).message, params);
     }
 
+    @Nullable
     public static Triple<IssueSeverity, QualityDimension, Boolean> getIssueSeverityAndDimension(
         String issueKey) {
         var remark = revisionConfig.dataQualityRemarks.get(issueKey);
+
+        if (Objects.isNull(remark)) {
+            log.error("No remark for key: " + issueKey + ". Skipping...");
+            return null;
+        }
+
         return new Triple<>(remark.severity, remark.dimension, remark.blocking);
     }
 

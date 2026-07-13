@@ -14,6 +14,5 @@ public interface RevisionService {
 
     Optional<String> getRevisionAtTimestamp(String entityType, Integer entityId, Instant timestamp);
 
-    List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType, Integer entityId,
-                                                               Instant timestamp);
+    List<QualityReportResponseDTO> getQualityReportAtTimestamp(String entityType, Integer entityId);
 }
