@@ -33,7 +33,6 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
@@ -81,9 +80,6 @@ public class CommonExportServiceTest {
 
     @Mock
     private OtherEventRepository otherEventRepository;
-
-    @Mock
-    private DatasetRepository datasetRepository;
 
     @Mock
     private IntangibleProductRepository intangibleProductRepository;
@@ -220,9 +216,6 @@ public class CommonExportServiceTest {
         // Given
         var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(datasetRepository.findAllModified(any(Pageable.class),
-            anyBoolean())).thenReturn(
-            (Page) emptyPage);
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
@@ -254,7 +247,7 @@ public class CommonExportServiceTest {
         commonExportService.exportDocumentsToCommonModel(allTime, Collections.emptyList());
 
         // Then
-        verify(commonExportWorker, times(14)).exportEntities(
+        verify(commonExportWorker, times(13)).exportEntities(
             any(), any(), eq(ExportDocument.class), any(), eq(allTime), any());
     }
 
@@ -264,9 +257,6 @@ public class CommonExportServiceTest {
         // Given
         var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(datasetRepository.findAllModified(any(Pageable.class),
-            anyBoolean())).thenReturn(
-            (Page) emptyPage);
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);

@@ -59,7 +59,6 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BibliographicFormat;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -1078,7 +1077,7 @@ public class DocumentPublicationServiceTest {
     void shouldUnarchiveDocument() {
         // Given
         var documentId = 4;
-        var document = new Dataset();
+        var document = new IntangibleProduct();
         document.setId(documentId);
         document.setIsArchived(true);
 
@@ -1235,7 +1234,7 @@ public class DocumentPublicationServiceTest {
     @Test
     void whenAllAuthorIdsAreNonPositiveThenNotifyAdmins() {
         // Given
-        var doc = new Dataset();
+        var doc = new IntangibleProduct();
         doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
             setAffiliationStatement(new AffiliationStatement() {{
                 setDisplayPersonName(

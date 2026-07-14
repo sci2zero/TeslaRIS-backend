@@ -1223,6 +1223,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "ssrnIdFormatError",
             "ssrnIdExistsError"
         );
+
+        // TODO: Add validation for nationalId
+        document.setNationalId(documentDTO.getNationalId());
     }
 
     @Override

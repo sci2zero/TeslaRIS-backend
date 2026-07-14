@@ -108,6 +108,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "ssrn_id")
     private String ssrnId;
 
+    @Column(name = "national_id")
+    private String nationalId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;
@@ -160,6 +163,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> displayPublisher = new HashSet<>();
 
 
     protected Document(DocumentPublicationType documentType) {

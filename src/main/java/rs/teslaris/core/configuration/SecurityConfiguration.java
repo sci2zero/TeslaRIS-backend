@@ -169,7 +169,6 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/proceedings-publication/proceedings/{proceedingsId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/intangible-product/{documentId}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/dataset/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/patent/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/monograph/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/journal/{documentId}").permitAll()

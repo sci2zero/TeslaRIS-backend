@@ -64,6 +64,8 @@ public class DocumentDTO {
 
     private String ssrnId;
 
+    private String nationalId;
+
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 

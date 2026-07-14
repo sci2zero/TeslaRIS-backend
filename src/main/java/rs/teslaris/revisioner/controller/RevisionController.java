@@ -41,6 +41,6 @@ public class RevisionController {
     public List<QualityReportResponseDTO> getQualityReportForEntity(@PathVariable String entityType,
                                                                     @PathVariable
                                                                     Integer entityId) {
-        return revisionService.getQualityReportAtTimestamp(entityType, entityId);
+        return revisionService.getQualityReportForEntity(entityType, entityId);
     }
 }

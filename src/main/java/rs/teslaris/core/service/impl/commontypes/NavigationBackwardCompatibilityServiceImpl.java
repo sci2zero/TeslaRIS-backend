@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -112,11 +111,6 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                     log.info("NAVIGATION SUCCESS - PATENT {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
                     return new Pair<>("PATENT", document.getId());
-                }
-                case Dataset ignored -> {
-                    log.info("NAVIGATION SUCCESS - DATASET {} from {} in LANGUAGE {}",
-                        document.getId(), source, language);
-                    return new Pair<>("DATASET", document.getId());
                 }
                 case IntangibleProduct ignored -> {
                     log.info("NAVIGATION SUCCESS - INTANGIBLE_PRODUCT {} from {} in LANGUAGE {}",

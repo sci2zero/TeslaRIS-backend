@@ -22,7 +22,6 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -57,7 +56,6 @@ import rs.teslaris.core.model.document.PublisherPublishable;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -74,7 +72,6 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
@@ -158,8 +155,6 @@ public class MergeServiceImpl implements MergeService {
 
     private final PerformanceRelatedOutputService performanceRelatedOutputService;
 
-    private final DatasetService datasetService;
-
     private final PatentService patentService;
 
     private final ThesisService thesisService;
@@ -175,8 +170,6 @@ public class MergeServiceImpl implements MergeService {
     private final BookSeriesService bookSeriesService;
 
     private final IntangibleProductRepository intangibleProductRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final PatentRepository patentRepository;
 
@@ -651,20 +644,6 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
-                                           DatasetDTO rightData) {
-        handleNoAuthorsRemaining(leftData, rightData);
-        updateAndRestoreMetadata(datasetService::editDataset, datasetService::indexDataset,
-            datasetService::findDatasetById, leftId, rightId, leftData, rightData,
-            dto -> CollectionOperations.concat(new String[] {dto.getInternalNumber()},
-                extractCommonDocumentIdentifiers(dto)),
-            (dto, values) -> {
-                dto.setInternalNumber(values[0]);
-                restoreCommonDocumentIdentifiers(dto, values);
-            });
-    }
-
-    @Override
     public void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
                                           PatentDTO rightData) {
         handleNoAuthorsRemaining(leftData, rightData);
@@ -895,7 +874,6 @@ public class MergeServiceImpl implements MergeService {
         List<JpaRepository<? extends PublisherPublishable, Integer>> repositories = List.of(
             proceedingsRepository,
             patentRepository,
-            datasetRepository,
             intangibleProductRepository,
             thesisRepository,
             monographRepository

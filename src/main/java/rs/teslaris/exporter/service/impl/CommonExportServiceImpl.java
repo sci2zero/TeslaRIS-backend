@@ -20,7 +20,6 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
@@ -40,7 +39,6 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
@@ -88,8 +86,6 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final CourseRepository courseRepository;
 
     private final OtherEventRepository otherEventRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
 
@@ -265,14 +261,6 @@ public class CommonExportServiceImpl implements CommonExportService {
                                                        boolean allTime) {
         try {
             return switch (exportType) {
-                case DATASET -> exportEntitiesAsync(
-                    datasetRepository::findAllModified,
-                    ExportDocumentConverter::toCommonExportModel,
-                    ExportDocument.class,
-                    Dataset::getId,
-                    allTime,
-                    ExportPublicationType.DATASET
-                );
                 case INTANGIBLE_PRODUCT -> exportEntitiesAsync(
                     intangibleProductRepository::findAllModified,
                     ExportDocumentConverter::toCommonExportModel,

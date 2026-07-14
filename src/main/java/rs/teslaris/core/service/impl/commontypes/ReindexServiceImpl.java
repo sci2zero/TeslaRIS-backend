@@ -21,7 +21,6 @@ import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -86,8 +85,6 @@ public class ReindexServiceImpl implements ReindexService {
     private final PatentService patentService;
 
     private final IntangibleProductService intangibleProductService;
-
-    private final DatasetService datasetService;
 
     private final MonographService monographService;
 
@@ -198,7 +195,6 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(patentService::reindexPatents, "Error reindexing patents");
         safeReindex(intangibleProductService::reindexIntangibleProduct,
             "Error reindexing intangible products");
-        safeReindex(datasetService::reindexDatasets, "Error reindexing datasets");
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
@@ -234,7 +230,6 @@ public class ReindexServiceImpl implements ReindexService {
             case MONOGRAPH -> monographService.reindexMonographs();
             case PATENT -> patentService.reindexPatents();
             case INTANGIBLE_PRODUCT -> intangibleProductService.reindexIntangibleProduct();
-            case DATASET -> datasetService.reindexDatasets();
             case MONOGRAPH_PUBLICATION ->
                 monographPublicationService.reindexMonographPublications();
             case MATERIAL_PRODUCT -> materialProductService.reindexMaterialProducts();

@@ -35,7 +35,7 @@ import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -218,7 +218,7 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setCommissionId(1);
 
         var classification = new DocumentAssessmentClassification();
-        classification.setDocument(new Dataset());
+        classification.setDocument(new IntangibleProduct());
         classification.setDocumentType(classification.getDocument().getDocumentType());
         classification.setId(1);
 

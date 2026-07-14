@@ -10,9 +10,6 @@ import rs.teslaris.core.model.document.Publisher;
 @Repository
 public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
 
-    @Query("SELECT COUNT(d) > 0 FROM Dataset d JOIN d.publisher p WHERE p.id = :publisherId")
-    boolean hasPublishedDataset(Integer publisherId);
-
     @Query("SELECT COUNT(pa) > 0 FROM Patent pa JOIN pa.publisher p WHERE p.id = :publisherId")
     boolean hasPublishedPatent(Integer publisherId);
 
@@ -24,10 +21,6 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
 
     @Query("SELECT COUNT(t) > 0 FROM Thesis t JOIN t.publisher p WHERE p.id = :publisherId")
     boolean hasPublishedThesis(Integer publisherId);
-
-    @Modifying
-    @Query("UPDATE Dataset d SET d.publisher = null WHERE d.publisher.id = :publisherId")
-    void unbindDataset(Integer publisherId);
 
     @Modifying
     @Query("UPDATE Patent p SET p.publisher = null WHERE p.publisher.id = :publisherId")

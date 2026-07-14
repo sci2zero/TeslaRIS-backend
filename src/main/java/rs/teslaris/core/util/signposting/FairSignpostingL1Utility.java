@@ -9,7 +9,6 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -29,11 +28,11 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.BibliographicFormat;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Monograph;
@@ -249,9 +248,9 @@ public class FairSignpostingL1Utility {
             case JournalPublicationResponseDTO ignored -> headers.add(HttpHeaders.LINK,
                 "<https://schema.org/ScholarlyArticle> ; rel=\"type\"");
             case IntangibleProductDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/Product> ; rel=\"type\"");
-            case DatasetDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Dataset> ; rel=\"type\"");
+                IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
+                    "https://schema.org/Dataset" :
+                    "https://schema.org/Product" + " ; rel=\"type\"");
             case PatentDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/result> ; rel=\"type\"");
             case ProceedingsResponseDTO ignored ->
@@ -279,7 +278,6 @@ public class FairSignpostingL1Utility {
         return switch (document) {
             case JournalPublication ignored -> "journal-publication";
             case IntangibleProduct ignored -> "product";
-            case Dataset ignored -> "dataset";
             case Patent ignored -> "patent";
             case Proceedings ignored -> "proceedings";
             case ProceedingsPublication ignored -> "proceedings-publication";

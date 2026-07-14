@@ -19,7 +19,6 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -96,23 +95,6 @@ public class ExportDocumentConverter extends ExportConverterBase {
         ExportDocumentConverter.thesisResearchOutputRepository = thesisResearchOutputRepository;
     }
 
-    public static ExportDocument toCommonExportModel(Dataset dataset, boolean computeRelations) {
-        var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(ExportPublicationType.DATASET);
-
-        setBaseFields(commonExportDocument, dataset);
-        if (commonExportDocument.getDeleted()) {
-            return commonExportDocument;
-        }
-
-        setCommonFields(commonExportDocument, dataset, computeRelations);
-
-        commonExportDocument.setNumber(dataset.getInternalNumber());
-        addPublisherInfo(commonExportDocument, dataset.getPublisher());
-
-        return commonExportDocument;
-    }
-
     public static ExportDocument toCommonExportModel(IntangibleProduct intangibleProduct,
                                                      boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
@@ -125,6 +107,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         setCommonFields(commonExportDocument, intangibleProduct, computeRelations);
 
+        commonExportDocument.setIntangibleProductType(intangibleProduct.getIntangibleProductType());
         commonExportDocument.setNumber(intangibleProduct.getInternalNumber());
         addPublisherInfo(commonExportDocument, intangibleProduct.getPublisher());
 

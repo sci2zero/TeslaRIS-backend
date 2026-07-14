@@ -8,7 +8,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Document;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -46,8 +45,6 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
     private final IntangibleProductRepository intangibleProductRepository;
 
     private final MaterialProductRepository materialProductRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
 
@@ -117,9 +114,6 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
         } else if (index.getType()
             .equals(DocumentPublicationType.INTANGIBLE_PRODUCT.name())) {
             return intangibleProductRepository.findById(index.getDatabaseId())
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.DATASET.name())) {
-            return datasetRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getType().equals(DocumentPublicationType.MATERIAL_PRODUCT.name())) {
             return materialProductRepository.findById(index.getDatabaseId())

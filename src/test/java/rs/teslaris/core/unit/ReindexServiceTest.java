@@ -22,7 +22,6 @@ import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -90,9 +89,6 @@ public class ReindexServiceTest {
 
     @Mock
     private IntangibleProductService intangibleProductService;
-
-    @Mock
-    private DatasetService datasetService;
 
     @Mock
     private MonographService monographService;
@@ -218,7 +214,6 @@ public class ReindexServiceTest {
             verify(proceedingsPublicationService).reindexProceedingsPublications();
             verify(patentService).reindexPatents();
             verify(intangibleProductService).reindexIntangibleProduct();
-            verify(datasetService).reindexDatasets();
             verify(monographService).reindexMonographs();
             verify(monographPublicationService).reindexMonographPublications();
             verify(proceedingsService).reindexProceedings();
@@ -241,7 +236,6 @@ public class ReindexServiceTest {
             verify(proceedingsPublicationService, never()).reindexProceedingsPublications();
             verify(patentService, never()).reindexPatents();
             verify(intangibleProductService, never()).reindexIntangibleProduct();
-            verify(datasetService, never()).reindexDatasets();
             verify(monographService, never()).reindexMonographs();
             verify(monographPublicationService, never()).reindexMonographPublications();
             verify(proceedingsService, never()).reindexProceedings();

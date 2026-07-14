@@ -52,7 +52,6 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
@@ -120,7 +119,6 @@ import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
@@ -185,8 +183,6 @@ public class TestingDataInitializer {
     private final PatentRepository patentRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final PersonContributionRepository personContributionRepository;
 
@@ -440,7 +436,7 @@ public class TestingDataInitializer {
 
         patentRepository.save(patent);
 
-        var dataset = new Dataset();
+        var dataset = new IntangibleProduct();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
         dataset.setDoi("10.1007/s11192-024-05076-2");
@@ -449,6 +445,7 @@ public class TestingDataInitializer {
         var datasetContribution = new PersonDocumentContribution();
         datasetContribution.setPerson(person1);
         datasetContribution.setContributionType(DocumentContributionType.AUTHOR);
+        dataset.setIntangibleProductType(IntangibleProductType.DATASET);
         datasetContribution.setIsMainContributor(true);
         datasetContribution.setIsCorrespondingContributor(false);
         datasetContribution.setOrderNumber(1);
@@ -460,7 +457,7 @@ public class TestingDataInitializer {
                 new Contact("", "", "", "")));
 
         dataset.setContributors(Set.of(datasetContribution));
-        datasetRepository.save(dataset);
+        intangibleProductRepository.save(dataset);
 
         var sci2zero = new OrganisationUnit();
         sci2zero.setNameAbbreviation(

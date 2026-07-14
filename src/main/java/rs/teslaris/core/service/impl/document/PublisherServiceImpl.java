@@ -162,8 +162,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Transactional
     public void deletePublisher(Integer publisherId) {
 
-        if (publisherRepository.hasPublishedDataset(publisherId) ||
-            publisherRepository.hasPublishedPatent(publisherId) ||
+        if (publisherRepository.hasPublishedPatent(publisherId) ||
             publisherRepository.hasPublishedProceedings(publisherId) ||
             publisherRepository.hasPublishedIntangibleProduct(publisherId) ||
             publisherRepository.hasPublishedThesis(publisherId)) {
@@ -180,7 +179,6 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Override
     @Transactional
     public void forceDeletePublisher(Integer publisherId) {
-        publisherRepository.unbindDataset(publisherId);
         publisherRepository.unbindPatent(publisherId);
         publisherRepository.unbindProceedings(publisherId);
         publisherRepository.unbindIntangibleProduct(publisherId);

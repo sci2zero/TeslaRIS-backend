@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -40,7 +39,6 @@ import rs.teslaris.core.model.rocrate.MediaObject;
 import rs.teslaris.core.model.rocrate.Organization;
 import rs.teslaris.core.model.rocrate.Periodical;
 import rs.teslaris.core.model.rocrate.RoCrate;
-import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
 import rs.teslaris.core.model.rocrate.RoCrateGeneticMaterial;
 import rs.teslaris.core.model.rocrate.RoCrateIntangibleProduct;
@@ -74,20 +72,6 @@ public class RoCrateConverter {
 
     private static boolean includeFileHashes;
 
-
-    public static RoCrateDataset toRoCrateModel(Dataset document, String documentIdentifier,
-                                                RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "dataset");
-
-        var metadata = new RoCrateDataset();
-        setCommonFields(metadata, document, documentIdentifier, metadataInfo);
-        setPublisherInfo(metadataInfo, metadata, document);
-        metadata.setIdentifier(document.getInternalNumber());
-        metadata.setDistribution(
-            baseUrl + "en/scientific-results/dataset/" + document.getId());
-
-        return metadata;
-    }
 
     public static RoCratePatent toRoCrateModel(Patent document, String documentIdentifier,
                                                RoCrate metadataInfo) {

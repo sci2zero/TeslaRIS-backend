@@ -7,7 +7,6 @@ public enum DocumentPublicationType {
     MONOGRAPH,
     PATENT,
     INTANGIBLE_PRODUCT,
-    DATASET,
     MONOGRAPH_PUBLICATION,
     THESIS,
     MATERIAL_PRODUCT,

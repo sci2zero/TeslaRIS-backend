@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -173,10 +172,8 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<QualityReportResponseDTO> getQualityReportAtTimestamp(
-        String entityType,
-        Integer entityId
-    ) {
+    public List<QualityReportResponseDTO> getQualityReportForEntity(String entityType,
+                                                                    Integer entityId) {
         var entityRevision = repository
             .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
 
@@ -187,12 +184,10 @@ public class RevisionServiceImpl implements RevisionService {
         var qualityReport = new ArrayList<QualityReportResponseDTO>();
 
         entityRevision.get().getAssessments().forEach(assessment -> {
-
-            Map<IssueSeverity, List<MultilingualContentDTO>> report =
-                new EnumMap<>(IssueSeverity.class);
+            List<Pair<IssueSeverity, List<MultilingualContentDTO>>> assessmentReport =
+                new ArrayList<>();
 
             assessment.getIssues().forEach(issue -> {
-
                 var remarks = RevisionConfigurationLoader.getDataQualityRemark(
                     issue.getKey(),
                     issue.getParameters().toArray()
@@ -207,19 +202,13 @@ public class RevisionServiceImpl implements RevisionService {
                     ))
                     .toList();
 
-                report.computeIfAbsent(issue.getSeverity(), k -> new ArrayList<>())
-                    .addAll(multilingualContents);
+                assessmentReport.add(new Pair<>(issue.getSeverity(), multilingualContents));
             });
-
-            var reportList = report.entrySet()
-                .stream()
-                .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
-                .toList();
 
             qualityReport.add(
                 new QualityReportResponseDTO(
                     assessment.getProfileName() + " (" + assessment.getProfileVersion() + ")",
-                    reportList
+                    assessmentReport
                 )
             );
         });

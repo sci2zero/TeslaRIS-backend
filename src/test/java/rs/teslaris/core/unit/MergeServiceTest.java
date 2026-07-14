@@ -42,7 +42,6 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
@@ -70,7 +69,6 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -100,7 +98,6 @@ import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -118,7 +115,6 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
@@ -208,9 +204,6 @@ public class MergeServiceTest {
     private IntangibleProductService intangibleProductService;
 
     @Mock
-    private DatasetService datasetService;
-
-    @Mock
     private PatentService patentService;
 
     @Mock
@@ -239,9 +232,6 @@ public class MergeServiceTest {
 
     @Mock
     private IntangibleProductRepository intangibleProductRepository;
-
-    @Mock
-    private DatasetRepository datasetRepository;
 
     @Mock
     private PatentRepository patentRepository;
@@ -310,15 +300,6 @@ public class MergeServiceTest {
                 }},
                 new Patent(),
                 Patent.class,
-                EntityType.PUBLICATION
-            ),
-            Arguments.of(
-                new Dataset() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Dataset(),
-                Dataset.class,
                 EntityType.PUBLICATION
             ),
             Arguments.of(
@@ -1149,31 +1130,6 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void shouldSaveMergedDatasetsMetadata() {
-        // given
-        var leftId = 1;
-        var rightId = 2;
-        var leftData = new DatasetDTO();
-        var rightData = new DatasetDTO();
-
-        // when
-        var authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(new User() {{
-            setAuthority(new Authority(
-                UserRole.ADMIN.name(), new HashSet<>()));
-        }});
-        var securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-        mergeService.saveMergedDatasetsMetadata(leftId, rightId, leftData, rightData);
-
-        // then
-        verify(datasetService, atLeastOnce()).editDataset(leftId, leftData);
-        verify(datasetService).editDataset(rightId, rightData);
-        verify(datasetService, times(2)).editDataset(leftId, leftData);
-    }
-
-    @Test
     public void shouldSaveMergedPatentsMetadata() {
         // given
         var leftId = 1;
@@ -1208,8 +1164,8 @@ public class MergeServiceTest {
         var leftFileItems = new ArrayList<Integer>();
         var rightFileItems = new ArrayList<Integer>();
 
-        var leftDocument = new Dataset();
-        var rightDocument = new Dataset();
+        var leftDocument = new IntangibleProduct();
+        var rightDocument = new IntangibleProduct();
 
         var leftProof1 = new DocumentFile();
         leftProof1.setId(101);

@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,6 +39,7 @@ public class PatentControllerTest extends BaseTest {
         patentDTO.setDescription(dummyMC);
         patentDTO.setKeywords(dummyMC);
         patentDTO.setDocumentDate("2004-11-06");
+        patentDTO.setType(IntellectualPropertyType.PATENT);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,

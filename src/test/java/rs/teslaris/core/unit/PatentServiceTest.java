@@ -40,6 +40,7 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
@@ -124,6 +125,7 @@ public class PatentServiceTest {
         // Given
         var dto = new PatentDTO();
         dto.setDocumentDate("2023-07-09");
+        dto.setType(IntellectualPropertyType.PATENT);
         var patent = new Patent();
         patent.setId(1);
         patent.setNumber("123");
@@ -156,6 +158,7 @@ public class PatentServiceTest {
         // Given
         var patentId = 1;
         var patentDTO = new PatentDTO();
+        patentDTO.setType(IntellectualPropertyType.PATENT);
         patentDTO.setDocumentDate("2024");
         var patentToUpdate = new Patent();
         patentToUpdate.setApproveStatus(ApproveStatus.REQUESTED);

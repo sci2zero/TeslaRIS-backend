@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
@@ -118,9 +117,6 @@ public interface MergeService {
     void saveMergedPerformanceRelatedOutputMetadata(Integer leftId, Integer rightId,
                                                     PerformanceRelatedOutputDTO leftData,
                                                     PerformanceRelatedOutputDTO rightData);
-
-    void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
-                                    DatasetDTO rightData);
 
     void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
                                    PatentDTO rightData);

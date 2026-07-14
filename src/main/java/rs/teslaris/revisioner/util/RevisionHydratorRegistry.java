@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
@@ -40,7 +39,7 @@ public class RevisionHydratorRegistry {
 
     {
         dtoClasses =
-            Map.ofEntries(Map.entry(DocumentPublicationType.DATASET.name(), DatasetDTO.class),
+            Map.ofEntries(
                 Map.entry(DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                     IntangibleProductDTO.class),
                 Map.entry(DocumentPublicationType.THESIS.name(), ThesisResponseDTO.class),

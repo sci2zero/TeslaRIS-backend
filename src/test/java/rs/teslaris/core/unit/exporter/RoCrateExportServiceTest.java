@@ -39,8 +39,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -124,7 +124,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldCreateZipWithMetadataAndPreviewOnlyWhenNoFiles() throws Exception {
         var documentId = 2;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -147,7 +147,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldIncludeOnlyApprovedOpenAccessFiles() throws Exception {
         var documentId = 3;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         var approvedFile = mock(DocumentFile.class);
         when(approvedFile.getApproveStatus()).thenReturn(ApproveStatus.APPROVED);
@@ -204,7 +204,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldWriteValidZipStructure() throws Exception {
         var documentId = 5;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -245,7 +245,7 @@ class RoCrateExportServiceTest {
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        when(documentService.findOne(any())).thenReturn(mock(Dataset.class));
+        when(documentService.findOne(any())).thenReturn(mock(IntangibleProduct.class));
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});

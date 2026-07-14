@@ -7,7 +7,6 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -29,6 +28,7 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -436,9 +436,10 @@ public class FairSignpostingL2Utility {
         return switch (dto) {
             case JournalPublicationResponseDTO ignored ->
                 new Pair<>("https://schema.org/ScholarlyArticle", "/journal-publication");
-            case IntangibleProductDTO ignored ->
-                new Pair<>("https://schema.org/Product", "/intangible-product");
-            case DatasetDTO ignored -> new Pair<>("https://schema.org/Dataset", "/dataset");
+            case IntangibleProductDTO ignored -> new Pair<>(
+                IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
+                    "https://schema.org/Dataset" : "https://schema.org/Product",
+                "/intangible-product");
             case PatentDTO ignored -> new Pair<>("https://schema.org/result", "/patent");
             case ProceedingsResponseDTO ignored ->
                 new Pair<>("https://schema.org/Collection", "/proceedings");

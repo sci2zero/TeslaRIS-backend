@@ -204,10 +204,8 @@ public class ResearchProductFilteringUtil {
                     Criteria.where("type").is(ExportPublicationType.THESIS)
                 )
             );
-            case "research software" -> criteriaList.add(
+            case "research software", "research data" -> criteriaList.add(
                 Criteria.where("type").is(ExportPublicationType.INTANGIBLE_PRODUCT));
-            case "research data" ->
-                criteriaList.add(Criteria.where("type").is(ExportPublicationType.DATASET));
             default ->
                 throw new IllegalArgumentException("No RP entity type type for: " + productType);
         }

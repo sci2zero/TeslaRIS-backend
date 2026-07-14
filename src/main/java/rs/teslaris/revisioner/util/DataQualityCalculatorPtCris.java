@@ -22,7 +22,6 @@ import org.springframework.web.client.RestClientException;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -159,8 +158,6 @@ public class DataQualityCalculatorPtCris {
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
                 (dto, assessment) -> assessEntity((ThesisResponseDTO) dto, assessment)),
-            Map.entry(DatasetDTO.class,
-                (dto, assessment) -> assessEntity((DatasetDTO) dto, assessment)),
             Map.entry(PatentDTO.class,
                 (dto, assessment) -> assessEntity((PatentDTO) dto, assessment)),
             Map.entry(JournalPublicationResponseDTO.class,

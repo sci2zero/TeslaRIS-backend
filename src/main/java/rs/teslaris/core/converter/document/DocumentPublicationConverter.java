@@ -18,7 +18,6 @@ import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
@@ -96,6 +95,7 @@ public class DocumentPublicationConverter {
         publicationDTO.setArxivId(publication.getArxivId());
         publicationDTO.setPubmedId(publication.getPubmedId());
         publicationDTO.setSsrnId(publication.getSsrnId());
+        publicationDTO.setNationalId(publication.getNationalId());
 
         publicationDTO.setIsMetadataValid(publication.getIsMetadataValid());
         publicationDTO.setAreFilesValid(publication.getAreFilesValid());
@@ -273,7 +273,6 @@ public class DocumentPublicationConverter {
     public static BibTeXEntry toBibTeXEntry(Document document, String defaultLanguageTag) {
         return switch (document) {
             case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis, defaultLanguageTag);
-            case Dataset dataset -> DatasetConverter.toBibTexEntry(dataset, defaultLanguageTag);
             case IntangibleProduct intangibleProduct -> IntangibleProductConverter.toBibTexEntry(
                 intangibleProduct, defaultLanguageTag);
             case Patent patent -> PatentConverter.toBibTexEntry(patent, defaultLanguageTag);
@@ -306,8 +305,6 @@ public class DocumentPublicationConverter {
         return switch (document) {
             case Thesis thesis ->
                 ThesisConverter.toTaggedFormat(thesis, defaultLanguageTag, refMan);
-            case Dataset dataset ->
-                DatasetConverter.toTaggedFormat(dataset, defaultLanguageTag, refMan);
             case IntangibleProduct intangibleProduct ->
                 IntangibleProductConverter.toTaggedFormat(intangibleProduct, defaultLanguageTag,
                     refMan);

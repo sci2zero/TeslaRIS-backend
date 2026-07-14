@@ -21,7 +21,6 @@ import org.springframework.util.StreamUtils;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
@@ -278,9 +277,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
         var documentIdentifier = constructDocumentIdentifier(document);
 
         switch (document) {
-            case Dataset dataset -> metadataInfo.getGraph().add(
-                RoCrateConverter.toRoCrateModel(dataset, documentIdentifier,
-                    metadataInfo));
             case JournalPublication journalPublication -> metadataInfo.getGraph().add(
                 RoCrateConverter.toRoCrateModel(journalPublication, documentIdentifier,
                     metadataInfo));

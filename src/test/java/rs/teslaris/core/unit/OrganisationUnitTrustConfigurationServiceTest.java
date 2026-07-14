@@ -32,7 +32,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -199,7 +198,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     @Test
     public void shouldApproveFilesAndIndexWhenMetadataValid() {
         // Given
-        var document = new Dataset();
+        var document = new IntangibleProduct();
         document.setId(3);
         document.setIsMetadataValid(true);
         document.setAreFilesValid(false);
@@ -337,7 +336,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         // Given
         var subOrgIds = List.of(10, 20);
         var types =
-            List.of(DocumentPublicationType.DATASET, DocumentPublicationType.INTANGIBLE_PRODUCT);
+            List.of(DocumentPublicationType.MATERIAL_PRODUCT,
+                DocumentPublicationType.INTANGIBLE_PRODUCT);
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5)).thenReturn(
             subOrgIds);
 

@@ -33,7 +33,7 @@ import rs.teslaris.assessment.service.impl.AssessmentMergeServiceImpl;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -290,9 +290,9 @@ public class AssessmentMergeServiceTest {
 
         var sourceIndicator = new DocumentIndicator();
         sourceIndicator.setIndicator(indicator);
-        sourceIndicator.setDocument(new Dataset());
+        sourceIndicator.setDocument(new IntangibleProduct());
 
-        var targetDoc = new Dataset();
+        var targetDoc = new IntangibleProduct();
         when(documentPublicationService.findOne(targetId)).thenReturn(targetDoc);
 
         try (var mocked = mockStatic(IndicatorMappingConfigurationLoader.class)) {

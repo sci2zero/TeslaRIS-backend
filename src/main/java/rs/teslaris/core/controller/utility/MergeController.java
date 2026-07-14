@@ -19,7 +19,6 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedCourseDTO;
-import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedExhibitionDTO;
 import rs.teslaris.core.dto.deduplication.MergedGeneticMaterialDTO;
@@ -402,20 +401,6 @@ public class MergeController {
             mergedPerformanceRelatedOutput.getRightPerformanceRelatedOutput());
 
         mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedPerformanceRelatedOutput);
-    }
-
-    @PatchMapping("/dataset/metadata/{leftDocumentId}/{rightDocumentId}")
-    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
-    @PublicationMergeCheck
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveMergedDatasetsMetadata(
-        @PathVariable Integer leftDocumentId,
-        @PathVariable Integer rightDocumentId,
-        @NotNull @RequestBody MergedDatasetsDTO mergedDatasets) {
-        mergeService.saveMergedDatasetsMetadata(leftDocumentId, rightDocumentId,
-            mergedDatasets.getLeftDataset(), mergedDatasets.getRightDataset());
-
-        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedDatasets);
     }
 
     @PatchMapping("/patent/metadata/{leftDocumentId}/{rightDocumentId}")

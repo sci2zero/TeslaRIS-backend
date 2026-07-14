@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -25,7 +24,6 @@ import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -74,9 +72,6 @@ class DocumentLookupServiceTest {
     private MaterialProductRepository materialProductRepository;
 
     @Mock
-    private DatasetRepository datasetRepository;
-
-    @Mock
     private GeneticMaterialRepository geneticMaterialRepository;
 
     @Mock
@@ -105,8 +100,6 @@ class DocumentLookupServiceTest {
         var patentDocument = new Patent();
         var intangibleIndex = createIndex(DocumentPublicationType.INTANGIBLE_PRODUCT);
         var intangibleDocument = new IntangibleProduct();
-        var datasetIndex = createIndex(DocumentPublicationType.DATASET);
-        var datasetDocument = new Dataset();
         var materialIndex = createIndex(DocumentPublicationType.MATERIAL_PRODUCT);
         var materialDocument = new MaterialProduct();
         var geneticIndex = createIndex(DocumentPublicationType.GENETIC_MATERIAL);
@@ -124,7 +117,6 @@ class DocumentLookupServiceTest {
             .thenReturn(Optional.of(procIndex))
             .thenReturn(Optional.of(patentIndex))
             .thenReturn(Optional.of(intangibleIndex))
-            .thenReturn(Optional.of(datasetIndex))
             .thenReturn(Optional.of(materialIndex))
             .thenReturn(Optional.of(geneticIndex))
             .thenReturn(Optional.of(performanceIndex));
@@ -141,7 +133,6 @@ class DocumentLookupServiceTest {
         when(patentRepository.findById(documentId)).thenReturn(Optional.of(patentDocument));
         when(intangibleProductRepository.findById(documentId)).thenReturn(
             Optional.of(intangibleDocument));
-        when(datasetRepository.findById(documentId)).thenReturn(Optional.of(datasetDocument));
         when(materialProductRepository.findById(documentId)).thenReturn(
             Optional.of(materialDocument));
         when(geneticMaterialRepository.findById(documentId)).thenReturn(
@@ -162,7 +153,6 @@ class DocumentLookupServiceTest {
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(patentDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(
             intangibleDocument);
-        assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(datasetDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(
             materialDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(geneticDocument);
@@ -184,7 +174,6 @@ class DocumentLookupServiceTest {
             .thenReturn(DocumentPublicationType.PROCEEDINGS.name())
             .thenReturn(DocumentPublicationType.PATENT.name())
             .thenReturn(DocumentPublicationType.INTANGIBLE_PRODUCT.name())
-            .thenReturn(DocumentPublicationType.DATASET.name())
             .thenReturn(DocumentPublicationType.MATERIAL_PRODUCT.name())
             .thenReturn(DocumentPublicationType.GENETIC_MATERIAL.name())
             .thenReturn(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name());
@@ -198,7 +187,6 @@ class DocumentLookupServiceTest {
         var procDocument = new Proceedings();
         var patentDocument = new Patent();
         var intangibleDocument = new IntangibleProduct();
-        var datasetDocument = new Dataset();
         var materialDocument = new MaterialProduct();
         var geneticDocument = new GeneticMaterial();
         var performanceRelatedOutput = new PerformanceRelatedOutput();
@@ -215,7 +203,6 @@ class DocumentLookupServiceTest {
         when(patentRepository.findById(documentId)).thenReturn(Optional.of(patentDocument));
         when(intangibleProductRepository.findById(documentId)).thenReturn(
             Optional.of(intangibleDocument));
-        when(datasetRepository.findById(documentId)).thenReturn(Optional.of(datasetDocument));
         when(materialProductRepository.findById(documentId)).thenReturn(
             Optional.of(materialDocument));
         when(geneticMaterialRepository.findById(documentId)).thenReturn(
@@ -240,8 +227,6 @@ class DocumentLookupServiceTest {
         assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
             intangibleDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
-            datasetDocument);
-        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
             materialDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
             geneticDocument);
@@ -261,7 +246,6 @@ class DocumentLookupServiceTest {
         var procIndex = createIndex(DocumentPublicationType.PROCEEDINGS);
         var patentIndex = createIndex(DocumentPublicationType.PATENT);
         var intangibleIndex = createIndex(DocumentPublicationType.INTANGIBLE_PRODUCT);
-        var datasetIndex = createIndex(DocumentPublicationType.DATASET);
         var materialIndex = createIndex(DocumentPublicationType.MATERIAL_PRODUCT);
         var geneticIndex = createIndex(DocumentPublicationType.GENETIC_MATERIAL);
         var performanceIndex = createIndex(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT);
@@ -276,7 +260,6 @@ class DocumentLookupServiceTest {
             .thenReturn(Optional.of(procIndex))
             .thenReturn(Optional.of(patentIndex))
             .thenReturn(Optional.of(intangibleIndex))
-            .thenReturn(Optional.of(datasetIndex))
             .thenReturn(Optional.of(materialIndex))
             .thenReturn(Optional.of(geneticIndex))
             .thenReturn(Optional.of(performanceIndex));
@@ -289,7 +272,6 @@ class DocumentLookupServiceTest {
         when(proceedingsRepository.findById(documentId)).thenReturn(Optional.empty());
         when(patentRepository.findById(documentId)).thenReturn(Optional.empty());
         when(intangibleProductRepository.findById(documentId)).thenReturn(Optional.empty());
-        when(datasetRepository.findById(documentId)).thenReturn(Optional.empty());
         when(materialProductRepository.findById(documentId)).thenReturn(Optional.empty());
         when(geneticMaterialRepository.findById(documentId)).thenReturn(Optional.empty());
         when(performanceRelatedOutputRepository.findById(documentId)).thenReturn(Optional.empty());

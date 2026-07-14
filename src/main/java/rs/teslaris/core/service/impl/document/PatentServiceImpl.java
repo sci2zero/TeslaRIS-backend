@@ -11,12 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.IntellectualPropertyApplicationStatus;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
@@ -190,6 +193,15 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
     private void setPatentRelatedFields(Patent patent, PatentDTO patentDTO) {
         patent.setNumber(patentDTO.getNumber());
+        patent.setType(patentDTO.getType());
+
+        validateApplicationStatus(patentDTO.getType(), patentDTO.getApplicationStatus());
+        patent.setApplicationStatus(patentDTO.getApplicationStatus());
+
+        patent.setDateRequested(FlexibleDateConverter.fromDTO(patentDTO.getDateRequested()));
+        patent.setDateFilingPriority(
+            FlexibleDateConverter.fromDTO(patentDTO.getDateFilingPriority()));
+        patent.setDateTo(FlexibleDateConverter.fromDTO(patentDTO.getDateTo()));
 
         patent.setPublisher(null);
         patent.setAuthorReprint(false);
@@ -257,5 +269,73 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         documentPublicationIndexRepository.save(index);
 
         return index;
+    }
+
+    private void validateApplicationStatus(IntellectualPropertyType type,
+                                           IntellectualPropertyApplicationStatus status) {
+        if (Objects.isNull(type) || Objects.isNull(status)) {
+            return;
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.DISCLOSED)
+            && !type.equals(IntellectualPropertyType.DISCLOSURE)) {
+            throw new IllegalArgumentException("DISCLOSED is only valid for DISCLOSURE.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.PENDING)
+            && !type.equals(IntellectualPropertyType.PATENT)
+            && !type.equals(IntellectualPropertyType.TRADEMARK)) {
+            throw new IllegalArgumentException("PENDING is only valid for PATENT and TRADEMARK.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.IN_NEGOTIATION)
+            && !type.equals(IntellectualPropertyType.LICENSE)) {
+            throw new IllegalArgumentException("IN_NEGOTIATION is only valid for LICENSE.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.ALLOWED)
+            && !type.equals(IntellectualPropertyType.PATENT)) {
+            throw new IllegalArgumentException("ALLOWED is only valid for PATENT.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.GRANTED_OR_REGISTERED)
+            && !type.equals(IntellectualPropertyType.PATENT)
+            && !type.equals(IntellectualPropertyType.REGISTERED_COPYRIGHT)
+            && !type.equals(IntellectualPropertyType.TRADEMARK)) {
+            throw new IllegalArgumentException(
+                "GRANTED_OR_REGISTERED is only valid for PATENT, REGISTERED_COPYRIGHT and TRADEMARK.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.PROTECTED)
+            && !type.equals(IntellectualPropertyType.DISCLOSURE)) {
+            throw new IllegalArgumentException("PROTECTED is only valid for DISCLOSURE.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.ASSIGNED)
+            && !type.equals(IntellectualPropertyType.LICENSE)) {
+            throw new IllegalArgumentException("ASSIGNED is only valid for LICENSE.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.FIRST_FIXATION)
+            && !type.equals(IntellectualPropertyType.REGISTERED_COPYRIGHT)) {
+            throw new IllegalArgumentException(
+                "FIRST_FIXATION is only valid for REGISTERED_COPYRIGHT.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.EXPIRED)
+            && !type.equals(IntellectualPropertyType.PATENT)) {
+            throw new IllegalArgumentException("EXPIRED is only valid for PATENT.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.WITHDRAWN)
+            && !type.equals(IntellectualPropertyType.PATENT)) {
+            throw new IllegalArgumentException("WITHDRAWN is only valid for PATENT.");
+        }
+
+        if (status.equals(IntellectualPropertyApplicationStatus.ELIMINATED)
+            && !type.equals(IntellectualPropertyType.REGISTERED_COPYRIGHT)) {
+            throw new IllegalArgumentException(
+                "ELIMINATED is only valid for REGISTERED_COPYRIGHT.");
+        }
     }
 }
