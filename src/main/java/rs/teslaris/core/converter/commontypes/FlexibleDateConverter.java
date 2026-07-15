@@ -7,6 +7,10 @@ import rs.teslaris.core.model.commontypes.FlexibleDate;
 public class FlexibleDateConverter {
 
     public static FlexibleDateDTO toDTO(FlexibleDate flexibleDate) {
+        if (Objects.isNull(flexibleDate)) {
+            return null;
+        }
+
         return new FlexibleDateDTO(
             flexibleDate.getYear(),
             flexibleDate.getMonth(),

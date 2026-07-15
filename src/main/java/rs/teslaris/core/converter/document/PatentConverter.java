@@ -4,6 +4,7 @@ import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.Patent;
@@ -25,6 +26,13 @@ public class PatentConverter extends DocumentPublicationConverter {
         } else {
             patentDTO.setAuthorReprint(patent.getAuthorReprint());
         }
+
+        patentDTO.setType(patent.getType());
+        patentDTO.setApplicationStatus(patent.getApplicationStatus());
+        patentDTO.setDateRequested(FlexibleDateConverter.toDTO(patent.getDateRequested()));
+        patentDTO.setDateFilingPriority(
+            FlexibleDateConverter.toDTO(patent.getDateFilingPriority()));
+        patentDTO.setDateTo(FlexibleDateConverter.toDTO(patent.getDateTo()));
 
         return patentDTO;
     }
