@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -40,7 +41,7 @@ public class IntangibleProductControllerTest extends BaseTest {
         intangibleProductDTO.setSubTitle(dummyMC);
         intangibleProductDTO.setDescription(dummyMC);
         intangibleProductDTO.setKeywords(dummyMC);
-        intangibleProductDTO.setDocumentDate("2004-11-06");
+        intangibleProductDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, 6, null));
         intangibleProductDTO.setIntangibleProductType(IntangibleProductType.SOFTWARE);
 
         var contribution =
@@ -81,7 +82,9 @@ public class IntangibleProductControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_INTANGIBLE"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
+            .andExpect(jsonPath("$.documentDate.year").value(2004))
+            .andExpect(jsonPath("$.documentDate.month").value(11))
+            .andExpect(jsonPath("$.documentDate.day").value(6));
     }
 
     @Test

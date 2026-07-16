@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
@@ -440,7 +441,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             }
         });
 
-        commonExportDocument.setDocumentDate(document.getDocumentDate());
+        commonExportDocument.setDocumentDate(FlexibleDate.toISOString(document.getDocumentDate()));
         commonExportDocument.setDoi(document.getDoi());
         commonExportDocument.setScopus(document.getScopusId());
         commonExportDocument.setOpenAlex(document.getOpenAlexId());

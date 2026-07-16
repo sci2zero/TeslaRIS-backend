@@ -13,10 +13,12 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
@@ -86,7 +88,7 @@ public class DocumentPublicationConverter {
             PersonContributionConverter.documentContributionToDTO(publication.getContributors()));
 
         publicationDTO.setUris(publication.getUris());
-        publicationDTO.setDocumentDate(publication.getDocumentDate());
+        publicationDTO.setDocumentDate(FlexibleDateConverter.toDTO(publication.getDocumentDate()));
         publicationDTO.setDoi(publication.getDoi());
         publicationDTO.setScopusId(publication.getScopusId());
         publicationDTO.setOpenAlexId(publication.getOpenAlexId());
@@ -128,10 +130,9 @@ public class DocumentPublicationConverter {
             PersonContributionConverter.toBibTexAuthors(publication.getContributors(), entry);
         }
 
-        if (Objects.nonNull(publication.getDocumentDate()) &&
-            !publication.getDocumentDate().isBlank()) {
+        if (FlexibleDate.isDatePresentAndValid(publication.getDocumentDate())) {
             entry.addField(BibTeXEntry.KEY_YEAR,
-                new StringValue(publication.getDocumentDate().split("-")[0],
+                new StringValue(String.valueOf(publication.getDocumentDate().getYear()),
                     StringValue.Style.BRACED));
         }
 
@@ -183,8 +184,8 @@ public class DocumentPublicationConverter {
             sb.append(refMan ? "DO  - " : "%R ").append(publication.getDoi()).append("\n");
         }
 
-        if (StringUtil.valueExists(publication.getDocumentDate())) {
-            sb.append(refMan ? "PY  - " : "%D ").append(publication.getDocumentDate().split("-")[0])
+        if (FlexibleDate.isDatePresentAndValid(publication.getDocumentDate())) {
+            sb.append(refMan ? "PY  - " : "%D ").append(publication.getDocumentDate().getYear())
                 .append("\n");
         }
 

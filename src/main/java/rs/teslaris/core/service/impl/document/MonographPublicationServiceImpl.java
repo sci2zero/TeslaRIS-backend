@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -277,7 +278,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setMonograph(monograph);
         monographPublication.setDocumentDate(
             Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
-                monographPublicationDTO.getDocumentDate());
+                FlexibleDateConverter.fromDTO(monographPublicationDTO.getDocumentDate()));
 
         monographPublication.setSection(multilingualContentService.getMultilingualContent(
             monographPublicationDTO.getSection()));

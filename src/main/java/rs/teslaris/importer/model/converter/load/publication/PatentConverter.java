@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
@@ -49,9 +50,11 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
 
         dto.setUris(new HashSet<>());
 
-        dto.setDocumentDate(String.valueOf(
-            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                .getYear()));
+        var approvalDate =
+            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        dto.setDocumentDate(
+            new FlexibleDateDTO(approvalDate.getYear(), approvalDate.getMonthValue(),
+                approvalDate.getDayOfMonth(), null));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),

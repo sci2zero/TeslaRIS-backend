@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -155,7 +156,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                 MultilingualContentConverter.getMultilingualContentDTO(publication.getTitle()));
             responseDTO.setProceedingsTitle(MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getProceedings().getTitle()));
-            responseDTO.setDocumentDate(publication.getDocumentDate());
+            responseDTO.setDocumentDate(FlexibleDateConverter.toDTO(publication.getDocumentDate()));
 
             return responseDTO;
         }).collect(Collectors.toList());

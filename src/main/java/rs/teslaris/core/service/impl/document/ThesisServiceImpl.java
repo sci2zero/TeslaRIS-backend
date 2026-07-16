@@ -50,6 +50,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -702,7 +703,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesis = thesisJPAService.findOne(thesisId);
 
         if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getThesisDefenceDate()) ||
-            Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isBlank()) {
+            !FlexibleDate.isDatePresentAndValid(thesis.getDocumentDate())) {
             throw new ThesisException("missingDataToArchiveMessage");
         }
 
@@ -812,7 +813,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }});
 
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
-            thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
+            thesis.setDocumentDate(new FlexibleDate(thesisDTO.getThesisDefenceDate().getYear()));
 
             if (thesis.getPublicReviewCompleted() || isAdmin || isHeadOfLibrary ||
                 Objects.isNull(thesis.getOrganisationUnit()) ||
@@ -828,7 +829,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 !thesis.getPublicReviewStartDates().isEmpty()) {
                 thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
                     .ifPresent(latestPublicReviewDate -> {
-                        thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                        thesis.setDocumentDate(new FlexibleDate(latestPublicReviewDate.getYear()));
                     });
             }
         }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Document;
@@ -343,7 +344,8 @@ public class RoCrateConverter {
             DEFAULT_RO_CRATE_LANGUAGE));
         metadata.setAbstractText(StringUtil.getStringContent(document.getDescription(),
             DEFAULT_RO_CRATE_LANGUAGE));
-        metadata.setPublicationYear(document.getDocumentDate());
+        metadata.setPublicationYear(FlexibleDate.isDatePresentAndValid(document.getDocumentDate()) ?
+            String.valueOf(document.getDocumentDate().getYear()) : "");
 
         metadata.setDoi(document.getDoi());
 

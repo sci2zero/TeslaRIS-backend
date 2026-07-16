@@ -56,6 +56,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BibliographicFormat;
@@ -1029,7 +1030,7 @@ public class DocumentPublicationServiceTest {
         var document = new Patent();
         document.setId(documentId);
         document.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
-        document.setDocumentDate("2023-05-01");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 1));
 
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
@@ -1063,7 +1064,7 @@ public class DocumentPublicationServiceTest {
         var document = new IntangibleProduct();
         document.setId(documentId);
         document.setTitle(new HashSet<>());
-        document.setDocumentDate("2023-01-01");
+        document.setDocumentDate(new FlexibleDate(2023, 6));
 
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 

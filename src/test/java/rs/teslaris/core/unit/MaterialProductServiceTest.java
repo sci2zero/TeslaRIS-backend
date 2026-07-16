@@ -31,11 +31,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.MaterialProductType;
 import rs.teslaris.core.model.document.Publisher;
@@ -189,7 +191,7 @@ public class MaterialProductServiceTest {
     public void shouldCreateMaterialProductWithIndexing() {
         // Given
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setInternalNumber("MP-001");
         dto.setNumberProduced(100L);
         dto.setMaterialProductType(MaterialProductType.INDUSTRIAL_PRODUCT);
@@ -224,7 +226,7 @@ public class MaterialProductServiceTest {
     public void shouldCreateMaterialProductWithAuthorReprint() {
         // Given
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setAuthorReprint(true);
 
         var materialProduct = new MaterialProduct();
@@ -248,7 +250,7 @@ public class MaterialProductServiceTest {
     public void shouldCreateMaterialProductWithoutIndexing() {
         // Given
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
 
         var materialProduct = new MaterialProduct();
         materialProduct.setId(1);
@@ -273,7 +275,7 @@ public class MaterialProductServiceTest {
         // Given
         Integer materialProductId = 1;
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2024-01-01");
+        dto.setDocumentDate(new FlexibleDateDTO(2024, 1, 1, null));
         dto.setInternalNumber("MP-002");
         dto.setNumberProduced(200L);
         dto.setMaterialProductType(MaterialProductType.PROTOTYPE);
@@ -282,7 +284,7 @@ public class MaterialProductServiceTest {
         var existingProduct = new MaterialProduct();
         existingProduct.setId(materialProductId);
         existingProduct.setApproveStatus(ApproveStatus.REQUESTED);
-        existingProduct.setDocumentDate("2023");
+        existingProduct.setDocumentDate(new FlexibleDate(2023));
 
         var index = new DocumentPublicationIndex();
         index.setDatabaseId(materialProductId);
@@ -312,7 +314,7 @@ public class MaterialProductServiceTest {
         // Given
         Integer materialProductId = 1;
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2024-01-01");
+        dto.setDocumentDate(new FlexibleDateDTO(2024, 1, 1, null));
 
         var existingProduct = new MaterialProduct();
         existingProduct.setId(materialProductId);
@@ -364,7 +366,7 @@ public class MaterialProductServiceTest {
         // Given
         var materialProduct = new MaterialProduct();
         materialProduct.setId(1);
-        materialProduct.setDocumentDate("2024");
+        materialProduct.setDocumentDate(new FlexibleDate(2024));
         var materialProducts = List.of(materialProduct);
         var page =
             new PageImpl<>(materialProducts, PageRequest.of(0, 100), materialProducts.size());
@@ -385,7 +387,7 @@ public class MaterialProductServiceTest {
     public void shouldSetMaterialProductTypeWhenCreating(MaterialProductType type) {
         // Given
         var dto = new MaterialProductDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setMaterialProductType(type);
 
         var materialProduct = new MaterialProduct();

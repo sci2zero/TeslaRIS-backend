@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 @Getter
@@ -19,5 +20,5 @@ public class ProceedingsPublicationResponseDTO {
 
     private List<MultilingualContentDTO> title;
 
-    private String documentDate;
+    private FlexibleDateDTO documentDate;
 }

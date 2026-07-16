@@ -24,6 +24,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographType;
@@ -276,11 +277,16 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         if (updatePublicationDates) {
             monographPublicationRepository.setDateToAggregatedPublications(
-                monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+                monographToUpdate.getId(),
+                monographToUpdate.getDocumentDate()
+            );
 
-            var year = StringUtil.parseYear(monographToUpdate.getDocumentDate());
-            indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
-                monographToUpdate.getId(), year);
+            var year = FlexibleDate.getYearNumber(monographToUpdate.getDocumentDate());
+            indexBulkUpdateService.setYearForAggregatedRecord(
+                "monograph_id",
+                monographToUpdate.getId(),
+                year
+            );
 
             applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }

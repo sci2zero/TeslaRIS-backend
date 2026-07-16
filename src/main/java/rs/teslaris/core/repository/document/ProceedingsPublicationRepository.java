@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 
@@ -28,7 +29,7 @@ public interface ProceedingsPublicationRepository
     @Modifying
     @Query("UPDATE ProceedingsPublication pp SET pp.documentDate = :date " +
         "WHERE pp.proceedings.id = :proceedingsId")
-    void setDateToAggregatedPublications(Integer proceedingsId, String date);
+    void setDateToAggregatedPublications(Integer proceedingsId, FlexibleDate date);
 
     @Modifying
     @Query("UPDATE ProceedingsPublication pp SET pp.event = :event " +

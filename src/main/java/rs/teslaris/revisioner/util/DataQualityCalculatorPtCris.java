@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
@@ -46,6 +47,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.OtherEventType;
@@ -284,6 +286,8 @@ public class DataQualityCalculatorPtCris {
             reportIssue(assessment, "descriptionMissing", dto.getId());
         }
 
+        var documentDate = FlexibleDateConverter.fromDTO(dto.getDocumentDate());
+
         if (!CollectionOperations.containsValues(dto.getContributions())) {
             reportIssue(assessment, "contributorsMissing", dto.getId());
         } else {
@@ -300,15 +304,15 @@ public class DataQualityCalculatorPtCris {
                 contribution ->
                     assessEntity(contribution, assessment,
                         null, null, dto.getId(),
-                        StringUtil.parseDocumentDate(dto.getDocumentDate()))
+                        StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate)))
             );
         }
 
-        if (!StringUtil.valueExists(dto.getDocumentDate())) {
+        if (!FlexibleDate.isDatePresentAndValid(documentDate)) {
             reportIssue(assessment, "documentDateMissing", dto.getId());
         } else {
             try {
-                var date = StringUtil.parseDocumentDate(dto.getDocumentDate());
+                var date = StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
 
                 if (date.isBefore(LocalDate.of(1950, 1, 1))) {
                     reportIssue(assessment, "documentDateBefore1950", dto.getDocumentDate());

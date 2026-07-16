@@ -39,6 +39,7 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -358,7 +359,7 @@ public class TestingDataInitializer {
         proceedings1.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 1", 1));
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
         proceedings1.setEISBN("978-3-16-148410-0");
-        proceedings1.setDocumentDate("2021");
+        proceedings1.setDocumentDate(new FlexibleDate(2021));
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
 
@@ -440,7 +441,7 @@ public class TestingDataInitializer {
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
         dataset.setDoi("10.1007/s11192-024-05076-2");
-        dataset.setDocumentDate("2020-01-01");
+        dataset.setDocumentDate(new FlexibleDate(2020, 1));
 
         var datasetContribution = new PersonDocumentContribution();
         datasetContribution.setPerson(person1);
@@ -616,7 +617,7 @@ public class TestingDataInitializer {
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.EDITED_BOOK);
-        monograph2.setDocumentDate("2024");
+        monograph2.setDocumentDate(new FlexibleDate(2024));
         monographRepository.save(monograph2);
 
         var researcherUser2 =
@@ -699,7 +700,7 @@ public class TestingDataInitializer {
 
         var monographPublication1 = new MonographPublication();
         monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
-        monographPublication1.setDocumentDate("2024");
+        monographPublication1.setDocumentDate(new FlexibleDate(2024, 3));
         monographPublication1.setMonograph(monograph1);
         monographPublication1.setMonographPublicationType(MonographPublicationType.PREFACE);
         monographPublication1.setTitle(
@@ -708,7 +709,7 @@ public class TestingDataInitializer {
 
         var monographPublication2 = new MonographPublication();
         monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
-        monographPublication2.setDocumentDate("2024");
+        monographPublication2.setDocumentDate(new FlexibleDate(2024, 7));
         monographPublication2.setMonograph(monograph1);
         monographPublication2.setMonographPublicationType(MonographPublicationType.CHAPTER);
         monographPublication2.setTitle(
@@ -723,7 +724,7 @@ public class TestingDataInitializer {
         var thesis1 = new Thesis();
         thesis1.setApproveStatus(ApproveStatus.APPROVED);
         thesis1.setThesisType(ThesisType.PHD);
-        thesis1.setDocumentDate("2021");
+        thesis1.setDocumentDate(new FlexibleDate(2021, 4, 17));
         thesis1.setOrganisationUnit(dummyOU);
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
@@ -750,7 +751,7 @@ public class TestingDataInitializer {
         var thesis2 = new Thesis();
         thesis2.setApproveStatus(ApproveStatus.APPROVED);
         thesis2.setThesisType(ThesisType.MASTER);
-        thesis2.setDocumentDate("2023");
+        thesis2.setDocumentDate(new FlexibleDate(2023));
         thesis2.setOrganisationUnit(dummyOU2);
         thesis2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Master rad", 1)));
@@ -1005,7 +1006,7 @@ public class TestingDataInitializer {
         intangibleProduct2.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct2.setApproveStatus(ApproveStatus.APPROVED);
         intangibleProduct2.setDoi("10.1038/nature.2012.9872");
-        intangibleProduct2.setDocumentDate("2012-3-14");
+        intangibleProduct2.setDocumentDate(new FlexibleDate(2012, 3, 14));
 
         var intangibleProductContribution3 = new PersonDocumentContribution();
         intangibleProductContribution3.setPerson(person1);
@@ -1038,7 +1039,7 @@ public class TestingDataInitializer {
         var thesis3 = new Thesis();
         thesis3.setApproveStatus(ApproveStatus.APPROVED);
         thesis3.setThesisType(ThesisType.PHD);
-        thesis3.setDocumentDate("2022");
+        thesis3.setDocumentDate(new FlexibleDate(2022, 5, 30));
         thesis3.setOrganisationUnit(dummyOU);
         thesis3.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija 2", 1)));
@@ -1065,7 +1066,7 @@ public class TestingDataInitializer {
         var thesis4 = new Thesis();
         thesis4.setApproveStatus(ApproveStatus.APPROVED);
         thesis4.setThesisType(ThesisType.PHD);
-        thesis4.setDocumentDate("2024");
+        thesis4.setDocumentDate(new FlexibleDate(2024, 6, 19));
         thesis4.setOrganisationUnit(dummyOU);
         thesis4.setTitle(
             Set.of(
@@ -1116,7 +1117,7 @@ public class TestingDataInitializer {
         var thesis5 = new Thesis();
         thesis5.setApproveStatus(ApproveStatus.APPROVED);
         thesis5.setThesisType(ThesisType.PHD);
-        thesis5.setDocumentDate("2024");
+        thesis5.setDocumentDate(new FlexibleDate(2024, 7, 24));
         thesis5.setOrganisationUnit(dummyOU);
         thesis5.setTitle(
             Set.of(new MultiLingualContent(serbianTag,
@@ -1147,7 +1148,7 @@ public class TestingDataInitializer {
         var thesis6 = new Thesis();
         thesis6.setApproveStatus(ApproveStatus.APPROVED);
         thesis6.setThesisType(ThesisType.PHD);
-        thesis6.setDocumentDate("2024");
+        thesis6.setDocumentDate(new FlexibleDate(2024, 11, 6));
         thesis6.setOrganisationUnit(dummyOU);
         thesis6.setTitle(
             Set.of(new MultiLingualContent(serbianTag,
@@ -1264,7 +1265,7 @@ public class TestingDataInitializer {
             "Most na adi", 1)));
         materialProduct.setInternalNumber("12398745");
         materialProduct.setApproveStatus(ApproveStatus.APPROVED);
-        materialProduct.setDocumentDate("2011-7-2");
+        materialProduct.setDocumentDate(new FlexibleDate(2011, 7, 2));
         materialProduct.setNumberProduced(1L);
         materialProduct.setMaterialProductType(MaterialProductType.INFRASTRUCTURE_OBJECT);
         materialProductRepository.save(materialProduct);
@@ -1274,7 +1275,7 @@ public class TestingDataInitializer {
             "New Wheat Seed", 1)));
         geneticMaterial.setInternalNumber("WH-12345-1");
         geneticMaterial.setApproveStatus(ApproveStatus.APPROVED);
-        geneticMaterial.setDocumentDate("2025-1-1");
+        geneticMaterial.setDocumentDate(new FlexibleDate(2025, 8));
         geneticMaterial.setGeneticMaterialType(GeneticMaterialType.STRAIN);
         geneticMaterialRepository.save(geneticMaterial);
 
@@ -1414,7 +1415,7 @@ public class TestingDataInitializer {
             "Predstava 1", 1)));
         play1.setLanguages(new HashSet<>(List.of(serbianTag)));
         play1.setApproveStatus(ApproveStatus.APPROVED);
-        play1.setDocumentDate("2003-1-1");
+        play1.setDocumentDate(new FlexibleDate(2003));
         play1.setType(PerformanceRelatedOutputType.ART_PERFORMANCE);
         performanceRelatedOutputRepository.save(play1);
 

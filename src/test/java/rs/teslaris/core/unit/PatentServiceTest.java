@@ -32,11 +32,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -124,13 +126,13 @@ public class PatentServiceTest {
     public void shouldCreatePatent() {
         // Given
         var dto = new PatentDTO();
-        dto.setDocumentDate("2023-07-09");
+        dto.setDocumentDate(new FlexibleDateDTO(2023, 7, 9, null));
         dto.setType(IntellectualPropertyType.PATENT);
         var patent = new Patent();
         patent.setId(1);
         patent.setNumber("123");
         var document = new Patent();
-        document.setDocumentDate("2023");
+        document.setDocumentDate(new FlexibleDate(2023));
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -159,10 +161,10 @@ public class PatentServiceTest {
         var patentId = 1;
         var patentDTO = new PatentDTO();
         patentDTO.setType(IntellectualPropertyType.PATENT);
-        patentDTO.setDocumentDate("2024");
+        patentDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
         var patentToUpdate = new Patent();
         patentToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        patentToUpdate.setDocumentDate("2023");
+        patentToUpdate.setDocumentDate(new FlexibleDate(2023));
 
         when(patentJPAService.findOne(patentId)).thenReturn(patentToUpdate);
         when(patentJPAService.save(any())).thenReturn(new Patent());
@@ -219,7 +221,7 @@ public class PatentServiceTest {
     public void shouldReindexPatents() {
         // Given
         var patent = new Patent();
-        patent.setDocumentDate("2024");
+        patent.setDocumentDate(new FlexibleDate(2024));
         var patents = List.of(patent);
         var page1 = new PageImpl<>(patents.subList(0, 1), PageRequest.of(0, 10),
             patents.size());

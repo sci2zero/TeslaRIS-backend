@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.PersonConverter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -862,7 +863,8 @@ public class CommonLoaderImpl implements CommonLoader {
                                              Integer eventId, String year) {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setEventId(eventId);
-        proceedingsDTO.setDocumentDate(year);
+        proceedingsDTO.setDocumentDate(
+            new FlexibleDateDTO(Integer.parseInt(year), null, null, null));
 
         proceedingsDTO.setTitle(new ArrayList<>());
         setMultilingualContent(proceedingsDTO.getTitle(), proceedingsPublication.getPublishedIn());

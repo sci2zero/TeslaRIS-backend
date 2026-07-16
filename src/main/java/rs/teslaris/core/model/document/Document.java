@@ -27,6 +27,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -68,7 +69,7 @@ public abstract class Document extends BaseEntity implements Mergeable {
     private Set<String> uris = new HashSet<>();
 
     @Column(name = "document_date")
-    private String documentDate;
+    private FlexibleDate documentDate;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @BatchSize(size = 50)
