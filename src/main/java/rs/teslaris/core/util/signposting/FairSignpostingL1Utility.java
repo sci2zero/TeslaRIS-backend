@@ -13,12 +13,12 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -33,11 +33,11 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
@@ -251,7 +251,7 @@ public class FairSignpostingL1Utility {
                 IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
                     "https://schema.org/Dataset" :
                     "https://schema.org/Product" + " ; rel=\"type\"");
-            case PatentDTO ignored ->
+            case IntellectualPropertyDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/result> ; rel=\"type\"");
             case ProceedingsResponseDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/Collection> ; rel=\"type\"");
@@ -278,7 +278,7 @@ public class FairSignpostingL1Utility {
         return switch (document) {
             case JournalPublication ignored -> "journal-publication";
             case IntangibleProduct ignored -> "product";
-            case Patent ignored -> "patent";
+            case IntellectualProperty ignored -> "patent";
             case Proceedings ignored -> "proceedings";
             case ProceedingsPublication ignored -> "proceedings-publication";
             case Monograph ignored -> "monograph";

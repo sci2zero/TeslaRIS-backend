@@ -33,7 +33,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -42,18 +42,18 @@ import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.IntellectualPropertyType;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
-import rs.teslaris.core.service.impl.document.PatentServiceImpl;
-import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.IntellectualPropertyServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.IntellectualPropertyJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -63,7 +63,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
-public class PatentServiceTest {
+public class IntellectualPropertyServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
@@ -81,7 +81,7 @@ public class PatentServiceTest {
     private PersonContributionService personContributionService;
 
     @Mock
-    private PatentJPAServiceImpl patentJPAService;
+    private IntellectualPropertyJPAServiceImpl intellectualPropertyJPAService;
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -96,13 +96,13 @@ public class PatentServiceTest {
     private CitationService citationService;
 
     @Mock
-    private PatentRepository patentRepository;
+    private IntellectualPropertyRepository intellectualPropertyRepository;
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
-    private PatentServiceImpl patentService;
+    private IntellectualPropertyServiceImpl intellectualPropertyService;
 
 
     private static Stream<Arguments> argumentSources() {
@@ -119,24 +119,25 @@ public class PatentServiceTest {
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(patentService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(intellectualPropertyService, "documentApprovedByDefault",
+            true);
     }
 
     @Test
-    public void shouldCreatePatent() {
+    public void shouldCreateIntellectualProperty() {
         // Given
-        var dto = new PatentDTO();
+        var dto = new IntellectualPropertyDTO();
         dto.setDocumentDate(new FlexibleDateDTO(2023, 7, 9, null));
         dto.setType(IntellectualPropertyType.PATENT);
-        var patent = new Patent();
-        patent.setId(1);
-        patent.setNumber("123");
-        var document = new Patent();
+        var intellectualProperty = new IntellectualProperty();
+        intellectualProperty.setId(1);
+        intellectualProperty.setNumber("123");
+        var document = new IntellectualProperty();
         document.setDocumentDate(new FlexibleDate(2023));
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(patentJPAService.save(any())).thenReturn(document);
+        when(intellectualPropertyJPAService.save(any())).thenReturn(document);
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -145,29 +146,30 @@ public class PatentServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         // When
-        var result = patentService.createPatent(dto, true);
+        var result = intellectualPropertyService.createIntellectualProperty(dto, true);
 
         // Then
         assertNotNull(result);
         verify(multilingualContentService, times(9)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
-        verify(patentJPAService).save(eq(document));
+        verify(intellectualPropertyJPAService).save(eq(document));
     }
 
     @Test
-    public void shouldEditPatent() {
+    public void shouldEditIntellectualProperty() {
         // Given
-        var patentId = 1;
-        var patentDTO = new PatentDTO();
-        patentDTO.setType(IntellectualPropertyType.PATENT);
-        patentDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
-        var patentToUpdate = new Patent();
-        patentToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        patentToUpdate.setDocumentDate(new FlexibleDate(2023));
+        var intellectualPropertyId = 1;
+        var intellectualPropertyDTO = new IntellectualPropertyDTO();
+        intellectualPropertyDTO.setType(IntellectualPropertyType.PATENT);
+        intellectualPropertyDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
+        var intellectualPropertyToUpdate = new IntellectualProperty();
+        intellectualPropertyToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        intellectualPropertyToUpdate.setDocumentDate(new FlexibleDate(2023));
 
-        when(patentJPAService.findOne(patentId)).thenReturn(patentToUpdate);
-        when(patentJPAService.save(any())).thenReturn(new Patent());
+        when(intellectualPropertyJPAService.findOne(intellectualPropertyId)).thenReturn(
+            intellectualPropertyToUpdate);
+        when(intellectualPropertyJPAService.save(any())).thenReturn(new IntellectualProperty());
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -176,22 +178,23 @@ public class PatentServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         // When
-        patentService.editPatent(patentId, patentDTO);
+        intellectualPropertyService.editIntellectualProperty(intellectualPropertyId,
+            intellectualPropertyDTO);
 
         // Then
-        verify(patentJPAService).findOne(eq(patentId));
+        verify(intellectualPropertyJPAService).findOne(eq(intellectualPropertyId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
-            eq(patentToUpdate), eq(patentDTO));
+            eq(intellectualPropertyToUpdate), eq(intellectualPropertyDTO));
     }
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadPatent(DocumentContributionType type, Boolean isMainAuthor,
-                                 Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadIntellectualProperty(DocumentContributionType type, Boolean isMainAuthor,
+                                               Boolean isCorrespondingAuthor, Country country) {
         // Given
-        var patentId = 1;
-        var patent = new Patent();
-        patent.setApproveStatus(ApproveStatus.APPROVED);
+        var intellectualPropertyId = 1;
+        var intellectualProperty = new IntellectualProperty();
+        intellectualProperty.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
         contribution.setContributionType(type);
@@ -204,78 +207,85 @@ public class PatentServiceTest {
         affiliationStatement.setPostalAddress(
             new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null));
         contribution.setAffiliationStatement(affiliationStatement);
-        patent.setContributors(Set.of(contribution));
+        intellectualProperty.setContributors(Set.of(contribution));
 
-        when(patentJPAService.findOne(patentId)).thenReturn(patent);
+        when(intellectualPropertyJPAService.findOne(intellectualPropertyId)).thenReturn(
+            intellectualProperty);
 
         // When
-        var result = patentService.readPatentById(patentId);
+        var result =
+            intellectualPropertyService.readIntellectualPropertyById(intellectualPropertyId);
 
         // Then
-        verify(patentJPAService).findOne(eq(patentId));
+        verify(intellectualPropertyJPAService).findOne(eq(intellectualPropertyId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
     }
 
     @Test
-    public void shouldReindexPatents() {
+    public void shouldReindexIntellectualProperties() {
         // Given
-        var patent = new Patent();
-        patent.setDocumentDate(new FlexibleDate(2024));
-        var patents = List.of(patent);
-        var page1 = new PageImpl<>(patents.subList(0, 1), PageRequest.of(0, 10),
-            patents.size());
+        var intellectualProperty = new IntellectualProperty();
+        intellectualProperty.setDocumentDate(new FlexibleDate(2024));
+        var intellectualProperties = List.of(intellectualProperty);
+        var page1 = new PageImpl<>(intellectualProperties.subList(0, 1), PageRequest.of(0, 10),
+            intellectualProperties.size());
 
-        when(patentJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+        when(intellectualPropertyJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
 
         // When
-        patentService.reindexPatents();
+        intellectualPropertyService.reindexIntellectualProperties();
 
         // Then
         verify(documentPublicationIndexRepository, never()).deleteAll();
-        verify(patentJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(intellectualPropertyJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
     }
 
     @Test
-    void shouldThrowNotFoundWhenPatentDoesNotExist() {
+    void shouldThrowNotFoundWhenIntellectualPropertyDoesNotExist() {
         // Given
         var oldId = 123;
-        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.empty());
+        when(intellectualPropertyRepository.findIntellectualPropertyByOldIdsContains(
+            oldId)).thenReturn(Optional.empty());
 
         // When / Then
-        assertThrows(NotFoundException.class, () -> patentService.readPatentByOldId(oldId));
-        verify(patentRepository).findPatentByOldIdsContains(oldId);
+        assertThrows(NotFoundException.class,
+            () -> intellectualPropertyService.readIntellectualPropertyByOldId(oldId));
+        verify(intellectualPropertyRepository).findIntellectualPropertyByOldIdsContains(oldId);
     }
 
     @Test
-    void shouldThrowNotFoundWhenPatentIsNotApproved() {
+    void shouldThrowNotFoundWhenIntellectualPropertyIsNotApproved() {
         // Given
         var oldId = 456;
-        var patent = new Patent();
-        patent.setApproveStatus(ApproveStatus.REQUESTED);
-        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.of(patent));
+        var intellectualProperty = new IntellectualProperty();
+        intellectualProperty.setApproveStatus(ApproveStatus.REQUESTED);
+        when(intellectualPropertyRepository.findIntellectualPropertyByOldIdsContains(
+            oldId)).thenReturn(Optional.of(intellectualProperty));
 
         // When / Then
-        assertThrows(NotFoundException.class, () -> patentService.readPatentByOldId(oldId));
-        verify(patentRepository).findPatentByOldIdsContains(oldId);
+        assertThrows(NotFoundException.class,
+            () -> intellectualPropertyService.readIntellectualPropertyByOldId(oldId));
+        verify(intellectualPropertyRepository).findIntellectualPropertyByOldIdsContains(oldId);
     }
 
     @Test
-    void shouldReturnDtoWhenPatentIsApproved() {
+    void shouldReturnDtoWhenIntellectualPropertyIsApproved() {
         // Given
         var oldId = 789;
-        var patent = new Patent();
-        patent.setApproveStatus(ApproveStatus.APPROVED);
+        var intellectualProperty = new IntellectualProperty();
+        intellectualProperty.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.of(patent));
+        when(intellectualPropertyRepository.findIntellectualPropertyByOldIdsContains(
+            oldId)).thenReturn(Optional.of(intellectualProperty));
 
         // When
-        var result = patentService.readPatentByOldId(oldId);
+        var result = intellectualPropertyService.readIntellectualPropertyByOldId(oldId);
 
         // Then
         assertNotNull(result);
-        verify(patentRepository).findPatentByOldIdsContains(oldId);
+        verify(intellectualPropertyRepository).findIntellectualPropertyByOldIdsContains(oldId);
     }
 }

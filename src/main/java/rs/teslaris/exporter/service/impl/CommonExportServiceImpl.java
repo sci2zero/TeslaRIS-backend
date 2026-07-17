@@ -23,13 +23,13 @@ import rs.teslaris.core.model.document.Course;
 import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.OtherEvent;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -42,13 +42,13 @@ import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -89,7 +89,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private final IntangibleProductRepository intangibleProductRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final JournalRepository journalRepository;
 
@@ -269,13 +269,13 @@ public class CommonExportServiceImpl implements CommonExportService {
                     allTime,
                     ExportPublicationType.INTANGIBLE_PRODUCT
                 );
-                case PATENT -> exportEntitiesAsync(
-                    patentRepository::findAllModified,
+                case INTELLECTUAL_PROPERTY -> exportEntitiesAsync(
+                    intellectualPropertyRepository::findAllModified,
                     ExportDocumentConverter::toCommonExportModel,
                     ExportDocument.class,
-                    Patent::getId,
+                    IntellectualProperty::getId,
                     allTime,
-                    ExportPublicationType.PATENT
+                    ExportPublicationType.INTELLECTUAL_PROPERTY
                 );
                 case JOURNAL -> exportEntitiesAsync(
                     journalRepository::findAllModified,

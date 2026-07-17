@@ -23,11 +23,11 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -276,7 +276,9 @@ public class DocumentPublicationConverter {
             case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis, defaultLanguageTag);
             case IntangibleProduct intangibleProduct -> IntangibleProductConverter.toBibTexEntry(
                 intangibleProduct, defaultLanguageTag);
-            case Patent patent -> PatentConverter.toBibTexEntry(patent, defaultLanguageTag);
+            case IntellectualProperty intellectualProperty ->
+                IntellectualPropertyConverter.toBibTexEntry(
+                    intellectualProperty, defaultLanguageTag);
             case JournalPublication journalPublication ->
                 JournalPublicationConverter.toBibTexEntry(journalPublication, defaultLanguageTag);
             case Monograph monograph ->
@@ -309,8 +311,9 @@ public class DocumentPublicationConverter {
             case IntangibleProduct intangibleProduct ->
                 IntangibleProductConverter.toTaggedFormat(intangibleProduct, defaultLanguageTag,
                     refMan);
-            case Patent patent ->
-                PatentConverter.toTaggedFormat(patent, defaultLanguageTag, refMan);
+            case IntellectualProperty intellectualProperty ->
+                IntellectualPropertyConverter.toTaggedFormat(intellectualProperty,
+                    defaultLanguageTag, refMan);
             case JournalPublication journalPublication ->
                 JournalPublicationConverter.toTaggedFormat(journalPublication, defaultLanguageTag,
                     refMan);

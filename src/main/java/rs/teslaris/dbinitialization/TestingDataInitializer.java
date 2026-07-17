@@ -63,6 +63,7 @@ import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -73,7 +74,6 @@ import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.OtherEventType;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -124,12 +124,12 @@ import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -181,7 +181,7 @@ public class TestingDataInitializer {
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
 
@@ -427,7 +427,7 @@ public class TestingDataInitializer {
         intangibleProduct.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
 
-        var patent = new Patent();
+        var patent = new IntellectualProperty();
         patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
         patent.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -435,7 +435,7 @@ public class TestingDataInitializer {
             patent.getOldIds().add(992);
         }
 
-        patentRepository.save(patent);
+        intellectualPropertyRepository.save(patent);
 
         var dataset = new IntangibleProduct();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));

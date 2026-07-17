@@ -27,12 +27,12 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -160,8 +160,8 @@ public class DataQualityCalculatorPtCris {
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
                 (dto, assessment) -> assessEntity((ThesisResponseDTO) dto, assessment)),
-            Map.entry(PatentDTO.class,
-                (dto, assessment) -> assessEntity((PatentDTO) dto, assessment)),
+            Map.entry(IntellectualPropertyDTO.class,
+                (dto, assessment) -> assessEntity((IntellectualPropertyDTO) dto, assessment)),
             Map.entry(JournalPublicationResponseDTO.class,
                 (dto, assessment) -> assessEntity((JournalPublicationResponseDTO) dto, assessment)),
             Map.entry(MonographDTO.class,

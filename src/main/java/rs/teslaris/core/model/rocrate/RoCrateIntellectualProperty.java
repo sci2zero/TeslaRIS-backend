@@ -11,12 +11,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class RoCratePatent extends RoCratePublicationBase {
+public class RoCrateIntellectualProperty extends RoCratePublicationBase {
 
     private String patentNumber;
 
 
-    public RoCratePatent() {
-        this.setType("Patent");
+    public RoCrateIntellectualProperty() {
+        this.setType("CreativeWork");
     }
 }

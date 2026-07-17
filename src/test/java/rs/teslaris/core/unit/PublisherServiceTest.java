@@ -164,7 +164,7 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedIntellectualProperty(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(false);
@@ -192,7 +192,8 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(publishedPatent);
+        when(publisherRepository.hasPublishedIntellectualProperty(publisherId)).thenReturn(
+            publishedPatent);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(
             publishedProceedings);
         when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(
@@ -290,7 +291,7 @@ public class PublisherServiceTest {
         publisherService.forceDeletePublisher(publisherId);
 
         // Then
-        verify(publisherRepository).unbindPatent(publisherId);
+        verify(publisherRepository).unbindIntellectualProperty(publisherId);
         verify(publisherRepository).unbindProceedings(publisherId);
         verify(publisherRepository).unbindIntangibleProduct(publisherId);
         verify(publisherRepository).unbindThesis(publisherId);

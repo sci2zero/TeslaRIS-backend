@@ -26,13 +26,13 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
@@ -58,9 +58,9 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -76,13 +76,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
-import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -155,7 +155,7 @@ public class MergeServiceImpl implements MergeService {
 
     private final PerformanceRelatedOutputService performanceRelatedOutputService;
 
-    private final PatentService patentService;
+    private final IntellectualPropertyService intellectualPropertyService;
 
     private final ThesisService thesisService;
 
@@ -171,7 +171,7 @@ public class MergeServiceImpl implements MergeService {
 
     private final IntangibleProductRepository intangibleProductRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final ThesisRepository thesisRepository;
 
@@ -644,11 +644,14 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
-                                          PatentDTO rightData) {
+    public void saveMergedIntellectualPropertiesMetadata(Integer leftId, Integer rightId,
+                                                         IntellectualPropertyDTO leftData,
+                                                         IntellectualPropertyDTO rightData) {
         handleNoAuthorsRemaining(leftData, rightData);
-        updateAndRestoreMetadata(patentService::editPatent, patentService::indexPatent,
-            patentService::findPatentById, leftId, rightId, leftData, rightData,
+        updateAndRestoreMetadata(intellectualPropertyService::editIntellectualProperty,
+            intellectualPropertyService::indexIntellectualProperty,
+            intellectualPropertyService::findIntellectualPropertyById, leftId, rightId, leftData,
+            rightData,
             dto -> CollectionOperations.concat(new String[] {dto.getNumber()},
                 extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
@@ -873,7 +876,7 @@ public class MergeServiceImpl implements MergeService {
 
         List<JpaRepository<? extends PublisherPublishable, Integer>> repositories = List.of(
             proceedingsRepository,
-            patentRepository,
+            intellectualPropertyRepository,
             intangibleProductRepository,
             thesisRepository,
             monographRepository

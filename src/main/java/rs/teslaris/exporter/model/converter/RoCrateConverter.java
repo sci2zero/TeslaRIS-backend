@@ -19,12 +19,13 @@ import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -43,11 +44,11 @@ import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
 import rs.teslaris.core.model.rocrate.RoCrateGeneticMaterial;
 import rs.teslaris.core.model.rocrate.RoCrateIntangibleProduct;
+import rs.teslaris.core.model.rocrate.RoCrateIntellectualProperty;
 import rs.teslaris.core.model.rocrate.RoCrateJournalPublication;
 import rs.teslaris.core.model.rocrate.RoCrateMaterialProduct;
 import rs.teslaris.core.model.rocrate.RoCrateMonograph;
 import rs.teslaris.core.model.rocrate.RoCrateMonographPublication;
-import rs.teslaris.core.model.rocrate.RoCratePatent;
 import rs.teslaris.core.model.rocrate.RoCratePerson;
 import rs.teslaris.core.model.rocrate.RoCrateProceedings;
 import rs.teslaris.core.model.rocrate.RoCrateProceedingsPublication;
@@ -74,11 +75,19 @@ public class RoCrateConverter {
     private static boolean includeFileHashes;
 
 
-    public static RoCratePatent toRoCrateModel(Patent document, String documentIdentifier,
-                                               RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "patent");
+    public static RoCrateIntellectualProperty toRoCrateModel(IntellectualProperty document,
+                                                             String documentIdentifier,
+                                                             RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "intellectual-property");
 
-        var metadata = new RoCratePatent();
+        var metadata = new RoCrateIntellectualProperty();
+
+        if (document.getType().equals(IntellectualPropertyType.PATENT)) {
+            metadata.setType("Patent");
+        } else if (document.getType().equals(IntellectualPropertyType.TRADEMARK)) {
+            metadata.setType("Brand");
+        }
+
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
         metadata.setPatentNumber(document.getNumber());

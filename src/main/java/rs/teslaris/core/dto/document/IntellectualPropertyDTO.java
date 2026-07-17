@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.IntellectualPropertyType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PatentDTO extends DocumentDTO implements PublishableDTO {
+public class IntellectualPropertyDTO extends DocumentDTO implements PublishableDTO {
 
     private IntellectualPropertyType type;
 

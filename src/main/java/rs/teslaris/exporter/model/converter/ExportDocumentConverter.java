@@ -25,12 +25,12 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -173,19 +173,21 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Patent patent, boolean computeRelations) {
+    public static ExportDocument toCommonExportModel(IntellectualProperty intellectualProperty,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(ExportPublicationType.PATENT);
+        commonExportDocument.setType(ExportPublicationType.INTELLECTUAL_PROPERTY);
 
-        setBaseFields(commonExportDocument, patent);
+        setBaseFields(commonExportDocument, intellectualProperty);
         if (commonExportDocument.getDeleted()) {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, patent, computeRelations);
+        setCommonFields(commonExportDocument, intellectualProperty, computeRelations);
 
-        commonExportDocument.setNumber(patent.getNumber());
-        addPublisherInfo(commonExportDocument, patent.getPublisher());
+        commonExportDocument.setNumber(intellectualProperty.getNumber());
+        addPublisherInfo(commonExportDocument, intellectualProperty.getPublisher());
+        commonExportDocument.setIntellectualPropertyType(intellectualProperty.getType());
 
         return commonExportDocument;
     }

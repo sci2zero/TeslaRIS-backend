@@ -24,11 +24,11 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -300,8 +300,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 RoCrateConverter.toRoCrateModel(intangibleProduct,
                     documentIdentifier,
                     metadataInfo));
-            case Patent patent -> metadataInfo.getGraph().add(
-                RoCrateConverter.toRoCrateModel(patent,
+            case IntellectualProperty intellectualProperty -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(intellectualProperty,
                     documentIdentifier,
                     metadataInfo));
             case Thesis thesis -> metadataInfo.getGraph().add(

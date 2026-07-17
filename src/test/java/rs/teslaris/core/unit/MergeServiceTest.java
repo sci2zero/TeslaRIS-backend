@@ -45,13 +45,13 @@ import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -74,12 +74,12 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -100,9 +100,9 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -119,13 +119,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
-import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -204,7 +204,7 @@ public class MergeServiceTest {
     private IntangibleProductService intangibleProductService;
 
     @Mock
-    private PatentService patentService;
+    private IntellectualPropertyService intellectualPropertyService;
 
     @Mock
     private ThesisService thesisService;
@@ -234,7 +234,7 @@ public class MergeServiceTest {
     private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
-    private PatentRepository patentRepository;
+    private IntellectualPropertyRepository intellectualPropertyRepository;
 
     @Mock
     private ThesisRepository thesisRepository;
@@ -294,12 +294,12 @@ public class MergeServiceTest {
                 EntityType.PUBLICATION
             ),
             Arguments.of(
-                new Patent() {{
+                new IntellectualProperty() {{
                     getMergedIds().add(103);
                     getOldIds().add(203);
                 }},
-                new Patent(),
-                Patent.class,
+                new IntellectualProperty(),
+                IntellectualProperty.class,
                 EntityType.PUBLICATION
             ),
             Arguments.of(
@@ -1134,8 +1134,8 @@ public class MergeServiceTest {
         // given
         var leftId = 1;
         var rightId = 2;
-        var leftData = new PatentDTO();
-        var rightData = new PatentDTO();
+        var leftData = new IntellectualPropertyDTO();
+        var rightData = new IntellectualPropertyDTO();
 
         // when
         var authentication = mock(Authentication.class);
@@ -1146,12 +1146,13 @@ public class MergeServiceTest {
         var securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        mergeService.saveMergedPatentsMetadata(leftId, rightId, leftData, rightData);
+        mergeService.saveMergedIntellectualPropertiesMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(patentService, atLeastOnce()).editPatent(leftId, leftData);
-        verify(patentService).editPatent(rightId, rightData);
-        verify(patentService, times(2)).editPatent(leftId, leftData);
+        verify(intellectualPropertyService, atLeastOnce()).editIntellectualProperty(leftId,
+            leftData);
+        verify(intellectualPropertyService).editIntellectualProperty(rightId, rightData);
+        verify(intellectualPropertyService, times(2)).editIntellectualProperty(leftId, leftData);
     }
 
     @Test

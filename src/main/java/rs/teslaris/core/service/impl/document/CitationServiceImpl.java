@@ -237,7 +237,7 @@ public class CitationServiceImpl implements CitationService {
             case "PROCEEDINGS_PUBLICATION" -> CSLType.PAPER_CONFERENCE;
             case "THESIS" -> CSLType.THESIS;
             case "INTANGIBLE_PRODUCT" -> CSLType.SOFTWARE;
-            case "PATENT" -> CSLType.PATENT;
+            case "INTELLECTUAL_PROPERTY" -> CSLType.PATENT;
             case "MONOGRAPH" -> CSLType.BOOK;
             case "MONOGRAPH_PUBLICATION" -> CSLType.CHAPTER;
             case "PROCEEDINGS" -> CSLType.ARTICLE_MAGAZINE;

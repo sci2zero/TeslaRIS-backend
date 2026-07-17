@@ -226,7 +226,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.PROCEEDINGS.name(),
                     DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                    DocumentPublicationType.PATENT.name(),
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
                     DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                     DocumentPublicationType.THESIS.name(),
                     DocumentPublicationType.MATERIAL_PRODUCT.name(),

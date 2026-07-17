@@ -11,12 +11,12 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -440,7 +440,8 @@ public class FairSignpostingL2Utility {
                 IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
                     "https://schema.org/Dataset" : "https://schema.org/Product",
                 "/intangible-product");
-            case PatentDTO ignored -> new Pair<>("https://schema.org/result", "/patent");
+            case IntellectualPropertyDTO ignored ->
+                new Pair<>("https://schema.org/result", "/patent");
             case ProceedingsResponseDTO ignored ->
                 new Pair<>("https://schema.org/Collection", "/proceedings");
             case ProceedingsPublicationDTO ignored ->

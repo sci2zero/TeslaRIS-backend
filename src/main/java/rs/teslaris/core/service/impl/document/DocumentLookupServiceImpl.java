@@ -10,11 +10,11 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -40,7 +40,7 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
 
     private final ThesisRepository thesisRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
 
@@ -108,8 +108,8 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
         } else if (index.getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
             return proceedingsRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.PATENT.name())) {
-            return patentRepository.findById(index.getDatabaseId())
+        } else if (index.getType().equals(DocumentPublicationType.INTELLECTUAL_PROPERTY.name())) {
+            return intellectualPropertyRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getType()
             .equals(DocumentPublicationType.INTANGIBLE_PRODUCT.name())) {

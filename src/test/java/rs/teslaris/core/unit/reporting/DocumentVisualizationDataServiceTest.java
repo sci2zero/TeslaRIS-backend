@@ -40,9 +40,9 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -238,7 +238,7 @@ class DocumentVisualizationDataServiceTest {
         var statisticsType = StatisticsType.VIEW;
 
         when(documentPublicationService.findOne(documentId)).thenReturn(
-            new Patent() {{
+            new IntellectualProperty() {{
                 setMergedIds(new HashSet<>(List.of(456, 789)));
             }}
         );

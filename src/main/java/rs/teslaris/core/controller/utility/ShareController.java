@@ -85,7 +85,7 @@ public class ShareController {
             case PROCEEDINGS -> "proceedings";
             case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
             case MONOGRAPH -> "monograph";
-            case PATENT -> "patent";
+            case INTELLECTUAL_PROPERTY -> "intellectual-property";
             case INTANGIBLE_PRODUCT -> "intangible-product";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
             case THESIS -> "thesis";

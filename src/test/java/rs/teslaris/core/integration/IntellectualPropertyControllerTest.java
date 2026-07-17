@@ -18,7 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -26,21 +26,21 @@ import rs.teslaris.core.model.document.IntellectualPropertyType;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class PatentControllerTest extends BaseTest {
+public class IntellectualPropertyControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private PatentDTO getTestPayload() {
+    private IntellectualPropertyDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        var patentDTO = new PatentDTO();
-        patentDTO.setTitle(dummyMC);
-        patentDTO.setSubTitle(dummyMC);
-        patentDTO.setDescription(dummyMC);
-        patentDTO.setKeywords(dummyMC);
-        patentDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, 6, null));
-        patentDTO.setType(IntellectualPropertyType.PATENT);
+        var intellectualPropertyDTO = new IntellectualPropertyDTO();
+        intellectualPropertyDTO.setTitle(dummyMC);
+        intellectualPropertyDTO.setSubTitle(dummyMC);
+        intellectualPropertyDTO.setDescription(dummyMC);
+        intellectualPropertyDTO.setKeywords(dummyMC);
+        intellectualPropertyDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, 6, null));
+        intellectualPropertyDTO.setType(IntellectualPropertyType.PATENT);
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,
@@ -51,32 +51,34 @@ public class PatentControllerTest extends BaseTest {
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null, null));
-        patentDTO.setContributions(List.of(contribution));
-        patentDTO.setUris(new HashSet<>());
+        intellectualPropertyDTO.setContributions(List.of(contribution));
+        intellectualPropertyDTO.setUris(new HashSet<>());
 
-        return patentDTO;
+        return intellectualPropertyDTO;
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadPatent() throws Exception {
+    public void testReadIntellectualProperty() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/patent/{patentId}", 3)
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/intellectual-property/{intellectualPropertyId}", 3)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreatePatent() throws Exception {
+    public void testCreateIntellectualProperty() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var patentDTO = getTestPayload();
+        var intellectualPropertyDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(patentDTO);
-        mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/patent")
-                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_PATENT"))
+        String requestBody = objectMapper.writeValueAsString(intellectualPropertyDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/intellectual-property")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_PATENT"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate.year").value(2004))
             .andExpect(jsonPath("$.documentDate.month").value(11))
@@ -85,14 +87,15 @@ public class PatentControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testUpdatePatent() throws Exception {
+    public void testUpdateIntellectualProperty() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var patentDTO = getTestPayload();
+        var intellectualPropertyDTO = getTestPayload();
 
-        String requestBody = objectMapper.writeValueAsString(patentDTO);
+        String requestBody = objectMapper.writeValueAsString(intellectualPropertyDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.put("http://localhost:8081/api/patent/{patentId}", 3)
+                MockMvcRequestBuilders.put(
+                        "http://localhost:8081/api/intellectual-property/{intellectualPropertyId}", 3)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -101,11 +104,12 @@ public class PatentControllerTest extends BaseTest {
     @Test
     @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testDeletePatent() throws Exception {
+    public void testDeleteIntellectualProperty() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("http://localhost:8081/api/patent/{patentId}",
+                MockMvcRequestBuilders.delete(
+                        "http://localhost:8081/api/intellectual-property/{intellectualPropertyId}",
                         3).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
@@ -113,9 +117,10 @@ public class PatentControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testReadPatentByOldId() throws Exception {
+    public void testReadIntellectualPropertyByOldId() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/patent/old-id/{oldId}", 992)
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/intellectual-property/old-id/{oldId}", 992)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

@@ -21,7 +21,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         UNION ALL
         SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intellectual_property WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -45,7 +45,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
             UNION ALL
             SELECT 1 FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
-            SELECT 1 FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            SELECT 1 FROM intellectual_property WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
             SELECT 1 FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
@@ -69,7 +69,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         UNION ALL
         SELECT id FROM monographs WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM patents WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intellectual_property WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM proceedings WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -92,7 +92,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         UNION ALL
         SELECT id FROM monographs WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
-        SELECT id FROM patents WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        SELECT id FROM intellectual_property WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
         SELECT id FROM proceedings WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL

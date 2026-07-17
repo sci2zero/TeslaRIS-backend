@@ -36,13 +36,13 @@ import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -85,7 +85,7 @@ public class CommonExportServiceTest {
     private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
-    private PatentRepository patentRepository;
+    private IntellectualPropertyRepository intellectualPropertyRepository;
 
     @Mock
     private JournalRepository journalRepository;
@@ -219,7 +219,7 @@ public class CommonExportServiceTest {
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(patentRepository.findAllModified(any(Pageable.class),
+        when(intellectualPropertyRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(journalRepository.findAllModified(
@@ -260,7 +260,7 @@ public class CommonExportServiceTest {
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(patentRepository.findAllModified(any(Pageable.class),
+        when(intellectualPropertyRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(journalRepository.findAllModified(

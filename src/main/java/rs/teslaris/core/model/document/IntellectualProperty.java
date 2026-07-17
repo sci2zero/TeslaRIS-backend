@@ -18,9 +18,9 @@ import rs.teslaris.core.model.commontypes.FlexibleDate;
 @Getter
 @Setter
 @Entity
-@Table(name = "patents")
+@Table(name = "intellectual_property")
 @SQLRestriction("deleted=false")
-public non-sealed class Patent extends Document implements PublisherPublishable {
+public non-sealed class IntellectualProperty extends Document implements PublisherPublishable {
 
     @Column(name = "type")
     private IntellectualPropertyType type;
@@ -63,7 +63,7 @@ public non-sealed class Patent extends Document implements PublisherPublishable 
     private Publisher publisher;
 
 
-    public Patent() {
-        super(DocumentPublicationType.PATENT);
+    public IntellectualProperty() {
+        super(DocumentPublicationType.INTELLECTUAL_PROPERTY);
     }
 }
