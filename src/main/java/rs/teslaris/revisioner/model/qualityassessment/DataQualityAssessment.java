@@ -83,6 +83,15 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(nullable = false)
     private Integer failedRules;
 
+    @Column(nullable = false)
+    private Double totalPoints;
+
+    @Column(nullable = false)
+    private Double achievedPointsRaw;
+
+    @Column(nullable = false)
+    private Double achievedPointsNormalised;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     @Builder.Default

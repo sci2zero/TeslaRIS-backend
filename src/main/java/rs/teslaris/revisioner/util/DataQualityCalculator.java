@@ -64,15 +64,12 @@ import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DataQualityCalculatorPtCris {
-
-    private static final String PROFILE_NAME = "PTCRIS";
-
-    private static final String PROFILE_VERSION = "1.0.0";
+public class DataQualityCalculator {
 
     private static final Pattern TITLE_PATTERN = Pattern.compile(
         "^[\\p{L}\\p{N}\\s\\-.,;:!?()'\"/&]+$"
@@ -204,14 +201,15 @@ public class DataQualityCalculatorPtCris {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void assessDataQuality(DataQualityAssessment assessment, String json,
                                   ObjectMapper objectMapper,
-                                  DataQualityAssessmentRepository repository) {
+                                  DataQualityAssessmentRepository repository,
+                                  String targetType) {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment);
+            assessEntity(dto, assessment, targetType);
 
             repository.save(assessment);
 
@@ -241,7 +239,7 @@ public class DataQualityCalculatorPtCris {
         }
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment) {
+    private void assessEntity(Object dto, DataQualityAssessment assessment, String targetType) {
         BiConsumer<Object, DataQualityAssessment> assessor = assessors.get(dto.getClass());
 
         if (Objects.isNull(assessor)) {
@@ -255,7 +253,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         assessor.accept(dto, assessment);
-        finishUpAssessment(assessment);
+        finishUpAssessment(assessment, targetType);
     }
 
     private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
@@ -1262,15 +1260,14 @@ public class DataQualityCalculatorPtCris {
         }
     }
 
-    private void reportIssue(DataQualityAssessment assessment,
-                             String issueKey, Object... params) {
-
+    private void reportIssue(DataQualityAssessment assessment, String issueKey, Object... params) {
         if (Objects.isNull(assessment.getIssues())) {
             assessment.setIssues(new ArrayList<>());
         }
 
         var severityAndDimension =
-            RevisionConfigurationLoader.getIssueSeverityAndDimension(issueKey);
+            DataQualityAssessmentConfigurationLoader.getIssueSeverityAndDimension(
+                assessment.getProfileName(), issueKey);
 
         if (Objects.isNull(severityAndDimension)) {
             return;
@@ -1289,10 +1286,8 @@ public class DataQualityCalculatorPtCris {
         );
     }
 
-    private void finishUpAssessment(DataQualityAssessment assessment) {
+    private void finishUpAssessment(DataQualityAssessment assessment, String target) {
         assessment.setFinishedAt(Instant.now());
-        assessment.setProfileVersion(PROFILE_VERSION);
-        assessment.setProfileName(PROFILE_NAME);
 
         assessment.setFailedRules(
             (int) assessment.getIssues().stream()
@@ -1305,12 +1300,27 @@ public class DataQualityCalculatorPtCris {
                 .count());
 
         assessment.setPassedRules(
-            RevisionConfigurationLoader.getTotalRuleCount()
+            DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
+                assessment.getProfileName(), target)
                 - assessment.getFailedRules()
                 - assessment.getWarningRules());
 
+        double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsRaw(
+            assessment.getProfileName(), target);
+
+        assessment.setTotalPoints(totalPoints);
+
+        double deductedPoints = assessment.getIssues().stream()
+            .mapToDouble(issue ->
+                DataQualityAssessmentConfigurationLoader.getIssuePoints(
+                    assessment.getProfileName(),
+                    issue.getKey()))
+            .sum();
+
+        assessment.setAchievedPointsRaw(totalPoints - deductedPoints);
+
         assessment.setValid(
-            assessment.getIssues().stream().anyMatch(DataQualityIssue::isBlocking)
+            assessment.getIssues().stream().noneMatch(DataQualityIssue::isBlocking)
         );
     }
 }

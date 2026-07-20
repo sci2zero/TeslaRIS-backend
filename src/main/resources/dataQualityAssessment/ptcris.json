@@ -1,0 +1,1097 @@
+{
+  "version": "1.0.0",
+  "dataQualityRemarks": {
+    "titleMissing": {
+      "message": {
+        "sr": "Polje naslov nedostaje u izlaznom zapisu. Polje naslov je obavezno.",
+        "sr-cyr": "Поље наслов недостаје у излазном запису. Поље наслов је обавезно.",
+        "en": "The title field is missing in output record. The title field is mandatory."
+      },
+      "target": "Document.title",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "titleTooLong": {
+      "message": {
+        "sr": "Naslov \"{0}\" u izlaznom zapisu prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+        "sr-cyr": "Наслов \"{0}\" у излазном запису прелази максималну дозвољену дужину од 255 карактера.",
+        "en": "The title \"{0}\" in output record exceeds the maximum allowed length of 255 characters."
+      },
+      "target": "Document.title",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidTitleFormat": {
+      "message": {
+        "sr": "Naslov \"{0}\" u izlaznom zapisu sadrži nedozvoljene karaktere.",
+        "sr-cyr": "Наслов \"{0}\" у излазном запису садржи недозвољене карактере.",
+        "en": "The title \"{0}\" in output record contains invalid characters."
+      },
+      "target": "Document.title",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "descriptionMissing": {
+      "message": {
+        "sr": "Opis izlaznog zapisa mora biti unet radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Опис излазног записа мора бити унет ради усклађености са FAIR принципима.",
+        "en": "The output description for record must be informed to comply with the FAIR Principles."
+      },
+      "target": "Document.description",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "contributorsMissing": {
+      "message": {
+        "sr": "Polje autori/saradnici nedostaje u izlaznom zapisu. Polje je obavezno.",
+        "sr-cyr": "Поље аутори/сарадници недостаје у излазном запису. Поље је обавезно.",
+        "en": "The contributors field is missing in output record. The contributors field is mandatory."
+      },
+      "target": "Document.contributors",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "noManagedContributor": {
+      "message": {
+        "sr": "Najmanje jedna upravljana osoba mora biti povezana sa izlaznim zapisom.",
+        "sr-cyr": "Најмање једна управљана особа мора бити повезана са излазним записом.",
+        "en": "At least one managed person should be linked with output record."
+      },
+      "target": "Document.contributors",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "documentDateMissing": {
+      "message": {
+        "sr": "Datum publikovanja nedostaje u izlaznom zapisu. Polje je obavezno.",
+        "sr-cyr": "Датум публиковања недостаје у излазном запису. Поље је обавезно.",
+        "en": "The output publication date is missing in output record. The publication date field is mandatory."
+      },
+      "target": "Document.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "documentDateBefore1950": {
+      "message": {
+        "sr": "Datum publikovanja ({0}) u izlaznom zapisu ne može biti pre 1950. godine.",
+        "sr-cyr": "Датум публиковања ({0}) у излазном запису не може бити пре 1950. године.",
+        "en": "The output publication date ({0}) in output record cannot be before the year 1950."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "documentDateTooFarInFuture": {
+      "message": {
+        "sr": "Datum publikovanja ({0}) u izlaznom zapisu može biti najviše tri godine u budućnosti.",
+        "sr-cyr": "Датум публиковања ({0}) у излазном запису може бити највише три године у будућности.",
+        "en": "The output publication date ({0}) in output record can only be in the near future (+3 years)."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidDocumentDateFormat": {
+      "message": {
+        "sr": "Datum publikovanja \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "Датум публиковања \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The publication date \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "noDoiPresent": {
+      "message": {
+        "sr": "DOI nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "DOI недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "en": "The DOI field is missing in output record. Although the DOI field is not mandatory, it is recommended."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8
+    },
+    "doiTooShort": {
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu mora sadržati najmanje 9 karaktera.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису мора садржати најмање 9 карактера.",
+        "en": "The DOI \"{0}\" in output record must contain at least 9 characters."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "doiTooLong": {
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu prelazi maksimalnu dužinu od 255 karaktera.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису прелази максималну дужину од 255 карактера.",
+        "en": "The DOI \"{0}\" in output record exceeds the maximum allowed length of 255 characters."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidDoiFormat": {
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The DOI \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateDoi": {
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu već postoji u drugom zapisu.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису већ постоји у другом запису.",
+        "en": "The DOI \"{0}\" in output record must be unique."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "doiNotResolvable": {
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu nije razrešiv putem DOI sistema.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису није разрешив путем DOI система.",
+        "en": "The DOI \"{0}\" in output record must be resolvable through DOI.org."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 8
+    },
+    "noHandlePresent": {
+      "message": {
+        "sr": "Handle identifikator nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "Handle идентификатор недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "en": "The Handle field is missing in output record. Although the Handle field is not mandatory, it is recommended."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8
+    },
+    "invalidHandleFormat": {
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The Handle \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateHandle": {
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu mora biti jedinstven.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису мора бити јединствен.",
+        "en": "The Handle \"{0}\" in output record must be unique."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "handleNotResolvable": {
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu nije razrešiv.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису није разрешив.",
+        "en": "The Handle \"{0}\" in output record must be resolvable."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 8
+    },
+    "handleTooShort": {
+      "message": {
+        "sr": "Handle \"{0}\" u zapisu mora sadržati najmanje 8 karaktera.",
+        "sr-cyr": "Handle \"{0}\" у запису мора садржати најмање 8 карактера.",
+        "en": "The Handle \"{0}\" in output record must contain at least 8 characters."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "handleTooLong": {
+      "message": {
+        "sr": "Handle \"{0}\" u zapisu prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+        "sr-cyr": "Handle \"{0}\" у запису прелази максималну дозвољену дужину од 255 карактера.",
+        "en": "The Handle \"{0}\" in output record exceeds the maximum allowed length of 255 characters."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "noIdentifierPresent": {
+      "message": {
+        "sr": "Izlazni zapis {0} mora sadržati najmanje jedan identifikator.",
+        "sr-cyr": "Излазни запис {0} мора садржати најмање један идентификатор.",
+        "en": "The output record {0} must contain at least one identifier."
+      },
+      "target": "Document.identifier",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8
+    },
+    "openAccessMissing": {
+      "message": {
+        "sr": "Polje 'Otvoreni pristup' nije definisano za izlazni zapis.",
+        "sr-cyr": "Поље 'Отворени приступ' није дефинисано за излазни запис.",
+        "en": "The 'Open access' field is missing in output record. Although not mandatory, it is recommended."
+      },
+      "target": "Document.access",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "topicAcceptanceDateMissing": {
+      "message": {
+        "sr": "Datum prihvatanja teme nedostaje za tezu.",
+        "sr-cyr": "Датум прихватања теме недостаје за тезу.",
+        "en": "The topic acceptance date field is missing in thesis record."
+      },
+      "target": "Document.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "topicAcceptanceDateBefore1950": {
+      "message": {
+        "sr": "Datum prihvatanja teme ({0}) za tezu ne može biti pre 1950. godine.",
+        "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити пре 1950. године.",
+        "en": "The topic acceptance date ({0}) in thesis record cannot be before the year 1950."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "topicAcceptanceDateFuture": {
+      "message": {
+        "sr": "Datum prihvatanja teme ({0}) za tezu ne može biti u budućnosti.",
+        "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити у будућности.",
+        "en": "The topic acceptance date ({0}) in thesis record cannot be in the future."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "thesisDefenceDateMissing": {
+      "message": {
+        "sr": "Datum odbrane teze nedostaje za tezu.",
+        "sr-cyr": "Датум одбране тезе недостаје за тезу.",
+        "en": "The thesis defence date field is missing in thesis record."
+      },
+      "target": "Document.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "defenceBeforeAcceptance": {
+      "message": {
+        "sr": "Datum odbrane ({0}) ne može biti pre datuma prihvatanja teme za tezu.",
+        "sr-cyr": "Датум одбране ({0}) не може бити пре датума прихватања теме за тезу.",
+        "en": "The thesis defence date ({0}) cannot be before the topic acceptance date."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "defenceTooFarInFuture": {
+      "message": {
+        "sr": "Datum odbrane ({0}) može biti najviše godinu dana u budućnosti za tezu.",
+        "sr-cyr": "Датум одбране ({0}) може бити највише годину дана у будућности за тезу.",
+        "en": "The thesis defence date ({0}) can only be in the near future (+1 year)."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfPagesBelowMinimum": {
+      "message": {
+        "sr": "Broj strana ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број страна ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of pages ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.pages",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfPagesAboveMaximum": {
+      "message": {
+        "sr": "Broj strana ({0}) u tezi mora biti manji ili jednak 5000.",
+        "sr-cyr": "Број страна ({0}) у тези мора бити мањи или једнак 5000.",
+        "en": "The number of pages ({0}) in thesis record must be less than or equal to 5000."
+      },
+      "target": "Document.pages",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfChaptersBelowMinimum": {
+      "message": {
+        "sr": "Broj poglavlja ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број поглавља ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of chapters ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.chapters",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfChaptersAboveMaximum": {
+      "message": {
+        "sr": "Broj poglavlja ({0}) u tezi mora biti manji ili jednak 30.",
+        "sr-cyr": "Број поглавља ({0}) у тези мора бити мањи или једнак 30.",
+        "en": "The number of chapters ({0}) in thesis record must be less than or equal to 30."
+      },
+      "target": "Document.chapters",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfReferencesBelowMinimum": {
+      "message": {
+        "sr": "Broj referenci ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број референци ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of references ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.references",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfReferencesAboveMaximum": {
+      "message": {
+        "sr": "Broj referenci ({0}) u tezi mora biti manji ili jednak 5000.",
+        "sr-cyr": "Број референци ({0}) у тези мора бити мањи или једнак 5000.",
+        "en": "The number of references ({0}) in thesis record must be less than or equal to 5000."
+      },
+      "target": "Document.references",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfTablesBelowMinimum": {
+      "message": {
+        "sr": "Broj tabela ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број табела ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of tables ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.tables",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfTablesAboveMaximum": {
+      "message": {
+        "sr": "Broj tabela ({0}) u tezi mora biti manji ili jednak 200.",
+        "sr-cyr": "Број табела ({0}) у тези мора бити мањи или једнак 200.",
+        "en": "The number of tables ({0}) in thesis record must be less than or equal to 200."
+      },
+      "target": "Document.tables",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfIllustrationsBelowMinimum": {
+      "message": {
+        "sr": "Broj ilustracija ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број илустрација ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of illustrations ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.illustrations",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfIllustrationsAboveMaximum": {
+      "message": {
+        "sr": "Broj ilustracija ({0}) u tezi mora biti manji ili jednak 200.",
+        "sr-cyr": "Број илустрација ({0}) у тези мора бити мањи или једнак 200.",
+        "en": "The number of illustrations ({0}) in thesis record must be less than or equal to 200."
+      },
+      "target": "Document.illustrations",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfGraphsBelowMinimum": {
+      "message": {
+        "sr": "Broj grafikona ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број графикона ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of graphs ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.graphs",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfGraphsAboveMaximum": {
+      "message": {
+        "sr": "Broj grafikona ({0}) u tezi mora biti manji ili jednak 200.",
+        "sr-cyr": "Број графикона ({0}) у тези мора бити мањи или једнак 200.",
+        "en": "The number of graphs ({0}) in thesis record must be less than or equal to 200."
+      },
+      "target": "Document.graphs",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfAppendicesBelowMinimum": {
+      "message": {
+        "sr": "Broj priloga ({0}) u tezi mora biti veći ili jednak 1.",
+        "sr-cyr": "Број прилога ({0}) у тези мора бити већи или једнак 1.",
+        "en": "The number of appendices ({0}) in thesis record must be greater than or equal to 1."
+      },
+      "target": "Document.appendices",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "numberOfAppendicesAboveMaximum": {
+      "message": {
+        "sr": "Broj priloga ({0}) u tezi mora biti manji ili jednak 30.",
+        "sr-cyr": "Број прилога ({0}) у тези мора бити мањи или једнак 30.",
+        "en": "The number of appendices ({0}) in thesis record must be less than or equal to 30."
+      },
+      "target": "Document.appendices",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "researchAreasMissing": {
+      "message": {
+        "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom. Iako nije obavezna, preporučena je.",
+        "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом. Иако није обавезна, препоручена је.",
+        "en": "There is no research area linked with output record. Although research areas are not mandatory, they are recommended."
+      },
+      "target": "Document.researchAreas",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "metadataLicenseMissing": {
+      "message": {
+        "sr": "Licenca metapodataka mora biti definisana za zapis radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Лиценца метаподатака мора бити дефинисана за запис ради усклађености са FAIR принципима.",
+        "en": "The metadata license for record must be informed to comply with the FAIR Principles."
+      },
+      "target": "Document.license",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "nameMissing": {
+      "message": {
+        "sr": "Ime osobe nedostaje u zapisu. Polje je obavezno.",
+        "sr-cyr": "Име особе недостаје у запису. Поље је обавезно.",
+        "en": "The person's name is missing in record. The field is mandatory."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "firstNameMissing": {
+      "message": {
+        "sr": "Lično ime nedostaje u zapisu osobe.",
+        "sr-cyr": "Лично име недостаје у запису особе.",
+        "en": "The first name is missing in person record."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "firstNameTooLong": {
+      "message": {
+        "sr": "Lično ime \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+        "sr-cyr": "Лично име \"{0}\" у запису особе прелази максималну дозвољену дужину од 100 карактера.",
+        "en": "The first name \"{0}\" in person record exceeds the maximum allowed length of 100 characters."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidFirstNameFormat": {
+      "message": {
+        "sr": "Lično ime \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Лично име \"{0}\" у запису особе није у исправном формату.",
+        "en": "The first name \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "lastNameMissing": {
+      "message": {
+        "sr": "Prezime nedostaje u zapisu osobe.",
+        "sr-cyr": "Презиме недостаје у запису особе.",
+        "en": "The last name is missing in person record."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "lastNameTooLong": {
+      "message": {
+        "sr": "Prezime \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od 100 karaktera.",
+        "sr-cyr": "Презиме \"{0}\" у запису особе прелази максималну дозвољену дужину од 100 карактера.",
+        "en": "The last name \"{0}\" in person record exceeds the maximum allowed length of 100 characters."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidLastNameFormat": {
+      "message": {
+        "sr": "Prezime \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Презиме \"{0}\" у запису особе није у исправном формату.",
+        "en": "The last name \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "birthDateMissing": {
+      "message": {
+        "sr": "Datum rođenja nedostaje u zapisu osobe.",
+        "sr-cyr": "Датум рођења недостаје у запису особе.",
+        "en": "The birth date is missing in person record."
+      },
+      "target": "Person.birthdate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "birthDateBefore1900": {
+      "message": {
+        "sr": "Datum rođenja ({0}) u zapisu osobe ne može biti pre 1900. godine.",
+        "sr-cyr": "Датум рођења ({0}) у запису особе не може бити пре 1900. године.",
+        "en": "The birth date ({0}) in person record cannot be before the year 1900."
+      },
+      "target": "Person.birthdate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "birthDateInFuture": {
+      "message": {
+        "sr": "Datum rođenja ({0}) u zapisu osobe ne može biti u budućnosti.",
+        "sr-cyr": "Датум рођења ({0}) у запису особе не може бити у будућности.",
+        "en": "The birth date ({0}) in person record cannot be in the future."
+      },
+      "target": "Person.birthdate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "noOrcidPresent": {
+      "message": {
+        "sr": "ORCID identifikator nije unet za osobu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "ORCID идентификатор није унет за особу. Иако није обавезан, препоручен је.",
+        "en": "The ORCID identifier is missing in person record. Although it is not mandatory, it is recommended."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidOrcidFormat": {
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The ORCID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateOrcid": {
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The ORCID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "webOfScienceResearcherIdTooShort": {
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora sadržati tačno 11 karaktera.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора садржати тачно 11 карактера.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must contain exactly 11 characters."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "webOfScienceResearcherIdTooLong": {
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora sadržati tačno 11 karaktera.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора садржати тачно 11 карактера.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must contain exactly 11 characters."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidWebOfScienceResearcherIdFormat": {
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateWebOfScienceResearcherId": {
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidScopusAuthorIdFormat": {
+      "message": {
+        "sr": "Scopus Author ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Scopus Author ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Scopus Author ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.scopus",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateScopusAuthorId": {
+      "message": {
+        "sr": "Scopus Author ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Scopus Author ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Scopus Author ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.scopus",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidOpenAlexIdFormat": {
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The OpenAlex ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.openAlex",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateOpenAlexId": {
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The OpenAlex ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.openAlex",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidGoogleScholarIdFormat": {
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Google Scholar ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.scholar",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateGoogleScholarId": {
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Google Scholar ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.scholar",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidLattesIdFormat": {
+      "message": {
+        "sr": "Lattes ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Lattes ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Lattes ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.lattes",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "invalidCienciaIdFormat": {
+      "message": {
+        "sr": "Ciência ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Ciência ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Ciência ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.ciencia",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateAuthenticusId": {
+      "message": {
+        "sr": "AuthentiCUS ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "AuthentiCUS ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The AuthentiCUS ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.authenticus",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "biographyMissing": {
+      "message": {
+        "sr": "Biografija osobe mora biti uneta radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Биографија особе мора бити унета ради усклађености са FAIR принципима.",
+        "en": "The person's biography must be informed to comply with the FAIR Principles."
+      },
+      "target": "Person.biography",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "organisationUnitNameMissing": {
+      "message": {
+        "sr": "Naziv organizacione jedinice nedostaje.",
+        "sr-cyr": "Назив организационе јединице недостаје.",
+        "en": "The organisation unit name is missing."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "organisationUnitNameTooLong": {
+      "message": {
+        "sr": "Naziv organizacione jedinice \"{0}\" prelazi maksimalnu dozvoljenu dužinu od 255 karaktera.",
+        "sr-cyr": "Назив организационе јединице \"{0}\" прелази максималну дозвољену дужину од 255 карактера.",
+        "en": "The organisation unit name \"{0}\" exceeds the maximum allowed length of 255 characters."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "invalidOrganisationUnitNameFormat": {
+      "message": {
+        "sr": "Naziv organizacione jedinice \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив организационе јединице \"{0}\" није у исправном формату.",
+        "en": "The organisation unit name \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "organisationUnitDescriptionMissing": {
+      "message": {
+        "sr": "Opis organizacione jedinice mora biti unet radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Опис организационе јединице мора бити унет ради усклађености са FAIR принципима.",
+        "en": "The organisation unit description must be informed to comply with the FAIR Principles."
+      },
+      "target": "OrganisationUnit.description",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "invalidRorFormat": {
+      "message": {
+        "sr": "ROR identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "ROR идентификатор \"{0}\" није у исправном формату.",
+        "en": "The ROR identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateRor": {
+      "message": {
+        "sr": "ROR identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "ROR идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The ROR identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidIsniFormat": {
+      "message": {
+        "sr": "ISNI \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "ISNI \"{0}\" није у исправном формату.",
+        "en": "The ISNI \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateIsni": {
+      "message": {
+        "sr": "ISNI \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "ISNI \"{0}\" мора бити јединствен.",
+        "en": "The ISNI \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidScopusAfidFormat": {
+      "message": {
+        "sr": "Scopus AFID \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Scopus AFID \"{0}\" није у исправном формату.",
+        "en": "The Scopus AFID \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateScopusAfid": {
+      "message": {
+        "sr": "Scopus AFID \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "Scopus AFID \"{0}\" мора бити јединствен.",
+        "en": "The Scopus AFID \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidGridFormat": {
+      "message": {
+        "sr": "GRID identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "GRID идентификатор \"{0}\" није у исправном формату.",
+        "en": "The GRID identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateGrid": {
+      "message": {
+        "sr": "GRID identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "GRID идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The GRID identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidRinggoldFormat": {
+      "message": {
+        "sr": "Ringgold identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Ringgold идентификатор \"{0}\" није у исправном формату.",
+        "en": "The Ringgold identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.ringgold",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "duplicateRinggold": {
+      "message": {
+        "sr": "Ringgold identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "Ringgold идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The Ringgold identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.ringgold",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15
+    },
+    "invalidFundrefFormat": {
+      "message": {
+        "sr": "FundRef identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "FundRef идентификатор \"{0}\" није у исправном формату.",
+        "en": "The FundRef identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.fundRef",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10
+    },
+    "dateDissolvedBeforeEstablished": {
+      "message": {
+        "sr": "Datum gašenja organizacione jedinice ({0}) ne može biti pre datuma osnivanja ({1}).",
+        "sr-cyr": "Датум гашења организационе јединице ({0}) не може бити пре датума оснивања ({1}).",
+        "en": "The organisation unit dissolution date ({0}) cannot be before the establishment date ({1})."
+      },
+      "target": "OrganisationUnit.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "startDateMissing": {
+      "message": {
+        "sr": "Datum početka nedostaje u aktivnosti za \"{0}\".",
+        "sr-cyr": "Датум почетка недостаје у активности за \"{0}\".",
+        "en": "The start date is missing in activity for \"{0}\"."
+      },
+      "target": "Activity.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    },
+    "endDateMissing": {
+      "message": {
+        "sr": "Datum završetka nedostaje u aktivnosti za \"{0}\".",
+        "sr-cyr": "Датум завршетка недостаје у активности за \"{0}\".",
+        "en": "The end date is missing in activity for \"{0}\"."
+      },
+      "target": "Activity.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3
+    }
+  }
+}

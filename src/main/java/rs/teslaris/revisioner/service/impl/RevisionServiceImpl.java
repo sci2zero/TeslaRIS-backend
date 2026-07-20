@@ -39,6 +39,7 @@ import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.ObjectMapperProvider;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 
 @Service
 @RequiredArgsConstructor
@@ -188,7 +189,8 @@ public class RevisionServiceImpl implements RevisionService {
                 new ArrayList<>();
 
             assessment.getIssues().forEach(issue -> {
-                var remarks = RevisionConfigurationLoader.getDataQualityRemark(
+                var remarks = DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                    assessment.getProfileName(),
                     issue.getKey(),
                     issue.getParameters().toArray()
                 );
