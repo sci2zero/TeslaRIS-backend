@@ -40,10 +40,10 @@ public class ProjectsRelation extends BaseEntity {
     @JoinColumn(name = "target_project_id")
     private Project targetProject;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> sourceProjectDescription = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> targetProjectDescription = new HashSet<>();
 
 }

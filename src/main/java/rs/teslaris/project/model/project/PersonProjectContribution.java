@@ -41,7 +41,7 @@ public class PersonProjectContribution extends PersonContribution {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayProject = new HashSet<>();
 
 }

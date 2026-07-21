@@ -22,7 +22,7 @@ public class OrganisationUnitProjectContribution extends OrganisationUnitContrib
     @Column(name = "contribution_type")
     private OrganisationUnitProjectContributionType contributionType;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayProject = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -45,7 +45,7 @@ public class ProjectControllerTest extends BaseTest {
         ));
 
         dto.setResearchAreasId(new HashSet<>(Set.of(1, 2)));
-        dto.setOrganisationsIds(new HashSet<>(Set.of(1, 2)));
+        dto.setOrganisationIds(new HashSet<>(Set.of(1, 2)));
 
         dto.setDateFrom(LocalDate.of(2025, 1, 1));
         dto.setDateTo(LocalDate.of(2026, 3, 1));
