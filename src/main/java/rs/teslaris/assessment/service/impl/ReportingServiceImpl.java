@@ -129,11 +129,12 @@ public class ReportingServiceImpl implements ReportingService {
                     AssessmentReportGenerator.constructDataForCommissionColumns(commissionIds,
                         locale);
                 ReportTemplateEngine.addColumnsToFirstRow(document, columns,
-                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ? 0 : 1);
+                    reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_SUMMARY) ? 0 : 1,
+                    locale);
             }
 
             processReportData(reportType, document, assessmentResponses, commissionIds, locale,
-                topLevelInstitutionId);
+                topLevelInstitutionId, String.valueOf(startYear), String.valueOf(assessmentYear));
 
             saveReport(reportType, document, commissionIds, assessmentYear, locale);
         } catch (IOException e) {
@@ -229,11 +230,17 @@ public class ReportingServiceImpl implements ReportingService {
     private void processReportData(ReportType reportType, XWPFDocument document,
                                    List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
                                    List<Integer> commissionIds, String locale,
-                                   Integer topLevelInstitutionId) {
+                                   Integer topLevelInstitutionId, String startYear,
+                                   String endYear) {
         var tableIndex = 0;
         Pair<Map<String, String>, List<List<String>>> reportData;
 
         if (reportType.equals(ReportType.TABLE_SCIENTIFIC_PRODUCTION)) {
+            var headers =
+                AssessmentReportGenerator.getScientificProductionTableHeaders(locale, startYear,
+                    endYear);
+            ReportTemplateEngine.insertFields(document, headers);
+
             reportData =
                 AssessmentReportGenerator.constructDataForTable63(assessmentResponses, locale);
             ReportTemplateEngine.insertFields(document, reportData.a);

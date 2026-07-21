@@ -7,6 +7,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.product.Product;
@@ -49,9 +50,9 @@ public class ProductConverter implements RecordConverter<Product, IntangibleProd
             dto.setDescription(new ArrayList<>());
         }
 
-        dto.setDocumentDate(String.valueOf(
+        dto.setDocumentDate(new FlexibleDateDTO(
             record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                .getYear()));
+                .getYear(), null, null, null));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getCreators(),

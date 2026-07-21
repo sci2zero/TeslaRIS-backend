@@ -5,8 +5,6 @@ import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
 import rs.teslaris.project.model.project.ProjectDocument;
 
-import java.util.concurrent.CompletableFuture;
-
 @Service
 public interface ProjectDocumentService extends JPAService<ProjectDocument> {
 

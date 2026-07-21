@@ -1,5 +1,19 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -19,14 +33,6 @@ import rs.teslaris.project.model.project.ProjectDocumentType;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.service.impl.project.ProjectDocumentServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class ProjectDocumentServiceTest {
@@ -88,7 +94,8 @@ public class ProjectDocumentServiceTest {
         verify(projectService).findOne(1);
         verify(documentPublicationService).findOne(2);
         verify(projectDocumentRepository).save(any(ProjectDocument.class));
-        verify(indexBulkUpdateService).setIdFieldForRecord("document_publication", "databaseId", 2, "project_id", 1);
+        verify(indexBulkUpdateService).setIdFieldForRecord("document_publication", "databaseId", 2,
+            "project_id", 1);
     }
 
     @Test
@@ -151,7 +158,8 @@ public class ProjectDocumentServiceTest {
         when(projectService.findOne(999)).thenThrow(NotFoundException.class);
 
         // when & then
-        assertThrows(NotFoundException.class, () -> projectDocumentService.createProjectDocument(dto));
+        assertThrows(NotFoundException.class,
+            () -> projectDocumentService.createProjectDocument(dto));
 
         verify(projectDocumentRepository, never()).save(any());
     }
@@ -173,7 +181,8 @@ public class ProjectDocumentServiceTest {
         when(documentPublicationService.findOne(999)).thenThrow(NotFoundException.class);
 
         // when & then
-        assertThrows(NotFoundException.class, () -> projectDocumentService.createProjectDocument(dto));
+        assertThrows(NotFoundException.class,
+            () -> projectDocumentService.createProjectDocument(dto));
 
         verify(projectDocumentRepository, never()).save(any());
     }
@@ -210,7 +219,7 @@ public class ProjectDocumentServiceTest {
 
         // then
         verify(indexBulkUpdateService).setIdFieldForRecord(
-                "document_publication", "databaseId", 2, "project_id", 1);
+            "document_publication", "databaseId", 2, "project_id", 1);
     }
 
     @Test
@@ -235,7 +244,7 @@ public class ProjectDocumentServiceTest {
         // then
         verify(projectDocumentRepository).save(argThat(pd -> pd.getDeleted().equals(true)));
         verify(indexBulkUpdateService).setIdFieldForRecord(
-                "document_publication", "databaseId", 2, "project_id", null);
+            "document_publication", "databaseId", 2, "project_id", null);
     }
 
     @Test
@@ -245,10 +254,11 @@ public class ProjectDocumentServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class,
-                () -> projectDocumentService.deleteProjectDocument(999));
+            () -> projectDocumentService.deleteProjectDocument(999));
 
         verify(projectDocumentRepository, never()).delete(any());
-        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(),
+            any());
     }
 
     @Test
@@ -266,12 +276,14 @@ public class ProjectDocumentServiceTest {
         projectDocument.setDocument(document);
 
         when(projectDocumentRepository.findById(10)).thenReturn(Optional.of(projectDocument));
-        when(projectDocumentRepository.save(any(ProjectDocument.class))).thenThrow(RuntimeException.class);
+        when(projectDocumentRepository.save(any(ProjectDocument.class))).thenThrow(
+            RuntimeException.class);
 
         // when & then
         assertThrows(RuntimeException.class,
-                () -> projectDocumentService.deleteProjectDocument(10));
+            () -> projectDocumentService.deleteProjectDocument(10));
 
-        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(),
+            any());
     }
 }

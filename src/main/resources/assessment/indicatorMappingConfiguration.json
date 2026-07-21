@@ -72,12 +72,14 @@
     "harvestYearPeriod": {
       "scopus": 40,
       "openAlex": 40,
-      "openCitations": 40
+      "openCitations": 40,
+      "unpaywall": 40
     },
     "rateLimits": {
       "scopus": 2000,
       "openAlex": 15000,
-      "openCitations": 1000000
+      "openCitations": 1000000,
+      "unpaywall": 1000000
     }
   },
   "publicationSeriesCSVIndicatorMapping": {

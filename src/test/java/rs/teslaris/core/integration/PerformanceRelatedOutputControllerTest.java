@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -39,7 +40,7 @@ public class PerformanceRelatedOutputControllerTest extends BaseTest {
         performanceRelatedOutputDTO.setSubTitle(dummyMC);
         performanceRelatedOutputDTO.setDescription(dummyMC);
         performanceRelatedOutputDTO.setKeywords(dummyMC);
-        performanceRelatedOutputDTO.setDocumentDate("2003-10-07");
+        performanceRelatedOutputDTO.setDocumentDate(new FlexibleDateDTO(2003, 10, 7, null));
         performanceRelatedOutputDTO.setSourceTitle(dummyMC);
         performanceRelatedOutputDTO.setLanguageTagIds(Set.of(1, 2));
         performanceRelatedOutputDTO.setType(PerformanceRelatedOutputType.MUSICAL_PERFORMANCE);
@@ -83,7 +84,9 @@ public class PerformanceRelatedOutputControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_PERF_REL_OUTPUT"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2003-10-07"));
+            .andExpect(jsonPath("$.documentDate.year").value(2003))
+            .andExpect(jsonPath("$.documentDate.month").value(10))
+            .andExpect(jsonPath("$.documentDate.day").value(7));
     }
 
     @Test

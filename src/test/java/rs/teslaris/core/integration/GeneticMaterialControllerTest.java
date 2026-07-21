@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -40,7 +41,7 @@ public class GeneticMaterialControllerTest extends BaseTest {
         geneticMaterialDTO.setSubTitle(dummyMC);
         geneticMaterialDTO.setDescription(dummyMC);
         geneticMaterialDTO.setKeywords(dummyMC);
-        geneticMaterialDTO.setDocumentDate("2024-12-16");
+        geneticMaterialDTO.setDocumentDate(new FlexibleDateDTO(2024, 12, 16, null));
         geneticMaterialDTO.setGeneticMaterialType(GeneticMaterialType.RACE);
 
         var contribution =
@@ -81,7 +82,9 @@ public class GeneticMaterialControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_GENETIC"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2024-12-16"))
+            .andExpect(jsonPath("$.documentDate.year").value(2024))
+            .andExpect(jsonPath("$.documentDate.month").value(12))
+            .andExpect(jsonPath("$.documentDate.day").value(16))
             .andExpect(jsonPath("$.geneticMaterialType").value("RACE"));
     }
 

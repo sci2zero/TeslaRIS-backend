@@ -48,7 +48,7 @@ public class ResearchAreasConfigurationLoader {
                 externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
-                "Failed to reload classification mapping configuration: " + e.getMessage());
+                "Failed to reload research areas configuration: " + e.getMessage());
         }
     }
 

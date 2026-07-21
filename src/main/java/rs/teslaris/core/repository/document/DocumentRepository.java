@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.Document;
@@ -16,13 +17,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findBulkDocuments(List<Integer> ids);
 
     @Query(value = """
-        SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
-        UNION ALL
         SELECT id FROM intangible_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intellectual_property WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -42,13 +41,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     @Query(value = """
         SELECT COUNT(*) FROM (
-            SELECT 1 FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
-            UNION ALL
             SELECT 1 FROM intangible_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
             SELECT 1 FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
-            SELECT 1 FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            SELECT 1 FROM intellectual_property WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
             SELECT 1 FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
@@ -68,13 +65,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Integer countDocumentsByOldIdsContains(Integer oldId);
 
     @Query(value = """
-        SELECT id FROM datasets WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
-        UNION ALL
         SELECT id FROM intangible_products WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM monographs WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM patents WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intellectual_property WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM proceedings WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -93,13 +88,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Optional<Integer> findDocumentByMergedIdsContains(Integer documentId);
 
     @Query(value = """
-        SELECT id FROM datasets WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
-        UNION ALL
         SELECT id FROM intangible_products WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
         SELECT id FROM monographs WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
-        SELECT id FROM patents WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        SELECT id FROM intellectual_property WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
         SELECT id FROM proceedings WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
@@ -198,4 +191,13 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "JOIN cont.person p " +
         "WHERE doc.id = :documentId AND p IS NOT NULL")
     List<Integer> findPersonIdsByDocumentId(Integer documentId);
+
+    @Modifying
+    @Query("UPDATE PersonDocumentContribution pdc SET pdc.deleted = TRUE " +
+        "WHERE pdc.document.id = :documentId")
+    void deleteDocumentContributions(Integer documentId);
+
+    @Modifying
+    @Query("UPDATE Document d SET d.openAccess = TRUE WHERE d.doi = :doi")
+    void setIsOpenAccess(String doi);
 }

@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum PersonalTitle {
-    DR("др"),
+    PHD("др"),
     ACADEMIC("академик"),
-    DR_ART("др ум."),
+    PHD_ART("др ум."),
     MR("мр"),
     NONE("");
 

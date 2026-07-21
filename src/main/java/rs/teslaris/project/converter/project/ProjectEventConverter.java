@@ -1,11 +1,10 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.project.converter.funding.FundingPartConverter;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.project.ProjectEvent;
-
-import java.util.Objects;
 
 public class ProjectEventConverter {
 
@@ -23,9 +22,9 @@ public class ProjectEventConverter {
         }
 
         projectEvent.getFundingParts().forEach(
-                fundingPart -> dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
+            fundingPart -> dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
         dto.setTextualDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                projectEvent.getTextualDescription()));
+            projectEvent.getTextualDescription()));
         dto.setRelationType(projectEvent.getRelationType());
 
         return dto;

@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -38,7 +39,7 @@ public class MonographPublicationControllerTest extends BaseTest {
         monographPublicationDTO.setDescription(dummyMC);
         monographPublicationDTO.setKeywords(dummyMC);
         monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
-        monographPublicationDTO.setDocumentDate("2004-11-06");
+        monographPublicationDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, 6, null));
 
         var contribution =
             new PersonDocumentContributionDTO(DocumentContributionType.AUTHOR, true, false, false,
@@ -79,7 +80,9 @@ public class MonographPublicationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_MONOGRAPH"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
+            .andExpect(jsonPath("$.documentDate.year").value(2004))
+            .andExpect(jsonPath("$.documentDate.month").value(11))
+            .andExpect(jsonPath("$.documentDate.day").value(6));
     }
 
     @Test

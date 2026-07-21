@@ -5,17 +5,16 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -119,11 +118,9 @@ public interface MergeService {
                                                     PerformanceRelatedOutputDTO leftData,
                                                     PerformanceRelatedOutputDTO rightData);
 
-    void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
-                                    DatasetDTO rightData);
-
-    void saveMergedPatentsMetadata(Integer leftId, Integer rightId, PatentDTO leftData,
-                                   PatentDTO rightData);
+    void saveMergedIntellectualPropertiesMetadata(Integer leftId, Integer rightId,
+                                                  IntellectualPropertyDTO leftData,
+                                                  IntellectualPropertyDTO rightData);
 
     void saveMergedProceedingsPublicationMetadata(Integer leftId, Integer rightId,
                                                   ProceedingsPublicationDTO leftData,

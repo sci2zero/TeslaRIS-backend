@@ -109,11 +109,14 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
               ON rel.id = crt.commission_relation_id
             JOIN commissions tc
               ON crt.target_commission_id = tc.id
-            JOIN commission_recognised_research_areas crra
-              ON rel.source_commission = crra.commission_id
+            JOIN commission_recognised_research_areas target_crra
+              ON tc.id = target_crra.commission_id
             WHERE rel.source_commission = :commissionId
               AND rel.deleted = FALSE
-              AND (:researchArea IS NULL OR crra.recognised_research_areas ILIKE CONCAT('%', :researchArea, '%'))
+              AND (
+                  :researchArea IS NULL
+                  OR target_crra.recognised_research_areas ILIKE CONCAT('%', :researchArea, '%')
+              )
             GROUP BY rel.id, rel.priority, rel.result_calculation_method
             ORDER BY rel.priority
         """, nativeQuery = true)

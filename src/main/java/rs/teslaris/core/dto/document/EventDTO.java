@@ -54,7 +54,7 @@ public class EventDTO {
     private List<MultilingualContentDTO> displayOrganizer = new ArrayList<>();
 
     @NotNull(message = "You have to provide contribution list.")
-    private List<PersonEventContributionDTO> contributions;
+    private List<PersonEventContributionDTO> contributions = new ArrayList<>();
 
     private Set<String> uris;
 

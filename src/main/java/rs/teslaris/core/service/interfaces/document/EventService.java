@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,9 +19,10 @@ public interface EventService extends JPAService<Event> {
 
     Event findEventByOldId(Integer eventId);
 
-    void setEventCommonFields(Event event, EventType eventType, EventDTO eventDTO);
+    void setEventCommonFields(Event event, EventType eventType, EventDTO eventDTO,
+                              HashSet<Integer> oldContributorIds);
 
-    void clearEventCommonFields(Event event);
+    HashSet<Integer> clearEventCommonFields(Event event);
 
     Boolean hasCommonUsage(Integer eventId);
 

@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
@@ -36,7 +37,7 @@ public class ProceedingsControllerTest extends BaseTest {
         proceedingsDTO.setSubTitle(dummyMC);
         proceedingsDTO.setDescription(dummyMC);
         proceedingsDTO.setKeywords(dummyMC);
-        proceedingsDTO.setDocumentDate("2004-11-06");
+        proceedingsDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, null, null));
         proceedingsDTO.setEventId(1);
 
         var contribution =
@@ -88,7 +89,9 @@ public class ProceedingsControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_PROCEEDINGS"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
+            .andExpect(jsonPath("$.documentDate.year").value(2004))
+            .andExpect(jsonPath("$.documentDate.month").value(11))
+            .andExpect(jsonPath("$.documentDate.day").isEmpty());
     }
 
     @Test

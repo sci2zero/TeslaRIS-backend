@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import rs.teslaris.core.model.document.AccessRights;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.skgif.common.SKGIFAccessRights;
 import rs.teslaris.core.model.skgif.researchproduct.BibliographicInfo;
@@ -21,7 +22,6 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
-import rs.teslaris.exporter.model.common.ExportPublicationType;
 
 public class ResearchProductConverter extends BaseConverter {
 
@@ -33,7 +33,7 @@ public class ResearchProductConverter extends BaseConverter {
         populateIdentifiers(researchProduct.getIdentifiers(), document);
 
         researchProduct.setEntityType("product");
-        researchProduct.setProductType(getProductType(document.getType()));
+        researchProduct.setProductType(getProductType(document));
 
         if (StringUtil.valueExists(document.getDocumentDate())) {
             researchProduct.setCreationDate(document.getDocumentDate() +
@@ -88,15 +88,16 @@ public class ResearchProductConverter extends BaseConverter {
         });
     }
 
-    private static String getProductType(ExportPublicationType type) {
-        return switch (type) {
+    private static String getProductType(ExportDocument document) {
+        return switch (document.getType()) {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, MONOGRAPH_PUBLICATION, THESIS ->
                 "literature";
-            case INTANGIBLE_PRODUCT -> "research software";
+            case INTANGIBLE_PRODUCT ->
+                IntangibleProductType.DATASET.equals(document.getIntangibleProductType()) ?
+                    "research data" : "research software";
             case MATERIAL_PRODUCT, GENETIC_MATERIAL, PERFORMANCE_RELATED_OUTPUT -> "other";
-            case DATASET -> "research data";
-            default ->
-                throw new IllegalArgumentException("No RP entity type type for: " + type.name());
+            default -> throw new IllegalArgumentException(
+                "No RP entity type type for: " + document.getType().name());
         };
     }
 

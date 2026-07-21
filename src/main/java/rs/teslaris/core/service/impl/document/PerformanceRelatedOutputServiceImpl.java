@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,6 +43,8 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -133,12 +134,22 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var newPerformanceRelatedOutput = new PerformanceRelatedOutput();
 
         checkForDocumentDate(performanceRelatedOutputDTO);
-        setCommonFields(newPerformanceRelatedOutput, performanceRelatedOutputDTO);
+        setCommonFields(newPerformanceRelatedOutput, performanceRelatedOutputDTO, new HashSet<>());
         setPerformanceRelatedOutputRelatedFields(newPerformanceRelatedOutput,
             performanceRelatedOutputDTO);
 
         var savedPerformanceRelatedOutput =
             performanceRelatedOutputJPAService.save(newPerformanceRelatedOutput);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                savedPerformanceRelatedOutput.getId(),
+                null,
+                PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexPerformanceRelatedOutput(savedPerformanceRelatedOutput,
@@ -157,15 +168,20 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToUpdate =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
-        var oldContributorIds =
-            performanceRelatedOutputToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                performanceRelatedOutputId,
+                PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
+                performanceRelatedOutputDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkForDocumentDate(performanceRelatedOutputDTO);
-        clearCommonFields(performanceRelatedOutputToUpdate);
-        setCommonFields(performanceRelatedOutputToUpdate, performanceRelatedOutputDTO);
+        var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);
+        setCommonFields(performanceRelatedOutputToUpdate, performanceRelatedOutputDTO,
+            oldContributorIds);
 
         if (Objects.nonNull(performanceRelatedOutputToUpdate.getLanguages())) {
             performanceRelatedOutputToUpdate.getLanguages().clear();
@@ -193,10 +209,12 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToDelete =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
+        updateIndexedPersonContributions(performanceRelatedOutputToDelete);
+
         deleteProofsAndFileItems(performanceRelatedOutputToDelete);
 
         performanceRelatedOutputJPAService.delete(performanceRelatedOutputId);
-        this.delete(performanceRelatedOutputId);
+        documentRepository.deleteDocumentContributions(performanceRelatedOutputId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(performanceRelatedOutputId));

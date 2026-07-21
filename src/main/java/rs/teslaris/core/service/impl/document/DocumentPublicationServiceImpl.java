@@ -39,7 +39,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
@@ -48,6 +50,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -55,6 +58,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
@@ -465,6 +469,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
 
+        updateIndexedPersonContributions(document);
+
         document.getFileItems().forEach(file -> {
             file.setDeleted(true);
             documentFileService.save(file);
@@ -497,6 +503,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setDeleted(true);
         documentRepository.save(document);
+        documentRepository.deleteDocumentContributions(documentId);
         documentRepository.flush();
 
         var index =
@@ -571,7 +578,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             : new Date());
 
         index.setDatabaseId(document.getId());
-        index.setYear(StringUtil.parseYear(document.getDocumentDate()));
+        index.setYear(
+            FlexibleDate.isDatePresentAndValid(document.getDocumentDate()) ?
+                document.getDocumentDate().getYear() : -1);
         indexTitle(document, index);
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
@@ -842,7 +851,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         if (document.getTitle().isEmpty() || Objects.isNull(document.getDocumentDate()) ||
-            document.getDocumentDate().isBlank()) {
+            Objects.isNull(document.getDocumentDate().getYear())) {
             throw new MissingDataException("missingDataToArchiveMessage");
         }
 
@@ -1048,7 +1057,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
-    protected void setCommonFields(Document document, DocumentDTO documentDTO) {
+    protected void setCommonFields(Document document, DocumentDTO documentDTO,
+                                   HashSet<Integer> oldContributorIds) {
         if (document.getIsArchived()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
@@ -1090,12 +1100,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
+        oldContributorIds.addAll(documentDTO.getContributions().stream()
+            .map(PersonContributionDTO::getPersonId)
+            .filter(Objects::nonNull).toList());
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(oldContributorIds));
+
         if (Objects.nonNull(documentDTO.getOldId())) {
             document.getOldIds().add(documentDTO.getOldId());
         }
 
-        document.setDocumentDate(documentDTO.getDocumentDate());
-        if (!StringUtil.valueExists(document.getDocumentDate())) {
+        document.setDocumentDate(FlexibleDateConverter.fromDTO(documentDTO.getDocumentDate()));
+        if (!FlexibleDate.isDatePresentAndValid(document.getDocumentDate())) {
             document.setPublicationStatus(PublicationStatus.IN_PRINT);
         } else {
             document.setPublicationStatus(PublicationStatus.PUBLISHED);
@@ -1211,6 +1227,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "ssrnIdFormatError",
             "ssrnIdExistsError"
         );
+
+        // TODO: Add validation for nationalId
+        document.setNationalId(documentDTO.getNationalId());
     }
 
     @Override
@@ -1318,15 +1337,25 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             webOfScienceId);
     }
 
-    protected void clearCommonFields(Document publication) {
+    protected HashSet<Integer> clearCommonFields(Document publication) {
+        var oldContributorIds = new HashSet<Integer>();
+
         publication.getTitle().clear();
         publication.getSubTitle().clear();
         publication.getDescription().clear();
         publication.getKeywords().clear();
 
         publication.getContributors().forEach(
-            contribution -> personContributionService.deleteContribution(contribution.getId()));
+            contribution -> {
+                if (Objects.nonNull(contribution.getPerson())) {
+                    oldContributorIds.add(contribution.getPerson().getId());
+                }
+
+                personContributionService.deleteContribution(contribution.getId());
+            });
         publication.getContributors().clear();
+
+        return oldContributorIds;
     }
 
     private void clearCommonIndexFields(DocumentPublicationIndex index) {
@@ -2002,7 +2031,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected void checkForDocumentDate(DocumentDTO documentDTO) {
         if (Objects.isNull(documentDTO.getDocumentDate()) ||
-            documentDTO.getDocumentDate().isBlank()) {
+            Objects.isNull(documentDTO.getDocumentDate().year()) ||
+            documentDTO.getDocumentDate().year() <= 0) {
             throw new MissingDataException("This document requires a specified document date.");
         }
     }
@@ -2057,5 +2087,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
+    }
+
+    protected void updateIndexedPersonContributions(Document document) {
+        applicationEventPublisher.publishEvent(
+            new PersonContributionsChangeEvent(document.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(contribution -> contribution.getPerson().getId())
+                .collect(Collectors.toSet())));
     }
 }

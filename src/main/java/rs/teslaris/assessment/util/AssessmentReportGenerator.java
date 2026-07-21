@@ -97,7 +97,8 @@ public class AssessmentReportGenerator {
         var year = String.valueOf(assessmentResponses.getFirst().getToYear());
         Map<String, String> replacements = getTable63Headers(locale, year);
 
-        Map<String, Integer> publicationsPerGroup = new TreeMap<>();
+        Map<String, Integer> publicationsPerGroup =
+            new TreeMap<>(ClassificationPriorityMapping.getClassificationCodeSorter());
         Set<Integer> handledPublicationIds = new HashSet<>();
         assessmentResponses.forEach(assessmentResponse -> {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
@@ -138,6 +139,35 @@ public class AssessmentReportGenerator {
         );
     }
 
+    public static Map<String, String> getScientificProductionTableHeaders(String locale,
+                                                                          String fromYear,
+                                                                          String toYear) {
+        return Map.of(
+            "{heading1}",
+            LocalizationUtil.getMessage("reporting.scientificProduction.first",
+                new Object[] {fromYear, toYear},
+                locale),
+            "{heading2}",
+            LocalizationUtil.getMessage("reporting.scientificProduction.second",
+                new Object[] {fromYear, toYear},
+                locale),
+            "{heading3}",
+            LocalizationUtil.getMessage("reporting.scientificProduction.third",
+                new Object[] {fromYear, toYear},
+                locale),
+            "{col5}",
+            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
+            "{col6}", LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.category",
+                new Object[] {}, locale),
+            "{col7}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.numberOfPublications",
+                new Object[] {}, locale),
+            "{col8}",
+            LocalizationUtil.getMessage("reporting.tableTopLevelInstitution.bibliographies",
+                new Object[] {}, locale)
+        );
+    }
+
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable64(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
         if (assessmentResponses.isEmpty()) {
@@ -164,7 +194,8 @@ public class AssessmentReportGenerator {
 
         var sorted = tableData.stream()
             .sorted((r1, r2) ->
-                classificationCodeSorter(r1.get(1), r2.get(1)))
+                ClassificationPriorityMapping.getClassificationCodeSorter()
+                    .compare(r1.get(1), r2.get(1)))
             .toList();
 
         return new Pair<>(replacements, applyRowNumbers(sorted));
@@ -434,7 +465,7 @@ public class AssessmentReportGenerator {
 
         // category -> array of sets (one set per commission)
         Map<String, Set<Integer>[]> categoryToPublicationSets =
-            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
+            new TreeMap<>(ClassificationPriorityMapping.getClassificationCodeSorter());
 
         for (EnrichedResearcherAssessmentResponseDTO response : assessmentResponses) {
             var commissionId = response.getCommissionId();
@@ -467,7 +498,7 @@ public class AssessmentReportGenerator {
         }
 
         Map<String, int[]> categoryToSums =
-            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
+            new TreeMap<>(ClassificationPriorityMapping.getClassificationCodeSorter());
 
         categoryToPublicationSets.forEach((category, sets) -> {
             int[] counts = new int[commissionIds.size()];
@@ -607,7 +638,7 @@ public class AssessmentReportGenerator {
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         Map<String, Pair<String, Integer>> publicationsPerGroup =
-            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
+            new TreeMap<>(ClassificationPriorityMapping.getClassificationCodeSorter());
         Set<Integer> handledPublicationIds = new HashSet<>();
         assessmentResponses.forEach(assessmentResponse -> {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
@@ -688,16 +719,6 @@ public class AssessmentReportGenerator {
                 languageCode.equalsIgnoreCase(LanguageAbbreviations.SERBIAN_CYRILLIC)) ?
                 SerbianTransliteration.toCyrillic(mc.getContent()) : mc.getContent())
             .orElseThrow(() -> new NotFoundException("Missing container title"));
-    }
-
-    private static int classificationCodeSorter(String s1, String s2) {
-        if (ClassificationPriorityMapping.isOnSciList(s1) &&
-            ClassificationPriorityMapping.isOnSciList(s2)) {
-            return Integer.compare(ClassificationPriorityMapping.getSciListPriority(s1),
-                ClassificationPriorityMapping.getSciListPriority(s2));
-        }
-
-        return s1.compareTo(s2);
     }
 
     private static List<List<String>> applyRowNumbers(List<List<String>> rows) {

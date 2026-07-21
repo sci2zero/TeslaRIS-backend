@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,6 +42,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -127,10 +128,20 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
         var newIntangibleProduct = new IntangibleProduct();
 
         checkForDocumentDate(intangibleProductDTO);
-        setCommonFields(newIntangibleProduct, intangibleProductDTO);
+        setCommonFields(newIntangibleProduct, intangibleProductDTO, new HashSet<>());
         setIntangibleProductRelatedFields(newIntangibleProduct, intangibleProductDTO);
 
         var savedIntangibleProduct = intangibleProductJPAService.save(newIntangibleProduct);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                savedIntangibleProduct.getId(),
+                null,
+                IntangibleProductConverter.toDTO(savedIntangibleProduct),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
@@ -147,15 +158,19 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
 
-        var oldContributorIds =
-            intangibleProductToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                intangibleProductId,
+                IntangibleProductConverter.toDTO(intangibleProductToUpdate),
+                intangibleProductDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkForDocumentDate(intangibleProductDTO);
-        clearCommonFields(intangibleProductToUpdate);
-        setCommonFields(intangibleProductToUpdate, intangibleProductDTO);
+        var oldContributorIds = clearCommonFields(intangibleProductToUpdate);
+        setCommonFields(intangibleProductToUpdate, intangibleProductDTO, oldContributorIds);
         setIntangibleProductRelatedFields(intangibleProductToUpdate, intangibleProductDTO);
 
         intangibleProductJPAService.save(intangibleProductToUpdate);
@@ -196,10 +211,12 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
     public void deleteIntangibleProduct(Integer intangibleProductId) {
         var intangibleProductToDelete = intangibleProductJPAService.findOne(intangibleProductId);
 
+        updateIndexedPersonContributions(intangibleProductToDelete);
+
         deleteProofsAndFileItems(intangibleProductToDelete);
 
         intangibleProductJPAService.delete(intangibleProductId);
-        this.delete(intangibleProductId);
+        documentRepository.deleteDocumentContributions(intangibleProductId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(intangibleProductId));

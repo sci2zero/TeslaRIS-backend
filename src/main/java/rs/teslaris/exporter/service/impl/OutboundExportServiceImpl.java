@@ -404,7 +404,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         try {
             var conversionMethod =
-                List.of("Publications", "Theses", "Products", "Patents").contains(set) ?
+                List.of("Publications", "Theses", "Products", "IntellectualProperty")
+                    .contains(set) ?
                     converterClass.getMethod(conversionFunctionName, recordClass,
                         boolean.class, List.class, Map.class) :
                     converterClass.getMethod(conversionFunctionName, recordClass,
@@ -435,7 +436,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 case "Products":
                     metadata.setProduct((ProductConvertable) convertedEntity);
                     break;
-                case "Patents":
+                case "IntellectualProperty":
                     metadata.setPatent((PatentConvertable) convertedEntity);
                     break;
                 case "Persons":

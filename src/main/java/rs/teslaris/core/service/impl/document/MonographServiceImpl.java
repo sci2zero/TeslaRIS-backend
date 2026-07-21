@@ -3,10 +3,10 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,6 +24,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographType;
@@ -60,6 +61,8 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -219,10 +222,20 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public Monograph createMonograph(MonographDTO monographDTO, Boolean index) {
         var newMonograph = new Monograph();
 
-        setCommonFields(newMonograph, monographDTO);
+        setCommonFields(newMonograph, monographDTO, new HashSet<>());
         setMonographRelatedFields(newMonograph, monographDTO);
 
         var savedMonograph = monographJPAService.save(newMonograph);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH.name(),
+                savedMonograph.getId(),
+                null,
+                MonographConverter.toDTO(savedMonograph),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
@@ -238,19 +251,23 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
-        var oldContributorIds =
-            monographToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH.name(),
+                monographId,
+                MonographConverter.toDTO(monographToUpdate),
+                monographDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
 
         monographToUpdate.getLanguages().clear();
-        clearCommonFields(monographToUpdate);
+        var oldContributorIds = clearCommonFields(monographToUpdate);
 
-        setCommonFields(monographToUpdate, monographDTO);
+        setCommonFields(monographToUpdate, monographDTO, oldContributorIds);
         setMonographRelatedFields(monographToUpdate, monographDTO);
 
         var monographIndex = findDocumentPublicationIndexByDatabaseId(monographId);
@@ -260,11 +277,16 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         if (updatePublicationDates) {
             monographPublicationRepository.setDateToAggregatedPublications(
-                monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+                monographToUpdate.getId(),
+                monographToUpdate.getDocumentDate()
+            );
 
-            var year = StringUtil.parseYear(monographToUpdate.getDocumentDate());
-            indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
-                monographToUpdate.getId(), year);
+            var year = FlexibleDate.getYearNumber(monographToUpdate.getDocumentDate());
+            indexBulkUpdateService.setYearForAggregatedRecord(
+                "monograph_id",
+                monographToUpdate.getId(),
+                year
+            );
 
             applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }
@@ -275,14 +297,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Override
     @Transactional
     public void deleteMonograph(Integer monographId) {
-        monographJPAService.findOne(monographId);
+        var monographToDelete = monographJPAService.findOne(monographId);
 
         if (monographRepository.hasPublication(monographId)) {
             throw new MonographReferenceConstraintViolationException(
                 "Monograph with given ID is in use and cannot be deleted.");
         }
 
+        updateIndexedPersonContributions(monographToDelete);
+
         monographJPAService.delete(monographId);
+        documentRepository.deleteDocumentContributions(monographId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(monographId));

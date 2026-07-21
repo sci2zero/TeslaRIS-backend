@@ -1,11 +1,10 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.Project;
-
-import java.util.Objects;
 
 public class ProjectConverter {
 
@@ -20,19 +19,19 @@ public class ProjectConverter {
         dto.setRaid(project.getRaid());
 
         dto.setName(
-                MultilingualContentConverter.getMultilingualContentDTO(project.getName()));
+            MultilingualContentConverter.getMultilingualContentDTO(project.getName()));
         dto.setDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(project.getDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(project.getDescription()));
         dto.setNameAbbreviation(
-                MultilingualContentConverter.getMultilingualContentDTO(project.getNameAbbreviation()));
+            MultilingualContentConverter.getMultilingualContentDTO(project.getNameAbbreviation()));
         dto.setKeywords(
-                MultilingualContentConverter.getMultilingualContentDTO(project.getKeywords()));
+            MultilingualContentConverter.getMultilingualContentDTO(project.getKeywords()));
 
         project.getResearchAreas().forEach(researchArea ->
-                dto.getResearchAreasId().add(researchArea.getId()));
+            dto.getResearchAreasId().add(researchArea.getId()));
 
         project.getConsortium().forEach(organisation ->
-                dto.getConsortiumIds().add(organisation.getId()));
+            dto.getConsortiumIds().add(organisation.getId()));
 
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());
@@ -49,7 +48,7 @@ public class ProjectConverter {
         }
 
         project.getTeam().forEach(member ->
-                dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
+            dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
 
         return dto;
     }

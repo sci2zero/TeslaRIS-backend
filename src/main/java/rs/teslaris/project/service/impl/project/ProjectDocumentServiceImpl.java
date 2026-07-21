@@ -1,5 +1,7 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,6 @@ import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.util.HashSet;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +52,8 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         var savedProjectDocument = save(newProjectDocument);
 
         indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
-                savedProjectDocument.getDocument().getId(), "project_id", savedProjectDocument.getProject().getId());
+            savedProjectDocument.getDocument().getId(), "project_id",
+            savedProjectDocument.getProject().getId());
 
         return savedProjectDocument;
     }
@@ -68,7 +68,7 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         delete(projectDocumentId);
 
         indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
-                documentId, "project_id", null);
+            documentId, "project_id", null);
 
     }
 
@@ -76,7 +76,7 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
 
         buildFundingParts(projectDocument, dto);
         projectDocument.setTextualDescription(
-                multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
+            multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
 
         projectDocument.setRelationType(dto.getRelationType());
 
@@ -109,11 +109,11 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         var part = new FundingPart();
 
         part.setDescription(
-                multilingualContentService.getMultilingualContent(dto.getDescription()));
+            multilingualContentService.getMultilingualContent(dto.getDescription()));
 
         part.setAmount(new MonetaryAmount());
         part.getAmount().setCurrency(
-                currencyService.findOne(dto.getAmount().getCurrencyId()));
+            currencyService.findOne(dto.getAmount().getCurrencyId()));
         part.getAmount().setAmount(dto.getAmount().getAmount());
 
         if (Objects.nonNull(dto.getFundingId())) {

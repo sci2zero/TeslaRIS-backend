@@ -334,8 +334,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         educationToUpdate.getAbbreviationTitle().clear();
         educationToUpdate.getSupervisors().clear();
 
-        if (Objects.nonNull(educationToUpdate.getDegreeCode())) {
-            educationToUpdate.getDegreeCode().clear();
+        if (Objects.nonNull(educationToUpdate.getCourseCode())) {
+            educationToUpdate.getCourseCode().clear();
         }
         if (Objects.nonNull(educationToUpdate.getDegreeClassification())) {
             educationToUpdate.getDegreeClassification().clear();
@@ -473,12 +473,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 organisationUnitService.findOrganisationUnitById(
                     commonFields.getOrganisationUnitId());
             involvement.setOrganisationUnit(organisationUnit);
-            involvement.getAffiliationStatement().clear();
+            involvement.getDisplayOrganisationUnit().clear();
         } else {
             involvement.setOrganisationUnit(null);
             var affiliationStatements = multilingualContentService.getMultilingualContent(
-                commonFields.getAffiliationStatement());
-            involvement.setAffiliationStatement(affiliationStatements);
+                commonFields.getDisplayOrganisationUnit());
+            involvement.setDisplayOrganisationUnit(affiliationStatements);
         }
 
         involvement.setDateFrom(commonFields.getDateFrom());
@@ -502,10 +502,18 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             multilingualContentService.getMultilingualContent(commonFields.getKeywords());
         involvement.setDescription(description);
         involvement.setKeywords(keywords);
+
+        var researchAreas = researchAreaService.getResearchAreasByIds(
+            commonFields.getResearchAreasId().stream().toList());
+        involvement.setResearchAreas(new HashSet<>(researchAreas));
+
+        var hostInstitutions = organisationUnitService.getOrganisationUnitsByIds(
+            commonFields.getHostInstitutionIds().stream().toList());
+        involvement.setHostInstitutions(new HashSet<>(hostInstitutions));
     }
 
     private void clearCommonCollections(Involvement involvement) {
-        involvement.getAffiliationStatement().clear();
+        involvement.getDisplayOrganisationUnit().clear();
         involvement.getProofs().clear();
 
         if (Objects.nonNull(involvement.getDescription())) {
@@ -524,7 +532,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                                                     List<MultilingualContentDTO> externalInstitutionName,
                                                     String employmentTitle,
                                                     boolean performPersonUserCheck) {
-        if (performPersonUserCheck && Objects.nonNull(personService.findOne(personId).getUser())) {
+        if (Objects.isNull(personId)) {
+            return;
+        }
+
+        if (performPersonUserCheck &&
+            Objects.nonNull(personService.findOne(personId).getUser())) {
             log.info("User account bound to PERSON with ID {}. Skipping...", personId);
             return;
         }
@@ -533,7 +546,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             .anyMatch(employment ->
                 CollectionOperations.hasCaseInsensitiveMatch(
                     externalInstitutionName.stream().map(MultilingualContentDTO::getContent)
-                        .collect(Collectors.toSet()), employment.getAffiliationStatement().stream()
+                        .collect(Collectors.toSet()),
+                    employment.getDisplayOrganisationUnit().stream()
                         .map(MultiLingualContent::getContent).collect(Collectors.toSet()),
                     false))) {
             log.info("External contribution already exists for PERSON with ID {}. Skipping...",
@@ -550,7 +564,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var finalEmploymentTitle = employmentTitle;
         addEmployment(personId, new EmploymentDTO() {{
             setInvolvementType(InvolvementType.EMPLOYED_AT);
-            setAffiliationStatement(externalInstitutionName);
+            setDisplayOrganisationUnit(externalInstitutionName);
 
             if (Objects.nonNull(finalEmploymentTitle)) {
                 setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
@@ -565,15 +579,15 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(Integer personId) {
         return employmentRepository.findExternalByPersonInvolvedId(personId).stream().map(
             employment -> MultilingualContentConverter.getMultilingualContentDTO(
-                employment.getAffiliationStatement())).toList();
+                employment.getDisplayOrganisationUnit())).toList();
     }
 
     private void setEducationCommonFields(Education target, EducationDTO dto) {
         var title = multilingualContentService.getMultilingualContent(dto.getTitle());
         var abbreviationTitle =
             multilingualContentService.getMultilingualContent(dto.getAbbreviationTitle());
-        var degreeCode =
-            multilingualContentService.getMultilingualContent(dto.getDegreeCode());
+        var courseCode =
+            multilingualContentService.getMultilingualContent(dto.getCourseCode());
         var degreeClassification =
             multilingualContentService.getMultilingualContent(dto.getDegreeClassification());
 
@@ -581,7 +595,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         target.setAbbreviationTitle(abbreviationTitle);
         target.setDegreeType(dto.getDegreeType());
         target.setEducationStatus(dto.getEducationStatus());
-        target.setDegreeCode(degreeCode);
+        target.setCourseCode(courseCode);
         target.setDegreeClassification(degreeClassification);
 
         if (CollectionOperations.containsValues(dto.getResearchAreasId())) {

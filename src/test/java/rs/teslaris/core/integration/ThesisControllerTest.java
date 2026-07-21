@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
@@ -41,7 +42,7 @@ public class ThesisControllerTest extends BaseTest {
         thesisDTO.setSubTitle(dummyMC);
         thesisDTO.setDescription(dummyMC);
         thesisDTO.setKeywords(dummyMC);
-        thesisDTO.setDocumentDate("2004-11-06");
+        thesisDTO.setDocumentDate(new FlexibleDateDTO(2004, 11, 6, null));
         thesisDTO.setThesisType(ThesisType.PHD);
         thesisDTO.setOrganisationUnitId(1);
         thesisDTO.setThesisDefenceDate(LocalDate.of(2024, 1, 31));
@@ -89,7 +90,9 @@ public class ThesisControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_THESIS"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2004-11-06"));
+            .andExpect(jsonPath("$.documentDate.year").value(2004))
+            .andExpect(jsonPath("$.documentDate.month").value(11))
+            .andExpect(jsonPath("$.documentDate.day").value(6));
     }
 
     @Test

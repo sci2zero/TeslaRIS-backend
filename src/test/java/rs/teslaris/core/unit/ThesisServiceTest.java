@@ -44,6 +44,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -51,6 +52,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.document.ThesisConverter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -58,6 +60,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -161,6 +164,9 @@ public class ThesisServiceTest {
     @Mock
     private TaskManagerService taskManagerService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private ThesisServiceImpl thesisService;
 
@@ -191,7 +197,7 @@ public class ThesisServiceTest {
         var dto = new ThesisDTO();
         dto.setOrganisationUnitId(ou.getId());
         var document = new Thesis();
-        document.setDocumentDate("2023");
+        document.setDocumentDate(new FlexibleDate(2023));
         document.setOrganisationUnit(ou);
         document.setThesisType(ThesisType.PHD);
 
@@ -222,13 +228,13 @@ public class ThesisServiceTest {
         // Given
         var thesisId = 1;
         var thesisDTO = new ThesisDTO();
-        thesisDTO.setDocumentDate("2024");
+        thesisDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
         thesisDTO.setOrganisationUnitId(1);
         thesisDTO.setThesisType(ThesisType.PHD);
 
         var thesisToUpdate = new Thesis();
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        thesisToUpdate.setDocumentDate("2023");
+        thesisToUpdate.setDocumentDate(new FlexibleDate(2023));
 
         when(organisationUnitService.findOne(1)).thenReturn(
             new OrganisationUnit() {{
@@ -290,7 +296,7 @@ public class ThesisServiceTest {
         // Given
         var thesis = new Thesis();
         thesis.setThesisType(ThesisType.UNDERGRADUATE_THESIS);
-        thesis.setDocumentDate("2024");
+        thesis.setDocumentDate(new FlexibleDate(2024));
         thesis.setOrganisationUnit(new OrganisationUnit());
 
         var theses = List.of(thesis);
@@ -636,7 +642,7 @@ public class ThesisServiceTest {
         var thesis = new Thesis();
         thesis.setTitle(new HashSet<>(Set.of(new MultiLingualContent())));
         thesis.setThesisDefenceDate(LocalDate.now());
-        thesis.setDocumentDate(String.valueOf(thesis.getThesisDefenceDate().getYear()));
+        thesis.setDocumentDate(new FlexibleDate(thesis.getThesisDefenceDate().getYear()));
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 

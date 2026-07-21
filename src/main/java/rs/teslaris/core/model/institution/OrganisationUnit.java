@@ -92,6 +92,15 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @Column(name = "fct_id")
     private String fctId;
 
+    @Column(name = "grid")
+    private String grid;
+
+    @Column(name = "wikidata")
+    private String wikidata;
+
+    @Column(name = "national_id")
+    private String nationalId;
+
     @Column(name = "tax_number")
     private String taxNumber;
 
@@ -156,6 +165,15 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @Column(name = "date_established")
     private LocalDate dateEstablished;
 
+    @Column(name = "date_dissolved")
+    private LocalDate dateDissolved;
+
+    @Column(name = "active")
+    private Boolean active;
+
+    @Column(name = "number_of_employees")
+    private String numberOfEmployees;
+
     @Embedded
     private PostalAddress postalAddress;
 
@@ -164,7 +182,15 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
         return emailConfigurations.getOrDefault(CRIS_KEY, new EmailConfiguration());
     }
 
+    public void setCrisConfig(EmailConfiguration config) {
+        emailConfigurations.put(CRIS_KEY, config);
+    }
+
     public EmailConfiguration getDlConfig() {
         return emailConfigurations.getOrDefault(DL_KEY, new EmailConfiguration());
+    }
+
+    public void setDlConfig(EmailConfiguration config) {
+        emailConfigurations.put(DL_KEY, config);
     }
 }

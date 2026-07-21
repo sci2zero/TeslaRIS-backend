@@ -1,10 +1,12 @@
 package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,6 +17,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -37,6 +40,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceCons
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -57,21 +62,20 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  EventRepository eventRepository,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  CommissionRepository commissionRepository,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ApplicationEventPublisher applicationEventPublisher,
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService,
                                  CountryService countryService,
                                  OrganisationUnitService organisationUnitService,
-                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  ResearchAreaService researchAreaService,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository,
-            documentPublicationIndexRepository,
-            eventsRelationRepository, searchService, countryService,
-            organisationUnitService,
-            researchAreaService);
+            documentPublicationIndexRepository, applicationEventPublisher, eventsRelationRepository,
+            searchService, countryService, organisationUnitService, researchAreaService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.conferenceRepository = conferenceRepository;
@@ -150,7 +154,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
 
-        setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO);
+        setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO,
+            new HashSet<>());
         setConferenceRelatedFields(conference, conferenceDTO);
 
         var savedConference = conferenceJPAService.save(conference);
@@ -185,8 +190,19 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO) {
         var conferenceToUpdate = findConferenceById(conferenceId);
 
-        clearEventCommonFields(conferenceToUpdate);
-        setEventCommonFields(conferenceToUpdate, EventType.CONFERENCE, conferenceDTO);
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.CONFERENCE.name(),
+                conferenceId,
+                ConferenceConverter.toDTO(conferenceToUpdate),
+                conferenceDTO,
+                RevisionType.UPDATE
+            )
+        );
+
+        var oldContributorIds = clearEventCommonFields(conferenceToUpdate);
+        setEventCommonFields(conferenceToUpdate, EventType.CONFERENCE, conferenceDTO,
+            oldContributorIds);
         setConferenceRelatedFields(conferenceToUpdate, conferenceDTO);
 
         conferenceJPAService.save(conferenceToUpdate);

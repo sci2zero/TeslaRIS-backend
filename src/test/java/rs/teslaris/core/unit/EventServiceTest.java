@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -81,6 +83,9 @@ public class EventServiceTest {
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private EventServiceImpl eventService;
 
@@ -133,7 +138,8 @@ public class EventServiceTest {
 
         // when
         when(countryService.findOne(1)).thenReturn(new Country());
-        eventService.setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO);
+        eventService.setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO,
+            new HashSet<>());
 
         // then
         verify(personContributionService, times(1))

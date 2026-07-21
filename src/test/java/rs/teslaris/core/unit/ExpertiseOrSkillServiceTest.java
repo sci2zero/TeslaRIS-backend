@@ -23,6 +23,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.service.impl.person.ExpertiseOrSkillServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
@@ -40,6 +41,9 @@ public class ExpertiseOrSkillServiceTest {
 
     @Mock
     private DocumentFileService documentFileService;
+
+    @Mock
+    private ResearchAreaService researchAreaService;
 
     @InjectMocks
     private ExpertiseOrSkillServiceImpl expertiseOrSkillService;

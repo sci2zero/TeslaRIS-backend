@@ -485,9 +485,13 @@ public class OrganisationUnitServiceTest {
 
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
-            Stream.of(new MultiLingualContent()).collect(Collectors.toSet()));
+            Stream.of(new MultiLingualContent() {{
+                setLanguage(new LanguageTag());
+            }}).collect(Collectors.toSet()));
         organisationUnit.setKeyword(
-            Stream.of(new MultiLingualContent()).collect(Collectors.toSet()));
+            Stream.of(new MultiLingualContent() {{
+                setLanguage(new LanguageTag());
+            }}).collect(Collectors.toSet()));
         organisationUnit.setResearchAreas(
             Stream.of(new ResearchArea()).collect(Collectors.toSet()));
         organisationUnit.setLocation(new GeoLocation(1.0, 2.0, "NOWHERE"));

@@ -63,6 +63,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApplicableEntityType;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
@@ -237,7 +238,7 @@ public class DocumentAssessmentClassificationServiceImpl
             return null;
         }
 
-        if (Objects.isNull(document.getDocumentDate()) || document.getDocumentDate().isEmpty()) {
+        if (!FlexibleDate.isDatePresentAndValid(document.getDocumentDate())) {
             throw new CantEditException("Document does not have publication date.");
         }
 
@@ -246,7 +247,7 @@ public class DocumentAssessmentClassificationServiceImpl
             documentAssessmentClassificationDTO.getCommissionId(), true);
 
         newDocumentClassification.setClassificationYear(
-            Integer.parseInt(document.getDocumentDate().split("-")[0]));
+            FlexibleDate.getYearNumber(document.getDocumentDate()));
         newDocumentClassification.setDocument(document);
         newDocumentClassification.setDocumentType(document.getDocumentType());
 

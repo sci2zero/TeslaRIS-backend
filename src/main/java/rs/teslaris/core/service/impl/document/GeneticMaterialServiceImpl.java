@@ -1,8 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,6 +41,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -99,10 +101,10 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         try {
             geneticMaterial = geneticMaterialJPAService.findOne(geneticMaterialId);
         } catch (NotFoundException e) {
-            log.info("Trying to read non-existent MATERIAL_PRODUCT with ID {}. Clearing index.",
+            log.info("Trying to read non-existent GENETIC_MATERIAL with ID {}. Clearing index.",
                 geneticMaterialId);
             this.clearIndexWhenFailedRead(geneticMaterialId,
-                DocumentPublicationType.MATERIAL_PRODUCT);
+                DocumentPublicationType.GENETIC_MATERIAL);
             throw e;
         }
 
@@ -118,21 +120,31 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     @Transactional
     public GeneticMaterial createGeneticMaterial(GeneticMaterialDTO geneticMaterialDTO,
                                                  Boolean index) {
-        var newProduct = new GeneticMaterial();
+        var newGeneticMaterial = new GeneticMaterial();
 
         checkForDocumentDate(geneticMaterialDTO);
-        setCommonFields(newProduct, geneticMaterialDTO);
-        setGeneticMaterialRelatedFields(newProduct, geneticMaterialDTO);
+        setCommonFields(newGeneticMaterial, geneticMaterialDTO, new HashSet<>());
+        setGeneticMaterialRelatedFields(newGeneticMaterial, geneticMaterialDTO);
 
-        var savedProduct = geneticMaterialJPAService.save(newProduct);
+        var savedGeneticMaterial = geneticMaterialJPAService.save(newGeneticMaterial);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.GENETIC_MATERIAL.name(),
+                savedGeneticMaterial.getId(),
+                null,
+                GeneticMaterialConverter.toDTO(savedGeneticMaterial),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
-            indexGeneticMaterial(savedProduct, new DocumentPublicationIndex());
+            indexGeneticMaterial(savedGeneticMaterial, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedProduct, Collections.emptySet());
+        sendNotifications(savedGeneticMaterial, Collections.emptySet());
 
-        return savedProduct;
+        return savedGeneticMaterial;
     }
 
     @Override
@@ -141,15 +153,19 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
 
-        var oldContributorIds =
-            geneticMaterialToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.GENETIC_MATERIAL.name(),
+                geneticMaterialId,
+                GeneticMaterialConverter.toDTO(geneticMaterialToUpdate),
+                geneticMaterialDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkForDocumentDate(geneticMaterialDTO);
-        clearCommonFields(geneticMaterialToUpdate);
-        setCommonFields(geneticMaterialToUpdate, geneticMaterialDTO);
+        var oldContributorIds = clearCommonFields(geneticMaterialToUpdate);
+        setCommonFields(geneticMaterialToUpdate, geneticMaterialDTO, oldContributorIds);
 
         setGeneticMaterialRelatedFields(geneticMaterialToUpdate, geneticMaterialDTO);
 
@@ -168,9 +184,12 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     public void deleteGeneticMaterial(Integer geneticMaterialId) {
         var geneticMaterialToDelete = geneticMaterialJPAService.findOne(geneticMaterialId);
 
+        updateIndexedPersonContributions(geneticMaterialToDelete);
+
         deleteProofsAndFileItems(geneticMaterialToDelete);
 
         geneticMaterialJPAService.delete(geneticMaterialId);
+        documentRepository.deleteDocumentContributions(geneticMaterialId);
         save(geneticMaterialToDelete);
 
         documentPublicationIndexRepository.delete(

@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -51,6 +50,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -105,6 +105,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -277,10 +279,20 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisDTO.setContributions(result);
         }
 
-        setCommonFields(newThesis, thesisDTO);
+        setCommonFields(newThesis, thesisDTO, new HashSet<>());
         setThesisRelatedFields(newThesis, thesisDTO);
 
         var savedThesis = thesisJPAService.save(newThesis);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                savedThesis.getId(),
+                null,
+                ThesisConverter.toDTO(savedThesis),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
@@ -296,15 +308,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
-        var oldContributorIds =
-            thesisToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.THESIS.name(),
+                thesisId,
+                ThesisConverter.toDTO(thesisToUpdate),
+                thesisDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         checkIfAvailableForEditing(thesisToUpdate);
 
-        clearCommonFields(thesisToUpdate);
+        var oldContributorIds = clearCommonFields(thesisToUpdate);
         thesisToUpdate.setOrganisationUnit(null);
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
@@ -321,7 +337,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisDTO.setContributions(filteredContributions);
         }
 
-        setCommonFields(thesisToUpdate, thesisDTO);
+        setCommonFields(thesisToUpdate, thesisDTO, oldContributorIds);
         setThesisRelatedFields(thesisToUpdate, thesisDTO);
 
         thesisJPAService.save(thesisToUpdate);
@@ -339,7 +355,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesisToDelete = thesisJPAService.findOne(thesisId);
         checkIfAvailableForEditing(thesisToDelete);
 
+        updateIndexedPersonContributions(thesisToDelete);
+
         thesisJPAService.delete(thesisId);
+        documentRepository.deleteDocumentContributions(thesisId);
+
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(thesisId));
     }
@@ -683,7 +703,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesis = thesisJPAService.findOne(thesisId);
 
         if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getThesisDefenceDate()) ||
-            Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isBlank()) {
+            !FlexibleDate.isDatePresentAndValid(thesis.getDocumentDate())) {
             throw new ThesisException("missingDataToArchiveMessage");
         }
 
@@ -793,7 +813,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }});
 
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
-            thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
+            thesis.setDocumentDate(new FlexibleDate(thesisDTO.getThesisDefenceDate().getYear()));
 
             if (thesis.getPublicReviewCompleted() || isAdmin || isHeadOfLibrary ||
                 Objects.isNull(thesis.getOrganisationUnit()) ||
@@ -809,7 +829,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 !thesis.getPublicReviewStartDates().isEmpty()) {
                 thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
                     .ifPresent(latestPublicReviewDate -> {
-                        thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                        thesis.setDocumentDate(new FlexibleDate(latestPublicReviewDate.getYear()));
                     });
             }
         }
@@ -1017,7 +1037,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                     return;
                 }
 
-                updateThesisAndIndex(thesis);
+                updateThesisAndIndex(thesis, publicReviewLengthDays);
 
                 var institutionId = thesis.getOrganisationUnit().getId();
                 thesesByInstitution.putIfAbsent(institutionId, new ArrayList<>());
@@ -1045,11 +1065,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             .orElse(false);
     }
 
-    private void updateThesisAndIndex(Thesis thesis) {
+    private void updateThesisAndIndex(Thesis thesis, Integer publicReviewLengthDays) {
         thesis.setIsOnPublicReview(false);
         thesis.setIsShortenedReview(false);
         thesis.setPublicReviewCompleted(true);
-        thesis.getPublicReviewEndDates().add(LocalDate.now());
+
+        var publicReviewStartDate = thesis.getPublicReviewStartDates().stream()
+            .max(Comparator.naturalOrder()).get();
+        var publicReviewEndDate = publicReviewStartDate.plusDays(publicReviewLengthDays);
+
+        thesis.getPublicReviewEndDates().add(publicReviewEndDate);
         thesis.setPublicationStatus(PublicationStatus.IN_PRINT);
         thesisJPAService.save(thesis);
 
@@ -1058,7 +1083,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 index.setIsOnPublicReview(false);
                 index.setIsOnPublicReviewShortened(false);
                 index.setIsPublicReviewCompleted(true);
-                index.getPublicReviewEndDates().add(LocalDate.now());
+                index.getPublicReviewEndDates().add(publicReviewEndDate);
                 documentPublicationIndexRepository.save(index);
             });
     }

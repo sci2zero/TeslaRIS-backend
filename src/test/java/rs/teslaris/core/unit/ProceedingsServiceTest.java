@@ -27,17 +27,20 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Proceedings;
@@ -118,6 +121,9 @@ public class ProceedingsServiceTest {
     @Mock
     private DocumentLookupService documentLookupService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
 
@@ -157,7 +163,7 @@ public class ProceedingsServiceTest {
         // given
         var event = new Conference();
         var document = new Proceedings();
-        document.setDocumentDate("MOCK DATE");
+        document.setDocumentDate(new FlexibleDate(2020));
         document.setEvent(event);
 
         when(proceedingsRepository.findProceedingsForEventId(1)).thenReturn(List.of(document));
@@ -175,7 +181,7 @@ public class ProceedingsServiceTest {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setLanguageIds(new ArrayList<>());
         var document = new Proceedings();
-        document.setDocumentDate("MOCK DATE");
+        document.setDocumentDate(new FlexibleDate(2026));
         document.setEvent(new Conference() {{
             setId(1);
         }});
@@ -206,7 +212,7 @@ public class ProceedingsServiceTest {
         var proceedingsId = 1;
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setLanguageIds(new ArrayList<>());
-        proceedingsDTO.setDocumentDate("2025");
+        proceedingsDTO.setDocumentDate(new FlexibleDateDTO(2025, null, null, null));
         var proceedingsToUpdate = new Proceedings();
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         proceedingsToUpdate.setEvent(new Conference() {{

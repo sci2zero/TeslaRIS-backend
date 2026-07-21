@@ -2,9 +2,9 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -47,6 +48,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -145,7 +148,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         MonographPublicationDTO monographPublicationDTO, Boolean index) {
         var newMonographPublication = new MonographPublication();
 
-        setCommonFields(newMonographPublication, monographPublicationDTO);
+        setCommonFields(newMonographPublication, monographPublicationDTO, new HashSet<>());
         setMonographPublicationRelatedFields(newMonographPublication, monographPublicationDTO);
 
         newMonographPublication.setApproveStatus((newMonographPublication.getIsMetadataValid() &&
@@ -154,6 +157,16 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         var savedMonographPublication =
             monographPublicationJPAService.save(newMonographPublication);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                savedMonographPublication.getId(),
+                null,
+                MonographPublicationConverter.toDTO(savedMonographPublication),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
@@ -192,14 +205,18 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
-        var oldContributorIds =
-            monographPublicationToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                monographPublicationId,
+                MonographPublicationConverter.toDTO(monographPublicationToUpdate),
+                monographPublicationDTO,
+                RevisionType.UPDATE
+            )
+        );
 
-        clearCommonFields(monographPublicationToUpdate);
-        setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
+        var oldContributorIds = clearCommonFields(monographPublicationToUpdate);
+        setCommonFields(monographPublicationToUpdate, monographPublicationDTO, oldContributorIds);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
 
         var monographPublicationIndex =
@@ -216,7 +233,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public void deleteMonographPublication(Integer monographPublicationId) {
         var publicationToDelete = monographPublicationJPAService.findOne(monographPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         monographPublicationJPAService.delete(publicationToDelete.getId());
+        documentRepository.deleteDocumentContributions(monographPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(monographPublicationId));
@@ -258,7 +278,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setMonograph(monograph);
         monographPublication.setDocumentDate(
             Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
-                monographPublicationDTO.getDocumentDate());
+                FlexibleDateConverter.fromDTO(monographPublicationDTO.getDocumentDate()));
 
         monographPublication.setSection(multilingualContentService.getMultilingualContent(
             monographPublicationDTO.getSection()));

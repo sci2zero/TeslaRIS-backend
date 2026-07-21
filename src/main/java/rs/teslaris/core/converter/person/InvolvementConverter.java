@@ -13,6 +13,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 public class InvolvementConverter {
@@ -45,8 +46,8 @@ public class InvolvementConverter {
 
         dto.setTitle(title);
         dto.setAbbreviationTitle(abbreviationTitle);
-        dto.setDegreeCode(MultilingualContentConverter.getMultilingualContentDTO(
-            education.getDegreeCode()));
+        dto.setCourseCode(MultilingualContentConverter.getMultilingualContentDTO(
+            education.getCourseCode()));
         dto.setDegreeClassification(MultilingualContentConverter.getMultilingualContentDTO(
             education.getDegreeClassification()));
         dto.setDegreeType(education.getDegreeType());
@@ -100,7 +101,7 @@ public class InvolvementConverter {
     private static void setCommonFields(Involvement involvement, InvolvementDTO dto) {
         var affiliationStatements =
             MultilingualContentConverter.getMultilingualContentDTO(
-                involvement.getAffiliationStatement());
+                involvement.getDisplayOrganisationUnit());
 
         dto.setId(involvement.getId());
         dto.setDateFrom(involvement.getDateFrom());
@@ -109,12 +110,26 @@ public class InvolvementConverter {
             .map(DocumentFileConverter::toDTO).collect(
                 Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
-        dto.setAffiliationStatement(affiliationStatements);
+        dto.setDisplayOrganisationUnit(affiliationStatements);
         dto.setFavorite(involvement.getFavorite());
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
             involvement.getDescription()));
         dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
             involvement.getKeywords()));
+        dto.setPersonBirthDate(
+            Objects.requireNonNullElse(involvement.getPersonInvolved().getPersonalInfo(),
+                new PersonalInfo()).getLocalBirthDate());
+
+        involvement.getResearchAreas().forEach(researchArea -> {
+            dto.getResearchAreasId().add(researchArea.getId());
+            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
+
+        involvement.getHostInstitutions().forEach(organisationUnit -> {
+            dto.getHostInstitutionIds().add(organisationUnit.getId());
+            dto.getHostInstitutionNames().add(
+                MultilingualContentConverter.getMultilingualContentDTO(organisationUnit.getName()));
+        });
 
         if (Objects.nonNull(involvement.getUris())) {
             dto.setUris(involvement.getUris());
@@ -126,7 +141,7 @@ public class InvolvementConverter {
                 involvement.getOrganisationUnit().getName()));
         } else {
             dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
-                involvement.getAffiliationStatement()));
+                involvement.getDisplayOrganisationUnit()));
         }
     }
 
