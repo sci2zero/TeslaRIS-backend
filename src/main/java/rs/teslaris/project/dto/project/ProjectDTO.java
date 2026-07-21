@@ -51,7 +51,7 @@ public class ProjectDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    private Set<Integer> organisationsIds = new HashSet<>();
+    private Set<Integer> organisationIds = new HashSet<>();
 
     private Set<String> uris = new HashSet<>();
 

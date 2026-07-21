@@ -33,7 +33,7 @@ public class ProjectConverter {
                 dto.getResearchAreasId().add(researchArea.getId()));
 
         project.getOrganisations().forEach(organisation ->
-                dto.getOrganisationsIds().add(organisation.getId()));
+                dto.getOrganisationIds().add(organisation.getId()));
 
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());

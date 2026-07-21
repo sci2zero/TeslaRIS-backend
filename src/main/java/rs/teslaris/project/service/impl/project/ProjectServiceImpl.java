@@ -186,7 +186,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
-                projectDTO.getOrganisationsIds().stream().toList());
+                projectDTO.getOrganisationIds().stream().toList());
         project.setOrganisations(new HashSet<>(organisations));
 
         project.setUris(projectDTO.getUris());
