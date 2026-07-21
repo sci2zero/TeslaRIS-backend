@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.project.model.common.Currency;
 
 @Getter
 @Setter
@@ -27,6 +28,13 @@ public class MonetaryAmountDTO {
 
     public MonetaryAmountDTO(Integer currencyId, double amount) {
         this.currencyId = currencyId;
+        this.amount = amount;
+    }
+
+    public MonetaryAmountDTO(Currency currency, double amount) {
+        this.currencyId = currency.getId();
+        this.currencyCode = currency.getCode();
+        this.currencySymbol = currency.getSymbol();
         this.amount = amount;
     }
 
