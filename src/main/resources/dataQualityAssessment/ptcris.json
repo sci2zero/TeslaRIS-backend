@@ -1,5 +1,46 @@
 {
   "version": "1.0.0",
+  "targetWeights": {
+    "Document.title": 5,
+    "Document.description": 5,
+    "Document.contributors": 3,
+    "Document.date": 5,
+    "Document.otherDate": 3,
+    "Document.doi": 3,
+    "Document.handle": 3,
+    "Document.identifier": 5,
+    "Document.access": 3,
+    "Document.pages": 1,
+    "Document.chapters": 1,
+    "Document.references": 1,
+    "Document.tables": 1,
+    "Document.illustrations": 1,
+    "Document.graphs": 1,
+    "Document.appendices": 1,
+    "Document.researchAreas": 5,
+    "Document.license": 5,
+    "Person.name": 5,
+    "Person.birthdate": 3,
+    "Person.orcid": 3,
+    "Person.wos": 3,
+    "Person.scopus": 3,
+    "Person.openALex": 3,
+    "Person.scholar": 3,
+    "Person.lattes": 3,
+    "Person.ciencia": 3,
+    "Person.authenticus": 3,
+    "Person.biography": 3,
+    "OrganisationUnit.name": 3,
+    "OrganisationUnit.description": 3,
+    "OrganisationUnit.ror": 3,
+    "OrganisationUnit.isni": 3,
+    "OrganisationUnit.scopusAfid": 3,
+    "OrganisationUnit.grid": 3,
+    "OrganisationUnit.ringgold": 3,
+    "OrganisationUnit.fundRef": 3,
+    "OrganisationUnit.date": 3,
+    "Activity.date": 3
+  },
   "dataQualityRemarks": {
     "titleMissing": {
       "message": {
@@ -295,7 +336,7 @@
         "sr-cyr": "Датум прихватања теме недостаје за тезу.",
         "en": "The topic acceptance date field is missing in thesis record."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
       "severity": "WARNING",
       "dimension": "COMPLETENESS",
       "blocking": false,
@@ -307,7 +348,7 @@
         "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити пре 1950. године.",
         "en": "The topic acceptance date ({0}) in thesis record cannot be before the year 1950."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
       "severity": "ERROR",
       "dimension": "CONSISTENCY",
       "blocking": true,
@@ -319,7 +360,7 @@
         "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити у будућности.",
         "en": "The topic acceptance date ({0}) in thesis record cannot be in the future."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
       "severity": "ERROR",
       "dimension": "CONSISTENCY",
       "blocking": true,
@@ -331,7 +372,7 @@
         "sr-cyr": "Датум одбране тезе недостаје за тезу.",
         "en": "The thesis defence date field is missing in thesis record."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
       "severity": "WARNING",
       "dimension": "COMPLETENESS",
       "blocking": false,
@@ -343,7 +384,7 @@
         "sr-cyr": "Датум одбране ({0}) не може бити пре датума прихватања теме за тезу.",
         "en": "The thesis defence date ({0}) cannot be before the topic acceptance date."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
       "severity": "ERROR",
       "dimension": "CONSISTENCY",
       "blocking": true,
@@ -355,7 +396,139 @@
         "sr-cyr": "Датум одбране ({0}) може бити највише годину дана у будућности за тезу.",
         "en": "The thesis defence date ({0}) can only be in the near future (+1 year)."
       },
-      "target": "Document.date",
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "dateRequestedMissing": {
+      "message": {
+        "sr": "Datum zahteva nedostaje u zapisu intelektualne svojine. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум захтева недостаје у запису интелектуалне својине. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date requested field is missing in intellectual property record. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateRequestedInvalid": {
+      "message": {
+        "sr": "Datum zahteva je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум захтева је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date requested field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateRequestedBefore1950": {
+      "message": {
+        "sr": "Datum zahteva ({0}) u zapisu intelektualne svojine ne može biti pre 1950. godine.",
+        "sr-cyr": "Датум захтева ({0}) у запису интелектуалне својине не може бити пре 1950. године.",
+        "en": "The date requested ({0}) in intellectual property record can't be before the year 1950."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "dateRequestedAfterCurrentDate": {
+      "message": {
+        "sr": "Datum zahteva ({0}) u zapisu intelektualne svojine ne može biti posle trenutnog datuma.",
+        "sr-cyr": "Датум захтева ({0}) у запису интелектуалне својине не може бити после тренутног датума.",
+        "en": "The date requested ({0}) in intellectual property record can't be after the current date."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "dateFilingPriorityMissing": {
+      "message": {
+        "sr": "Datum podnošenja prioriteta nedostaje u zapisu intelektualne svojine. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум подношења приоритета недостаје у запису интелектуалне својине. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date filing priority field is missing in intellectual property record. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateFilingPriorityInvalid": {
+      "message": {
+        "sr": "Datum podnošenja prioriteta je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум подношења приоритета је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date filing priority field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateFilingPriorityBefore1950": {
+      "message": {
+        "sr": "Datum podnošenja prioriteta ({0}) u zapisu intelektualne svojine ne može biti pre 1950. godine.",
+        "sr-cyr": "Датум подношења приоритета ({0}) у запису интелектуалне својине не може бити пре 1950. године.",
+        "en": "The date filing priority ({0}) in intellectual property record can't be before the year 1950."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "dateFilingPriorityAfterRequestDate": {
+      "message": {
+        "sr": "Datum podnošenja prioriteta ({0}) u zapisu intelektualne svojine ne može biti posle datuma zahteva ({1}).",
+        "sr-cyr": "Датум подношења приоритета ({0}) у запису интелектуалне својине не може бити после датума захтева ({1}).",
+        "en": "The date filing priority ({0}) in intellectual property record can't be after the request date ({1})."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8
+    },
+    "dateEndTermMissing": {
+      "message": {
+        "sr": "Datum završetka roka nedostaje u zapisu intelektualne svojine {0}. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум завршетка рока недостаје у запису интелектуалне својине {0}. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date end term field is missing in intellectual property record {0}. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateEndTermInvalid": {
+      "message": {
+        "sr": "Datum završetka roka je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум завршетка рока је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date end term field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2
+    },
+    "dateEndTermBefore1950": {
+      "message": {
+        "sr": "Datum završetka roka ({0}) u zapisu intelektualne svojine ne može biti pre 1950. godine.",
+        "sr-cyr": "Датум завршетка рока ({0}) у запису интелектуалне својине не може бити пре 1950. године.",
+        "en": "The date end term ({0}) in intellectual property record can't be before the year 1950."
+      },
+      "target": "Document.otherDate",
       "severity": "ERROR",
       "dimension": "CONSISTENCY",
       "blocking": true,
