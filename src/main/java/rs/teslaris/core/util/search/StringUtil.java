@@ -16,10 +16,6 @@ import java.text.MessageFormat;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -357,36 +353,6 @@ public class StringUtil {
         }
 
         return identifier;
-    }
-
-    public static int parseYear(String dateString) {
-        if (Objects.isNull(dateString)) {
-            return -1;
-        }
-
-        DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("yyyy"), // Year only
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
-        };
-
-        for (var formatter : formatters) {
-            try {
-                TemporalAccessor parsed = formatter.parse(dateString);
-
-                if (parsed.isSupported(ChronoField.YEAR)) {
-                    return parsed.get(ChronoField.YEAR);
-                }
-            } catch (DateTimeParseException e) {
-                // Parsing failed, try the next formatter
-            }
-        }
-
-        return -1;
     }
 
     public static String formatNameToLastNameFirst(String fullName) {

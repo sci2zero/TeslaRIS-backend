@@ -43,6 +43,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
@@ -331,7 +332,7 @@ public class ProceedingsPublicationServiceTest {
     public void shouldReindexProceedingsPublications() {
         // Given
         var proceedingsPublication = new ProceedingsPublication();
-        proceedingsPublication.setDocumentDate("2024");
+        proceedingsPublication.setDocumentDate(new FlexibleDate(2024));
         var proceedings = new Proceedings();
         proceedings.setEvent(new Conference());
         proceedings.setId(1);
@@ -375,7 +376,7 @@ public class ProceedingsPublicationServiceTest {
         when(proceedingsService.findProceedingsById(proceedingsId))
             .thenReturn(proceedings);
         when(proceedings.getEvent()).thenReturn(conference);
-        when(proceedings.getDocumentDate()).thenReturn(documentDate.toString());
+        when(proceedings.getDocumentDate()).thenReturn(new FlexibleDate(documentDate));
         when(proceedingsPublicationRepository.save(any(ProceedingsPublication.class)))
             .thenReturn(new ProceedingsPublication() {{
                 setId(expectedSavedId);

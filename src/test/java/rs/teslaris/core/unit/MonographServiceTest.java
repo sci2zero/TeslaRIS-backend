@@ -38,6 +38,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -236,7 +237,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageIds(new ArrayList<>());
-        monographDTO.setDocumentDate("2025");
+        monographDTO.setDocumentDate(new FlexibleDateDTO(2025, null, null, null));
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.APPROVED);
@@ -262,7 +263,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageIds(new ArrayList<>());
-        monographDTO.setDocumentDate("2025");
+        monographDTO.setDocumentDate(new FlexibleDateDTO(2025, null, null, null));
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.REQUESTED);

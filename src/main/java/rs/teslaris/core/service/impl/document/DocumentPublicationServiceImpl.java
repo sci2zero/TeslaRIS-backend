@@ -41,6 +41,7 @@ import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
@@ -57,6 +58,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
@@ -576,7 +578,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             : new Date());
 
         index.setDatabaseId(document.getId());
-        index.setYear(StringUtil.parseYear(document.getDocumentDate()));
+        index.setYear(
+            FlexibleDate.isDatePresentAndValid(document.getDocumentDate()) ?
+                document.getDocumentDate().getYear() : -1);
         indexTitle(document, index);
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
@@ -847,7 +851,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         if (document.getTitle().isEmpty() || Objects.isNull(document.getDocumentDate()) ||
-            document.getDocumentDate().isBlank()) {
+            Objects.isNull(document.getDocumentDate().getYear())) {
             throw new MissingDataException("missingDataToArchiveMessage");
         }
 
@@ -1106,8 +1110,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getOldIds().add(documentDTO.getOldId());
         }
 
-        document.setDocumentDate(documentDTO.getDocumentDate());
-        if (!StringUtil.valueExists(document.getDocumentDate())) {
+        document.setDocumentDate(FlexibleDateConverter.fromDTO(documentDTO.getDocumentDate()));
+        if (!FlexibleDate.isDatePresentAndValid(document.getDocumentDate())) {
             document.setPublicationStatus(PublicationStatus.IN_PRINT);
         } else {
             document.setPublicationStatus(PublicationStatus.PUBLISHED);
@@ -1223,6 +1227,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "ssrnIdFormatError",
             "ssrnIdExistsError"
         );
+
+        // TODO: Add validation for nationalId
+        document.setNationalId(documentDTO.getNationalId());
     }
 
     @Override
@@ -2024,7 +2031,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected void checkForDocumentDate(DocumentDTO documentDTO) {
         if (Objects.isNull(documentDTO.getDocumentDate()) ||
-            documentDTO.getDocumentDate().isBlank()) {
+            Objects.isNull(documentDTO.getDocumentDate().year()) ||
+            documentDTO.getDocumentDate().year() <= 0) {
             throw new MissingDataException("This document requires a specified document date.");
         }
     }

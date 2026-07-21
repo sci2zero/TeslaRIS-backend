@@ -874,7 +874,7 @@ package document {
     Boolean isArchived
     DocumentPublicationType documentType
     Boolean authorReprint 
-    Set<MultilingualContent> displayPublisher /' !!! '/
+    Set<MultilingualContent> displayPublisher /' !!!??? '/
   }
   
   enum DocumentPublicationType {

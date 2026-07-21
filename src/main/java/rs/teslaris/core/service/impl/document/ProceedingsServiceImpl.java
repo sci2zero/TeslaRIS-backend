@@ -23,6 +23,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -55,7 +56,6 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
@@ -237,10 +237,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (updatePublicationDates) {
             proceedingsPublicationRepository.setDateToAggregatedPublications(
-                proceedingsToUpdate.getId(), proceedingsToUpdate.getDocumentDate());
+                proceedingsToUpdate.getId(),
+                proceedingsToUpdate.getDocumentDate()
+            );
             indexBulkUpdateService.setYearForAggregatedRecord("proceedings_id",
                 proceedingsToUpdate.getId(),
-                StringUtil.parseYear(proceedingsToUpdate.getDocumentDate()));
+                FlexibleDate.getYearNumber(proceedingsToUpdate.getDocumentDate())
+            );
         }
 
         sendNotifications(proceedingsToUpdate, oldContributorIds);

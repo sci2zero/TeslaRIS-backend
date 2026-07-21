@@ -68,11 +68,12 @@ public class PublisherServiceTest {
 
 
     private static Stream<Arguments> argumentSources() {
-        return Stream.of(Arguments.of(true, false, false, false, false),
-            Arguments.of(false, true, false, false, false),
-            Arguments.of(false, false, true, false, false),
-            Arguments.of(false, false, false, true, false),
-            Arguments.of(false, false, false, false, true));
+        return Stream.of(
+            Arguments.of(true, false, false, false),
+            Arguments.of(false, true, false, false),
+            Arguments.of(false, false, true, false),
+            Arguments.of(false, false, false, true)
+        );
     }
 
     @Test
@@ -163,8 +164,7 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.hasPublishedDataset(publisherId)).thenReturn(false);
-        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedIntellectualProperty(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(false);
@@ -182,8 +182,7 @@ public class PublisherServiceTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldThrowExceptionWhenPublisherIsUsed(boolean publishedDataset,
-                                                        boolean publishedPatent,
+    public void shouldThrowExceptionWhenPublisherIsUsed(boolean publishedPatent,
                                                         boolean publishedProceedings,
                                                         boolean publishedIntangibleProduct,
                                                         boolean publishedThesis) {
@@ -193,8 +192,8 @@ public class PublisherServiceTest {
         publisher.setId(publisherId);
 
         when(publisherRepository.findById(publisherId)).thenReturn(Optional.of(publisher));
-        when(publisherRepository.hasPublishedDataset(publisherId)).thenReturn(publishedDataset);
-        when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(publishedPatent);
+        when(publisherRepository.hasPublishedIntellectualProperty(publisherId)).thenReturn(
+            publishedPatent);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(
             publishedProceedings);
         when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(
@@ -292,8 +291,7 @@ public class PublisherServiceTest {
         publisherService.forceDeletePublisher(publisherId);
 
         // Then
-        verify(publisherRepository).unbindDataset(publisherId);
-        verify(publisherRepository).unbindPatent(publisherId);
+        verify(publisherRepository).unbindIntellectualProperty(publisherId);
         verify(publisherRepository).unbindProceedings(publisherId);
         verify(publisherRepository).unbindIntangibleProduct(publisherId);
         verify(publisherRepository).unbindThesis(publisherId);

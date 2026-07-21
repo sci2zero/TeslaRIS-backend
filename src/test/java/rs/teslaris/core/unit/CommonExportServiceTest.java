@@ -33,17 +33,16 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -83,13 +82,10 @@ public class CommonExportServiceTest {
     private OtherEventRepository otherEventRepository;
 
     @Mock
-    private DatasetRepository datasetRepository;
-
-    @Mock
     private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
-    private PatentRepository patentRepository;
+    private IntellectualPropertyRepository intellectualPropertyRepository;
 
     @Mock
     private JournalRepository journalRepository;
@@ -220,13 +216,10 @@ public class CommonExportServiceTest {
         // Given
         var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(datasetRepository.findAllModified(any(Pageable.class),
-            anyBoolean())).thenReturn(
-            (Page) emptyPage);
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(patentRepository.findAllModified(any(Pageable.class),
+        when(intellectualPropertyRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(journalRepository.findAllModified(
@@ -254,7 +247,7 @@ public class CommonExportServiceTest {
         commonExportService.exportDocumentsToCommonModel(allTime, Collections.emptyList());
 
         // Then
-        verify(commonExportWorker, times(14)).exportEntities(
+        verify(commonExportWorker, times(13)).exportEntities(
             any(), any(), eq(ExportDocument.class), any(), eq(allTime), any());
     }
 
@@ -264,13 +257,10 @@ public class CommonExportServiceTest {
         // Given
         var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(datasetRepository.findAllModified(any(Pageable.class),
-            anyBoolean())).thenReturn(
-            (Page) emptyPage);
         when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(patentRepository.findAllModified(any(Pageable.class),
+        when(intellectualPropertyRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(journalRepository.findAllModified(

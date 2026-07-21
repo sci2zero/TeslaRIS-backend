@@ -48,7 +48,7 @@ public class Education extends Involvement {
     private EducationStatus educationStatus;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> degreeCode = new HashSet<>();
+    private Set<MultiLingualContent> courseCode = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> degreeClassification = new HashSet<>();
@@ -69,23 +69,24 @@ public class Education extends Involvement {
 
     public Education(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
                      Set<DocumentFile> proofs, InvolvementType involvementType,
-                     Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                     Set<MultiLingualContent> displayOrganisationUnit, Person personInvolved,
                      OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
                      Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
-                     Set<ResearchArea> researchAreas, Set<MultiLingualContent> title,
-                     Set<MultiLingualContent> abbreviationTitle, DegreeType degreeType,
-                     EducationStatus educationStatus, Set<MultiLingualContent> degreeCode,
+                     Set<ResearchArea> researchAreas, Set<OrganisationUnit> hostInstitutions,
+                     Set<MultiLingualContent> title, Set<MultiLingualContent> abbreviationTitle,
+                     DegreeType degreeType, EducationStatus educationStatus,
+                     Set<MultiLingualContent> courseCode,
                      Set<MultiLingualContent> degreeClassification,
-                     Set<ResearchArea> researchAreas1,
-                     Thesis thesis, Set<Person> supervisors,
+                     Set<ResearchArea> researchAreas1, Thesis thesis, Set<Person> supervisors,
                      Set<MultiLingualContent> displayThesisSupervisors) {
-        super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas);
+        super(dateFrom, dateTo, approveStatus, proofs, involvementType, displayOrganisationUnit,
+            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas,
+            hostInstitutions);
         this.title = title;
         this.abbreviationTitle = abbreviationTitle;
         this.degreeType = degreeType;
         this.educationStatus = educationStatus;
-        this.degreeCode = degreeCode;
+        this.courseCode = courseCode;
         this.degreeClassification = degreeClassification;
         this.researchAreas = researchAreas1;
         this.thesis = thesis;

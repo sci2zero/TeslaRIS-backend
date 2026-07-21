@@ -39,6 +39,7 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -52,7 +53,6 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
@@ -63,6 +63,7 @@ import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -73,7 +74,6 @@ import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.OtherEventType;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -120,17 +120,16 @@ import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -182,11 +181,9 @@ public class TestingDataInitializer {
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final PersonContributionRepository personContributionRepository;
 
@@ -362,7 +359,7 @@ public class TestingDataInitializer {
         proceedings1.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 1", 1));
         proceedings1.setApproveStatus(ApproveStatus.APPROVED);
         proceedings1.setEISBN("978-3-16-148410-0");
-        proceedings1.setDocumentDate("2021");
+        proceedings1.setDocumentDate(new FlexibleDate(2021));
         proceedings1.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings1);
 
@@ -430,7 +427,7 @@ public class TestingDataInitializer {
         intangibleProduct.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
 
-        var patent = new Patent();
+        var patent = new IntellectualProperty();
         patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
         patent.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -438,17 +435,18 @@ public class TestingDataInitializer {
             patent.getOldIds().add(992);
         }
 
-        patentRepository.save(patent);
+        intellectualPropertyRepository.save(patent);
 
-        var dataset = new Dataset();
+        var dataset = new IntangibleProduct();
         dataset.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Dataset", 1)));
         dataset.setApproveStatus(ApproveStatus.APPROVED);
         dataset.setDoi("10.1007/s11192-024-05076-2");
-        dataset.setDocumentDate("2020-01-01");
+        dataset.setDocumentDate(new FlexibleDate(2020, 1));
 
         var datasetContribution = new PersonDocumentContribution();
         datasetContribution.setPerson(person1);
         datasetContribution.setContributionType(DocumentContributionType.AUTHOR);
+        dataset.setIntangibleProductType(IntangibleProductType.DATASET);
         datasetContribution.setIsMainContributor(true);
         datasetContribution.setIsCorrespondingContributor(false);
         datasetContribution.setOrderNumber(1);
@@ -460,7 +458,7 @@ public class TestingDataInitializer {
                 new Contact("", "", "", "")));
 
         dataset.setContributors(Set.of(datasetContribution));
-        datasetRepository.save(dataset);
+        intangibleProductRepository.save(dataset);
 
         var sci2zero = new OrganisationUnit();
         sci2zero.setNameAbbreviation(
@@ -480,7 +478,8 @@ public class TestingDataInitializer {
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                dummyOU, false, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 EmploymentPosition.TEACHING_ASSISTANT,
                 Set.of(new MultiLingualContent(englishTag,
                     "Courses: Digital Documents Management, Secure IntangibleProduct Development",
@@ -488,7 +487,8 @@ public class TestingDataInitializer {
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null,
-                sci2zero, true, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                sci2zero, true, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 EmploymentPosition.COLLABORATOR,
                 Set.of(new MultiLingualContent(englishTag,
                     "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
@@ -496,7 +496,7 @@ public class TestingDataInitializer {
             new Membership(LocalDate.of(2021, 10, 3), null,
                 ApproveStatus.APPROVED, new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(),
                 null, sci2zero, false, new HashSet<>(),
-                new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag,
                     "I just wanted to be around cool kids...", 1)),
                 Set.of(new MultiLingualContent(englishTag,
@@ -505,7 +505,8 @@ public class TestingDataInitializer {
             new Education(LocalDate.of(2018, 10, 1), LocalDate.of(2023, 9, 1),
                 ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null,
-                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                dummyOU, false, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
@@ -521,13 +522,19 @@ public class TestingDataInitializer {
                     new HashSet<>(), "application/pdf", 200L, ResourceType.SUPPLEMENT,
                     AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false, false, null, null, person1, false)), person1));
+                    false, false, null, null, person1, false)),
+            Set.of(new MultiLingualContent(englishTag,
+                "Web exploitation\nReverse engineering", 1)),
+            new HashSet<>(), false, person1));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
                 "Contributing to VIVO, Vitro and TeslaRIS current research information systems.",
                 1)),
-            new HashSet<>(), person1));
+            new HashSet<>(),
+            Set.of(new MultiLingualContent(englishTag,
+                "VIVO\nVitro\nTeslaRIS", 1)),
+            new HashSet<>(), false, person1));
         person1.getPrizes().add(new Prize(
             Set.of(
                 new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",
@@ -610,7 +617,7 @@ public class TestingDataInitializer {
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.EDITED_BOOK);
-        monograph2.setDocumentDate("2024");
+        monograph2.setDocumentDate(new FlexibleDate(2024));
         monographRepository.save(monograph2);
 
         var researcherUser2 =
@@ -693,7 +700,7 @@ public class TestingDataInitializer {
 
         var monographPublication1 = new MonographPublication();
         monographPublication1.setApproveStatus(ApproveStatus.APPROVED);
-        monographPublication1.setDocumentDate("2024");
+        monographPublication1.setDocumentDate(new FlexibleDate(2024, 3));
         monographPublication1.setMonograph(monograph1);
         monographPublication1.setMonographPublicationType(MonographPublicationType.PREFACE);
         monographPublication1.setTitle(
@@ -702,7 +709,7 @@ public class TestingDataInitializer {
 
         var monographPublication2 = new MonographPublication();
         monographPublication2.setApproveStatus(ApproveStatus.APPROVED);
-        monographPublication2.setDocumentDate("2024");
+        monographPublication2.setDocumentDate(new FlexibleDate(2024, 7));
         monographPublication2.setMonograph(monograph1);
         monographPublication2.setMonographPublicationType(MonographPublicationType.CHAPTER);
         monographPublication2.setTitle(
@@ -717,7 +724,7 @@ public class TestingDataInitializer {
         var thesis1 = new Thesis();
         thesis1.setApproveStatus(ApproveStatus.APPROVED);
         thesis1.setThesisType(ThesisType.PHD);
-        thesis1.setDocumentDate("2021");
+        thesis1.setDocumentDate(new FlexibleDate(2021, 4, 17));
         thesis1.setOrganisationUnit(dummyOU);
         thesis1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija", 1)));
@@ -744,7 +751,7 @@ public class TestingDataInitializer {
         var thesis2 = new Thesis();
         thesis2.setApproveStatus(ApproveStatus.APPROVED);
         thesis2.setThesisType(ThesisType.MASTER);
-        thesis2.setDocumentDate("2023");
+        thesis2.setDocumentDate(new FlexibleDate(2023));
         thesis2.setOrganisationUnit(dummyOU2);
         thesis2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Master rad", 1)));
@@ -999,7 +1006,7 @@ public class TestingDataInitializer {
         intangibleProduct2.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct2.setApproveStatus(ApproveStatus.APPROVED);
         intangibleProduct2.setDoi("10.1038/nature.2012.9872");
-        intangibleProduct2.setDocumentDate("2012-3-14");
+        intangibleProduct2.setDocumentDate(new FlexibleDate(2012, 3, 14));
 
         var intangibleProductContribution3 = new PersonDocumentContribution();
         intangibleProductContribution3.setPerson(person1);
@@ -1032,7 +1039,7 @@ public class TestingDataInitializer {
         var thesis3 = new Thesis();
         thesis3.setApproveStatus(ApproveStatus.APPROVED);
         thesis3.setThesisType(ThesisType.PHD);
-        thesis3.setDocumentDate("2022");
+        thesis3.setDocumentDate(new FlexibleDate(2022, 5, 30));
         thesis3.setOrganisationUnit(dummyOU);
         thesis3.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Doktorska disertacija 2", 1)));
@@ -1059,7 +1066,7 @@ public class TestingDataInitializer {
         var thesis4 = new Thesis();
         thesis4.setApproveStatus(ApproveStatus.APPROVED);
         thesis4.setThesisType(ThesisType.PHD);
-        thesis4.setDocumentDate("2024");
+        thesis4.setDocumentDate(new FlexibleDate(2024, 6, 19));
         thesis4.setOrganisationUnit(dummyOU);
         thesis4.setTitle(
             Set.of(
@@ -1110,7 +1117,7 @@ public class TestingDataInitializer {
         var thesis5 = new Thesis();
         thesis5.setApproveStatus(ApproveStatus.APPROVED);
         thesis5.setThesisType(ThesisType.PHD);
-        thesis5.setDocumentDate("2024");
+        thesis5.setDocumentDate(new FlexibleDate(2024, 7, 24));
         thesis5.setOrganisationUnit(dummyOU);
         thesis5.setTitle(
             Set.of(new MultiLingualContent(serbianTag,
@@ -1141,7 +1148,7 @@ public class TestingDataInitializer {
         var thesis6 = new Thesis();
         thesis6.setApproveStatus(ApproveStatus.APPROVED);
         thesis6.setThesisType(ThesisType.PHD);
-        thesis6.setDocumentDate("2024");
+        thesis6.setDocumentDate(new FlexibleDate(2024, 11, 6));
         thesis6.setOrganisationUnit(dummyOU);
         thesis6.setTitle(
             Set.of(new MultiLingualContent(serbianTag,
@@ -1258,7 +1265,7 @@ public class TestingDataInitializer {
             "Most na adi", 1)));
         materialProduct.setInternalNumber("12398745");
         materialProduct.setApproveStatus(ApproveStatus.APPROVED);
-        materialProduct.setDocumentDate("2011-7-2");
+        materialProduct.setDocumentDate(new FlexibleDate(2011, 7, 2));
         materialProduct.setNumberProduced(1L);
         materialProduct.setMaterialProductType(MaterialProductType.INFRASTRUCTURE_OBJECT);
         materialProductRepository.save(materialProduct);
@@ -1268,7 +1275,7 @@ public class TestingDataInitializer {
             "New Wheat Seed", 1)));
         geneticMaterial.setInternalNumber("WH-12345-1");
         geneticMaterial.setApproveStatus(ApproveStatus.APPROVED);
-        geneticMaterial.setDocumentDate("2025-1-1");
+        geneticMaterial.setDocumentDate(new FlexibleDate(2025, 8));
         geneticMaterial.setGeneticMaterialType(GeneticMaterialType.STRAIN);
         geneticMaterialRepository.save(geneticMaterial);
 
@@ -1408,7 +1415,7 @@ public class TestingDataInitializer {
             "Predstava 1", 1)));
         play1.setLanguages(new HashSet<>(List.of(serbianTag)));
         play1.setApproveStatus(ApproveStatus.APPROVED);
-        play1.setDocumentDate("2003-1-1");
+        play1.setDocumentDate(new FlexibleDate(2003));
         play1.setType(PerformanceRelatedOutputType.ART_PERFORMANCE);
         performanceRelatedOutputRepository.save(play1);
 

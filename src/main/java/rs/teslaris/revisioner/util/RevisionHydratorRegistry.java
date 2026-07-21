@@ -9,17 +9,16 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -40,14 +39,15 @@ public class RevisionHydratorRegistry {
 
     {
         dtoClasses =
-            Map.ofEntries(Map.entry(DocumentPublicationType.DATASET.name(), DatasetDTO.class),
+            Map.ofEntries(
                 Map.entry(DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                     IntangibleProductDTO.class),
                 Map.entry(DocumentPublicationType.THESIS.name(), ThesisResponseDTO.class),
                 Map.entry(DocumentPublicationType.PROCEEDINGS.name(), ProceedingsResponseDTO.class),
                 Map.entry(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     ProceedingsPublicationDTO.class),
-                Map.entry(DocumentPublicationType.PATENT.name(), PatentDTO.class),
+                Map.entry(DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
+                    IntellectualPropertyDTO.class),
                 Map.entry(DocumentPublicationType.MATERIAL_PRODUCT.name(),
                     MaterialProductDTO.class),
                 Map.entry(DocumentPublicationType.GENETIC_MATERIAL.name(),

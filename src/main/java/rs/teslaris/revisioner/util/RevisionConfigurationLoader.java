@@ -7,17 +7,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
-import rs.teslaris.core.util.search.StringUtil;
 
 @Component
+@Slf4j
 public class RevisionConfigurationLoader {
 
     private static String externalOverrideConfiguration;
@@ -58,21 +58,14 @@ public class RevisionConfigurationLoader {
         return revisionConfig.migrationMappings().getOrDefault(entityType, Collections.emptyMap());
     }
 
-    public static Set<MultiLingualContent> getDataQualityRemark(String remarkKey,
-                                                                Object... params) {
-        return StringUtil.buildMultilingualContent(languageTagService,
-            revisionConfig.dataQualityRemarks.get(remarkKey), params);
-    }
-
     private record RevisionConfig(
+
         @JsonProperty(value = "fieldExclusions", required = true)
         Map<String, List<String>> fieldExclusions,
 
         @JsonProperty(value = "migrationMappings", required = true)
-        Map<String, Map<String, String>> migrationMappings,
+        Map<String, Map<String, String>> migrationMappings
 
-        @JsonProperty(value = "dataQualityRemarks", required = true)
-        Map<String, Map<String, String>> dataQualityRemarks
     ) {
     }
 }

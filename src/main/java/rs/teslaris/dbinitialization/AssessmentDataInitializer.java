@@ -1557,7 +1557,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M91A",
                     1)));
-        m91a.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+        m91a.setApplicableTypes(Set.of(ApplicableEntityType.INTELLECTUAL_PROPERTY));
 
         var m91 = new AssessmentClassification();
         m91.setFormalDescriptionOfRule("handleM91");
@@ -1567,7 +1567,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M91",
                     1)));
-        m91.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+        m91.setApplicableTypes(Set.of(ApplicableEntityType.INTELLECTUAL_PROPERTY));
 
         var m92 = new AssessmentClassification();
         m92.setFormalDescriptionOfRule("handleM92");
@@ -1577,7 +1577,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M92",
                     1)));
-        m92.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+        m92.setApplicableTypes(Set.of(ApplicableEntityType.INTELLECTUAL_PROPERTY));
 
         var m93 = new AssessmentClassification();
         m93.setFormalDescriptionOfRule("handleM93");
@@ -1587,7 +1587,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M93",
                     1)));
-        m93.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+        m93.setApplicableTypes(Set.of(ApplicableEntityType.INTELLECTUAL_PROPERTY));
 
         var m94 = new AssessmentClassification();
         m94.setFormalDescriptionOfRule("handleM94");
@@ -1597,7 +1597,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M94",
                     1)));
-        m94.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+        m94.setApplicableTypes(Set.of(ApplicableEntityType.INTELLECTUAL_PROPERTY));
 
         var m95 = new AssessmentClassification();
         m95.setFormalDescriptionOfRule("handleM95");

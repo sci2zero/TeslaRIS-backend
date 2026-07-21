@@ -8,14 +8,13 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Document;
-import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
+import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
-import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -41,13 +40,11 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
 
     private final ThesisRepository thesisRepository;
 
-    private final PatentRepository patentRepository;
+    private final IntellectualPropertyRepository intellectualPropertyRepository;
 
     private final IntangibleProductRepository intangibleProductRepository;
 
     private final MaterialProductRepository materialProductRepository;
-
-    private final DatasetRepository datasetRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
 
@@ -111,15 +108,12 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
         } else if (index.getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
             return proceedingsRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.PATENT.name())) {
-            return patentRepository.findById(index.getDatabaseId())
+        } else if (index.getType().equals(DocumentPublicationType.INTELLECTUAL_PROPERTY.name())) {
+            return intellectualPropertyRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getType()
             .equals(DocumentPublicationType.INTANGIBLE_PRODUCT.name())) {
             return intangibleProductRepository.findById(index.getDatabaseId())
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.DATASET.name())) {
-            return datasetRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getType().equals(DocumentPublicationType.MATERIAL_PRODUCT.name())) {
             return materialProductRepository.findById(index.getDatabaseId())

@@ -22,20 +22,19 @@ import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
-import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -86,13 +85,10 @@ public class ReindexServiceTest {
     private ProceedingsPublicationService proceedingsPublicationService;
 
     @Mock
-    private PatentService patentService;
+    private IntellectualPropertyService intellectualPropertyService;
 
     @Mock
     private IntangibleProductService intangibleProductService;
-
-    @Mock
-    private DatasetService datasetService;
 
     @Mock
     private MonographService monographService;
@@ -216,9 +212,8 @@ public class ReindexServiceTest {
             verify(documentPublicationService).deleteIndexes();
             verify(journalPublicationService).reindexJournalPublications();
             verify(proceedingsPublicationService).reindexProceedingsPublications();
-            verify(patentService).reindexPatents();
+            verify(intellectualPropertyService).reindexIntellectualProperties();
             verify(intangibleProductService).reindexIntangibleProduct();
-            verify(datasetService).reindexDatasets();
             verify(monographService).reindexMonographs();
             verify(monographPublicationService).reindexMonographPublications();
             verify(proceedingsService).reindexProceedings();
@@ -239,9 +234,8 @@ public class ReindexServiceTest {
             verify(documentPublicationService, never()).deleteIndexes();
             verify(journalPublicationService, never()).reindexJournalPublications();
             verify(proceedingsPublicationService, never()).reindexProceedingsPublications();
-            verify(patentService, never()).reindexPatents();
+            verify(intellectualPropertyService, never()).reindexIntellectualProperties();
             verify(intangibleProductService, never()).reindexIntangibleProduct();
-            verify(datasetService, never()).reindexDatasets();
             verify(monographService, never()).reindexMonographs();
             verify(monographPublicationService, never()).reindexMonographPublications();
             verify(proceedingsService, never()).reindexProceedings();

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.MonographPublication;
 
 @Repository
@@ -21,7 +22,7 @@ public interface MonographPublicationRepository
     @Modifying
     @Query("UPDATE MonographPublication mp SET mp.documentDate = :date " +
         "WHERE mp.monograph.id = :monographId")
-    void setDateToAggregatedPublications(Integer monographId, String date);
+    void setDateToAggregatedPublications(Integer monographId, FlexibleDate date);
 
     @Query(value = "SELECT *, 0 AS clazz_ FROM monograph_publications WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)

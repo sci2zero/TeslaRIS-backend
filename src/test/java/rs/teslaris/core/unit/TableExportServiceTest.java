@@ -24,7 +24,7 @@ import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.service.impl.commontypes.TableExportServiceImpl;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -73,7 +73,7 @@ class TableExportServiceTest {
             .thenReturn(Optional.of(mockDocument));
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(2))
             .thenReturn(Optional.empty());
-        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset() {{
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct() {{
             setId(1);
         }});
 
@@ -99,7 +99,7 @@ class TableExportServiceTest {
 
         when(documentPublicationIndexRepository.findAll(PageRequest.of(0, 500)))
             .thenReturn(page);
-        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset() {{
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct() {{
             setId(1);
         }});
 

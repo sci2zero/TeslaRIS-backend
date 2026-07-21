@@ -27,7 +27,7 @@ import rs.teslaris.assessment.service.impl.CommissionServiceImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
@@ -117,7 +117,7 @@ public class CommissionServiceTest {
         var newCommission = new Commission();
         newCommission.setId(2);
 
-        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset());
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct());
         when(personService.findPersonById(anyInt())).thenReturn(new Person());
         when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
             new OrganisationUnit());
@@ -145,7 +145,7 @@ public class CommissionServiceTest {
         when(commissionRepository.findById(commissionId))
             .thenReturn(Optional.of(existingCommission));
 
-        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset());
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct());
         when(personService.findPersonById(anyInt())).thenReturn(new Person());
         when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
             new OrganisationUnit());

@@ -21,5 +21,7 @@ public enum IntangibleProductType {
     SET_DESIGN,
     LIGHT_DESIGN,
     CHOREOGRAPHY,
-    STANDARD
+    STANDARD,
+    DATASET,
+    MUSICAL_COMPOSITION
 }

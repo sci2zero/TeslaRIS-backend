@@ -17,6 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -773,6 +774,7 @@ public class CommonLoaderTest {
         createdProceedings.setId(1);
         var event = new Conference();
         event.setId(1);
+        event.setDateFrom(LocalDate.of(2005, 3, 12));
         when(conferenceService.createConference(any(), any())).thenReturn(event);
         when(proceedingsService.createProceedings(any(), anyBoolean())).thenReturn(
             createdProceedings);
@@ -812,6 +814,7 @@ public class CommonLoaderTest {
         createdProceedings.setId(1);
         var event = new Conference();
         event.setId(1);
+        event.setDateFrom(LocalDate.of(2000, 9, 12));
         when(conferenceService.createConference(any(), any())).thenReturn(event);
         when(proceedingsService.createProceedings(any(), anyBoolean())).thenReturn(
             createdProceedings);

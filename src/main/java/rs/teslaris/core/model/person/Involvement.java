@@ -29,7 +29,6 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.project.model.funding.Funding;
 
 @Getter
 @Setter
@@ -68,7 +67,7 @@ public class Involvement extends BaseEntity {
     private InvolvementType involvementType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> affiliationStatement = new HashSet<>();
+    private Set<MultiLingualContent> displayOrganisationUnit = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
@@ -94,29 +93,9 @@ public class Involvement extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
 
-    @OneToMany(mappedBy = "involvement", fetch = FetchType.LAZY)
-    private Set<Funding> fundings = new HashSet<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<OrganisationUnit> hostInstitutions = new HashSet<>();
 
-    public Involvement(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
-                       Set<DocumentFile> proofs, InvolvementType involvementType,
-                       Set<MultiLingualContent> affiliationStatement, Person personInvolved,
-                       OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
-                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
-                       Set<ResearchArea> researchAreas) {
-        this.dateFrom = dateFrom;
-        this.dateTo = dateTo;
-        this.approveStatus = approveStatus;
-        this.proofs = proofs;
-        this.involvementType = involvementType;
-        this.affiliationStatement = affiliationStatement;
-        this.personInvolved = personInvolved;
-        this.organisationUnit = organisationUnit;
-        this.favorite = favorite;
-        this.uris = uris;
-        this.description = description;
-        this.keywords = keywords;
-        this.researchAreas = researchAreas;
-    }
 
     @Override
     public boolean equals(Object o) {

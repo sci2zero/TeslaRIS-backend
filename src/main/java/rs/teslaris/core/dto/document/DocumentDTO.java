@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.document.PublicationStatus;
 
@@ -46,7 +47,7 @@ public class DocumentDTO {
     @NotNull(message = "You have to provide a list of URIs.")
     private Set<String> uris;
 
-    private String documentDate;
+    private FlexibleDateDTO documentDate;
 
     private String doi;
 
@@ -63,6 +64,8 @@ public class DocumentDTO {
     private String pubmedId;
 
     private String ssrnId;
+
+    private String nationalId;
 
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;

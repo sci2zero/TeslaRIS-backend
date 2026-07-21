@@ -876,7 +876,7 @@ public class PersonServiceTest {
         verify(personContributionRepository, times(1)).fetchAllPersonDocumentContributions(
             eq(personId), any());
         verify(personIndexRepository, times(1)).delete(any(PersonIndex.class));
-        verify(documentPublicationIndexRepository, times(7)).deleteByAuthorIdsAndType(anyInt(),
+        verify(documentPublicationIndexRepository, times(6)).deleteByAuthorIdsAndType(anyInt(),
             anyString());
     }
 

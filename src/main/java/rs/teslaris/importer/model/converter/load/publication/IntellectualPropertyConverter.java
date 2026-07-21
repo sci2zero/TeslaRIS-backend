@@ -6,7 +6,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -15,7 +16,8 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
-public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
+public class IntellectualPropertyConverter
+    implements RecordConverter<Patent, IntellectualPropertyDTO> {
 
     private final MultilingualContentConverter multilingualContentConverter;
 
@@ -25,8 +27,8 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
 
 
     @Override
-    public PatentDTO toDTO(Patent record) {
-        var dto = new PatentDTO();
+    public IntellectualPropertyDTO toDTO(Patent record) {
+        var dto = new IntellectualPropertyDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
@@ -49,9 +51,11 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
 
         dto.setUris(new HashSet<>());
 
-        dto.setDocumentDate(String.valueOf(
-            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                .getYear()));
+        var approvalDate =
+            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        dto.setDocumentDate(
+            new FlexibleDateDTO(approvalDate.getYear(), approvalDate.getMonthValue(),
+                approvalDate.getDayOfMonth(), null));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),

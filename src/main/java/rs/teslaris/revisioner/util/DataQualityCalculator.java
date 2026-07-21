@@ -19,20 +19,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -47,6 +47,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.OtherEventType;
@@ -62,17 +63,13 @@ import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
-import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DataQualityCalculatorPtCris {
-
-    private static final String PROFILE_NAME = "PTCRIS";
-
-    private static final String PROFILE_VERSION = "1.0.0";
+public class DataQualityCalculator {
 
     private static final Pattern TITLE_PATTERN = Pattern.compile(
         "^[\\p{L}\\p{N}\\s\\-.,;:!?()'\"/&]+$"
@@ -160,10 +157,8 @@ public class DataQualityCalculatorPtCris {
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
                 (dto, assessment) -> assessEntity((ThesisResponseDTO) dto, assessment)),
-            Map.entry(DatasetDTO.class,
-                (dto, assessment) -> assessEntity((DatasetDTO) dto, assessment)),
-            Map.entry(PatentDTO.class,
-                (dto, assessment) -> assessEntity((PatentDTO) dto, assessment)),
+            Map.entry(IntellectualPropertyDTO.class,
+                (dto, assessment) -> assessEntity((IntellectualPropertyDTO) dto, assessment)),
             Map.entry(JournalPublicationResponseDTO.class,
                 (dto, assessment) -> assessEntity((JournalPublicationResponseDTO) dto, assessment)),
             Map.entry(MonographDTO.class,
@@ -206,14 +201,15 @@ public class DataQualityCalculatorPtCris {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void assessDataQuality(DataQualityAssessment assessment, String json,
                                   ObjectMapper objectMapper,
-                                  DataQualityAssessmentRepository repository) {
+                                  DataQualityAssessmentRepository repository,
+                                  String targetType) {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment);
+            assessEntity(dto, assessment, targetType);
 
             repository.save(assessment);
 
@@ -243,7 +239,7 @@ public class DataQualityCalculatorPtCris {
         }
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment) {
+    private void assessEntity(Object dto, DataQualityAssessment assessment, String targetType) {
         BiConsumer<Object, DataQualityAssessment> assessor = assessors.get(dto.getClass());
 
         if (Objects.isNull(assessor)) {
@@ -257,6 +253,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         assessor.accept(dto, assessment);
+        finishUpAssessment(assessment, targetType);
     }
 
     private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
@@ -287,6 +284,8 @@ public class DataQualityCalculatorPtCris {
             reportIssue(assessment, "descriptionMissing", dto.getId());
         }
 
+        var documentDate = FlexibleDateConverter.fromDTO(dto.getDocumentDate());
+
         if (!CollectionOperations.containsValues(dto.getContributions())) {
             reportIssue(assessment, "contributorsMissing", dto.getId());
         } else {
@@ -303,15 +302,15 @@ public class DataQualityCalculatorPtCris {
                 contribution ->
                     assessEntity(contribution, assessment,
                         null, null, dto.getId(),
-                        StringUtil.parseDocumentDate(dto.getDocumentDate()))
+                        StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate)))
             );
         }
 
-        if (!StringUtil.valueExists(dto.getDocumentDate())) {
+        if (!FlexibleDate.isDatePresentAndValid(documentDate)) {
             reportIssue(assessment, "documentDateMissing", dto.getId());
         } else {
             try {
-                var date = StringUtil.parseDocumentDate(dto.getDocumentDate());
+                var date = StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
 
                 if (date.isBefore(LocalDate.of(1950, 1, 1))) {
                     reportIssue(assessment, "documentDateBefore1950", dto.getDocumentDate());
@@ -484,25 +483,6 @@ public class DataQualityCalculatorPtCris {
                 }
             }
         }
-
-        // TODO: Make this into a helper method
-        assessment.setFinishedAt(Instant.now());
-
-        assessment.setFailedRules(
-            (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
-                .count());
-
-        assessment.setWarningRules(
-            (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity() == IssueSeverity.WARNING)
-                .count());
-
-        assessment.setPassedRules(100 // TODO: Read total rules from JSON
-            - assessment.getFailedRules()
-            - assessment.getWarningRules());
-
-        assessment.setValid(assessment.getFailedRules() == 0);
 
         // TODO: metadataLicenseMissing
     }
@@ -1030,7 +1010,7 @@ public class DataQualityCalculatorPtCris {
 
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "startDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
@@ -1060,7 +1040,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "endDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
@@ -1072,7 +1052,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "researchAreasMissing");
         }
 
         // TODO metadataLicenseMissing
@@ -1094,7 +1074,7 @@ public class DataQualityCalculatorPtCris {
                 .getLocalBirthDate();
 
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "startDateMissing");
         } else {
             if (dto.getDateFrom().isBefore(LocalDate.of(1950, 1, 1))) {
                 reportIssue(
@@ -1123,7 +1103,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "endDateMissing");
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
@@ -1134,7 +1114,7 @@ public class DataQualityCalculatorPtCris {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "researchAreasMissing");
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1280,11 +1260,17 @@ public class DataQualityCalculatorPtCris {
         }
     }
 
-    private void reportIssue(DataQualityAssessment assessment,
-                             String issueKey, Object... params) {
-
+    private void reportIssue(DataQualityAssessment assessment, String issueKey, Object... params) {
         if (Objects.isNull(assessment.getIssues())) {
             assessment.setIssues(new ArrayList<>());
+        }
+
+        var severityAndDimension =
+            DataQualityAssessmentConfigurationLoader.getIssueSeverityAndDimension(
+                assessment.getProfileName(), issueKey);
+
+        if (Objects.isNull(severityAndDimension)) {
+            return;
         }
 
         assessment.getIssues().add(
@@ -1293,14 +1279,48 @@ public class DataQualityCalculatorPtCris {
                 .parameters(Arrays.stream(params)
                     .map(String::valueOf)
                     .toList())
-                .severity(IssueSeverity.ERROR) // TODO: Severity should be read from JSON
-                .dimension(resolveDimension(issueKey))
-                .blocking(true)
+                .severity(severityAndDimension.a)
+                .dimension(severityAndDimension.b)
+                .blocking(severityAndDimension.c)
                 .build()
         );
     }
 
-    private QualityDimension resolveDimension(String issueKey) {
-        return QualityDimension.CONFORMITY; // TODO: Dimension should be read from JSON
+    private void finishUpAssessment(DataQualityAssessment assessment, String target) {
+        assessment.setFinishedAt(Instant.now());
+
+        assessment.setFailedRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity().equals(IssueSeverity.ERROR))
+                .count());
+
+        assessment.setWarningRules(
+            (int) assessment.getIssues().stream()
+                .filter(i -> i.getSeverity().equals(IssueSeverity.WARNING))
+                .count());
+
+        assessment.setPassedRules(
+            DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
+                assessment.getProfileName(), target)
+                - assessment.getFailedRules()
+                - assessment.getWarningRules());
+
+        double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsRaw(
+            assessment.getProfileName(), target);
+
+        assessment.setTotalPoints(totalPoints);
+
+        double deductedPoints = assessment.getIssues().stream()
+            .mapToDouble(issue ->
+                DataQualityAssessmentConfigurationLoader.getIssuePoints(
+                    assessment.getProfileName(),
+                    issue.getKey()))
+            .sum();
+
+        assessment.setAchievedPointsRaw(totalPoints - deductedPoints);
+
+        assessment.setValid(
+            assessment.getIssues().stream().noneMatch(DataQualityIssue::isBlocking)
+        );
     }
 }

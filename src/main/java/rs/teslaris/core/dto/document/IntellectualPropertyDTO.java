@@ -7,15 +7,28 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.document.IntellectualPropertyApplicationStatus;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DatasetDTO extends DocumentDTO {
+public class IntellectualPropertyDTO extends DocumentDTO implements PublishableDTO {
 
-    private String internalNumber;
+    private IntellectualPropertyType type;
+
+    private IntellectualPropertyApplicationStatus applicationStatus;
+
+    private String number;
+
+    private FlexibleDateDTO dateRequested;
+
+    private FlexibleDateDTO dateFilingPriority;
+
+    private FlexibleDateDTO dateTo;
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;

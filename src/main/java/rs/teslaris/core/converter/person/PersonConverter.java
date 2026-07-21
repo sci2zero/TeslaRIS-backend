@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
@@ -190,21 +189,9 @@ public class PersonConverter {
                                                ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
         person.getExpertisesAndSkills().stream()
             .sorted(Comparator.comparing(ExpertiseOrSkill::getId))
-            .forEach(expertiseOrSkill -> {
-                var dto = new ExpertiseOrSkillResponseDTO();
-                dto.setId(expertiseOrSkill.getId());
-                dto.setName(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                        expertiseOrSkill.getName()));
-                dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                    expertiseOrSkill.getDescription()));
-
-                dto.setProofs(new ArrayList<>());
-                expertiseOrSkill.getProofs().forEach(proof -> {
-                    dto.getProofs().add(DocumentFileConverter.toDTO(proof));
-                });
-                expertisesOrSkills.add(dto);
-            });
+            .forEach(expertiseOrSkill ->
+                expertisesOrSkills.add(ExpertiseOrSkillConverter.toDTO(expertiseOrSkill))
+            );
     }
 
     public static PersonUserResponseDTO toDTOWithUser(Person person) {

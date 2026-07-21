@@ -14,7 +14,7 @@ import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 
 @RestController
-@RequestMapping("/api/revisions")
+@RequestMapping("/api/revision")
 @RequiredArgsConstructor
 public class RevisionController {
 
@@ -37,10 +37,10 @@ public class RevisionController {
             .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping(value = "/quality-report/{entityType}/{entityId}/at", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<QualityReportResponseDTO> getQualityReportAtDate(@PathVariable String entityType,
-                                                                 @PathVariable Integer entityId,
-                                                                 @RequestParam Instant timestamp) {
-        return revisionService.getQualityReportAtTimestamp(entityType, entityId, timestamp);
+    @GetMapping(value = "/quality-report/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<QualityReportResponseDTO> getQualityReportForEntity(@PathVariable String entityType,
+                                                                    @PathVariable
+                                                                    Integer entityId) {
+        return revisionService.getQualityReportForEntity(entityType, entityId);
     }
 }

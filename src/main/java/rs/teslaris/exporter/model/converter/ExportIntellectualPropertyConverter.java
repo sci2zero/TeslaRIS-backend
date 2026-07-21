@@ -18,7 +18,7 @@ import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 
-public class ExportPatentConverter extends ExportConverterBase {
+public class ExportIntellectualPropertyConverter extends ExportConverterBase {
 
     public static Patent toOpenaireModel(ExportDocument exportDocument,
                                          boolean supportLegacyIdentifiers,
@@ -30,11 +30,12 @@ public class ExportPatentConverter extends ExportConverterBase {
             typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
+            openairePatent.setOldId("Intellectual-property/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
             openairePatent.setOldId(
-                "Patents/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId() +
+                "Intellectual-property/" + IdentifierUtil.identifierPrefix +
+                    exportDocument.getDatabaseId() +
                     identifierTypeSuffix);
         }
 
@@ -78,62 +79,62 @@ public class ExportPatentConverter extends ExportConverterBase {
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
                                List<String> supportedLanguages,
                                Map<String, String> typeToIdentifierSuffixMapping) {
-        var dcPatent = new DC();
-        dcPatent.getType().add(new DCType("model", null, null));
-        dcPatent.getSource().add(repositoryName);
+        var dcIntellectualProperty = new DC();
+        dcIntellectualProperty.getType().add(new DCType("model", null, null));
+        dcIntellectualProperty.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            dcPatent.getIdentifier().add(legacyIdentifierPrefix +
+            dcIntellectualProperty.getIdentifier().add(legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         }
 
         var identifierTypeSuffix =
             typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
-        dcPatent.getIdentifier()
+        dcIntellectualProperty.getIdentifier()
             .add(identifierPrefix + exportDocument.getDatabaseId() + identifierTypeSuffix);
 
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
-            dcPatent.getIdentifier()
-                .add(baseFrontendUrl + lang + "/scientific-results/patent/" +
+            dcIntellectualProperty.getIdentifier()
+                .add(baseFrontendUrl + lang + "/scientific-results/intellectual-property/" +
                     exportDocument.getDatabaseId());
         });
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
-            dcPatent.getIdentifier().add("doi:" + exportDocument.getDoi());
+            dcIntellectualProperty.getIdentifier().add("doi:" + exportDocument.getDoi());
         }
 
         if (StringUtil.valueExists(exportDocument.getScopus())) {
-            dcPatent.getIdentifier().add("scopus:" + exportDocument.getScopus());
+            dcIntellectualProperty.getIdentifier().add("scopus:" + exportDocument.getScopus());
         }
 
         if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
-            dcPatent.getIdentifier().add("openalex:" + exportDocument.getOpenAlex());
+            dcIntellectualProperty.getIdentifier().add("openalex:" + exportDocument.getOpenAlex());
         }
 
         if (StringUtil.valueExists(exportDocument.getWebOfScience())) {
-            dcPatent.getIdentifier().add("wos:" + exportDocument.getWebOfScience());
+            dcIntellectualProperty.getIdentifier().add("wos:" + exportDocument.getWebOfScience());
         }
 
         addContentToList(
             exportDocument.getTitle(),
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
-            (content, languageTag) -> dcPatent.getTitle()
+            (content, languageTag) -> dcIntellectualProperty.getTitle()
                 .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportDocument.getAuthors(),
             ExportContribution::getDisplayName,
-            content -> dcPatent.getCreator().add(content)
+            content -> dcIntellectualProperty.getCreator().add(content)
         );
 
         addContentToList(
             exportDocument.getDescription(),
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
-            (content, languageTag) -> dcPatent.getDescription()
+            (content, languageTag) -> dcIntellectualProperty.getDescription()
                 .add(new DCMultilingualContent(content, languageTag))
         );
 
@@ -141,22 +142,22 @@ public class ExportPatentConverter extends ExportConverterBase {
             exportDocument.getKeywords(),
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
-            (content, languageTag) -> dcPatent.getSubject()
+            (content, languageTag) -> dcIntellectualProperty.getSubject()
                 .add(new DCMultilingualContent(content.replace("\n", "; "), languageTag))
         );
 
         addContentToList(
             exportDocument.getFileFormats(),
             Functions.identity(),
-            content -> dcPatent.getFormat().add(content)
+            content -> dcIntellectualProperty.getFormat().add(content)
         );
 
-        dcPatent.getRights().add(
+        dcIntellectualProperty.getRights().add(
             (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
                 "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
-        dcPatent.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
+        dcIntellectualProperty.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
 
-        return dcPatent;
+        return dcIntellectualProperty;
     }
 }

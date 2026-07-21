@@ -34,8 +34,9 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -142,7 +143,7 @@ public class DocumentAssessmentClassificationServiceTest {
         // Given
         var document = new JournalPublication();
         document.setId(1);
-        document.setDocumentDate("2023-05-15");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 15));
 
         var classificationDTO = new DocumentAssessmentClassificationDTO();
         classificationDTO.setDocumentId(1);
@@ -174,7 +175,7 @@ public class DocumentAssessmentClassificationServiceTest {
     void shouldThrowExceptionWhenDocumentNotFound() {
         var document = new JournalPublication();
         document.setId(1);
-        document.setDocumentDate("2023-05-15");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 15));
 
         var classificationDTO = new DocumentAssessmentClassificationDTO();
         classificationDTO.setDocumentId(1);
@@ -193,7 +194,7 @@ public class DocumentAssessmentClassificationServiceTest {
     void shouldThrowExceptionWhenDocumentHasNoPublicationDate() {
         var document = new JournalPublication();
         document.setId(1);
-        document.setDocumentDate("2023-05-15");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 15));
 
         var classificationDTO = new DocumentAssessmentClassificationDTO();
         classificationDTO.setDocumentId(1);
@@ -211,14 +212,14 @@ public class DocumentAssessmentClassificationServiceTest {
     void shouldEditDocumentAssessmentClassification() {
         var document = new JournalPublication();
         document.setId(1);
-        document.setDocumentDate("2023-05-15");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 15));
 
         var classificationDTO = new DocumentAssessmentClassificationDTO();
         classificationDTO.setDocumentId(1);
         classificationDTO.setCommissionId(1);
 
         var classification = new DocumentAssessmentClassification();
-        classification.setDocument(new Dataset());
+        classification.setDocument(new IntangibleProduct());
         classification.setDocumentType(classification.getDocument().getDocumentType());
         classification.setId(1);
 
@@ -241,7 +242,7 @@ public class DocumentAssessmentClassificationServiceTest {
         // Given
         var document = new JournalPublication();
         document.setId(1);
-        document.setDocumentDate("2023-05-15");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 15));
 
         var classificationDTO = new DocumentAssessmentClassificationDTO();
         classificationDTO.setDocumentId(1);

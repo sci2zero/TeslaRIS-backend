@@ -56,17 +56,17 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BibliographicFormat;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
@@ -1027,10 +1027,10 @@ public class DocumentPublicationServiceTest {
     void shouldArchiveDocument() {
         // Given
         var documentId = 1;
-        var document = new Patent();
+        var document = new IntellectualProperty();
         document.setId(documentId);
         document.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
-        document.setDocumentDate("2023-05-01");
+        document.setDocumentDate(new FlexibleDate(2023, 5, 1));
 
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
@@ -1064,7 +1064,7 @@ public class DocumentPublicationServiceTest {
         var document = new IntangibleProduct();
         document.setId(documentId);
         document.setTitle(new HashSet<>());
-        document.setDocumentDate("2023-01-01");
+        document.setDocumentDate(new FlexibleDate(2023, 6));
 
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
@@ -1078,7 +1078,7 @@ public class DocumentPublicationServiceTest {
     void shouldUnarchiveDocument() {
         // Given
         var documentId = 4;
-        var document = new Dataset();
+        var document = new IntangibleProduct();
         document.setId(documentId);
         document.setIsArchived(true);
 
@@ -1235,7 +1235,7 @@ public class DocumentPublicationServiceTest {
     @Test
     void whenAllAuthorIdsAreNonPositiveThenNotifyAdmins() {
         // Given
-        var doc = new Dataset();
+        var doc = new IntangibleProduct();
         doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
             setAffiliationStatement(new AffiliationStatement() {{
                 setDisplayPersonName(
@@ -1385,7 +1385,7 @@ public class DocumentPublicationServiceTest {
     void shouldUpdateOnlyNonEmptyIdentifiers() {
         // Given
         var documentId = 2;
-        var document = new Patent();
+        var document = new IntellectualProperty();
         document.setId(documentId);
         document.setDoi("old-doi");
         document.setScopusId("old-scopus");
