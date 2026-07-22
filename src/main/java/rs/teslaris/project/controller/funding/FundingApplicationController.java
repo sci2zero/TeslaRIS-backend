@@ -114,4 +114,10 @@ public class FundingApplicationController {
             submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo,
             pageable);
     }
+
+    @GetMapping("/{fundingApplicationId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_APPLICATIONS')")
+    public boolean canEditFundingApplication() {
+        return true;
+    }
 }
