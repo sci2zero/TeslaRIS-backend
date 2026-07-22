@@ -3,6 +3,7 @@ package rs.teslaris.core.model.commontypes;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -89,5 +90,27 @@ public class FlexibleDate {
     public static FlexibleDate now() {
         var today = LocalDate.now();
         return new FlexibleDate(today.getYear(), today.getMonthValue(), today.getDayOfMonth());
+    }
+
+    @Nullable
+    public static LocalDate toLocalDate(FlexibleDate flexibleDate) {
+        if (!isDatePresentAndValid(flexibleDate)) {
+            return null;
+        }
+
+        if (Objects.isNull(flexibleDate.getMonth()) || Objects.isNull(flexibleDate.getDay())) {
+            return null;
+        }
+
+        try {
+            return LocalDate.of(
+                flexibleDate.getYear(),
+                flexibleDate.getMonth(),
+                flexibleDate.getDay()
+            );
+        } catch (DateTimeException e) {
+            // Invalid date (e.g., February 30th, April 31st, etc.)
+            return null;
+        }
     }
 }

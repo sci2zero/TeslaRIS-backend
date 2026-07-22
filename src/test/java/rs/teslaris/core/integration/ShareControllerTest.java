@@ -14,7 +14,7 @@ public class ShareControllerTest extends BaseTest {
     public void testReadIntangibleProduct() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/share/document/INTANGIBLE_PRODUCT/{id}/en", 7)
+                    "http://localhost:8081/api/share/document/INTANGIBLE_PRODUCT/{id}/en", 13)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }
