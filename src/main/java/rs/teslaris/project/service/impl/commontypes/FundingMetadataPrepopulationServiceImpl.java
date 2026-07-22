@@ -13,6 +13,7 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.project.dto.funding.PrepopulatedFundingMetadataDTO;
 import rs.teslaris.project.service.interfaces.commontypes.FundingMetadataPrepopulationService;
@@ -76,7 +77,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
 
         metadata.setDoi(message.path("DOI").asText(null));
         metadata.setGrantAgreementId(message.path("award").asText(null));
-        metadata.setDateAwarded(parseDateParts(message.path("issued").path("date-parts")));
+        metadata.setDateAwarded(StringUtil.parseDateParts(message.path("issued").path("date-parts")));
 
         var resourceUrl = message.path("resource").path("primary").path("URL").asText(null);
         metadata.getUris().add(
@@ -85,7 +86,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
         var projectsNode = message.path("project");
         if (projectsNode.isArray() && !projectsNode.isEmpty()) {
             // Crossref's grant JSON schema doesn't have grant-level attributes like name, description, dates...
-            // I couldn't find any grants on Crossref that contains multiple projects, so I pulled the data from the
+            // I couldn't find any grants on Crossref that contain multiple projects, so I pulled the data from the
             // single one that was always there
             populateFromProject(metadata, projectsNode.get(0));
 
@@ -125,8 +126,8 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
             }
         });
 
-        metadata.setDateFrom(parseDateParts(projectNode.path("award-start").path("date-parts")));
-        metadata.setDateTo(parseDateParts(projectNode.path("award-end").path("date-parts")));
+        metadata.setDateFrom(StringUtil.parseDateParts(projectNode.path("award-start").path("date-parts")));
+        metadata.setDateTo(StringUtil.parseDateParts(projectNode.path("award-end").path("date-parts")));
 
         var awardAmountNode = projectNode.path("award-amount");
         if (!awardAmountNode.isMissingNode()) {
@@ -161,24 +162,6 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
                 }
             }
         }
-    }
-
-    @Nullable
-    private String parseDateParts(JsonNode dateParts) {
-        if (!dateParts.isArray() || dateParts.isEmpty()) {
-            return null;
-        }
-
-        var firstDate = dateParts.get(0);
-        if (!firstDate.isArray() || firstDate.isEmpty()) {
-            return null;
-        }
-
-        var year = firstDate.get(0).asInt();
-        var month = firstDate.size() > 1 ? firstDate.get(1).asInt() : 1;
-        var day = firstDate.size() > 2 ? firstDate.get(2).asInt() : 1;
-
-        return String.format("%04d-%02d-%02d", year, month, day);
     }
 
     private boolean looksLikeAbbreviation(String title) {
