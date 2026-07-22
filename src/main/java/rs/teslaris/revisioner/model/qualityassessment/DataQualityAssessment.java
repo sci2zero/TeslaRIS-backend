@@ -49,47 +49,44 @@ public class DataQualityAssessment extends BaseEntity {
     @JoinColumn(name = "revision_id")
     private EntityRevision revision;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "profile_name", nullable = false, length = 100)
     private String profileName;
 
-    @Column(nullable = false, length = 30)
+    @Column(name = "profile_version", nullable = false, length = 30)
     private String profileVersion;
 
     /**
      * Version of the validator implementation.
      * Useful when rules change without profile changes.
      */
-    @Column(nullable = false, length = 100)
+    @Column(name = "engine_version", nullable = false, length = 100)
     private String engineVersion;
 
-    @Column(nullable = false)
+    @Column(name = "started_at", nullable = false)
     private Instant startedAt;
 
-    @Column(nullable = false)
+    @Column(name = "finished_at", nullable = false)
     private Instant finishedAt;
 
-    @Column(nullable = false)
+    @Column(name = "quality_score", nullable = false)
     private Double qualityScore;
 
-    @Column(nullable = false)
+    @Column(name = "valid", nullable = false)
     private Boolean valid;
 
-    @Column(nullable = false)
+    @Column(name = "passed_rules", nullable = false)
     private Integer passedRules;
 
-    @Column(nullable = false)
-    private Integer warningRules;
+    @Column(name = "warning_failed_rules", nullable = false)
+    private Integer warningFailedRules;
 
-    @Column(nullable = false)
-    private Integer failedRules;
+    @Column(name = "error_failed_rules", nullable = false)
+    private Integer errorFailedRules;
 
-    @Column(nullable = false)
+    @Column(name = "total_points", nullable = false)
     private Double totalPoints;
 
-    @Column(nullable = false)
-    private Double achievedPointsRaw;
-
-    @Column(nullable = false)
+    @Column(name = "achieved_points_normalised", nullable = false)
     private Double achievedPointsNormalised;
 
     @JdbcTypeCode(SqlTypes.JSON)

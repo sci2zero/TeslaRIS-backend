@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
@@ -45,8 +46,7 @@ public class DataQualityAssessmentListener {
                 .startedAt(Instant.now())
                 .build();
 
-            var targetType = getTargetTypeFromEntityType(
-                EntityType.valueOf(event.entityRevision().getEntityType()));
+            var targetType = resolveTargetType(event.entityRevision().getEntityType());
 
             if (Objects.isNull(targetType)) {
                 log.error("Unable to find target type for {} and entity id {{}}",
@@ -61,6 +61,19 @@ public class DataQualityAssessmentListener {
 
             entityRevisionRepository.save(event.entityRevision());
         });
+    }
+
+    private String resolveTargetType(String entityType) {
+        try {
+            return getTargetTypeFromEntityType(EntityType.valueOf(entityType));
+        } catch (IllegalArgumentException ex) {
+            try {
+                DocumentPublicationType.valueOf(entityType);
+                return getTargetTypeFromEntityType(EntityType.PUBLICATION);
+            } catch (IllegalArgumentException ignored) {
+                throw ex;
+            }
+        }
     }
 
     @Nullable

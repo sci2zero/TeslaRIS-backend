@@ -65,7 +65,7 @@ public class IntangibleProductControllerTest extends BaseTest {
     public void testReadIntangibleProduct() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/intangible-product/{intangibleProductId}", 7)
+                    "http://localhost:8081/api/intangible-product/{intangibleProductId}", 13)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 

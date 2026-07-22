@@ -83,6 +83,10 @@ public class DataQualityAssessmentConfigurationLoader {
         return dataQualityProfiles.get(profileName.toLowerCase()).version();
     }
 
+    public static Map<String, Double> getTargetWeights(String profileName) {
+        return dataQualityProfiles.get(profileName.toLowerCase()).targetWeights();
+    }
+
     public static Set<MultiLingualContent> getDataQualityRemark(String profile, String issueKey,
                                                                 Object... params) {
         var remark = getRemark(profile.toLowerCase(), issueKey);
@@ -103,35 +107,43 @@ public class DataQualityAssessmentConfigurationLoader {
         return new Triple<>(remark.severity(), remark.dimension(), remark.blocking());
     }
 
-    public static double getIssuePoints(String profile, String issueKey) {
-        var remark = getRemark(profile, issueKey);
+    public static double getIssuePoints(String profileName, String issueKey) {
+        var remark = getRemark(profileName, issueKey);
+        var targetWeights = getTargetWeights(profileName);
 
-        return Objects.isNull(remark) ? 0 : remark.points();
+        return Objects.isNull(remark) ? 0 :
+            remark.points() * targetWeights.getOrDefault(remark.target(), 1.0);
     }
 
     public static int getTotalRuleCount(String profile, String targetPrefix) {
-        return Math.toIntExact(getProfile(profile).values().stream()
-            .filter(remark -> Objects.nonNull(remark.target()))
-            .filter(remark -> remark.target().startsWith(targetPrefix))
-            .count());
+        return Math.toIntExact(
+            getRemarksForProfile(profile).values().stream()
+                .filter(remark -> Objects.nonNull(remark.target()))
+                .filter(remark -> remark.target().startsWith(targetPrefix))
+                .count()
+        );
     }
 
-    public static double getTotalPointsRaw(String profile, String targetPrefix) {
-        return getProfile(profile).values().stream()
+    public static double getTotalPointsWeighed(String profileName, String targetPrefix) {
+        var targetWeights = getTargetWeights(profileName);
+
+        return getRemarksForProfile(profileName).values().stream()
             .filter(remark -> Objects.nonNull(remark.target()))
             .filter(remark -> remark.target().startsWith(targetPrefix))
-            .mapToDouble(DataQualityRemark::points)
-            .sum();
+            .mapToDouble(remark ->
+                remark.points * targetWeights.getOrDefault(remark.target, 1.0)
+            ).sum();
     }
 
-    private static Map<String, DataQualityRemark> getProfile(String profile) {
+    private static Map<String, DataQualityRemark> getRemarksForProfile(String profile) {
         return dataQualityProfiles.getOrDefault(profile,
-            new DataQualityProfile("1.0.0", Collections.emptyMap())).dataQualityRemarks();
+                new DataQualityProfile("1.0.0", Collections.emptyMap(), Collections.emptyMap()))
+            .dataQualityRemarks();
     }
 
     @Nullable
     private static DataQualityRemark getRemark(String profile, String issueKey) {
-        var remark = getProfile(profile.toLowerCase()).get(issueKey);
+        var remark = getRemarksForProfile(profile.toLowerCase()).get(issueKey);
 
         if (Objects.isNull(remark)) {
             log.error("Missing issue '{}' in profile '{}'", issueKey, profile);
@@ -151,6 +163,9 @@ public class DataQualityAssessmentConfigurationLoader {
     private record DataQualityProfile(
         @JsonProperty(value = "version", required = true)
         String version,
+
+        @JsonProperty(value = "targetWeights", required = true)
+        Map<String, Double> targetWeights,
 
         @JsonProperty(value = "dataQualityRemarks", required = true)
         Map<String, DataQualityRemark> dataQualityRemarks

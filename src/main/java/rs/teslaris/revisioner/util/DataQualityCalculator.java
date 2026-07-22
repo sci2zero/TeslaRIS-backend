@@ -55,6 +55,7 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.util.search.CollectionOperations;
@@ -150,6 +151,8 @@ public class DataQualityCalculator {
     private final CountryRepository countryRepository;
 
     private final LanguageRepository languageRepository;
+
+    private final PublisherRepository publisherRepository;
 
     private final RestTemplateProvider restTemplateProvider;
 
@@ -484,7 +487,88 @@ public class DataQualityCalculator {
             }
         }
 
-        // TODO: metadataLicenseMissing
+        if (dto instanceof IntellectualPropertyDTO intellectualProperty) {
+            var dateRequested =
+                FlexibleDateConverter.fromDTO(intellectualProperty.getDateRequested());
+
+            if (!FlexibleDate.isDatePresentAndValid(dateRequested)) {
+                reportIssue(assessment, "dateRequestedMissing");
+            } else {
+                var localDate = FlexibleDate.toLocalDate(dateRequested);
+
+                if (Objects.isNull(localDate)) {
+                    reportIssue(assessment, "dateRequestedInvalid");
+                }
+
+                if (Objects.nonNull(localDate) &&
+                    localDate.isBefore(LocalDate.of(1950, 1, 1))) {
+                    reportIssue(
+                        assessment,
+                        "dateRequestedBefore1950",
+                        FlexibleDate.toISOString(dateRequested));
+                }
+
+                if (Objects.nonNull(localDate) && localDate.isAfter(LocalDate.now())) {
+                    reportIssue(
+                        assessment,
+                        "dateRequestedAfterCurrentDate",
+                        FlexibleDate.toISOString(dateRequested));
+                }
+            }
+
+            var dateFilingPriority =
+                FlexibleDateConverter.fromDTO(intellectualProperty.getDateFilingPriority());
+
+            if (!FlexibleDate.isDatePresentAndValid(dateFilingPriority)) {
+                reportIssue(assessment, "dateFilingPriorityMissing");
+            } else {
+                var localDate = FlexibleDate.toLocalDate(dateFilingPriority);
+
+                if (Objects.isNull(localDate)) {
+                    reportIssue(assessment, "dateFilingPriorityInvalid");
+                }
+
+                if (Objects.nonNull(localDate) &&
+                    localDate.isBefore(LocalDate.of(1950, 1, 1))) {
+                    reportIssue(
+                        assessment,
+                        "dateFilingPriorityBefore1950",
+                        FlexibleDate.toISOString(dateFilingPriority));
+                }
+
+                if (Objects.nonNull(localDate)) {
+                    var dateRequestedLocalDate = FlexibleDate.toLocalDate(dateRequested);
+                    if (Objects.nonNull(dateRequestedLocalDate) &&
+                        localDate.isAfter(dateRequestedLocalDate)) {
+                        reportIssue(
+                            assessment,
+                            "dateFilingPriorityAfterRequestDate",
+                            FlexibleDate.toISOString(dateFilingPriority),
+                            FlexibleDate.toISOString(dateRequested));
+                    }
+                }
+            }
+
+            var dateEndTerm = FlexibleDateConverter.fromDTO(intellectualProperty.getDateTo());
+
+            if (!FlexibleDate.isDatePresentAndValid(dateEndTerm)) {
+                reportIssue(assessment, "dateEndTermMissing");
+            } else {
+                var localDate = FlexibleDate.toLocalDate(dateEndTerm);
+
+                if (Objects.isNull(localDate)) {
+                    reportIssue(assessment, "dateEndTermInvalid");
+                }
+
+                if (Objects.nonNull(localDate) &&
+                    localDate.isBefore(LocalDate.of(1950, 1, 1))) {
+                    reportIssue(
+                        assessment,
+                        "dateEndTermBefore1950",
+                        FlexibleDate.toISOString(dateEndTerm));
+                }
+            }
+        }
     }
 
     private void assessEntity(EventDTO dto, DataQualityAssessment assessment) {
@@ -1289,12 +1373,12 @@ public class DataQualityCalculator {
     private void finishUpAssessment(DataQualityAssessment assessment, String target) {
         assessment.setFinishedAt(Instant.now());
 
-        assessment.setFailedRules(
+        assessment.setErrorFailedRules(
             (int) assessment.getIssues().stream()
                 .filter(i -> i.getSeverity().equals(IssueSeverity.ERROR))
                 .count());
 
-        assessment.setWarningRules(
+        assessment.setWarningFailedRules(
             (int) assessment.getIssues().stream()
                 .filter(i -> i.getSeverity().equals(IssueSeverity.WARNING))
                 .count());
@@ -1302,10 +1386,10 @@ public class DataQualityCalculator {
         assessment.setPassedRules(
             DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
                 assessment.getProfileName(), target)
-                - assessment.getFailedRules()
-                - assessment.getWarningRules());
+                - assessment.getErrorFailedRules()
+                - assessment.getWarningFailedRules());
 
-        double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsRaw(
+        double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
             assessment.getProfileName(), target);
 
         assessment.setTotalPoints(totalPoints);
@@ -1317,7 +1401,7 @@ public class DataQualityCalculator {
                     issue.getKey()))
             .sum();
 
-        assessment.setAchievedPointsRaw(totalPoints - deductedPoints);
+        assessment.setAchievedPointsNormalised(totalPoints - deductedPoints);
 
         assessment.setValid(
             assessment.getIssues().stream().noneMatch(DataQualityIssue::isBlocking)

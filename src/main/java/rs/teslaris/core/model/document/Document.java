@@ -1,7 +1,10 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
@@ -68,7 +71,13 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @Column(name = "document_date")
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "year", column = @Column(name = "document_date_year")),
+        @AttributeOverride(name = "month", column = @Column(name = "document_date_month")),
+        @AttributeOverride(name = "day", column = @Column(name = "document_date_day")),
+        @AttributeOverride(name = "text", column = @Column(name = "document_date_text"))
+    })
     private FlexibleDate documentDate;
 
     @ManyToMany(fetch = FetchType.LAZY)
