@@ -25,7 +25,10 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.revisioner.converter.DataQualityAssessmentConverter;
+import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
@@ -46,7 +49,7 @@ import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfiguratio
 @Slf4j
 public class RevisionServiceImpl implements RevisionService {
 
-    private final EntityRevisionRepository repository;
+    private final EntityRevisionRepository revisionRepository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
 
@@ -94,7 +97,7 @@ public class RevisionServiceImpl implements RevisionService {
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, newJson));
 
-            repository.save(revision);
+            revisionRepository.save(revision);
 
             log.info(
                 "Created {} revision for entity '{}' (ID={}), revisionId={}, hash={}.",
@@ -128,7 +131,7 @@ public class RevisionServiceImpl implements RevisionService {
     @Override
     @Transactional(readOnly = true)
     public List<Instant> getRevisionTimestamps(String entityType, Integer entityId) {
-        return repository
+        return revisionRepository
             .findByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .stream()
             .map(EntityRevision::getRevisionTimestamp)
@@ -142,7 +145,7 @@ public class RevisionServiceImpl implements RevisionService {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(entityType);
 
-        return repository
+        return revisionRepository
             .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
                 entityType,
                 entityId,
@@ -175,7 +178,7 @@ public class RevisionServiceImpl implements RevisionService {
     @Transactional(readOnly = true)
     public List<QualityReportResponseDTO> getQualityReportForEntity(String entityType,
                                                                     Integer entityId) {
-        var entityRevision = repository
+        var entityRevision = revisionRepository
             .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
 
         if (entityRevision.isEmpty()) {
@@ -191,6 +194,7 @@ public class RevisionServiceImpl implements RevisionService {
             assessment.getIssues().forEach(issue -> {
                 var remarks = DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
                     assessment.getProfileName(),
+                    assessment.getProfileVersion(),
                     issue.getKey(),
                     issue.getParameters().toArray()
                 );
@@ -216,6 +220,19 @@ public class RevisionServiceImpl implements RevisionService {
         });
 
         return qualityReport;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DataQualityAssessmentDTO> findLatestAssessmentsForEntity(String entityType,
+                                                                         Integer entityId) {
+        var entityRevision = revisionRepository
+            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .orElseThrow(() -> new NotFoundException(
+                "No data quality assessment found for " + entityType + " with ID " + entityId +
+                    "."));
+
+        return entityRevision.getAssessments().stream().map(DataQualityAssessmentConverter::toDTO)
+            .toList();
     }
 
     private String canonicalize(String json, String entityType)

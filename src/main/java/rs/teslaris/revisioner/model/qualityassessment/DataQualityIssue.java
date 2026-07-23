@@ -22,6 +22,8 @@ public class DataQualityIssue {
 
     private IssueSeverity severity;
 
+    private String target;
+
     private QualityDimension dimension;
 
     private boolean blocking;

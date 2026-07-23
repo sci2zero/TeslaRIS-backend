@@ -508,4 +508,11 @@ public class StringUtil {
             })
             .toArray();
     }
+
+    public static String stripExtension(String filename) {
+        int index = filename.lastIndexOf('.');
+        return index == -1
+            ? filename
+            : filename.substring(0, index);
+    }
 }

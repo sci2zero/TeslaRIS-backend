@@ -9,7 +9,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -93,4 +95,10 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(columnDefinition = "jsonb", nullable = false)
     @Builder.Default
     private List<DataQualityIssue> issues = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", nullable = false)
+    @Builder.Default
+    private Map<QualityDimension, DimensionScore> dimensionScores =
+        new EnumMap<>(QualityDimension.class);
 }

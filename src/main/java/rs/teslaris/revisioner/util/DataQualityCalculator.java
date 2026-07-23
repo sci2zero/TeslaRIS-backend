@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,9 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
+import rs.teslaris.revisioner.model.qualityassessment.DimensionScore;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 
@@ -1198,7 +1201,7 @@ public class DataQualityCalculator {
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "researchAreasMissing");
+            reportIssue(assessment, "contributionResearchAreasMissing");
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1351,7 +1354,10 @@ public class DataQualityCalculator {
 
         var severityAndDimension =
             DataQualityAssessmentConfigurationLoader.getIssueSeverityAndDimension(
-                assessment.getProfileName(), issueKey);
+                assessment.getProfileName(),
+                assessment.getProfileVersion(),
+                issueKey
+            );
 
         if (Objects.isNull(severityAndDimension)) {
             return;
@@ -1375,36 +1381,106 @@ public class DataQualityCalculator {
 
         assessment.setErrorFailedRules(
             (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity().equals(IssueSeverity.ERROR))
+                .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
                 .count());
 
         assessment.setWarningFailedRules(
             (int) assessment.getIssues().stream()
-                .filter(i -> i.getSeverity().equals(IssueSeverity.WARNING))
+                .filter(i -> i.getSeverity() == IssueSeverity.WARNING)
                 .count());
 
         assessment.setPassedRules(
             DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
-                assessment.getProfileName(), target)
+                assessment.getProfileName(),
+                assessment.getProfileVersion(),
+                target)
                 - assessment.getErrorFailedRules()
-                - assessment.getWarningFailedRules());
+                - assessment.getWarningFailedRules()
+        );
 
-        double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
-            assessment.getProfileName(), target);
+        double totalPoints =
+            DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
+                assessment.getProfileName(),
+                assessment.getProfileVersion(),
+                target
+            );
 
         assessment.setTotalPoints(totalPoints);
 
-        double deductedPoints = assessment.getIssues().stream()
-            .mapToDouble(issue ->
-                DataQualityAssessmentConfigurationLoader.getIssuePoints(
-                    assessment.getProfileName(),
-                    issue.getKey()))
-            .sum();
+        double deductedPoints = 0;
 
-        assessment.setAchievedPointsNormalised(totalPoints - deductedPoints);
+        EnumMap<QualityDimension, Double> deductedPerDimension =
+            new EnumMap<>(QualityDimension.class);
+
+        for (var issue : assessment.getIssues()) {
+            var remark =
+                DataQualityAssessmentConfigurationLoader.getIssue(
+                    assessment.getProfileName(),
+                    assessment.getProfileVersion(),
+                    issue.getKey()
+                );
+
+            if (Objects.isNull(remark)) {
+                continue;
+            }
+
+            double weightedPoints =
+                DataQualityAssessmentConfigurationLoader.getWeightedPoints(
+                    assessment.getProfileName(),
+                    assessment.getProfileVersion(),
+                    remark
+                );
+
+            deductedPoints += weightedPoints;
+
+            deductedPerDimension.merge(
+                remark.dimension(),
+                weightedPoints,
+                Double::sum);
+        }
+
+        double achievedPoints = totalPoints - deductedPoints;
+
+        assessment.setAchievedPointsNormalised(achievedPoints);
+
+        EnumMap<QualityDimension, DimensionScore> dimensionScores =
+            new EnumMap<>(QualityDimension.class);
+
+        for (var dimension : QualityDimension.values()) {
+            double dimensionTotal =
+                DataQualityAssessmentConfigurationLoader
+                    .getTotalPointsWeighed(
+                        assessment.getProfileName(),
+                        assessment.getProfileVersion(),
+                        target,
+                        dimension
+                    );
+
+            if (dimensionTotal == 0) {
+                continue;
+            }
+
+            double achieved =
+                dimensionTotal - deductedPerDimension.getOrDefault(dimension, 0.0);
+
+            dimensionScores.put(
+                dimension,
+                new DimensionScore(
+                    dimensionTotal,
+                    achieved,
+                    achieved / dimensionTotal * 100.0));
+        }
+
+        assessment.setDimensionScores(dimensionScores);
+
+        assessment.setQualityScore(
+            totalPoints == 0
+                ? 100.0
+                : achievedPoints / totalPoints * 100.0
+        );
 
         assessment.setValid(
-            assessment.getIssues().stream().noneMatch(DataQualityIssue::isBlocking)
-        );
+            assessment.getIssues().stream()
+                .noneMatch(DataQualityIssue::isBlocking));
     }
 }

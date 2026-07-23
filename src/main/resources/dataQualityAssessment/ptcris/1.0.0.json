@@ -1,5 +1,4 @@
 {
-  "version": "1.0.0",
   "targetWeights": {
     "Document.title": 5,
     "Document.description": 5,

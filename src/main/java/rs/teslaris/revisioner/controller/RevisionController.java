@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 
@@ -42,5 +43,11 @@ public class RevisionController {
                                                                     @PathVariable
                                                                     Integer entityId) {
         return revisionService.getQualityReportForEntity(entityType, entityId);
+    }
+
+    @GetMapping(value = "/assessments/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<DataQualityAssessmentDTO> findOne(@PathVariable String entityType,
+                                                  @PathVariable Integer entityId) {
+        return revisionService.findLatestAssessmentsForEntity(entityType, entityId);
     }
 }

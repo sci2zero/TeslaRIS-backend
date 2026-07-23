@@ -1,6 +1,5 @@
 package rs.teslaris.revisioner.util.dataquality;
 
-import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +40,7 @@ public class DataQualityAssessmentListener {
                 .revision(event.entityRevision())
                 .engineVersion("1.0.0")
                 .profileVersion(
-                    DataQualityAssessmentConfigurationLoader.getProfileVersion(profileName))
+                    DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName))
                 .profileName(profileName)
                 .startedAt(Instant.now())
                 .build();
@@ -65,30 +64,16 @@ public class DataQualityAssessmentListener {
 
     private String resolveTargetType(String entityType) {
         try {
-            return getTargetTypeFromEntityType(EntityType.valueOf(entityType));
+            return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
+                EntityType.valueOf(entityType));
         } catch (IllegalArgumentException ex) {
             try {
                 DocumentPublicationType.valueOf(entityType);
-                return getTargetTypeFromEntityType(EntityType.PUBLICATION);
+                return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
+                    EntityType.PUBLICATION);
             } catch (IllegalArgumentException ignored) {
                 throw ex;
             }
         }
-    }
-
-    @Nullable
-    private String getTargetTypeFromEntityType(EntityType entityType) {
-        return switch (entityType) {
-            case BOOK_SERIES -> "PubSeries";
-            case PUBLICATION, MONOGRAPH, PROCEEDINGS -> "Document";
-            case EVENT, CONFERENCE, EXHIBITION, COURSE, OTHER_EVENT -> "Event";
-            case JOURNAL -> "PublicationSeries";
-            case ORGANISATION_UNIT -> "OrganisationUnit";
-            case PERSON -> "Person";
-            case PUBLISHER -> "Publisher";
-            case PRIZE -> "Prize";
-            case PROJECT -> "Project";
-            default -> null;
-        };
     }
 }
