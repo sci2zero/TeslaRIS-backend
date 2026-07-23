@@ -212,8 +212,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         } else {
             project.setCosts(null);
         }
-
-        rebuildTeam(project, projectDTO);
     }
 
     private void clearCommonFields(Project project) {
@@ -223,15 +221,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getKeywords().clear();
         project.getResearchAreas().clear();
         project.getTeam().clear();
-    }
-
-    private void rebuildTeam(Project project, ProjectDTO projectDTO) {
-        if (Objects.isNull(project.getTeam())) {
-            project.setTeam(new HashSet<>());
-        }
-        projectDTO.getTeam().forEach(memberDto ->
-            project.getTeam().add(
-                personProjectContributionService.createContribution(memberDto, project)));
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {
@@ -263,6 +252,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         return index;
     }
+
+    // TODO: Add team member
+    // TODO: Remove team member
+    // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
                                          LocalDate dateTo) {
