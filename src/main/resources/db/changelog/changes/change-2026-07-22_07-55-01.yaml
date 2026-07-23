@@ -1,0 +1,1496 @@
+databaseChangeLog:
+- changeSet:
+    id: 1784706916091-90
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: educations_degree_code
+        constraintName: fk1te3gvp1fhf3gj7quqo1gtlrr
+- changeSet:
+    id: 1784706916091-91
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: datasets
+        constraintName: fk_l86bt5byltucmq4nys2lg51m1
+- changeSet:
+    id: 1784706916091-93
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: patents
+        constraintName: fk_xs5j7p42qs6paorhjcsgi8y5
+- changeSet:
+    id: 1784706916091-94
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: patents
+        constraintName: fkb0iip5t6qbcskdie1nn01djrw
+- changeSet:
+    id: 1784706916091-95
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: educations_degree_code
+        constraintName: fkia8vu8dy3ltg6kk4l73jneot6
+- changeSet:
+    id: 1784706916091-96
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: involvements_affiliation_statement
+        constraintName: fknb7pcfomihfplley2lk55r2ab
+- changeSet:
+    id: 1784706916091-97
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: datasets
+        constraintName: fktls08sh3qf1qtt5pa0nqohgfs
+- changeSet:
+    id: 1784706916091-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: achieved_points_normalised
+            type: FLOAT8
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: error_failed_rules
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: data_quality_assessment_pkey
+            name: id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: passed_rules
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: quality_score
+            type: FLOAT8
+        - column:
+            constraints:
+              nullable: false
+            name: revision_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: total_points
+            type: FLOAT8
+        - column:
+            constraints:
+              nullable: false
+            name: valid
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: warning_failed_rules
+            type: INTEGER
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: finished_at
+            type: TIMESTAMP WITH TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: started_at
+            type: TIMESTAMP WITH TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: profile_version
+            type: VARCHAR(30)
+        - column:
+            constraints:
+              nullable: false
+            name: engine_version
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: profile_name
+            type: VARCHAR(100)
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: issues
+            type: JSONB
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1784706916091-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: application_status
+            type: SMALLINT
+        - column:
+            constraints:
+              nullable: false
+            name: approve_status
+            type: SMALLINT
+        - column:
+            name: are_files_valid
+            type: BOOLEAN
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        - column:
+            name: country_id
+            type: INTEGER
+        - column:
+            name: date_filing_priority_day
+            type: INTEGER
+        - column:
+            name: date_filing_priority_month
+            type: INTEGER
+        - column:
+            name: date_filing_priority_year
+            type: INTEGER
+        - column:
+            name: date_requested_day
+            type: INTEGER
+        - column:
+            name: date_requested_month
+            type: INTEGER
+        - column:
+            name: date_requested_year
+            type: INTEGER
+        - column:
+            name: date_to_day
+            type: INTEGER
+        - column:
+            name: date_to_month
+            type: INTEGER
+        - column:
+            name: date_to_year
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            name: document_date_day
+            type: INTEGER
+        - column:
+            name: document_date_month
+            type: INTEGER
+        - column:
+            name: document_date_year
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: document_type
+            type: SMALLINT
+        - column:
+            name: event_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: intellectual_property_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: is_archived
+            type: BOOLEAN
+        - column:
+            name: is_metadata_valid
+            type: BOOLEAN
+        - column:
+            name: open_access
+            type: BOOLEAN
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        - column:
+            name: publication_status
+            type: SMALLINT
+        - column:
+            name: publisher_id
+            type: INTEGER
+        - column:
+            name: type
+            type: SMALLINT
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: date_filing_priority_text
+            type: VARCHAR(255)
+        - column:
+            name: date_requested_text
+            type: VARCHAR(255)
+        - column:
+            name: date_to_text
+            type: VARCHAR(255)
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        - column:
+            name: doi
+            type: VARCHAR(255)
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        - column:
+            name: number
+            type: VARCHAR(255)
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        - column:
+            name: scopus_id
+            type: VARCHAR(255)
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: web_of_science_id
+            type: VARCHAR(255)
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        - column:
+            name: merged_ids
+            type: JSONB
+        - column:
+            name: old_ids
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
+        tableName: intellectual_property
+- changeSet:
+    id: 1784706916091-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_display_publisher_pkey
+            name: display_publisher_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_display_publisher_pkey
+            name: document_id
+            type: INTEGER
+        tableName: documents_display_publisher
+- changeSet:
+    id: 1784706916091-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: educations_course_code_pkey
+            name: course_code_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: educations_course_code_pkey
+            name: education_id
+            type: INTEGER
+        tableName: educations_course_code
+- changeSet:
+    id: 1784706916091-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: expertise_or_skills_keywords_pkey
+            name: expertise_or_skill_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: expertise_or_skills_keywords_pkey
+            name: keywords_id
+            type: INTEGER
+        tableName: expertise_or_skills_keywords
+- changeSet:
+    id: 1784706916091-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: expertise_or_skills_research_areas_pkey
+            name: expertise_or_skill_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: expertise_or_skills_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: expertise_or_skills_research_areas
+- changeSet:
+    id: 1784706916091-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_display_organisation_unit_pkey
+            name: display_organisation_unit_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_display_organisation_unit_pkey
+            name: involvement_id
+            type: INTEGER
+        tableName: involvements_display_organisation_unit
+- changeSet:
+    id: 1784706916091-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_host_institutions_pkey
+            name: host_institutions_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_host_institutions_pkey
+            name: involvement_id
+            type: INTEGER
+        tableName: involvements_host_institutions
+- changeSet:
+    id: 1784706916091-9
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: revision_id
+        - column:
+            name: profile_name
+        - column:
+            name: profile_version
+        indexName: idx_dqa_revision_profile
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1784706916091-10
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: profile_name
+        - column:
+            name: profile_version
+        indexName: idx_dqa_profile
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1784706916091-11
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: quality_score
+        indexName: idx_dqa_score
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1784706916091-12
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_publisher_id
+        constraintName: documents_display_publisher_display_publisher_id_key
+        tableName: documents_display_publisher
+- changeSet:
+    id: 1784706916091-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: course_code_id
+        constraintName: educations_course_code_course_code_id_key
+        tableName: educations_course_code
+- changeSet:
+    id: 1784706916091-14
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: keywords_id
+        constraintName: expertise_or_skills_keywords_keywords_id_key
+        tableName: expertise_or_skills_keywords
+- changeSet:
+    id: 1784706916091-15
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_organisation_unit_id
+        constraintName: involvements_display_organisat_display_organisation_unit_id_key
+        tableName: involvements_display_organisation_unit
+- changeSet:
+    id: 1784706916091-16
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: data_quality_assessment_seq
+        startValue: 1
+- changeSet:
+    id: 1784706916091-17
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            defaultValueBoolean: false
+            type: BOOLEAN
+        tableName: expertise_or_skills
+- changeSet:
+    id: 1784706916091-18
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-19
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-20
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-21
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-22
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-23
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-24
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-25
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-26
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-27
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_day
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1784706916091-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-34
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-35
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-36
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-37
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-38
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-39
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-40
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-41
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_month
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1784706916091-42
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-43
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-44
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-45
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-46
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-47
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-48
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-49
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-50
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-51
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-52
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-53
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_year
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1784706916091-54
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-55
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-56
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-57
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-58
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-59
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-60
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-61
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-62
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-63
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-64
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-65
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-66
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-67
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-68
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-69
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-70
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-71
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-72
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-73
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-74
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-75
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-76
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: document_date_text
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1784706916091-77
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1784706916091-78
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: keywords_id
+        baseTableName: expertise_or_skills_keywords
+        constraintName: fk30tbtbnmtbrphsolhd3vdmup5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1784706916091-79
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: host_institutions_id
+        baseTableName: involvements_host_institutions
+        constraintName: fk3od2ux9479roo3fi2k8rnqb4l
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1784706916091-80
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: education_id
+        baseTableName: educations_course_code
+        constraintName: fk7i3qvq7cytb5pc53abe6khrfh
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: educations
+        validate: true
+- changeSet:
+    id: 1784706916091-81
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: intellectual_property
+        constraintName: fk_3dhll4qgdco18a8taogcbms1k
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1784706916091-82
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: expertise_or_skills_research_areas
+        constraintName: fka4vvhmrq0fig8u4rr54sbtnb3
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+- changeSet:
+    id: 1784706916091-83
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: expertise_or_skill_id
+        baseTableName: expertise_or_skills_research_areas
+        constraintName: fkb3qvuoeetlatvvajsfre0t21i
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: expertise_or_skills
+        validate: true
+- changeSet:
+    id: 1784706916091-84
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: revision_id
+        baseTableName: data_quality_assessment
+        constraintName: fkcnpnqq2gnl5sbaa2tlxiqa871
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: entity_revision
+        validate: true
+- changeSet:
+    id: 1784706916091-85
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: publisher_id
+        baseTableName: intellectual_property
+        constraintName: fkk7ceti6a2hp93i9xeqtsr1fmj
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: publishers
+        validate: true
+- changeSet:
+    id: 1784706916091-86
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: expertise_or_skill_id
+        baseTableName: expertise_or_skills_keywords
+        constraintName: fknv4wi4mtgcuvruyphakt1a08r
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: expertise_or_skills
+        validate: true
+- changeSet:
+    id: 1784706916091-87
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: course_code_id
+        baseTableName: educations_course_code
+        constraintName: fkqdbx4baw3mf6p7vcjafob73ol
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1784706916091-88
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_publisher_id
+        baseTableName: documents_display_publisher
+        constraintName: fksud38rpc7sbd73cq5bgp3rstg
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1784706916091-89
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_organisation_unit_id
+        baseTableName: involvements_display_organisation_unit
+        constraintName: fktihkrd691l3rqf2p854jdeqau
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1784706916091-90
+    author: milospopovic
+    changes:
+    - sql:
+        dbms: postgresql
+        stripComments: true
+        sql: |
+          UPDATE encyclopedic_contributions
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE genetic_materials
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE informative_attachments
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE intangible_products
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE journal_publications
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE material_products
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE monograph_publications
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE monographs
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE performance_related_outputs
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE proceedings
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE proceedings_publications
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+
+          UPDATE theses
+          SET document_date_year = document_date::INTEGER
+          WHERE document_date IS NOT NULL AND document_date ~ '^\d+$';
+- changeSet:
+    id: 1784706916091-98
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1784706916091-99
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: genetic_materials
+- changeSet:
+    id: 1784706916091-100
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: informative_attachments
+- changeSet:
+    id: 1784706916091-101
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: intangible_products
+- changeSet:
+    id: 1784706916091-102
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: journal_publications
+- changeSet:
+    id: 1784706916091-103
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: material_products
+- changeSet:
+    id: 1784706916091-104
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: monograph_publications
+- changeSet:
+    id: 1784706916091-105
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: monographs
+- changeSet:
+    id: 1784706916091-106
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: performance_related_outputs
+- changeSet:
+    id: 1784706916091-107
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: proceedings
+- changeSet:
+    id: 1784706916091-108
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: proceedings_publications
+- changeSet:
+    id: 1784706916091-109
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: document_date
+        tableName: theses
+- changeSet:
+    id: 1784706916091-110
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: quality_data_score
+        tableName: entity_revision
+- changeSet:
+    id: 1784706916091-111
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: uris
+        tableName: entity_revision
+
