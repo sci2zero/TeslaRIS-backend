@@ -82,14 +82,14 @@ public class DataQualityAssessmentConfigurationLoader {
                                             version);
                                     } catch (IOException e) {
                                         throw new StorageException(
-                                            "Failed loading profile" + profileName + ". Reason: " +
+                                            "Failed loading profile " + profileName + ". Reason: " +
                                                 e.getMessage());
                                     }
 
                                 });
                         } catch (IOException e) {
                             throw new StorageException(
-                                "Failed loading profile" + profileName + ". Reason: " +
+                                "Failed loading profile " + profileName + ". Reason: " +
                                     e.getMessage());
                         }
 
@@ -108,6 +108,7 @@ public class DataQualityAssessmentConfigurationLoader {
 
     public static DataQualityProfile preprocess(DataQualityProfile config, String version) {
         Map<String, Double> totalPointsByTarget = new HashMap<>();
+        Map<String, Double> totalPointsByTargetFair = new HashMap<>();
         Map<String, EnumMap<QualityDimension, Double>>
             totalPointsByTargetAndDimension =
             new HashMap<>();
@@ -118,6 +119,11 @@ public class DataQualityAssessmentConfigurationLoader {
 
             totalPointsByTarget.merge(remark.target(), weightedPoints,
                 Double::sum);
+
+            if (remark.usedForFairCompliance()) {
+                totalPointsByTargetFair.merge(remark.target(), weightedPoints,
+                    Double::sum);
+            }
 
             totalPointsByTargetAndDimension
                 .computeIfAbsent(
@@ -134,7 +140,9 @@ public class DataQualityAssessmentConfigurationLoader {
             config.targetWeights(),
             config.dataQualityRemarks(),
             totalPointsByTarget,
-            totalPointsByTargetAndDimension
+            totalPointsByTargetFair,
+            totalPointsByTargetAndDimension,
+            config.constraints()
         );
     }
 
@@ -180,7 +188,34 @@ public class DataQualityAssessmentConfigurationLoader {
                                                                 Object... params) {
         var remark = getRemark(profile.toLowerCase(), version, issueKey);
 
+        if (Objects.isNull(remark)) {
+            return Collections.emptySet();
+        }
+
         return StringUtil.buildMultilingualContent(languageTagService, remark.message(), params);
+    }
+
+    public static Set<MultiLingualContent> getDataQualityTitle(String profile, String version,
+                                                               String issueKey) {
+        var remark = getRemark(profile.toLowerCase(), version, issueKey);
+
+        if (Objects.isNull(remark)) {
+            return Collections.emptySet();
+        }
+
+        return StringUtil.buildMultilingualContent(languageTagService, remark.title());
+    }
+
+    @Nullable
+    public static Object getConstraint(String profile, String version, String issueKey,
+                                       String constraintKey) {
+        var remark = getRemark(profile.toLowerCase(), version, issueKey);
+
+        if (Objects.isNull(remark) || Objects.isNull(remark.constraints())) {
+            return null;
+        }
+
+        return remark.constraints().get(constraintKey);
     }
 
     @Nullable
@@ -219,6 +254,19 @@ public class DataQualityAssessmentConfigurationLoader {
             .sum();
     }
 
+    public static double getTotalPointsWeighedFair(String profile, String version,
+                                                   String targetPrefix) {
+        return dataQualityProfiles
+            .get(profile.toLowerCase())
+            .get(version)
+            .totalPointsByTargetFair()
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey().startsWith(targetPrefix))
+            .mapToDouble(Map.Entry::getValue)
+            .sum();
+    }
+
     public static double getTotalPointsWeighed(String profile, String version, String targetPrefix,
                                                QualityDimension dimension) {
         return dataQualityProfiles
@@ -239,6 +287,8 @@ public class DataQualityAssessmentConfigurationLoader {
             .getOrDefault(version,
                 new DataQualityProfile(
                     "1.0.0",
+                    Collections.emptyMap(),
+                    Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
@@ -316,11 +366,19 @@ public class DataQualityAssessmentConfigurationLoader {
 
         Map<String, Double> totalPointsByTarget,
 
-        Map<String, EnumMap<QualityDimension, Double>> totalPointsByTargetAndDimension
+        Map<String, Double> totalPointsByTargetFair,
+
+        Map<String, EnumMap<QualityDimension, Double>> totalPointsByTargetAndDimension,
+
+        @JsonProperty(value = "constraints", required = true)
+        Map<String, Double> constraints
     ) {
     }
 
     public record DataQualityRemark(
+        @JsonProperty(value = "title", required = true)
+        Map<String, String> title,
+
         @JsonProperty(value = "message", required = true)
         Map<String, String> message,
 
@@ -337,7 +395,13 @@ public class DataQualityAssessmentConfigurationLoader {
         boolean blocking,
 
         @JsonProperty(value = "points", required = true)
-        double points
+        double points,
+
+        @JsonProperty(value = "usedForFairCompliance", required = true)
+        boolean usedForFairCompliance,
+
+        @JsonProperty(value = "constraints")
+        Map<String, Object> constraints
     ) {
     }
 }

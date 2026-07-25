@@ -22,6 +22,8 @@ public record DataQualityRuleResultDTO(
 
     boolean passed,
 
+    List<MultilingualContentDTO> title,
+
     List<MultilingualContentDTO> message,
 
     @Nullable

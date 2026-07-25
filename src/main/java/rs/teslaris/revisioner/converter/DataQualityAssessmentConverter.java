@@ -10,8 +10,8 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityRuleResultDTO;
+import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
-import rs.teslaris.revisioner.model.qualityassessment.DataQualityIssue;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 
 public class DataQualityAssessmentConverter {
@@ -20,10 +20,10 @@ public class DataQualityAssessmentConverter {
         var target = DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
             EntityType.valueOf(assessment.getRevision().getEntityType()));
 
-        Map<String, DataQualityIssue> failedIssues =
+        Map<String, ConstraintEvaluationResult> failedIssues =
             assessment.getIssues().stream()
                 .collect(Collectors.toMap(
-                    DataQualityIssue::getKey,
+                    ConstraintEvaluationResult::getKey,
                     Function.identity()));
 
         var passedRules = new ArrayList<DataQualityRuleResultDTO>();
@@ -37,7 +37,7 @@ public class DataQualityAssessmentConverter {
             String key = entry.getKey();
             var remark = entry.getValue();
 
-            DataQualityIssue issue = failedIssues.get(key);
+            ConstraintEvaluationResult issue = failedIssues.get(key);
 
             if (Objects.isNull(issue)) {
                 passedRules.add(
@@ -50,12 +50,13 @@ public class DataQualityAssessmentConverter {
                         remark.points(),
                         true,
                         MultilingualContentConverter.getMultilingualContentDTO(
-                            DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                            DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                                 assessment.getProfileName(),
                                 assessment.getProfileVersion(),
                                 key
                             )
                         ),
+                        new ArrayList<>(),
                         null
                     )
                 );
@@ -69,6 +70,13 @@ public class DataQualityAssessmentConverter {
                         remark.blocking(),
                         remark.points(),
                         false,
+                        MultilingualContentConverter.getMultilingualContentDTO(
+                            DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                                assessment.getProfileName(),
+                                assessment.getProfileVersion(),
+                                key
+                            )
+                        ),
                         MultilingualContentConverter.getMultilingualContentDTO(
                             DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
                                 assessment.getProfileName(),

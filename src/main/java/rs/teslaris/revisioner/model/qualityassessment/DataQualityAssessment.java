@@ -70,14 +70,14 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(name = "finished_at", nullable = false)
     private Instant finishedAt;
 
-    @Column(name = "quality_score", nullable = false)
-    private Double qualityScore;
-
     @Column(name = "valid", nullable = false)
     private Boolean valid;
 
     @Column(name = "passed_rules", nullable = false)
     private Integer passedRules;
+
+    @Column(name = "info_failed_rules", nullable = false)
+    private Integer infoFailedRules;
 
     @Column(name = "warning_failed_rules", nullable = false)
     private Integer warningFailedRules;
@@ -91,10 +91,22 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(name = "achieved_points_normalised", nullable = false)
     private Double achievedPointsNormalised;
 
+    @Column(name = "quality_score", nullable = false)
+    private Double qualityScore;
+
+    @Column(name = "total_points_fair", nullable = false)
+    private Double totalPointsFair;
+
+    @Column(name = "achieved_fair_points_normalised", nullable = false)
+    private Double achievedFairPointsNormalised;
+
+    @Column(name = "quality_score_fair", nullable = false)
+    private Double qualityScoreFair;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     @Builder.Default
-    private List<DataQualityIssue> issues = new ArrayList<>();
+    private List<ConstraintEvaluationResult> issues = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
