@@ -141,8 +141,7 @@ public class DataQualityAssessmentConfigurationLoader {
             config.dataQualityRemarks(),
             totalPointsByTarget,
             totalPointsByTargetFair,
-            totalPointsByTargetAndDimension,
-            config.constraints()
+            totalPointsByTargetAndDimension
         );
     }
 
@@ -291,7 +290,6 @@ public class DataQualityAssessmentConfigurationLoader {
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
-                    Collections.emptyMap(),
                     Collections.emptyMap()
                 )
             ).dataQualityRemarks();
@@ -368,10 +366,7 @@ public class DataQualityAssessmentConfigurationLoader {
 
         Map<String, Double> totalPointsByTargetFair,
 
-        Map<String, EnumMap<QualityDimension, Double>> totalPointsByTargetAndDimension,
-
-        @JsonProperty(value = "constraints", required = true)
-        Map<String, Double> constraints
+        Map<String, EnumMap<QualityDimension, Double>> totalPointsByTargetAndDimension
     ) {
     }
 

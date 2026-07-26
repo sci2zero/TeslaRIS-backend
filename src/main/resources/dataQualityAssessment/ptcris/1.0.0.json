@@ -1,7 +1,4 @@
 {
-  "constraints": {
-    "titleLength": 255
-  },
   "targetWeights": {
     "Document.title": 5,
     "Document.description": 5,
