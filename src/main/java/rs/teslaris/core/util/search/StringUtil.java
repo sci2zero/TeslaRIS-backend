@@ -482,6 +482,34 @@ public class StringUtil {
         return result;
     }
 
+    public static List<MultilingualContentDTO> buildMultilingualContentDTO(
+        LanguageTagService languageTagService, Map<String, String> localizedContent,
+        Object... params) {
+        var result = new ArrayList<MultilingualContentDTO>();
+        var priority = new AtomicInteger(1);
+
+        localizedContent.forEach((languageCode, template) -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(languageCode.toUpperCase());
+
+            if (Objects.isNull(languageTag) || Objects.isNull(languageTag.getLanguageTag())) {
+                return;
+            }
+
+            Object[] processedParams =
+                processParamsForLanguage(languageCode, params);
+
+            result.add(new MultilingualContentDTO(
+                languageTag.getId(),
+                languageTag.getLanguageTag(),
+                MessageFormat.format(template, processedParams),
+                priority.getAndIncrement()
+            ));
+        });
+
+        return result;
+    }
+
     private static Object[] processParamsForLanguage(
         String languageCode,
         Object... params) {

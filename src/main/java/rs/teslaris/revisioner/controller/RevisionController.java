@@ -37,17 +37,4 @@ public class RevisionController {
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
-
-    @GetMapping(value = "/quality-report/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<QualityReportResponseDTO> getQualityReportForEntity(@PathVariable String entityType,
-                                                                    @PathVariable
-                                                                    Integer entityId) {
-        return revisionService.getQualityReportForEntity(entityType, entityId);
-    }
-
-    @GetMapping(value = "/assessments/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<DataQualityAssessmentDTO> findOne(@PathVariable String entityType,
-                                                  @PathVariable Integer entityId) {
-        return revisionService.findLatestAssessmentsForEntity(entityType, entityId);
-    }
 }

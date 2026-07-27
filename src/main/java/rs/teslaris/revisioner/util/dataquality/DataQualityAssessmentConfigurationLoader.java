@@ -8,12 +8,14 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +25,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
@@ -145,7 +148,7 @@ public class DataQualityAssessmentConfigurationLoader {
         );
     }
 
-    private static DataQualityProfile getProfile(String profileName, String version) {
+    public static DataQualityProfile getProfile(String profileName, String version) {
         var versions =
             dataQualityProfiles.get(profileName.toLowerCase());
 
@@ -169,6 +172,15 @@ public class DataQualityAssessmentConfigurationLoader {
 
     public static Set<String> listAvailableProfiles() {
         return dataQualityProfiles.keySet();
+    }
+
+    public static Set<Pair<String, String>> listAvailableProfilesWithVersion() {
+        return dataQualityProfiles.entrySet()
+            .stream()
+            .map(entry -> new Pair<>(
+                entry.getKey(),
+                entry.getValue().lastEntry().getKey()))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public static String getLatestProfileVersion(String profileName) {
@@ -352,7 +364,7 @@ public class DataQualityAssessmentConfigurationLoader {
         };
     }
 
-    private record DataQualityProfile(
+    public record DataQualityProfile(
         @JsonProperty(value = "version")
         String version,
 

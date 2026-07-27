@@ -174,67 +174,6 @@ public class RevisionServiceImpl implements RevisionService {
             });
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<QualityReportResponseDTO> getQualityReportForEntity(String entityType,
-                                                                    Integer entityId) {
-        var entityRevision = revisionRepository
-            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
-
-        if (entityRevision.isEmpty()) {
-            return List.of();
-        }
-
-        var qualityReport = new ArrayList<QualityReportResponseDTO>();
-
-        entityRevision.get().getAssessments().forEach(assessment -> {
-            List<Pair<IssueSeverity, List<MultilingualContentDTO>>> assessmentReport =
-                new ArrayList<>();
-
-            assessment.getIssues().forEach(issue -> {
-                var remarks = DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
-                    assessment.getProfileName(),
-                    assessment.getProfileVersion(),
-                    issue.getKey(),
-                    issue.getParameters().toArray()
-                );
-
-                var multilingualContents = remarks.stream()
-                    .map(r -> new MultilingualContentDTO(
-                        r.getLanguage().getId(),
-                        r.getLanguage().getLanguageTag(),
-                        r.getContent(),
-                        r.getPriority()
-                    ))
-                    .toList();
-
-                assessmentReport.add(new Pair<>(issue.getSeverity(), multilingualContents));
-            });
-
-            qualityReport.add(
-                new QualityReportResponseDTO(
-                    assessment.getProfileName() + " (" + assessment.getProfileVersion() + ")",
-                    assessmentReport
-                )
-            );
-        });
-
-        return qualityReport;
-    }
-
-    @Transactional(readOnly = true)
-    public List<DataQualityAssessmentDTO> findLatestAssessmentsForEntity(String entityType,
-                                                                         Integer entityId) {
-        var entityRevision = revisionRepository
-            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-            .orElseThrow(() -> new NotFoundException(
-                "No data quality assessment found for " + entityType + " with ID " + entityId +
-                    "."));
-
-        return entityRevision.getAssessments().stream().map(DataQualityAssessmentConverter::toDTO)
-            .toList();
-    }
-
     private String canonicalize(String json, String entityType)
         throws JsonProcessingException {
 

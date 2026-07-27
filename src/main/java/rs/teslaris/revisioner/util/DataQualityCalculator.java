@@ -217,7 +217,7 @@ public class DataQualityCalculator {
 
                 var titleMaxLength = getIntConstraint(assessment, "titleTooLong", "maxLength");
                 if (Objects.nonNull(titleMaxLength) && value.length() > titleMaxLength) {
-                    reportIssue(assessment, "titleTooLong", value);
+                    reportIssue(assessment, "titleTooLong", value, titleMaxLength);
                 }
 
                 var titlePattern = getPatternConstraint(assessment, "invalidTitleFormat");
@@ -260,10 +260,11 @@ public class DataQualityCalculator {
                 var date = StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
 
                 var documentDateMinYear =
-                    getIntConstraint(assessment, "documentDateBefore1950", "minYear");
+                    getIntConstraint(assessment, "documentDateBefore", "minYear");
                 if (Objects.nonNull(documentDateMinYear) &&
                     date.isBefore(LocalDate.of(documentDateMinYear, 1, 1))) {
-                    reportIssue(assessment, "documentDateBefore1950", dto.getDocumentDate());
+                    reportIssue(assessment, "documentDateBefore", dto.getDocumentDate(),
+                        documentDateMinYear);
                 }
 
                 var documentDateMaxFutureYears =
@@ -271,7 +272,7 @@ public class DataQualityCalculator {
                 if (Objects.nonNull(documentDateMaxFutureYears) &&
                     date.isAfter(LocalDate.now().plusYears(documentDateMaxFutureYears))) {
                     reportIssue(assessment, "documentDateTooFarInFuture",
-                        dto.getDocumentDate());
+                        dto.getDocumentDate(), documentDateMaxFutureYears);
                 }
             } catch (Exception e) {
                 reportIssue(assessment, "invalidDocumentDateFormat", dto.getDocumentDate());
@@ -285,12 +286,12 @@ public class DataQualityCalculator {
 
             var doiMinLength = getIntConstraint(assessment, "doiTooShort", "minLength");
             if (Objects.nonNull(doiMinLength) && doi.length() < doiMinLength) {
-                reportIssue(assessment, "doiTooShort", doi);
+                reportIssue(assessment, "doiTooShort", doi, doiMinLength);
             }
 
             var doiMaxLength = getIntConstraint(assessment, "doiTooLong", "maxLength");
             if (Objects.nonNull(doiMaxLength) && doi.length() > doiMaxLength) {
-                reportIssue(assessment, "doiTooLong", doi);
+                reportIssue(assessment, "doiTooLong", doi, doiMaxLength);
             }
 
             var doiPattern = getPatternConstraint(assessment, "invalidDoiFormat");
@@ -314,12 +315,12 @@ public class DataQualityCalculator {
 
             var handleMinLength = getIntConstraint(assessment, "handleTooShort", "minLength");
             if (Objects.nonNull(handleMinLength) && handle.length() < handleMinLength) {
-                reportIssue(assessment, "handleTooShort", handle);
+                reportIssue(assessment, "handleTooShort", handle, handleMinLength);
             }
 
             var handleMaxLength = getIntConstraint(assessment, "handleTooLong", "maxLength");
             if (Objects.nonNull(handleMaxLength) && handle.length() > handleMaxLength) {
-                reportIssue(assessment, "handleTooLong", handle);
+                reportIssue(assessment, "handleTooLong", handle, handleMaxLength);
             }
 
             var handlePattern = getPatternConstraint(assessment, "invalidHandleFormat");
@@ -380,14 +381,15 @@ public class DataQualityCalculator {
                 reportIssue(assessment, "topicAcceptanceDateMissing");
             } else {
                 var topicAcceptanceDateMinYear =
-                    getIntConstraint(assessment, "topicAcceptanceDateBefore1950", "minYear");
+                    getIntConstraint(assessment, "topicAcceptanceDateBefore", "minYear");
                 if (Objects.nonNull(topicAcceptanceDateMinYear) &&
                     thesis.getTopicAcceptanceDate()
                         .isBefore(LocalDate.of(topicAcceptanceDateMinYear, 1, 1))) {
                     reportIssue(
                         assessment,
-                        "topicAcceptanceDateBefore1950",
-                        thesis.getTopicAcceptanceDate());
+                        "topicAcceptanceDateBefore",
+                        thesis.getTopicAcceptanceDate(),
+                        topicAcceptanceDateMinYear);
                 }
 
                 if (thesis.getTopicAcceptanceDate().isAfter(LocalDate.now())) {
@@ -418,7 +420,8 @@ public class DataQualityCalculator {
                     reportIssue(
                         assessment,
                         "defenceTooFarInFuture",
-                        thesis.getThesisDefenceDate());
+                        thesis.getThesisDefenceDate(),
+                        defenceMaxFutureYears);
                 }
             }
         }
@@ -437,13 +440,14 @@ public class DataQualityCalculator {
                 }
 
                 var dateRequestedMinYear =
-                    getIntConstraint(assessment, "dateRequestedBefore1950", "minYear");
+                    getIntConstraint(assessment, "dateRequestedBefore", "minYear");
                 if (Objects.nonNull(dateRequestedMinYear) && Objects.nonNull(localDate) &&
                     localDate.isBefore(LocalDate.of(dateRequestedMinYear, 1, 1))) {
                     reportIssue(
                         assessment,
-                        "dateRequestedBefore1950",
-                        FlexibleDate.toISOString(dateRequested));
+                        "dateRequestedBefore",
+                        FlexibleDate.toISOString(dateRequested),
+                        dateRequestedMinYear);
                 }
 
                 if (Objects.nonNull(localDate) && localDate.isAfter(LocalDate.now())) {
@@ -467,13 +471,14 @@ public class DataQualityCalculator {
                 }
 
                 var dateFilingPriorityMinYear =
-                    getIntConstraint(assessment, "dateFilingPriorityBefore1950", "minYear");
+                    getIntConstraint(assessment, "dateFilingPriorityBefore", "minYear");
                 if (Objects.nonNull(dateFilingPriorityMinYear) && Objects.nonNull(localDate) &&
                     localDate.isBefore(LocalDate.of(dateFilingPriorityMinYear, 1, 1))) {
                     reportIssue(
                         assessment,
-                        "dateFilingPriorityBefore1950",
-                        FlexibleDate.toISOString(dateFilingPriority));
+                        "dateFilingPriorityBefore",
+                        FlexibleDate.toISOString(dateFilingPriority),
+                        dateFilingPriorityMinYear);
                 }
 
                 if (Objects.nonNull(localDate)) {
@@ -501,13 +506,14 @@ public class DataQualityCalculator {
                 }
 
                 var dateEndTermMinYear =
-                    getIntConstraint(assessment, "dateEndTermBefore1950", "minYear");
+                    getIntConstraint(assessment, "dateEndTermBefore", "minYear");
                 if (Objects.nonNull(dateEndTermMinYear) && Objects.nonNull(localDate) &&
                     localDate.isBefore(LocalDate.of(dateEndTermMinYear, 1, 1))) {
                     reportIssue(
                         assessment,
-                        "dateEndTermBefore1950",
-                        FlexibleDate.toISOString(dateEndTerm));
+                        "dateEndTermBefore",
+                        FlexibleDate.toISOString(dateEndTerm),
+                        dateEndTermMinYear);
                 }
             }
         }
@@ -531,10 +537,10 @@ public class DataQualityCalculator {
         } else {
             var birthDate = personalInfoDTO.getLocalBirthDate();
 
-            var birthDateMinYear = getIntConstraint(assessment, "birthDateBefore1900", "minYear");
+            var birthDateMinYear = getIntConstraint(assessment, "birthDateBefore", "minYear");
             if (Objects.nonNull(birthDateMinYear) &&
                 birthDate.isBefore(LocalDate.of(birthDateMinYear, 1, 1))) {
-                reportIssue(assessment, "birthDateBefore1900", birthDate);
+                reportIssue(assessment, "birthDateBefore", birthDate, birthDateMinYear);
             }
 
             if (birthDate.isAfter(LocalDate.now())) {
@@ -562,13 +568,13 @@ public class DataQualityCalculator {
             var wosMinLength =
                 getIntConstraint(assessment, "webOfScienceResearcherIdTooShort", "minLength");
             if (Objects.nonNull(wosMinLength) && rid.length() < wosMinLength) {
-                reportIssue(assessment, "webOfScienceResearcherIdTooShort", rid);
+                reportIssue(assessment, "webOfScienceResearcherIdTooShort", rid, wosMinLength);
             }
 
             var wosMaxLength =
                 getIntConstraint(assessment, "webOfScienceResearcherIdTooLong", "maxLength");
             if (Objects.nonNull(wosMaxLength) && rid.length() > wosMaxLength) {
-                reportIssue(assessment, "webOfScienceResearcherIdTooLong", rid);
+                reportIssue(assessment, "webOfScienceResearcherIdTooLong", rid, wosMaxLength);
             }
 
             var wosPattern =
@@ -672,13 +678,15 @@ public class DataQualityCalculator {
                 if (StringUtil.valueExists(name.getFirstname()) &&
                     Objects.nonNull(firstNameMaxLength) &&
                     name.getFirstname().length() > firstNameMaxLength) {
-                    reportIssue(assessment, "firstNameTooLong", name.getFirstname());
+                    reportIssue(assessment, "firstNameTooLong", name.getFirstname(),
+                        firstNameMaxLength);
                 }
 
                 if (StringUtil.valueExists(name.getLastname()) &&
                     Objects.nonNull(lastNameMaxLength) &&
                     name.getLastname().length() > lastNameMaxLength) {
-                    reportIssue(assessment, "lastNameTooLong", name.getLastname());
+                    reportIssue(assessment, "lastNameTooLong", name.getLastname(),
+                        lastNameMaxLength);
                 }
 
                 if (StringUtil.valueExists(name.getFirstname()) &&
@@ -727,7 +735,7 @@ public class DataQualityCalculator {
                 }
 
                 if (Objects.nonNull(nameMaxLength) && value.length() > nameMaxLength) {
-                    reportIssue(assessment, "organisationUnitNameTooLong", value);
+                    reportIssue(assessment, "organisationUnitNameTooLong", value, nameMaxLength);
                 }
 
                 if (Objects.nonNull(namePattern) && !namePattern.matcher(value).matches()) {
@@ -835,7 +843,7 @@ public class DataQualityCalculator {
         } else {
             var codeLength = getIntConstraint(assessment, "countryCodeInvalidLength", "length");
             if (Objects.nonNull(codeLength) && dto.getCode().length() != codeLength) {
-                reportIssue(assessment, "countryCodeInvalidLength", dto.getCode());
+                reportIssue(assessment, "countryCodeInvalidLength", dto.getCode(), codeLength);
             }
 
             var codePattern = getPatternConstraint(assessment, "invalidCountryCodeFormat");
@@ -863,7 +871,7 @@ public class DataQualityCalculator {
                 }
 
                 if (Objects.nonNull(nameMaxLength) && value.length() > nameMaxLength) {
-                    reportIssue(assessment, "countryNameTooLong", value);
+                    reportIssue(assessment, "countryNameTooLong", value, nameMaxLength);
                 }
 
                 if (Objects.nonNull(namePattern) && !namePattern.matcher(value).matches()) {
@@ -883,7 +891,8 @@ public class DataQualityCalculator {
             var emailMaxLength = getIntConstraint(assessment, "contactEmailTooLong", "maxLength");
             if (Objects.nonNull(emailMaxLength) &&
                 dto.getContactEmail().length() > emailMaxLength) {
-                reportIssue(assessment, "contactEmailTooLong", dto.getContactEmail());
+                reportIssue(assessment, "contactEmailTooLong", dto.getContactEmail(),
+                    emailMaxLength);
             }
 
             var emailPattern = getPatternConstraint(assessment, "invalidContactEmailFormat");
@@ -896,7 +905,8 @@ public class DataQualityCalculator {
         if (StringUtil.valueExists(dto.getPhoneNumber())) {
             var phoneMaxLength = getIntConstraint(assessment, "phoneNumberTooLong", "maxLength");
             if (Objects.nonNull(phoneMaxLength) && dto.getPhoneNumber().length() > phoneMaxLength) {
-                reportIssue(assessment, "phoneNumberTooLong", dto.getPhoneNumber());
+                reportIssue(assessment, "phoneNumberTooLong", dto.getPhoneNumber(),
+                    phoneMaxLength);
             }
 
             var phonePattern = getPatternConstraint(assessment, "invalidPhoneNumberFormat");
@@ -911,7 +921,8 @@ public class DataQualityCalculator {
                 getIntConstraint(assessment, "mobilePhoneNumberTooLong", "maxLength");
             if (Objects.nonNull(mobileMaxLength) &&
                 dto.getMobilePhoneNumber().length() > mobileMaxLength) {
-                reportIssue(assessment, "mobilePhoneNumberTooLong", dto.getMobilePhoneNumber());
+                reportIssue(assessment, "mobilePhoneNumberTooLong", dto.getMobilePhoneNumber(),
+                    mobileMaxLength);
             }
 
             var mobilePattern = getPatternConstraint(assessment, "invalidMobilePhoneNumberFormat");
@@ -925,7 +936,7 @@ public class DataQualityCalculator {
         if (StringUtil.valueExists(dto.getFaxNumber())) {
             var faxMaxLength = getIntConstraint(assessment, "faxNumberTooLong", "maxLength");
             if (Objects.nonNull(faxMaxLength) && dto.getFaxNumber().length() > faxMaxLength) {
-                reportIssue(assessment, "faxNumberTooLong", dto.getFaxNumber());
+                reportIssue(assessment, "faxNumberTooLong", dto.getFaxNumber(), faxMaxLength);
             }
 
             var faxPattern = getPatternConstraint(assessment, "invalidFaxNumberFormat");
@@ -953,7 +964,7 @@ public class DataQualityCalculator {
         } else {
             var tagMaxLength = getIntConstraint(assessment, "languageTagTooLong", "maxLength");
             if (Objects.nonNull(tagMaxLength) && dto.getLanguageCode().length() > tagMaxLength) {
-                reportIssue(assessment, "languageTagTooLong", dto.getLanguageCode());
+                reportIssue(assessment, "languageTagTooLong", dto.getLanguageCode(), tagMaxLength);
             }
 
             var tagPattern = getPatternConstraint(assessment, "invalidLanguageTagFormat");
@@ -982,7 +993,7 @@ public class DataQualityCalculator {
                 }
 
                 if (Objects.nonNull(nameMaxLength) && value.length() > nameMaxLength) {
-                    reportIssue(assessment, "languageNameTooLong", value);
+                    reportIssue(assessment, "languageNameTooLong", value, nameMaxLength);
                 }
 
                 if (Objects.nonNull(namePattern) && !namePattern.matcher(value).matches()) {
@@ -1014,7 +1025,7 @@ public class DataQualityCalculator {
                 }
 
                 if (Objects.nonNull(nameMaxLength) && value.length() > nameMaxLength) {
-                    reportIssue(assessment, "researchAreaNameTooLong", value);
+                    reportIssue(assessment, "researchAreaNameTooLong", value, nameMaxLength);
                 }
 
                 if (Objects.nonNull(namePattern) && !namePattern.matcher(value).matches()) {
@@ -1052,7 +1063,7 @@ public class DataQualityCalculator {
             var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
             if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
                 (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
-                reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude());
+                reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin, latMax);
             }
         }
 
@@ -1063,7 +1074,7 @@ public class DataQualityCalculator {
             var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
             if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
                 (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
-                reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude());
+                reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin, lonMax);
             }
         }
 
@@ -1072,7 +1083,7 @@ public class DataQualityCalculator {
             var addressMaxLength = getIntConstraint(assessment, "addressTooLong", "maxLength");
             if (Objects.nonNull(addressMaxLength) &&
                 dto.getAddress().length() > addressMaxLength) {
-                reportIssue(assessment, "addressTooLong", dto.getAddress());
+                reportIssue(assessment, "addressTooLong", dto.getAddress(), addressMaxLength);
             }
 
             var addressPattern = getPatternConstraint(assessment, "invalidAddressFormat");
@@ -1098,7 +1109,7 @@ public class DataQualityCalculator {
             if (Objects.nonNull(regexMaxLength) &&
                 dto.regularExpression().length() > regexMaxLength) {
                 reportIssue(assessment, "identifierRegularExpressionTooLong",
-                    dto.regularExpression());
+                    dto.regularExpression(), regexMaxLength);
             }
 
             try {
@@ -1112,7 +1123,7 @@ public class DataQualityCalculator {
         if (StringUtil.valueExists(dto.uriPrefix())) {
             var uriMaxLength = getIntConstraint(assessment, "identifierUriTooLong", "maxLength");
             if (Objects.nonNull(uriMaxLength) && dto.uriPrefix().length() > uriMaxLength) {
-                reportIssue(assessment, "identifierUriTooLong", dto.uriPrefix());
+                reportIssue(assessment, "identifierUriTooLong", dto.uriPrefix(), uriMaxLength);
             }
 
             var uriPattern = getPatternConstraint(assessment, "invalidIdentifierUriFormat");
@@ -1132,25 +1143,27 @@ public class DataQualityCalculator {
             reportIssue(assessment, "activityStartDateMissing");
         } else {
             var startDateMinYear =
-                getIntConstraint(assessment, "activityStartDateBefore1950", "minYear");
+                getIntConstraint(assessment, "activityStartDateBefore", "minYear");
             if (Objects.nonNull(startDateMinYear) &&
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore1950",
-                    dto.getDateFrom()
+                    "activityStartDateBefore",
+                    dto.getDateFrom(),
+                    startDateMinYear
                 );
             }
 
             var minAgeYears = getIntConstraint(
-                assessment, "activityStartDateBeforePersonTurned15", "minAgeYears");
+                assessment, "activityStartDateBeforeMinAge", "minAgeYears");
             if (Objects.nonNull(minAgeYears) && Objects.nonNull(dto.getPersonBirthDate()) &&
                 dto.getDateFrom().isBefore(dto.getPersonBirthDate().plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforePersonTurned15",
+                    "activityStartDateBeforeMinAge",
                     dto.getDateFrom(),
-                    dto.getPersonBirthDate()
+                    dto.getPersonBirthDate(),
+                    minAgeYears
                 );
             }
 
@@ -1161,7 +1174,8 @@ public class DataQualityCalculator {
                 reportIssue(
                     assessment,
                     "activityStartDateTooFarInFuture",
-                    dto.getDateFrom()
+                    dto.getDateFrom(),
+                    startDateMaxFutureYears
                 );
             }
         }
@@ -1204,25 +1218,27 @@ public class DataQualityCalculator {
             reportIssue(assessment, "activityStartDateMissing");
         } else {
             var startDateMinYear =
-                getIntConstraint(assessment, "activityStartDateBefore1950", "minYear");
+                getIntConstraint(assessment, "activityStartDateBefore", "minYear");
             if (Objects.nonNull(startDateMinYear) &&
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore1950",
-                    dto.getDateFrom()
+                    "activityStartDateBefore",
+                    dto.getDateFrom(),
+                    startDateMinYear
                 );
             }
 
             var minAgeYears = getIntConstraint(
-                assessment, "activityStartDateBeforePersonTurned15", "minAgeYears");
+                assessment, "activityStartDateBeforeMinAge", "minAgeYears");
             if (Objects.nonNull(minAgeYears) && Objects.nonNull(birthDate) &&
                 dto.getDateFrom().isBefore(birthDate.plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforePersonTurned15",
+                    "activityStartDateBeforeMinAge",
                     dto.getDateFrom(),
-                    birthDate
+                    birthDate,
+                    minAgeYears
                 );
             }
 
@@ -1233,7 +1249,8 @@ public class DataQualityCalculator {
                 reportIssue(
                     assessment,
                     "activityStartDateTooFarInFuture",
-                    dto.getDateFrom()
+                    dto.getDateFrom(),
+                    startDateMaxFutureYears
                 );
             }
         }
@@ -1290,7 +1307,8 @@ public class DataQualityCalculator {
                     reportIssue(
                         assessment,
                         "numberOfReviewsTooHigh",
-                        eventContribution.getNumberOfReviewsOrAssessment()
+                        eventContribution.getNumberOfReviewsOrAssessment(),
+                        maxReviews
                     );
                 }
 
@@ -1385,12 +1403,12 @@ public class DataQualityCalculator {
 
         var min = getIntConstraint(assessment, fieldName + "BelowMinimum", "min");
         if (Objects.nonNull(min) && value < min) {
-            reportIssue(assessment, fieldName + "BelowMinimum");
+            reportIssue(assessment, fieldName + "BelowMinimum", value, min);
         }
 
         var max = getIntConstraint(assessment, fieldName + "AboveMaximum", "max");
         if (Objects.nonNull(max) && value > max) {
-            reportIssue(assessment, fieldName + "AboveMaximum");
+            reportIssue(assessment, fieldName + "AboveMaximum", value, max);
         }
     }
 
