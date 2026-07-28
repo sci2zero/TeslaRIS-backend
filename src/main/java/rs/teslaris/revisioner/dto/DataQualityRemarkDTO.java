@@ -1,6 +1,5 @@
 package rs.teslaris.revisioner.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;

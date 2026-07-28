@@ -4,8 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
-import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
-import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 
 @Service

@@ -1,4 +1,5 @@
 {
+  "minimumRequiredScore": 60.0,
   "targetWeights": {
     "Document.title": 5,
     "Document.description": 5,
@@ -23,7 +24,7 @@
     "Person.orcid": 3,
     "Person.wos": 3,
     "Person.scopus": 3,
-    "Person.openALex": 3,
+    "Person.openAlex": 3,
     "Person.scholar": 3,
     "Person.lattes": 3,
     "Person.ciencia": 3,

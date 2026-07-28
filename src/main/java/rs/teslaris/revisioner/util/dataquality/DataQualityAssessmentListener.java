@@ -28,6 +28,20 @@ public class DataQualityAssessmentListener {
 
     private final DataQualityAssessmentRepository repository;
 
+    public static String resolveTargetType(String entityType) {
+        try {
+            return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
+                EntityType.valueOf(entityType));
+        } catch (IllegalArgumentException ex) {
+            try {
+                DocumentPublicationType.valueOf(entityType);
+                return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
+                    EntityType.PUBLICATION);
+            } catch (IllegalArgumentException ignored) {
+                throw ex;
+            }
+        }
+    }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -60,20 +74,5 @@ public class DataQualityAssessmentListener {
 
             entityRevisionRepository.save(event.entityRevision());
         });
-    }
-
-    private String resolveTargetType(String entityType) {
-        try {
-            return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
-                EntityType.valueOf(entityType));
-        } catch (IllegalArgumentException ex) {
-            try {
-                DocumentPublicationType.valueOf(entityType);
-                return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
-                    EntityType.PUBLICATION);
-            } catch (IllegalArgumentException ignored) {
-                throw ex;
-            }
-        }
     }
 }

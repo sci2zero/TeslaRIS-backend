@@ -1,5 +1,7 @@
 package rs.teslaris.revisioner.service.impl;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,12 @@ public class DataQualityServiceImpl implements DataQualityService {
             qualityReport.add(
                 new QualityReportResponseDTO(
                     assessment.getProfileName() + " (" + assessment.getProfileVersion() + ")",
+                    assessment.getQualityScore(),
+                    assessment.getInfoFailedRules() +
+                        assessment.getWarningFailedRules() +
+                        assessment.getErrorFailedRules(),
+                    LocalDate.ofInstant(assessment.getStartedAt(), ZoneId.systemDefault()),
+                    assessment.getPublicationCandidate(),
                     assessmentReport
                 )
             );

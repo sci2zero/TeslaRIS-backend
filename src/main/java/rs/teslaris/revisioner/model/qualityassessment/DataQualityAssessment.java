@@ -73,6 +73,9 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(name = "valid", nullable = false)
     private Boolean valid;
 
+    @Column(name = "publication_candidate", nullable = false)
+    private Boolean publicationCandidate;
+
     @Column(name = "passed_rules", nullable = false)
     private Integer passedRules;
 

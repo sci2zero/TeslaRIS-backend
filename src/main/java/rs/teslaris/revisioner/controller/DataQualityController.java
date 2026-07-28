@@ -13,7 +13,7 @@ import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 
 @RestController
-@RequestMapping("/data-quality")
+@RequestMapping("/api/data-quality")
 @RequiredArgsConstructor
 public class DataQualityController {
 

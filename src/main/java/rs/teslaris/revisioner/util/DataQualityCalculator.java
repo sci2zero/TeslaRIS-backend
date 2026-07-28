@@ -72,6 +72,7 @@ import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentIndexer;
 
 @Component
 @RequiredArgsConstructor
@@ -95,6 +96,8 @@ public class DataQualityCalculator {
     private final PublisherRepository publisherRepository;
 
     private final RestTemplateProvider restTemplateProvider;
+
+    private final DataQualityAssessmentIndexer dataQualityAssessmentIndexer;
 
     private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
         Map.ofEntries(
@@ -155,6 +158,8 @@ public class DataQualityCalculator {
             assessEntity(dto, assessment, targetType);
 
             repository.save(assessment);
+
+            dataQualityAssessmentIndexer.index(assessment, targetType, dto);
 
             log.info(
                 "Successfully completed data quality assessment that lasted {}s. revisionId={}, entityType={}, score={}, remarks={}",
@@ -887,6 +892,10 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(ContactDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto)) {
+            return;
+        }
+
         if (StringUtil.valueExists(dto.getContactEmail())) {
             var emailMaxLength = getIntConstraint(assessment, "contactEmailTooLong", "maxLength");
             if (Objects.nonNull(emailMaxLength) &&
@@ -1509,6 +1518,11 @@ public class DataQualityCalculator {
         assessment.setValid(
             assessment.getIssues().stream()
                 .noneMatch(ConstraintEvaluationResult::isBlocking));
+
+        assessment.setPublicationCandidate(assessment.getValid() && assessment.getQualityScore() >=
+            DataQualityAssessmentConfigurationLoader.getProfile(assessment.getProfileName(),
+                assessment.getProfileVersion()).minimumRequiredScore());
+
     }
 
     private void computeRuleCounts(DataQualityAssessment assessment, String target) {

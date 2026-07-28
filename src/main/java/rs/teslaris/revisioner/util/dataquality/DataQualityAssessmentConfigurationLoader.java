@@ -140,6 +140,7 @@ public class DataQualityAssessmentConfigurationLoader {
 
         return new DataQualityProfile(
             version,
+            config.minimumRequiredScore(),
             config.targetWeights(),
             config.dataQualityRemarks(),
             totalPointsByTarget,
@@ -298,6 +299,7 @@ public class DataQualityAssessmentConfigurationLoader {
             .getOrDefault(version,
                 new DataQualityProfile(
                     "1.0.0",
+                    100.0,
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
@@ -367,6 +369,9 @@ public class DataQualityAssessmentConfigurationLoader {
     public record DataQualityProfile(
         @JsonProperty(value = "version")
         String version,
+
+        @JsonProperty(value = "minimumRequiredScore")
+        Double minimumRequiredScore,
 
         @JsonProperty(value = "targetWeights", required = true)
         Map<String, Double> targetWeights,
