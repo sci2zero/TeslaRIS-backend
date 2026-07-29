@@ -267,6 +267,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFunding() {
+        fundingIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -329,6 +331,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         if (Objects.nonNull(funding.getFundingCall())) {
             index.setFundingCallId(funding.getFundingCall().getId());
+        } else {
+            index.setFundingCallId(null);
         }
 
         index.setDatabaseId(funding.getId());
