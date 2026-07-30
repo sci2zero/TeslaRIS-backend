@@ -75,4 +75,30 @@ public class OrganisationUnitContribution extends BaseEntity {
             orphanRemoval = true)
     private Set<FundingPart> fundingParts = new HashSet<>();
 
+    public OrganisationUnitContribution(Set<MultiLingualContent> contributionDescription,
+                                        Set<MultiLingualContent> displayOrganisationUnit,
+                                        PersonName displayContactPersonName,
+                                        Integer orderNumber,
+                                        ApproveStatus approveStatus,
+                                        LocalDate dateFrom,
+                                        LocalDate dateTo,
+                                        Set<String> uris,
+                                        Boolean favorite,
+                                        boolean isMainContributor,
+                                        Person contactPerson,
+                                        OrganisationUnit organisationUnit) {
+        this.contributionDescription = contributionDescription;
+        this.displayOrganisationUnit = displayOrganisationUnit;
+        this.displayContactPersonName = displayContactPersonName;
+        this.orderNumber = orderNumber;
+        this.approveStatus = approveStatus;
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+        this.uris = uris;
+        this.favorite = favorite;
+        this.isMainContributor = isMainContributor;
+        this.contactPerson = contactPerson;
+        this.organisationUnit = organisationUnit;
+    }
+
 }
