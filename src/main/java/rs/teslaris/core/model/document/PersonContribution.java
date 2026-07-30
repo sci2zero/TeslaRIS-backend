@@ -100,13 +100,16 @@ public class PersonContribution extends BaseEntity {
                               AffiliationStatement affiliationStatement,
                               Set<OrganisationUnit> institutions,
                               Integer orderNumber,
-                              ApproveStatus approveStatus) {
+                              ApproveStatus approveStatus, Boolean isMainContributor,
+                              Boolean isInvitedContributor) {
         this.person = person;
         this.contributionDescription = contributionDescription;
         this.affiliationStatement = affiliationStatement;
         this.institutions = institutions;
         this.orderNumber = orderNumber;
         this.approveStatus = approveStatus;
+        this.isMainContributor = isMainContributor;
+        this.isInvitedContributor = isInvitedContributor;
     }
 
 }

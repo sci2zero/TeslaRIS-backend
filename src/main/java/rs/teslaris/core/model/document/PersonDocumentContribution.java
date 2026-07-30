@@ -65,7 +65,9 @@ public class PersonDocumentContribution extends PersonContribution {
                         : new AffiliationStatement(other.getAffiliationStatement()),
                 new HashSet<>(other.getInstitutions()),
                 other.getOrderNumber(),
-                other.getApproveStatus()
+                other.getApproveStatus(),
+                other.getIsMainContributor(),
+                other.getIsInvitedContributor()
         );
 
         this.setDateFrom(other.getDateFrom());
@@ -79,8 +81,6 @@ public class PersonDocumentContribution extends PersonContribution {
                 .collect(Collectors.toCollection(HashSet::new)));
         this.setUris(new HashSet<>(other.getUris()));
         this.setFavorite(other.getFavorite());
-        this.setIsMainContributor(other.getIsMainContributor());
-        this.setIsInvitedContributor(other.getIsInvitedContributor());
 
         this.document = newDocument;
         this.contributionType = other.getContributionType();
