@@ -23,17 +23,23 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.revisioner.converter.RevisionConverter;
+import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
+import rs.teslaris.revisioner.restorer.RevisionRestorer;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.ObjectMapperProvider;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
+import rs.teslaris.revisioner.util.RevisionRestorerRegistry;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +49,8 @@ public class RevisionServiceImpl implements RevisionService {
     private final EntityRevisionRepository revisionRepository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
+
+    private final RevisionRestorerRegistry revisionRestorerRegistry;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -78,12 +86,25 @@ public class RevisionServiceImpl implements RevisionService {
 
             var revision =
                 EntityRevision.builder()
+                    .majorVersion(1)
+                    .minorVersion(0)
                     .entityType(event.entityType())
                     .entityId(event.entityId())
                     .revisionTimestamp(Instant.now())
                     .contentHash(newHash)
                     .compressedContent(CompressionUtil.compress(newJson))
                     .build();
+
+            revision.setAdminNote(getAdminNote(event.revisionType()));
+
+            revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                event.entityType(), event.entityId()).ifPresent(latestRevision -> {
+                    revision.setMajorVersion(
+                        latestRevision.getMajorVersion() +
+                            (event.revisionType().equals(RevisionType.ENRICHMENT) ? 1 : 0));
+                    revision.setMinorVersion(latestRevision.getMinorVersion() + 1);
+                }
+            );
 
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, newJson));
@@ -121,11 +142,11 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Instant> getRevisionTimestamps(String entityType, Integer entityId) {
+    public List<RevisionDTO> getRevisions(String entityType, Integer entityId) {
         return revisionRepository
             .findByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .stream()
-            .map(EntityRevision::getRevisionTimestamp)
+            .map(RevisionConverter::toDTO)
             .toList();
     }
 
@@ -163,6 +184,45 @@ public class RevisionServiceImpl implements RevisionService {
                         "Unable to load revisions at given timestamp. Reason: " + e.getMessage());
                 }
             });
+    }
+
+    @Override
+    @Transactional
+    public void restoreRevision(String entityType, Integer entityId, Integer majorVersion,
+                                Integer minorVersion) {
+        var restorer = revisionRestorerRegistry
+            .get(entityType)
+            .orElseThrow(() -> new RevisionRestoreException(
+                String.format("Restoring revisions of type %s is not supported.", entityType)));
+
+        var revision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                entityType, entityId, majorVersion, minorVersion)
+            .orElseThrow(() -> new NotFoundException(
+                String.format("Revision %d.%d of %s with ID %d does not exist.",
+                    majorVersion, minorVersion, entityType, entityId)));
+
+        var json = CompressionUtil.decompress(revision.getCompressedContent());
+
+        try {
+            var tree = objectMapper.readTree(json);
+
+            applyFieldRenames(tree, RevisionConfigurationLoader.getMigrationMappings(entityType));
+
+            var dto = objectMapper.treeToValue(tree, restorer.dtoClass());
+
+            restoreUnchecked(restorer, entityId, dto);
+        } catch (Exception e) {
+            log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
+                majorVersion, minorVersion, entityType, entityId, e);
+
+            throw new RevisionRestoreException(
+                String.format("Unable to restore revision %d.%d. Reason: %s",
+                    majorVersion, minorVersion, e.getMessage()));
+        }
+
+        log.info("Restored entity '{}' (ID={}) to revision {}.{}.",
+            entityType, entityId, majorVersion, minorVersion);
     }
 
     private String canonicalize(String json, String entityType)
@@ -272,5 +332,22 @@ public class RevisionServiceImpl implements RevisionService {
     @SuppressWarnings("unchecked")
     private <T> void hydrateUnchecked(RevisionHydrator<?> hydrator, Object dto) {
         ((RevisionHydrator<T>) hydrator).hydrate((T) dto);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void restoreUnchecked(RevisionRestorer<?> restorer, Integer entityId, Object dto) {
+        ((RevisionRestorer<T>) restorer).restore(entityId, (T) dto);
+    }
+
+    private String getAdminNote(RevisionType revisionType) {
+        if (revisionType.equals(RevisionType.CREATE)) {
+            return "revisionCreate";
+        } else if (revisionType.equals(RevisionType.UPDATE)) {
+            return "revisionUpdate";
+        } else if (revisionType.equals(RevisionType.ENRICHMENT)) {
+            return "revisionEnrichment";
+        }
+
+        return "";
     }
 }

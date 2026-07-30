@@ -1,5 +1,7 @@
 package rs.teslaris.revisioner.converter;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
+import rs.teslaris.revisioner.dto.DataQualityAssessmentSimpleDTO;
 import rs.teslaris.revisioner.dto.DataQualityRuleResultDTO;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
@@ -122,6 +125,16 @@ public class DataQualityAssessmentConverter {
             assessment.getDimensionScores(),
             passedRules,
             failedRules
+        );
+    }
+
+    public static DataQualityAssessmentSimpleDTO toSimpleDTO(DataQualityAssessment assessment) {
+        return new DataQualityAssessmentSimpleDTO(
+            assessment.getProfileName(),
+            assessment.getProfileVersion(),
+            assessment.getQualityScore(),
+            Boolean.TRUE.equals(assessment.getPublicationCandidate()),
+            LocalDate.ofInstant(assessment.getFinishedAt(), ZoneId.systemDefault())
         );
     }
 }
