@@ -24,16 +24,10 @@ public class ProjectsRelationConverter {
 
         if (Objects.nonNull(relation.getSourceProject())) {
             dto.setSourceProjectId(relation.getSourceProject().getId());
-            dto.setSourceProjectName(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                            relation.getSourceProject().getName()));
         }
 
         if (Objects.nonNull(relation.getTargetProject())) {
             dto.setTargetProjectId(relation.getTargetProject().getId());
-            dto.setTargetProjectName(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                            relation.getTargetProject().getName()));
         }
 
         return dto;

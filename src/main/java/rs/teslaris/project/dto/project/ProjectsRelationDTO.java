@@ -36,11 +36,7 @@ public class ProjectsRelationDTO {
     @NotNull(message = "You have to provide an end date.")
     private LocalDate dateTo;
 
-    private List<MultilingualContentDTO> sourceProjectName = new ArrayList<>();
-
     private Integer sourceProjectId;
-
-    private List<MultilingualContentDTO> targetProjectName = new ArrayList<>();
 
     @Positive(message = "Project id must be a positive number.")
     private Integer targetProjectId;
