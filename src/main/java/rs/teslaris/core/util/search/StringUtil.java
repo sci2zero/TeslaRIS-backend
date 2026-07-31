@@ -529,4 +529,10 @@ public class StringUtil {
 
         return String.format("%04d-%02d-%02d", year, month, day);
     }
+
+    public static boolean looksLikeAbbreviation(String title) {
+        var trimmed = title.trim();
+        var wordCount = trimmed.split("\\s+").length;
+        return trimmed.length() <= 25 && wordCount <= 3;
+    }
 }

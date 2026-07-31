@@ -109,7 +109,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
                 var content = new MultilingualContentDTO(
                         english.getId(), english.getLanguageTag(), titleText, 1);
 
-                if (looksLikeAbbreviation(titleText)) {
+                if (StringUtil.looksLikeAbbreviation(titleText)) {
                     metadata.getNameAbbreviation().add(content);
                 } else {
                     metadata.getName().add(content);
@@ -162,12 +162,5 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
                 }
             }
         }
-    }
-
-    private boolean looksLikeAbbreviation(String title) {
-        var trimmed = title.trim();
-        var wordCount = trimmed.split("\\s+").length;
-
-        return trimmed.length() <= 25 && wordCount <= 3;
     }
 }
