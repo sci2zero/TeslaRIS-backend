@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.project.model.project.ProjectStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,11 @@ public class PrepopulatedProjectMetadataDTO {
 
     private List<MultilingualContentDTO> description = new ArrayList<>();
 
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
+
     private List<String> uris = new ArrayList<>();
+
+    private ProjectStatus status;
 
     private String dateFrom;
 

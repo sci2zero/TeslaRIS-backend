@@ -20,6 +20,7 @@ import rs.teslaris.project.dto.project.PrepopulatedConsortiumMemberDTO;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
 
 import javax.xml.XMLConstants;
@@ -150,18 +151,26 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
                     english.getId(), english.getLanguageTag(), objective, 1));
         }
 
+        var keywords = evaluateText(xpath, document, "//*[local-name()='keywords']");
+        if (Objects.nonNull(objective)) {
+            metadata.getKeywords().add(new MultilingualContentDTO(
+                    english.getId(), english.getLanguageTag(), keywords, 1));
+        }
+
+        var status = evaluateText(xpath, document, "//*[local-name()='status']");
+        metadata.setStatus(mapCordisStatusToProjectStatus(status));
+
         metadata.setDateFrom(evaluateText(xpath, document, "//*[local-name()='startDate']"));
         metadata.setDateTo(evaluateText(xpath, document, "//*[local-name()='endDate']"));
 
-        var ecMaxContribution =
-                evaluateText(xpath, document, "//*[local-name()='ecMaxContribution']");
-        if (Objects.nonNull(ecMaxContribution)) {
+        var totalCost = evaluateText(xpath, document, "//*[local-name()='totalCost']");
+        if (Objects.nonNull(totalCost)) {
             var currency = currencyService.findCurrencyByCode(CURRENCY_CODE);
             try {
                 metadata.setCosts(
-                        new MonetaryAmountDTO(currency, Double.parseDouble(ecMaxContribution)));
+                        new MonetaryAmountDTO(currency, Double.parseDouble(totalCost)));
             } catch (NumberFormatException e) {
-                log.warn("Unable to parse ecMaxContribution value: {}", ecMaxContribution);
+                log.warn("Unable to parse totalCost value: {}", totalCost);
             }
         }
 
@@ -257,6 +266,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         return Objects.isNull(result) || result.isBlank() ? null : result.trim();
     }
 
+    @Nullable
     private OrganisationUnitProjectContributionType mapCordisTypeToContributionType(String cordisType) {
         return switch (cordisType) {
             case "coordinator" -> OrganisationUnitProjectContributionType.COORDINATOR;
@@ -264,7 +274,20 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
             case "thirdParty" -> OrganisationUnitProjectContributionType.INKIND_CONTRIBUTOR;
             default -> {
                 log.warn("Unknown CORDIS organization type: {}", cordisType);
-                yield OrganisationUnitProjectContributionType.INKIND_CONTRIBUTOR;
+                yield null;
+            }
+        };
+    }
+
+    @Nullable
+    private ProjectStatus mapCordisStatusToProjectStatus(String cordisStatus) {
+        return switch (cordisStatus) {
+            case "SIGNED" -> ProjectStatus.ONGOING;
+            case "CLOSED" -> ProjectStatus.CONCLUDED;
+            case "TERMINATED" -> ProjectStatus.CANCELLED; // CORDIS website could be queried by this status but fetching a project with it results in request time out
+            default -> {
+                log.warn("Unknown CORDIS project status: {}", cordisStatus);
+                yield null;
             }
         };
     }
