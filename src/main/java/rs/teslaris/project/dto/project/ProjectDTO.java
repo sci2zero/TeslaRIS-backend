@@ -36,6 +36,8 @@ public class ProjectDTO {
 
     private String raid;
 
+    private String nationalId;
+
     @Valid
     @NotNull(message = "You have to provide a project name.")
     @NotEmpty(message = "You have to provide a project name.")
@@ -49,7 +51,7 @@ public class ProjectDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    private Set<Integer> consortiumIds = new HashSet<>();
+    private Set<Integer> organisationIds = new HashSet<>();
 
     private Set<String> uris = new HashSet<>();
 
@@ -71,5 +73,8 @@ public class ProjectDTO {
     private MonetaryAmountDTO costs;
 
     @Valid
-    private List<PersonProjectContributionDTO> team = new ArrayList<>();
+    private List<PersonProjectContributionDTO> persons = new ArrayList<>();
+
+    @Valid
+    private List<ProjectsRelationDTO> relations = new ArrayList<>();
 }
