@@ -35,8 +35,10 @@ public class FundingApplicationConverter {
             fundingPart -> dto.getOtherFundingSources()
                 .add(FundingPartConverter.toDTO(fundingPart)));
 
-        dto.setRequestedAmount(new MonetaryAmountDTO());
+        // Left null when there is no amount - an empty DTO would be sent back on update and
+        // fail currency lookup with a null id.
         if (Objects.nonNull(fundingApplication.getRequestedAmount())) {
+            dto.setRequestedAmount(new MonetaryAmountDTO());
             dto.getRequestedAmount().setAmount(
                 fundingApplication.getRequestedAmount().getAmount());
             dto.getRequestedAmount().setCurrencyId(
