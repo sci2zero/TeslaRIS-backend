@@ -32,16 +32,12 @@ public class FundingCallConverter {
             dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
         });
 
-        dto.setMonetaryAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(fundingCall.getAmount())) {
+            dto.setMonetaryAmount(new MonetaryAmountDTO());
             dto.getMonetaryAmount().setAmount(fundingCall.getAmount().getAmount());
             dto.getMonetaryAmount().setCurrencyId(fundingCall.getAmount().getCurrency().getId());
             dto.getMonetaryAmount().setCurrencyCode(fundingCall.getAmount().getCurrency().getCode());
             dto.getMonetaryAmount().setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
-        }
-
-        if (Objects.nonNull(fundingCall.getFunder())) {
-            dto.setFunderId(fundingCall.getFunder().getId());
         }
 
         if (Objects.nonNull(fundingCall.getFunder())) {
@@ -55,9 +51,11 @@ public class FundingCallConverter {
         dto.setDateFrom(fundingCall.getDateFrom());
         dto.setDateTo(fundingCall.getDateTo());
 
-        dto.setFundingProgramId(fundingCall.getFundingProgram().getId());
-        dto.setFundingProgramName(MultilingualContentConverter.getMultilingualContentDTO(
-            fundingCall.getFundingProgram().getName()));
+        if (Objects.nonNull(fundingCall.getFundingProgram())) {
+            dto.setFundingProgramId(fundingCall.getFundingProgram().getId());
+            dto.setFundingProgramName(MultilingualContentConverter.getMultilingualContentDTO(
+                fundingCall.getFundingProgram().getName()));
+        }
 
         dto.setOaMandated(fundingCall.getOaMandated());
         dto.setOaMandateUrl(fundingCall.getOaMandateUrl());
