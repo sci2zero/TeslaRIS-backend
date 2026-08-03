@@ -2,6 +2,7 @@ package rs.teslaris.project.controller.funding;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -101,6 +102,7 @@ public class FundingApplicationController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('READ_FUNDING_APPLICATIONS')")
     public Page<FundingApplicationIndex> searchFundingApplications(
+        @RequestParam(required = false) List<String> tokens,
         @RequestParam(required = false) Integer fundingCallId,
         @RequestParam(required = false) Integer funderId,
         @RequestParam(required = false) String result,
@@ -110,7 +112,7 @@ public class FundingApplicationController {
         @RequestParam(required = false) LocalDate decisionDateTo,
         Pageable pageable) {
         return fundingApplicationService.searchFundingApplications(
-            fundingCallId, funderId, result,
+            tokens, fundingCallId, funderId, result,
             submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo,
             pageable);
     }
