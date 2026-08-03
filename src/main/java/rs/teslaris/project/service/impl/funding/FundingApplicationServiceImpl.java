@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingApplicationConverter;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
@@ -130,6 +132,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFundingApplications() {
+        fundingApplicationIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -183,7 +187,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     }
 
     @Override
-    public Page<FundingApplicationIndex> searchFundingApplications(Integer fundingCallId,
+    public Page<FundingApplicationIndex> searchFundingApplications(List<String> tokens,
+                                                                   Integer fundingCallId,
                                                                    Integer funderId,
                                                                    String result,
                                                                    LocalDate submissionDateFrom,
@@ -192,7 +197,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                                                    LocalDate decisionDateTo,
                                                                    Pageable pageable) {
         return searchService.runQuery(
-            buildFilterQuery(fundingCallId, funderId, result,
+            buildFilterQuery(tokens, fundingCallId, funderId, result,
                 submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
             pageable, FundingApplicationIndex.class, "funding_application");
     }
@@ -234,7 +239,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         application.setResponseSummary(
             multilingualContentService.getMultilingualContent(dto.getResponseSummary()));
 
-        if (Objects.nonNull(dto.getRequestedAmount())) {
+        if (Objects.nonNull(dto.getRequestedAmount()) &&
+            Objects.nonNull(dto.getRequestedAmount().getCurrencyId())) {
             if (Objects.isNull(application.getRequestedAmount())) {
                 application.setRequestedAmount(new MonetaryAmount());
             }
@@ -341,11 +347,28 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         index.setDatabaseId(application.getId());
         index.setFundingCallId(application.getFundingCall().getId());
 
+        indexFundingCallNameFields(application, index);
+
         if (Objects.nonNull(application.getProject())) {
             index.setProjectId(application.getProject().getId());
+            indexProjectNameFields(application, index);
+        } else {
+            // Empty strings rather than nulls - the index has a dynamic mapping, so a field that
+            // is never written does not exist and sorting on it fails with a shard exception.
+            index.setProjectId(null);
+            index.setProjectNameSr("");
+            index.setProjectNameSrSortable("");
+            index.setProjectNameOther("");
+            index.setProjectNameOtherSortable("");
         }
+
         if (Objects.nonNull(application.getFundingCall().getFunder())) {
             index.setFunderId(application.getFundingCall().getFunder().getId());
+            indexFunderNameFields(application, index);
+        } else {
+            index.setFunderId(null);
+            index.setFunderNameSr("");
+            index.setFunderNameOther("");
         }
 
         index.setSubmissionDate(application.getSubmissionDate());
@@ -353,12 +376,86 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         if (Objects.nonNull(application.getResult())) {
             index.setResult(application.getResult().name());
+        } else {
+            index.setResult(null);
         }
 
         return index;
     }
 
-    private Query buildFilterQuery(Integer fundingCallId,
+    private void indexProjectNameFields(FundingApplication application,
+                                        FundingApplicationIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            application.getProject().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setProjectNameSr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setProjectNameSrSortable(index.getProjectNameSr());
+        index.setProjectNameOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setProjectNameOtherSortable(index.getProjectNameOther());
+    }
+
+    private void indexFundingCallNameFields(FundingApplication application,
+                                            FundingApplicationIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            application.getFundingCall().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setFundingCallNameSr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setFundingCallNameSrSortable(index.getFundingCallNameSr());
+        index.setFundingCallNameOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setFundingCallNameOtherSortable(index.getFundingCallNameOther());
+    }
+
+    private void indexFunderNameFields(FundingApplication application,
+                                       FundingApplicationIndex index) {
+        var funder = application.getFundingCall().getFunder();
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            funder.getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            funder.getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setFunderNameSr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setFunderNameOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+    }
+
+    private Query buildFilterQuery(List<String> tokens,
+                                   Integer fundingCallId,
                                    Integer funderId,
                                    String result,
                                    LocalDate submissionDateFrom,
@@ -366,6 +463,61 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                    LocalDate decisionDateFrom,
                                    LocalDate decisionDateTo) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+
+            if (Objects.nonNull(tokens) && !tokens.isEmpty()) {
+                b.must(bq -> bq.bool(eq -> {
+                    tokens.forEach(token -> {
+                        if (token.equals("*")) {
+                            eq.should(sb -> sb.matchAll(m -> m));
+                        } else if (token.startsWith("\"") && token.endsWith("\"")) {
+                            var phrase = token.replace("\"", "");
+
+                            eq.must(mp -> mp.bool(m -> m
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("project_name_sr").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("project_name_other").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("funding_call_name_sr").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("funding_call_name_other").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("funder_name_sr").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("funder_name_other").query(phrase)))
+                            ));
+                        } else {
+                            var raw = token.replace("*", "").replace(".", "");
+                            var srWildcard =
+                                StringUtil.performSimpleLatinPreprocessing(raw) + "*";
+                            var otherWildcard = raw + "*";
+
+                            eq.should(mp -> mp.bool(m -> m
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("project_name_sr").value(srWildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("project_name_other").value(otherWildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("funding_call_name_sr").value(srWildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("funding_call_name_other")
+                                        .value(otherWildcard).caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("funder_name_sr").value(srWildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("funder_name_other").value(otherWildcard)
+                                        .caseInsensitive(true)))
+                            ));
+                        }
+                    });
+
+                    return eq;
+                }));
+            }
 
             if (Objects.nonNull(fundingCallId)) {
                 b.must(m -> m.term(
