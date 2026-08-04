@@ -41,6 +41,12 @@ import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 @Builder
 public class EntityRevision extends BaseEntity {
 
+    @Column(name = "major_version", nullable = false)
+    private Integer majorVersion = 1;
+
+    @Column(name = "minor_version", nullable = false)
+    private Integer minorVersion = 0;
+
     @Column(name = "entity_type", nullable = false, length = 100)
     private String entityType;
 

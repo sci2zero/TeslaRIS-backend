@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.DataQualityAssessmentReindexEvent;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.applicationevent.ProjectEventReindexingEvent;
 import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
@@ -177,6 +178,10 @@ public class ReindexServiceImpl implements ReindexService {
 
             applicationEventPublisher.publishEvent(
                 new ProjectEventReindexingEvent(indexesToRepopulate));
+
+            if (indexesToRepopulate.contains(EntityType.QUALITY_ASSESSMENT)) {
+                applicationEventPublisher.publishEvent(new DataQualityAssessmentReindexEvent());
+            }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing of core entities. Reason: ", e);
         }

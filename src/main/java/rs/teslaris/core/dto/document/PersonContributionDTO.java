@@ -1,12 +1,8 @@
 package rs.teslaris.core.dto.document;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +12,12 @@ import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -45,16 +47,27 @@ public class PersonContributionDTO {
 
     private ContactDTO contact;
 
-    private LocalDate dateFrom;
+    // only for responses
+    private List<List<MultilingualContentDTO>> displayInstitutionNames = new ArrayList<>();
 
-    private LocalDate dateTo;
+    private Boolean favorite;
+
+    @Valid
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
 
     @NotNull(message = "You have to provide research area IDs.")
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    // used only for responses
+    private LocalDate dateFrom;
 
-    private List<List<MultilingualContentDTO>> displayInstitutionNames = new ArrayList<>();
+    private LocalDate dateTo;
+
+    private Set<String> uris = new HashSet<>();
+
+    private Boolean isMainContributor;
+
+    private Boolean isInvitedContributor;
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
 }
