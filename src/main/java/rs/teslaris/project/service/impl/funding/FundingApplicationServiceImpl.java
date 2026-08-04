@@ -188,6 +188,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
     @Override
     public Page<FundingApplicationIndex> searchFundingApplications(List<String> tokens,
+                                                                   Integer projectId,
                                                                    Integer fundingCallId,
                                                                    Integer funderId,
                                                                    String result,
@@ -197,7 +198,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                                                    LocalDate decisionDateTo,
                                                                    Pageable pageable) {
         return searchService.runQuery(
-            buildFilterQuery(tokens, fundingCallId, funderId, result,
+            buildFilterQuery(tokens, projectId, fundingCallId, funderId, result,
                 submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
             pageable, FundingApplicationIndex.class, "funding_application");
     }
@@ -455,6 +456,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     }
 
     private Query buildFilterQuery(List<String> tokens,
+                                   Integer projectId,
                                    Integer fundingCallId,
                                    Integer funderId,
                                    String result,
@@ -517,6 +519,11 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
                     return eq;
                 }));
+            }
+
+            if (Objects.nonNull(projectId)) {
+                b.must(m -> m.term(
+                    t -> t.field("project_id").value(projectId)));
             }
 
             if (Objects.nonNull(fundingCallId)) {

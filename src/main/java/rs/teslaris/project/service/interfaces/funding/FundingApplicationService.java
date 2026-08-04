@@ -38,6 +38,7 @@ public interface FundingApplicationService extends JPAService<FundingApplication
     void deleteFundingApplicationDocument(Integer documentFileId, Integer fundingApplicationId);
 
     Page<FundingApplicationIndex> searchFundingApplications(List<String> tokens,
+                                                            Integer projectId,
                                                             Integer fundingCallId,
                                                             Integer funderId,
                                                             String result,

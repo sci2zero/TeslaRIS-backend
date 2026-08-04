@@ -103,6 +103,7 @@ public class FundingApplicationController {
     @PreAuthorize("hasAuthority('READ_FUNDING_APPLICATIONS')")
     public Page<FundingApplicationIndex> searchFundingApplications(
         @RequestParam(required = false) List<String> tokens,
+        @RequestParam(required = false) Integer projectId,
         @RequestParam(required = false) Integer fundingCallId,
         @RequestParam(required = false) Integer funderId,
         @RequestParam(required = false) String result,
@@ -112,7 +113,7 @@ public class FundingApplicationController {
         @RequestParam(required = false) LocalDate decisionDateTo,
         Pageable pageable) {
         return fundingApplicationService.searchFundingApplications(
-            tokens, fundingCallId, funderId, result,
+            tokens, projectId, fundingCallId, funderId, result,
             submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo,
             pageable);
     }
