@@ -3,11 +3,6 @@ package rs.teslaris.project.service.impl.project;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,11 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
-import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
-import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.commontypes.*;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -30,12 +21,19 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -187,13 +185,14 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
             projectDTO.getResearchAreasId().stream().toList());
         project.setResearchAreas(new HashSet<>(researchAreas));
 
-        var consortium = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
-            projectDTO.getConsortiumIds().stream().toList());
-        project.setConsortium(new HashSet<>(consortium));
+        var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
+                projectDTO.getOrganisationIds().stream().toList());
+        project.setOrganisations(new HashSet<>(organisations));
 
         project.setUris(projectDTO.getUris());
         project.setDoi(projectDTO.getDoi());
         project.setRaid(projectDTO.getRaid());
+        project.setNationalId(projectDTO.getNationalId());
         project.setDateFrom(projectDTO.getDateFrom());
         project.setDateTo(projectDTO.getDateTo());
         project.setStatus(projectDTO.getStatus());
@@ -212,6 +211,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         } else {
             project.setCosts(null);
         }
+
+        rebuildTeam(project, projectDTO);
+        rebuildRelations(project, projectDTO);
     }
 
     private void clearCommonFields(Project project) {
@@ -220,7 +222,42 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getNameAbbreviation().clear();
         project.getKeywords().clear();
         project.getResearchAreas().clear();
-        project.getTeam().clear();
+        project.getPersons().clear();
+        project.getRelatedProjects().clear();
+    }
+
+    private void rebuildTeam(Project project, ProjectDTO projectDTO) {
+        if (Objects.isNull(project.getPersons())) {
+            project.setPersons(new HashSet<>());
+        }
+        projectDTO.getPersons().forEach(memberDto ->
+                project.getPersons().add(
+                        personProjectContributionService.createContribution(memberDto, project)));
+    }
+
+    private void rebuildRelations(Project project, ProjectDTO projectDTO) {
+        if (Objects.isNull(project.getRelatedProjects())) {
+            project.setRelatedProjects(new HashSet<>());
+        }
+        projectDTO.getRelations().forEach(relationDto -> {
+            var relation = new ProjectsRelation();
+            relation.setRelationType(relationDto.getRelationType());
+            relation.setDateFrom(relationDto.getDateFrom());
+            relation.setDateTo(relationDto.getDateTo());
+            relation.setSourceProjectDescription(
+                    multilingualContentService.getMultilingualContent(
+                            relationDto.getSourceProjectDescription()));
+            relation.setTargetProjectDescription(
+                    multilingualContentService.getMultilingualContent(
+                            relationDto.getTargetProjectDescription()));
+
+            relation.setSourceProject(project);
+            if (Objects.nonNull(relationDto.getTargetProjectId())) {
+                relation.setTargetProject(findOne(relationDto.getTargetProjectId()));
+            }
+
+            project.getRelatedProjects().add(relation);
+        });
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,32 +22,35 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
-import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.revisioner.converter.RevisionConverter;
+import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
-import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
+import rs.teslaris.revisioner.restorer.RevisionRestorer;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.ObjectMapperProvider;
 import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
-import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.RevisionRestorerRegistry;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RevisionServiceImpl implements RevisionService {
 
-    private final EntityRevisionRepository repository;
+    private final EntityRevisionRepository revisionRepository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
+
+    private final RevisionRestorerRegistry revisionRestorerRegistry;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -82,8 +84,21 @@ public class RevisionServiceImpl implements RevisionService {
                 }
             }
 
+            var latestRevision =
+                revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                    event.entityType(), event.entityId());
+
+            if (latestRevision.isPresent() &&
+                latestRevision.get().getContentHash().equals(newHash)) {
+                // Restores record their own revision up front (see restoreRevision), so the update
+                // event they trigger would otherwise duplicate it.
+                return;
+            }
+
             var revision =
                 EntityRevision.builder()
+                    .majorVersion(1)
+                    .minorVersion(0)
                     .entityType(event.entityType())
                     .entityId(event.entityId())
                     .revisionTimestamp(Instant.now())
@@ -91,10 +106,20 @@ public class RevisionServiceImpl implements RevisionService {
                     .compressedContent(CompressionUtil.compress(newJson))
                     .build();
 
+            revision.setAdminNote(getAdminNote(event.revisionType()));
+
+            latestRevision.ifPresent(latest -> {
+                    revision.setMajorVersion(
+                        latest.getMajorVersion() +
+                            (event.revisionType().equals(RevisionType.ENRICHMENT) ? 1 : 0));
+                    revision.setMinorVersion(latest.getMinorVersion() + 1);
+                }
+            );
+
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, newJson));
 
-            repository.save(revision);
+            revisionRepository.save(revision);
 
             log.info(
                 "Created {} revision for entity '{}' (ID={}), revisionId={}, hash={}.",
@@ -127,11 +152,11 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Instant> getRevisionTimestamps(String entityType, Integer entityId) {
-        return repository
+    public List<RevisionDTO> getRevisions(String entityType, Integer entityId) {
+        return revisionRepository
             .findByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .stream()
-            .map(EntityRevision::getRevisionTimestamp)
+            .map(RevisionConverter::toDTO)
             .toList();
     }
 
@@ -142,7 +167,7 @@ public class RevisionServiceImpl implements RevisionService {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(entityType);
 
-        return repository
+        return revisionRepository
             .findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
                 entityType,
                 entityId,
@@ -172,50 +197,93 @@ public class RevisionServiceImpl implements RevisionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<QualityReportResponseDTO> getQualityReportForEntity(String entityType,
-                                                                    Integer entityId) {
-        var entityRevision = repository
-            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
+    @Transactional
+    public void restoreRevision(String entityType, Integer entityId, Integer majorVersion,
+                                Integer minorVersion) {
+        var restorer = revisionRestorerRegistry
+            .get(entityType)
+            .orElseThrow(() -> new RevisionRestoreException(
+                String.format("Restoring revisions of type %s is not supported.", entityType)));
 
-        if (entityRevision.isEmpty()) {
-            return List.of();
+        var revision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                entityType, entityId, majorVersion, minorVersion)
+            .orElseThrow(() -> new NotFoundException(
+                String.format("Revision %d.%d of %s with ID %d does not exist.",
+                    majorVersion, minorVersion, entityType, entityId)));
+
+        var isLatestRevision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .map(latestRevision ->
+                Objects.equals(latestRevision.getMajorVersion(), majorVersion) &&
+                    Objects.equals(latestRevision.getMinorVersion(), minorVersion))
+            .orElse(false);
+
+        if (isLatestRevision) {
+            log.info("Revision {}.{} of entity '{}' (ID={}) is already the current state, " +
+                "skipping restore.", majorVersion, minorVersion, entityType, entityId);
+            return;
         }
 
-        var qualityReport = new ArrayList<QualityReportResponseDTO>();
+        var json = CompressionUtil.decompress(revision.getCompressedContent());
 
-        entityRevision.get().getAssessments().forEach(assessment -> {
-            List<Pair<IssueSeverity, List<MultilingualContentDTO>>> assessmentReport =
-                new ArrayList<>();
+        try {
+            var tree = objectMapper.readTree(json);
 
-            assessment.getIssues().forEach(issue -> {
-                var remarks = DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
-                    assessment.getProfileName(),
-                    issue.getKey(),
-                    issue.getParameters().toArray()
-                );
+            applyFieldRenames(tree, RevisionConfigurationLoader.getMigrationMappings(entityType));
 
-                var multilingualContents = remarks.stream()
-                    .map(r -> new MultilingualContentDTO(
-                        r.getLanguage().getId(),
-                        r.getLanguage().getLanguageTag(),
-                        r.getContent(),
-                        r.getPriority()
-                    ))
-                    .toList();
+            var dto = objectMapper.treeToValue(tree, restorer.dtoClass());
 
-                assessmentReport.add(new Pair<>(issue.getSeverity(), multilingualContents));
-            });
+            restoreUnchecked(restorer, entityId, dto);
 
-            qualityReport.add(
-                new QualityReportResponseDTO(
-                    assessment.getProfileName() + " (" + assessment.getProfileVersion() + ")",
-                    assessmentReport
-                )
-            );
-        });
+            recordRestoredRevision(entityType, entityId, revision, json);
+        } catch (Exception e) {
 
-        return qualityReport;
+            log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
+                majorVersion, minorVersion, entityType, entityId, e);
+
+            throw new RevisionRestoreException(
+                String.format("Unable to restore revision %d.%d. Reason: %s",
+                    majorVersion, minorVersion, e.getMessage()));
+        }
+
+        log.info("Restored entity '{}' (ID={}) to revision {}.{}.",
+            entityType, entityId, majorVersion, minorVersion);
+    }
+
+    private void recordRestoredRevision(String entityType, Integer entityId,
+                                        EntityRevision restoredRevision, String restoredJson) {
+        var latestRevision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .orElse(restoredRevision);
+
+        var sameMajorLine = Objects.equals(
+            restoredRevision.getMajorVersion(), latestRevision.getMajorVersion());
+
+        var revision =
+            EntityRevision.builder()
+                .majorVersion(latestRevision.getMajorVersion() + (sameMajorLine ? 0 : 1))
+                .minorVersion(sameMajorLine ? latestRevision.getMinorVersion() + 1 : 0)
+                .entityType(entityType)
+                .entityId(entityId)
+                .revisionTimestamp(Instant.now())
+                .contentHash(restoredRevision.getContentHash())
+                .compressedContent(restoredRevision.getCompressedContent())
+                .build();
+
+        revision.setAdminNote(
+            "revisionRestore:" +
+                restoredRevision.getMajorVersion() + "." +
+                restoredRevision.getMinorVersion()
+        );
+
+        revisionRepository.save(revision);
+
+        applicationEventPublisher.publishEvent(
+            new DataQualityAssessmentEvent(revision, restoredJson));
+
+        log.info("Recorded restored state of entity '{}' (ID={}) as revision {}.{}.",
+            entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion());
     }
 
     private String canonicalize(String json, String entityType)
@@ -325,5 +393,22 @@ public class RevisionServiceImpl implements RevisionService {
     @SuppressWarnings("unchecked")
     private <T> void hydrateUnchecked(RevisionHydrator<?> hydrator, Object dto) {
         ((RevisionHydrator<T>) hydrator).hydrate((T) dto);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void restoreUnchecked(RevisionRestorer<?> restorer, Integer entityId, Object dto) {
+        ((RevisionRestorer<T>) restorer).restore(entityId, (T) dto);
+    }
+
+    private String getAdminNote(RevisionType revisionType) {
+        if (revisionType.equals(RevisionType.CREATE)) {
+            return "revisionCreate";
+        } else if (revisionType.equals(RevisionType.UPDATE)) {
+            return "revisionUpdate";
+        } else if (revisionType.equals(RevisionType.ENRICHMENT)) {
+            return "revisionEnrichment";
+        }
+
+        return "";
     }
 }
