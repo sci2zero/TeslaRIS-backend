@@ -363,8 +363,6 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
             index.setProjectId(application.getProject().getId());
             indexProjectNameFields(application, index);
         } else {
-            // Empty strings rather than nulls - the index has a dynamic mapping, so a field that
-            // is never written does not exist and sorting on it fails with a shard exception.
             index.setProjectId(null);
             index.setProjectNameSr("");
             index.setProjectNameSrSortable("");
