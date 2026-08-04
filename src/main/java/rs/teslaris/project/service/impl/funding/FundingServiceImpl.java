@@ -113,7 +113,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var fundingToUpdate = findOne(fundingId);
 
         clearCommonFields(fundingToUpdate);
-        setCommonFields(fundingToUpdate, fundingDTO);
+        setCommonFields(fundingToUpdate, fundingDTO, false);
 
         fundingIndexRepository.findFundingIndexByDatabaseId(fundingId)
             .ifPresent(index -> {
