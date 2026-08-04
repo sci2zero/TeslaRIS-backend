@@ -129,33 +129,58 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Comparator.nullsFirst(LocalDate::compareTo))
             .thenComparing(PersonNameDTO::getPersonNameType,
                 Comparator.nullsFirst(Enum::compareTo));
+
     private final PersonRepository personRepository;
+
     private final SearchService<PersonIndex> searchService;
+
     private final ExpressionTransformer expressionTransformer;
+
     private final PersonIndexRepository personIndexRepository;
+
     private final OrganisationUnitService organisationUnitService;
+
     private final CountryService countryService;
+
     private final LanguageTagService languageTagService;
+
     private final PersonNameService personNameService;
+
     private final PersonContributionRepository personContributionRepository;
+
     private final IndexBulkUpdateService indexBulkUpdateService;
+
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final MultilingualContentService multilingualContentService;
+
     private final FileService fileService;
+
     private final SearchFieldsLoader searchFieldsLoader;
+
     private final ElasticsearchClient elasticsearchClient;
+
     private final PersonEmploymentWorker personEmploymentWorker;
+
     private final InvolvementRepository involvementRepository;
+
     private final ExpertiseOrSkillRepository expertiseOrSkillRepository;
+
     private final PrizeRepository prizeRepository;
+
     private final PersonFieldVisibilityRepository personFieldVisibilityRepository;
+
     private final ApplicationEventPublisher applicationEventPublisher;
+
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
+
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
+
     @Value("${default.region-code}")
     private String defaultRegionCode;
+
 
     private static PersonNameDTO normalizePersonName(PersonNameDTO dto) {
         return new PersonNameDTO(
@@ -462,6 +487,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             Objects.requireNonNullElse(personNameDTO.getPersonNameType(),
                 PersonNameType.PRESENTED_NAME));
 
+        updateUserName(personToUpdate);
+
         save(personToUpdate);
 
         var newPerson = PersonConverter.toDTO(personToUpdate);
@@ -493,6 +520,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.getOtherNames().add(personToUpdate.getName());
         personToUpdate.setName(chosenName);
         personToUpdate.getOtherNames().remove(chosenName);
+
+        updateUserName(personToUpdate);
 
         this.save(personToUpdate);
 
@@ -1907,6 +1936,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         personIndex.getBirthdateSortable().substring(0, 4));
                 }
             });
+        }
+    }
+
+    private void updateUserName(Person personToUpdate) {
+        if (Objects.nonNull(personToUpdate.getUser())) {
+            personToUpdate.getUser().setFirstname(personToUpdate.getName().getFirstname());
+            personToUpdate.getUser().setLastName(personToUpdate.getName().getLastname());
         }
     }
 }
