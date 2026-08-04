@@ -84,6 +84,17 @@ public class RevisionServiceImpl implements RevisionService {
                 }
             }
 
+            var latestRevision =
+                revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                    event.entityType(), event.entityId());
+
+            if (latestRevision.isPresent() &&
+                latestRevision.get().getContentHash().equals(newHash)) {
+                // Restores record their own revision up front (see restoreRevision), so the update
+                // event they trigger would otherwise duplicate it.
+                return;
+            }
+
             var revision =
                 EntityRevision.builder()
                     .majorVersion(1)
@@ -97,12 +108,11 @@ public class RevisionServiceImpl implements RevisionService {
 
             revision.setAdminNote(getAdminNote(event.revisionType()));
 
-            revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-                event.entityType(), event.entityId()).ifPresent(latestRevision -> {
+            latestRevision.ifPresent(latest -> {
                     revision.setMajorVersion(
-                        latestRevision.getMajorVersion() +
+                        latest.getMajorVersion() +
                             (event.revisionType().equals(RevisionType.ENRICHMENT) ? 1 : 0));
-                    revision.setMinorVersion(latestRevision.getMinorVersion() + 1);
+                    revision.setMinorVersion(latest.getMinorVersion() + 1);
                 }
             );
 
@@ -202,6 +212,19 @@ public class RevisionServiceImpl implements RevisionService {
                 String.format("Revision %d.%d of %s with ID %d does not exist.",
                     majorVersion, minorVersion, entityType, entityId)));
 
+        var isLatestRevision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .map(latestRevision ->
+                Objects.equals(latestRevision.getMajorVersion(), majorVersion) &&
+                    Objects.equals(latestRevision.getMinorVersion(), minorVersion))
+            .orElse(false);
+
+        if (isLatestRevision) {
+            log.info("Revision {}.{} of entity '{}' (ID={}) is already the current state, " +
+                "skipping restore.", majorVersion, minorVersion, entityType, entityId);
+            return;
+        }
+
         var json = CompressionUtil.decompress(revision.getCompressedContent());
 
         try {
@@ -212,7 +235,10 @@ public class RevisionServiceImpl implements RevisionService {
             var dto = objectMapper.treeToValue(tree, restorer.dtoClass());
 
             restoreUnchecked(restorer, entityId, dto);
+
+            recordRestoredRevision(entityType, entityId, revision, json);
         } catch (Exception e) {
+
             log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
                 majorVersion, minorVersion, entityType, entityId, e);
 
@@ -223,6 +249,41 @@ public class RevisionServiceImpl implements RevisionService {
 
         log.info("Restored entity '{}' (ID={}) to revision {}.{}.",
             entityType, entityId, majorVersion, minorVersion);
+    }
+
+    private void recordRestoredRevision(String entityType, Integer entityId,
+                                        EntityRevision restoredRevision, String restoredJson) {
+        var latestRevision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .orElse(restoredRevision);
+
+        var sameMajorLine = Objects.equals(
+            restoredRevision.getMajorVersion(), latestRevision.getMajorVersion());
+
+        var revision =
+            EntityRevision.builder()
+                .majorVersion(latestRevision.getMajorVersion() + (sameMajorLine ? 0 : 1))
+                .minorVersion(sameMajorLine ? latestRevision.getMinorVersion() + 1 : 0)
+                .entityType(entityType)
+                .entityId(entityId)
+                .revisionTimestamp(Instant.now())
+                .contentHash(restoredRevision.getContentHash())
+                .compressedContent(restoredRevision.getCompressedContent())
+                .build();
+
+        revision.setAdminNote(
+            "revisionRestore:" +
+                restoredRevision.getMajorVersion() + "." +
+                restoredRevision.getMinorVersion()
+        );
+
+        revisionRepository.save(revision);
+
+        applicationEventPublisher.publishEvent(
+            new DataQualityAssessmentEvent(revision, restoredJson));
+
+        log.info("Recorded restored state of entity '{}' (ID={}) as revision {}.{}.",
+            entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion());
     }
 
     private String canonicalize(String json, String entityType)

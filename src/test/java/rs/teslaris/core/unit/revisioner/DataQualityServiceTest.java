@@ -15,6 +15,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -77,7 +78,7 @@ public class DataQualityServiceTest {
             .errorFailedRules(3)
             .startedAt(Instant.now())
             .finishedAt(Instant.now())
-            .issues(issue == null ? List.of() : List.of(issue))
+            .issues(Objects.isNull(issue) ? List.of() : List.of(issue))
             .build();
 
         revision.getAssessments().add(assessment);

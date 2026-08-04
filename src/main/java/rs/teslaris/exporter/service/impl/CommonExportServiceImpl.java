@@ -257,6 +257,19 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
     }
 
+    @Override
+    public void deleteDocumentFromCommonModel(Integer documentId,
+                                              ExportPublicationType exportType) {
+        var deletedCount = commonExportWorker.deleteExportEntity(
+            documentId, ExportDocument.class, exportType
+        );
+
+        if (deletedCount > 0) {
+            log.info("Deleted {} export record(s) of type {} for document with ID {}.",
+                deletedCount, exportType, documentId);
+        }
+    }
+
     private CompletableFuture<Void> createExportFuture(ExportPublicationType exportType,
                                                        boolean allTime) {
         try {

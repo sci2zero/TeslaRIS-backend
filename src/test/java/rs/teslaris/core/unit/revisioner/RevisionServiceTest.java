@@ -75,13 +75,18 @@ public class RevisionServiceTest {
     }
 
     private EntityRevision revisionWithContent(String json, Integer major, Integer minor) {
+        return revisionWithContent(json, major, minor, "hash");
+    }
+
+    private EntityRevision revisionWithContent(String json, Integer major, Integer minor,
+                                               String contentHash) {
         return EntityRevision.builder()
             .majorVersion(major)
             .minorVersion(minor)
             .entityType(ENTITY_TYPE)
             .entityId(1)
             .revisionTimestamp(Instant.now())
-            .contentHash("hash")
+            .contentHash(contentHash)
             .compressedContent(CompressionUtil.compress(json))
             .build();
     }
@@ -282,12 +287,8 @@ public class RevisionServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    @Test
     @SuppressWarnings("unchecked")
-    public void shouldRestoreRevisionToRequestedVersion() {
-        // given
-        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
-
+    private RevisionRestorer<DummyDTO> stubRestorerFor(EntityRevision revision) {
         RevisionRestorer<DummyDTO> restorer =
             (RevisionRestorer<DummyDTO>) mock(RevisionRestorer.class);
         when(restorer.dtoClass()).thenReturn(DummyDTO.class);
@@ -295,7 +296,20 @@ public class RevisionServiceTest {
         doReturn(Optional.of(restorer)).when(revisionRestorerRegistry).get(ENTITY_TYPE);
         when(revisionRepository
             .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
-                ENTITY_TYPE, 1, 1, 2)).thenReturn(Optional.of(revision));
+                ENTITY_TYPE, 1, revision.getMajorVersion(), revision.getMinorVersion()))
+            .thenReturn(Optional.of(revision));
+
+        return restorer;
+    }
+
+    @Test
+    public void shouldRestoreRevisionToRequestedVersion() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
+        var restorer = stubRestorerFor(revision);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 1, 4)));
 
         try (var ignored = mockConfigurationLoader()) {
             // when
@@ -303,6 +317,115 @@ public class RevisionServiceTest {
 
             // then
             verify(restorer).restore(1, new DummyDTO(1, "Old title"));
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+            assertEquals(ENTITY_TYPE, savedRevision.getEntityType());
+            assertEquals(1, savedRevision.getEntityId());
+            assertEquals(revision.getContentHash(), savedRevision.getContentHash());
+            assertTrue(CompressionUtil.decompress(savedRevision.getCompressedContent())
+                .contains("Old title"));
+
+            var eventCaptor = ArgumentCaptor.forClass(DataQualityAssessmentEvent.class);
+            verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
+            assertEquals(savedRevision, eventCaptor.getValue().entityRevision());
+            assertTrue(eventCaptor.getValue().json().contains("Old title"));
+        }
+    }
+
+    @Test
+    public void shouldDoNothingWhenRequestedRevisionIsAlreadyTheLatestOne() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Current title\"}", 4, 2);
+        var restorer = stubRestorerFor(revision);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revision));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.restoreRevision(ENTITY_TYPE, 1, 4, 2);
+
+            // then
+            verify(restorer, never()).restore(any(), any());
+            verify(revisionRepository, never()).save(any());
+            verify(applicationEventPublisher, never()).publishEvent(any());
+        }
+    }
+
+    @Test
+    public void shouldCreateMinorVersionWhenRestoringWithinSameMajorLine() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 4, 1);
+        stubRestorerFor(revision);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 4, 2)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.restoreRevision(ENTITY_TYPE, 1, 4, 1);
+
+            // then
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            assertEquals(4, captor.getValue().getMajorVersion());
+            assertEquals(3, captor.getValue().getMinorVersion());
+        }
+    }
+
+    @Test
+    public void shouldCreateMajorVersionWhenRestoringFromDifferentMajorLine() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 3, 4);
+        stubRestorerFor(revision);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 4, 2)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.restoreRevision(ENTITY_TYPE, 1, 3, 4);
+
+            // then
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            assertEquals(5, captor.getValue().getMajorVersion());
+            assertEquals(0, captor.getValue().getMinorVersion());
+        }
+    }
+
+    @Test
+    public void shouldNotCreateRevisionWhenUpdateMatchesLatestStoredContent() {
+        // given
+        var event = new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+            RevisionType.CREATE);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            revisionService.createRevisionIfChanged(event);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var storedHash = captor.getValue().getContentHash();
+
+            when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                ENTITY_TYPE, 1)).thenReturn(
+                Optional.of(revisionWithContent("{}", 1, 0, storedHash)));
+
+            // when (the same state is reported again, as a restore's update event would)
+            revisionService.createRevisionIfChanged(event);
+
+            // then (no second revision is created)
+            verify(revisionRepository).save(any());
         }
     }
 
@@ -363,6 +486,7 @@ public class RevisionServiceTest {
 
             // then (RevisionRestoreException should be thrown)
             verify(restorer, never()).restore(any(), any());
+            verify(revisionRepository, never()).save(any());
         }
     }
 
