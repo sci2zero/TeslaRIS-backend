@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
@@ -65,6 +66,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     private final SearchService<FundingApplicationIndex> searchService;
 
     private final ProjectService projectService;
+
+    private final PersonService personService;
 
     @Override
     protected JpaRepository<FundingApplication, Integer> getEntityRepository() {
@@ -233,6 +236,12 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
             application.setFunding(fundingService.findOne(dto.getFundingId()));
         } else {
             application.setFunding(null);
+        }
+
+        if (Objects.nonNull(dto.getSubmitterId())) {
+            application.setSubmitter(personService.findOne(dto.getSubmitterId()));
+        } else {
+            application.setSubmitter(null);
         }
 
         application.setDescription(

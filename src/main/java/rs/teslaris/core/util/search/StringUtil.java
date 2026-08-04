@@ -485,6 +485,34 @@ public class StringUtil {
         return result;
     }
 
+    public static List<MultilingualContentDTO> buildMultilingualContentDTO(
+        LanguageTagService languageTagService, Map<String, String> localizedContent,
+        Object... params) {
+        var result = new ArrayList<MultilingualContentDTO>();
+        var priority = new AtomicInteger(1);
+
+        localizedContent.forEach((languageCode, template) -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(languageCode.toUpperCase());
+
+            if (Objects.isNull(languageTag) || Objects.isNull(languageTag.getLanguageTag())) {
+                return;
+            }
+
+            Object[] processedParams =
+                processParamsForLanguage(languageCode, params);
+
+            result.add(new MultilingualContentDTO(
+                languageTag.getId(),
+                languageTag.getLanguageTag(),
+                MessageFormat.format(template, processedParams),
+                priority.getAndIncrement()
+            ));
+        });
+
+        return result;
+    }
+
     private static Object[] processParamsForLanguage(
         String languageCode,
         Object... params) {
@@ -512,6 +540,13 @@ public class StringUtil {
             .toArray();
     }
 
+    public static String stripExtension(String filename) {
+        int index = filename.lastIndexOf('.');
+        return index == -1
+            ? filename
+            : filename.substring(0, index);
+    }
+
     @Nullable
     public static String parseDateParts(JsonNode dateParts) {
         if (!dateParts.isArray() || dateParts.isEmpty()) {
@@ -528,5 +563,11 @@ public class StringUtil {
         var day = firstDate.size() > 2 ? firstDate.get(2).asInt() : 1;
 
         return String.format("%04d-%02d-%02d", year, month, day);
+    }
+
+    public static boolean looksLikeAbbreviation(String title) {
+        var trimmed = title.trim();
+        var wordCount = trimmed.split("\\s+").length;
+        return trimmed.length() <= 25 && wordCount <= 3;
     }
 }

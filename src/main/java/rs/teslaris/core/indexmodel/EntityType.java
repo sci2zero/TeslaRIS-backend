@@ -23,4 +23,5 @@ public enum EntityType {
     OTHER_EVENT,
     FUNDING_APPLICATION,
     FUNDING,
+    QUALITY_ASSESSMENT
 }

@@ -1,5 +1,6 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.ArrayList;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
@@ -26,6 +27,7 @@ public class PersonProjectContributionConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 contribution.getContributionDescription()));
 
+        dto.setInstitutionIds(new ArrayList<>());
         contribution.getInstitutions().forEach(institution ->
             dto.getInstitutionIds().add(institution.getId()));
 
@@ -55,6 +57,19 @@ public class PersonProjectContributionConverter {
 
         contribution.getFundingParts().forEach(fundingPart ->
             dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
+
+        dto.setFavorite(contribution.getFavorite());
+        dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getKeywords()));
+        contribution.getResearchAreas().forEach(ra ->
+                dto.getResearchAreasId().add(ra.getId()));
+        dto.setDateFrom(contribution.getDateFrom());
+        dto.setDateTo(contribution.getDateTo());
+        dto.setUris(contribution.getUris());
+        dto.setIsMainContributor(contribution.getIsMainContributor());
+        dto.setIsInvitedContributor(contribution.getIsInvitedContributor());
+        dto.setDisplayProject(MultilingualContentConverter.getMultilingualContentDTO(
+                contribution.getDisplayProject()));
 
         return dto;
     }

@@ -14,6 +14,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
@@ -40,6 +41,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
     private final MultilingualContentService multilingualContentService;
 
     private final CurrencyService currencyService;
+
+    private final ResearchAreaService researchAreaService;
 
     @Override
     protected JpaRepository<PersonProjectContribution, Integer> getEntityRepository() {
@@ -79,6 +82,24 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
                 .add(buildContributionFundingPart(partDto, contribution)));
 
         contribution.setProject(parent);
+        contribution.setFavorite(dto.getFavorite());
+        contribution.setKeywords(
+                multilingualContentService.getMultilingualContent(dto.getKeywords()));
+
+        if (Objects.nonNull(dto.getResearchAreasId()) && !dto.getResearchAreasId().isEmpty()) {
+            contribution.setResearchAreas(new HashSet<>(
+                    researchAreaService.getResearchAreasByIds(
+                            dto.getResearchAreasId().stream().toList())));
+        }
+
+        contribution.setDateFrom(dto.getDateFrom());
+        contribution.setDateTo(dto.getDateTo());
+        contribution.setUris(dto.getUris());
+        contribution.setIsMainContributor(dto.getIsMainContributor());
+        contribution.setIsInvitedContributor(dto.getIsInvitedContributor());
+
+        contribution.setDisplayProject(
+                multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
 
         return contribution;
     }
@@ -119,7 +140,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         part.getAmount().setAmount(partDto.getAmount().getAmount());
 
         if (Objects.nonNull(partDto.getFundingId())) {
-            part.setPersonProjectContribution(contribution);
+            part.setPersonContribution(contribution);
         }
 
         return part;

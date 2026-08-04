@@ -219,7 +219,7 @@ public class FundingPartServiceTest {
         verify(currencyService).findOne(1);
         verify(fundingPartRepository).save(any(FundingPart.class));
 
-        assertThat(result.getPersonProjectContribution()).isEqualTo(contribution);
+        assertThat(result.getPersonContribution()).isEqualTo(contribution);
     }
 
     @Test
@@ -247,7 +247,7 @@ public class FundingPartServiceTest {
         verify(currencyService).findOne(1);
         verify(fundingPartRepository).save(any(FundingPart.class));
 
-        assertThat(result.getOrganisationUnitProjectContribution()).isEqualTo(contribution);
+        assertThat(result.getOrganisationUnitContribution()).isEqualTo(contribution);
     }
 
     @Test

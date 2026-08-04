@@ -35,6 +35,8 @@ public class FundingProgramConverter {
             dto.getTotalAmount().setAmount(fundingProgram.getTotalAmount().getAmount());
             dto.getTotalAmount()
                 .setCurrencyId(fundingProgram.getTotalAmount().getCurrency().getId());
+            dto.getTotalAmount().setCurrencyCode(fundingProgram.getTotalAmount().getCurrency().getCode());
+            dto.getTotalAmount().setCurrencySymbol(fundingProgram.getTotalAmount().getCurrency().getSymbol());
         }
 
         dto.setFundingTypes(fundingProgram.getTypes());

@@ -30,6 +30,12 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    @GetMapping("/{projectId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    public boolean canEditProject() {
+        return true;
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public Page<ProjectIndex> searchProjects(@RequestParam List<String> tokens,

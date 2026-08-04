@@ -1,0 +1,3245 @@
+{
+  "minimumRequiredScore": 60.0,
+  "targetWeights": {
+    "Document.title": 5,
+    "Document.description": 5,
+    "Document.contributors": 3,
+    "Document.date": 5,
+    "Document.otherDate": 3,
+    "Document.doi": 3,
+    "Document.handle": 3,
+    "Document.identifier": 5,
+    "Document.access": 3,
+    "Document.pages": 1,
+    "Document.chapters": 1,
+    "Document.references": 1,
+    "Document.tables": 1,
+    "Document.illustrations": 1,
+    "Document.graphs": 1,
+    "Document.appendices": 1,
+    "Document.researchAreas": 5,
+    "Document.license": 5,
+    "Person.name": 5,
+    "Person.birthdate": 3,
+    "Person.orcid": 3,
+    "Person.wos": 3,
+    "Person.scopus": 3,
+    "Person.openAlex": 3,
+    "Person.scholar": 3,
+    "Person.lattes": 3,
+    "Person.ciencia": 3,
+    "Person.authenticus": 3,
+    "Person.biography": 3,
+    "OrganisationUnit.name": 3,
+    "OrganisationUnit.description": 3,
+    "OrganisationUnit.ror": 3,
+    "OrganisationUnit.isni": 3,
+    "OrganisationUnit.scopusAfid": 3,
+    "OrganisationUnit.grid": 3,
+    "OrganisationUnit.ringgold": 3,
+    "OrganisationUnit.fundRef": 3,
+    "OrganisationUnit.date": 3,
+    "Activity.date": 3,
+    "Activity.teachingHours": 3,
+    "Activity.reviews": 3,
+    "Activity.trial": 3,
+    "Activity.contributionType": 3,
+    "Activity.researchAreas": 3,
+    "Identifier.value": 3,
+    "Identifier.type": 3,
+    "Identifier.pattern": 3,
+    "Identifier.uri": 3,
+    "GeoLocation.latitude": 3,
+    "GeoLocation.longitude": 3,
+    "GeoLocation.address": 3,
+    "Contact.email": 3,
+    "Contact.phone": 3,
+    "Contact.mobilePhone": 3,
+    "Contact.fax": 3,
+    "Contact.website": 3,
+    "ResearchArea.name": 3,
+    "ResearchArea.uri": 3,
+    "Language.tag": 3,
+    "Language.name": 3,
+    "Country.code": 3,
+    "Country.name": 3
+  },
+  "dataQualityRemarks": {
+    "titleMissing": {
+      "title": {
+        "sr": "Nedostaje naslov",
+        "sr-cyr": "Недостаје наслов",
+        "en": "Missing title"
+      },
+      "message": {
+        "sr": "Polje naslov nedostaje u izlaznom zapisu. Polje naslov je obavezno.",
+        "sr-cyr": "Поље наслов недостаје у излазном запису. Поље наслов је обавезно.",
+        "en": "The title field is missing in output record. The title field is mandatory."
+      },
+      "target": "Document.title",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "titleTooLong": {
+      "title": {
+        "sr": "Naslov je predugačak",
+        "sr-cyr": "Наслов је предугачак",
+        "en": "Title too long"
+      },
+      "message": {
+        "sr": "Naslov \"{0}\" u izlaznom zapisu prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Наслов \"{0}\" у излазном запису прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The title \"{0}\" in output record exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Document.title",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidTitleFormat": {
+      "title": {
+        "sr": "Neispravan format naslova",
+        "sr-cyr": "Неисправан формат наслова",
+        "en": "Invalid title format"
+      },
+      "message": {
+        "sr": "Naslov \"{0}\" u izlaznom zapisu sadrži nedozvoljene karaktere.",
+        "sr-cyr": "Наслов \"{0}\" у излазном запису садржи недозвољене карактере.",
+        "en": "The title \"{0}\" in output record contains invalid characters."
+      },
+      "target": "Document.title",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{N}\\s\\-.,;:!?()'\\\"/&]+$"
+      }
+    },
+    "descriptionMissing": {
+      "title": {
+        "sr": "Nedostaje opis",
+        "sr-cyr": "Недостаје опис",
+        "en": "Missing description"
+      },
+      "message": {
+        "sr": "Opis izlaznog zapisa mora biti unet radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Опис излазног записа мора бити унет ради усклађености са FAIR принципима.",
+        "en": "The output description for record must be informed to comply with the FAIR Principles."
+      },
+      "target": "Document.description",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": true
+    },
+    "contributorsMissing": {
+      "title": {
+        "sr": "Nedostaju autori/saradnici",
+        "sr-cyr": "Недостају аутори/сарадници",
+        "en": "Missing contributors"
+      },
+      "message": {
+        "sr": "Polje autori/saradnici nedostaje u izlaznom zapisu. Polje je obavezno.",
+        "sr-cyr": "Поље аутори/сарадници недостаје у излазном запису. Поље је обавезно.",
+        "en": "The contributors field is missing in output record. The contributors field is mandatory."
+      },
+      "target": "Document.contributors",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "noManagedContributor": {
+      "title": {
+        "sr": "Nema upravljanog saradnika",
+        "sr-cyr": "Нема управљаног сарадника",
+        "en": "No managed contributor"
+      },
+      "message": {
+        "sr": "Najmanje jedna upravljana osoba mora biti povezana sa izlaznim zapisom.",
+        "sr-cyr": "Најмање једна управљана особа мора бити повезана са излазним записом.",
+        "en": "At least one managed person should be linked with output record."
+      },
+      "target": "Document.contributors",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "documentDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum publikovanja",
+        "sr-cyr": "Недостаје датум публиковања",
+        "en": "Missing publication date"
+      },
+      "message": {
+        "sr": "Datum publikovanja nedostaje u izlaznom zapisu. Polje je obavezno.",
+        "sr-cyr": "Датум публиковања недостаје у излазном запису. Поље је обавезно.",
+        "en": "The output publication date is missing in output record. The publication date field is mandatory."
+      },
+      "target": "Document.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "documentDateBefore": {
+      "title": {
+        "sr": "Datum publikovanja pre konfigurisane godine",
+        "sr-cyr": "Датум публиковања пре конфигурисане године",
+        "en": "Publication date before configured year"
+      },
+      "message": {
+        "sr": "Datum publikovanja ({0}) u izlaznom zapisu ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум публиковања ({0}) у излазном запису не може бити пре {1}. године.",
+        "en": "The output publication date ({0}) in output record cannot be before the year {1}."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "documentDateTooFarInFuture": {
+      "title": {
+        "sr": "Datum publikovanja predaleko u budućnosti",
+        "sr-cyr": "Датум публиковања предалеко у будућности",
+        "en": "Publication date too far in future"
+      },
+      "message": {
+        "sr": "Datum publikovanja ({0}) u izlaznom zapisu može biti najviše {1} godina u budućnosti.",
+        "sr-cyr": "Датум публиковања ({0}) у излазном запису може бити највише {1} година у будућности.",
+        "en": "The output publication date ({0}) in output record can only be at most {1} years in the future."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "invalidDocumentDateFormat": {
+      "title": {
+        "sr": "Neispravan format datuma publikovanja",
+        "sr-cyr": "Неисправан формат датума публиковања",
+        "en": "Invalid publication date format"
+      },
+      "message": {
+        "sr": "Datum publikovanja \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "Датум публиковања \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The publication date \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.date",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false
+    },
+    "noDoiPresent": {
+      "title": {
+        "sr": "Nedostaje DOI",
+        "sr-cyr": "Недостаје DOI",
+        "en": "Missing DOI"
+      },
+      "message": {
+        "sr": "DOI nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "DOI недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "en": "The DOI field is missing in output record. Although the DOI field is not mandatory, it is recommended."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "doiTooShort": {
+      "title": {
+        "sr": "DOI je prekratak",
+        "sr-cyr": "DOI је прекратак",
+        "en": "DOI too short"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису мора садржати најмање {1} карактера.",
+        "en": "The DOI \"{0}\" in output record must contain at least {1} characters."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 9
+      }
+    },
+    "doiTooLong": {
+      "title": {
+        "sr": "DOI je predugačak",
+        "sr-cyr": "DOI је предугачак",
+        "en": "DOI too long"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu prelazi maksimalnu dužinu od {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису прелази максималну дужину од {1} карактера.",
+        "en": "The DOI \"{0}\" in output record exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidDoiFormat": {
+      "title": {
+        "sr": "Neispravan format DOI-ja",
+        "sr-cyr": "Неисправан формат DOI-ја",
+        "en": "Invalid DOI format"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The DOI \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$"
+      }
+    },
+    "duplicateDoi": {
+      "title": {
+        "sr": "Dupliran DOI",
+        "sr-cyr": "Дуплиран DOI",
+        "en": "Duplicate DOI"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu već postoji u drugom zapisu.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису већ постоји у другом запису.",
+        "en": "The DOI \"{0}\" in output record must be unique."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "doiNotResolvable": {
+      "title": {
+        "sr": "DOI nije razrešiv",
+        "sr-cyr": "DOI није разрешив",
+        "en": "DOI not resolvable"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u izlaznom zapisu nije razrešiv putem DOI sistema.",
+        "sr-cyr": "DOI \"{0}\" у излазном запису није разрешив путем DOI система.",
+        "en": "The DOI \"{0}\" in output record must be resolvable through DOI.org."
+      },
+      "target": "Document.doi",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "noHandlePresent": {
+      "title": {
+        "sr": "Nedostaje Handle identifikator",
+        "sr-cyr": "Недостаје Handle идентификатор",
+        "en": "Missing Handle identifier"
+      },
+      "message": {
+        "sr": "Handle identifikator nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "Handle идентификатор недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "en": "The Handle field is missing in output record. Although the Handle field is not mandatory, it is recommended."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "invalidHandleFormat": {
+      "title": {
+        "sr": "Neispravan format Handle-a",
+        "sr-cyr": "Неисправан формат Handle-а",
+        "en": "Invalid Handle format"
+      },
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису није у исправном формату.",
+        "en": "The Handle \"{0}\" in output record is not in a valid format."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{2}\\.\\d{3,5}(\\.\\d+)?/\\S+$"
+      }
+    },
+    "duplicateHandle": {
+      "title": {
+        "sr": "Dupliran Handle",
+        "sr-cyr": "Дуплиран Handle",
+        "en": "Duplicate Handle"
+      },
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu mora biti jedinstven.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису мора бити јединствен.",
+        "en": "The Handle \"{0}\" in output record must be unique."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "handleNotResolvable": {
+      "title": {
+        "sr": "Handle nije razrešiv",
+        "sr-cyr": "Handle није разрешив",
+        "en": "Handle not resolvable"
+      },
+      "message": {
+        "sr": "Handle \"{0}\" u izlaznom zapisu nije razrešiv.",
+        "sr-cyr": "Handle \"{0}\" у излазном запису није разрешив.",
+        "en": "The Handle \"{0}\" in output record must be resolvable."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "handleTooShort": {
+      "title": {
+        "sr": "Handle je prekratak",
+        "sr-cyr": "Handle је прекратак",
+        "en": "Handle too short"
+      },
+      "message": {
+        "sr": "Handle \"{0}\" u zapisu mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Handle \"{0}\" у запису мора садржати најмање {1} карактера.",
+        "en": "The Handle \"{0}\" in output record must contain at least {1} characters."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 8
+      }
+    },
+    "handleTooLong": {
+      "title": {
+        "sr": "Handle je predugačak",
+        "sr-cyr": "Handle је предугачак",
+        "en": "Handle too long"
+      },
+      "message": {
+        "sr": "Handle \"{0}\" u zapisu prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Handle \"{0}\" у запису прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Handle \"{0}\" in output record exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Document.handle",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "noIdentifierPresent": {
+      "title": {
+        "sr": "Nedostaje identifikator",
+        "sr-cyr": "Недостаје идентификатор",
+        "en": "Missing identifier"
+      },
+      "message": {
+        "sr": "Izlazni zapis mora sadržati najmanje jedan identifikator.",
+        "sr-cyr": "Излазни запис мора садржати најмање један идентификатор.",
+        "en": "The output record must contain at least one identifier."
+      },
+      "target": "Document.identifier",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "openAccessMissing": {
+      "title": {
+        "sr": "Nedostaje polje otvoreni pristup",
+        "sr-cyr": "Недостаје поље отворени приступ",
+        "en": "Missing open access field"
+      },
+      "message": {
+        "sr": "Polje 'Otvoreni pristup' nije definisano za izlazni zapis.",
+        "sr-cyr": "Поље 'Отворени приступ' није дефинисано за излазни запис.",
+        "en": "The 'Open access' field is missing in output record. Although not mandatory, it is recommended."
+      },
+      "target": "Document.access",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "topicAcceptanceDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum prihvatanja teme",
+        "sr-cyr": "Недостаје датум прихватања теме",
+        "en": "Missing topic acceptance date"
+      },
+      "message": {
+        "sr": "Datum prihvatanja teme nedostaje za tezu.",
+        "sr-cyr": "Датум прихватања теме недостаје за тезу.",
+        "en": "The topic acceptance date field is missing in thesis record."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "topicAcceptanceDateBefore": {
+      "title": {
+        "sr": "Datum prihvatanja teme pre konfigurisane godine",
+        "sr-cyr": "Датум прихватања теме пре конфигурисане године",
+        "en": "Topic acceptance date before configured year"
+      },
+      "message": {
+        "sr": "Datum prihvatanja teme ({0}) za tezu ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити пре {1}. године.",
+        "en": "The topic acceptance date ({0}) in thesis record cannot be before the year {1}."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "topicAcceptanceDateFuture": {
+      "title": {
+        "sr": "Datum prihvatanja teme u budućnosti",
+        "sr-cyr": "Датум прихватања теме у будућности",
+        "en": "Topic acceptance date in future"
+      },
+      "message": {
+        "sr": "Datum prihvatanja teme ({0}) za tezu ne može biti u budućnosti.",
+        "sr-cyr": "Датум прихватања теме ({0}) за тезу не може бити у будућности.",
+        "en": "The topic acceptance date ({0}) in thesis record cannot be in the future."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "thesisDefenceDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum odbrane teze",
+        "sr-cyr": "Недостаје датум одбране тезе",
+        "en": "Missing thesis defence date"
+      },
+      "message": {
+        "sr": "Datum odbrane teze nedostaje za tezu.",
+        "sr-cyr": "Датум одбране тезе недостаје за тезу.",
+        "en": "The thesis defence date field is missing in thesis record."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "defenceBeforeAcceptance": {
+      "title": {
+        "sr": "Odbrana pre prihvatanja teme",
+        "sr-cyr": "Одбрана пре прихватања теме",
+        "en": "Defence before topic acceptance"
+      },
+      "message": {
+        "sr": "Datum odbrane ({0}) ne može biti pre datuma prihvatanja teme za tezu.",
+        "sr-cyr": "Датум одбране ({0}) не може бити пре датума прихватања теме за тезу.",
+        "en": "The thesis defence date ({0}) cannot be before the topic acceptance date."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "defenceTooFarInFuture": {
+      "title": {
+        "sr": "Datum odbrane predaleko u budućnosti",
+        "sr-cyr": "Датум одбране предалеко у будућности",
+        "en": "Defence date too far in future"
+      },
+      "message": {
+        "sr": "Datum odbrane ({0}) može biti najviše {1} godina u budućnosti za tezu.",
+        "sr-cyr": "Датум одбране ({0}) може бити највише {1} година у будућности за тезу.",
+        "en": "The thesis defence date ({0}) can only be at most {1} years in the future."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 1
+      }
+    },
+    "dateRequestedMissing": {
+      "title": {
+        "sr": "Nedostaje datum zahteva",
+        "sr-cyr": "Недостаје датум захтева",
+        "en": "Missing date requested"
+      },
+      "message": {
+        "sr": "Datum zahteva nedostaje u zapisu intelektualne svojine. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум захтева недостаје у запису интелектуалне својине. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date requested field is missing in intellectual property record. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateRequestedInvalid": {
+      "title": {
+        "sr": "Neispravan format datuma zahteva",
+        "sr-cyr": "Неисправан формат датума захтева",
+        "en": "Invalid date requested format"
+      },
+      "message": {
+        "sr": "Datum zahteva je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум захтева је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date requested field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateRequestedBefore": {
+      "title": {
+        "sr": "Datum zahteva pre konfigurisane godine",
+        "sr-cyr": "Датум захтева пре конфигурисане године",
+        "en": "Date requested before configured year"
+      },
+      "message": {
+        "sr": "Datum zahteva ({0}) u zapisu intelektualne svojine ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум захтева ({0}) у запису интелектуалне својине не може бити пре {1}. године.",
+        "en": "The date requested ({0}) in intellectual property record can't be before the year {1}."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "dateRequestedAfterCurrentDate": {
+      "title": {
+        "sr": "Datum zahteva posle trenutnog datuma",
+        "sr-cyr": "Датум захтева после тренутног датума",
+        "en": "Date requested after current date"
+      },
+      "message": {
+        "sr": "Datum zahteva ({0}) u zapisu intelektualne svojine ne može biti posle trenutnog datuma.",
+        "sr-cyr": "Датум захтева ({0}) у запису интелектуалне својине не може бити после тренутног датума.",
+        "en": "The date requested ({0}) in intellectual property record can't be after the current date."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "dateFilingPriorityMissing": {
+      "title": {
+        "sr": "Nedostaje datum podnošenja prioriteta",
+        "sr-cyr": "Недостаје датум подношења приоритета",
+        "en": "Missing filing priority date"
+      },
+      "message": {
+        "sr": "Datum podnošenja prioriteta nedostaje u zapisu intelektualne svojine. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум подношења приоритета недостаје у запису интелектуалне својине. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date filing priority field is missing in intellectual property record. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateFilingPriorityInvalid": {
+      "title": {
+        "sr": "Neispravan format datuma podnošenja prioriteta",
+        "sr-cyr": "Неисправан формат датума подношења приоритета",
+        "en": "Invalid filing priority date format"
+      },
+      "message": {
+        "sr": "Datum podnošenja prioriteta je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум подношења приоритета је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date filing priority field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateFilingPriorityBefore": {
+      "title": {
+        "sr": "Datum podnošenja prioriteta pre konfigurisane godine",
+        "sr-cyr": "Датум подношења приоритета пре конфигурисане године",
+        "en": "Filing priority date before configured year"
+      },
+      "message": {
+        "sr": "Datum podnošenja prioriteta ({0}) u zapisu intelektualne svojine ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум подношења приоритета ({0}) у запису интелектуалне својине не може бити пре {1}. године.",
+        "en": "The date filing priority ({0}) in intellectual property record can't be before the year {1}."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "dateFilingPriorityAfterRequestDate": {
+      "title": {
+        "sr": "Datum podnošenja prioriteta posle datuma zahteva",
+        "sr-cyr": "Датум подношења приоритета после датума захтева",
+        "en": "Filing priority date after request date"
+      },
+      "message": {
+        "sr": "Datum podnošenja prioriteta ({0}) u zapisu intelektualne svojine ne može biti posle datuma zahteva ({1}).",
+        "sr-cyr": "Датум подношења приоритета ({0}) у запису интелектуалне својине не може бити после датума захтева ({1}).",
+        "en": "The date filing priority ({0}) in intellectual property record can't be after the request date ({1})."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "dateEndTermMissing": {
+      "title": {
+        "sr": "Nedostaje datum završetka roka",
+        "sr-cyr": "Недостаје датум завршетка рока",
+        "en": "Missing end term date"
+      },
+      "message": {
+        "sr": "Datum završetka roka nedostaje u zapisu intelektualne svojine. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум завршетка рока недостаје у запису интелектуалне својине. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date end term field is missing in intellectual property record. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateEndTermInvalid": {
+      "title": {
+        "sr": "Neispravan format datuma završetka roka",
+        "sr-cyr": "Неисправан формат датума завршетка рока",
+        "en": "Invalid end term date format"
+      },
+      "message": {
+        "sr": "Datum završetka roka je u neispravnom formatu. Iako ovo polje nije obavezno, preporučuje se njegovo popunjavanje.",
+        "sr-cyr": "Датум завршетка рока је у неисправном формату. Иако ово поље није обавезно, препоручује се његово попуњавање.",
+        "en": "The date end term field is in invalid format. Although this field is not mandatory, it is recommended."
+      },
+      "target": "Document.otherDate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 2,
+      "usedForFairCompliance": false
+    },
+    "dateEndTermBefore": {
+      "title": {
+        "sr": "Datum završetka roka pre konfigurisane godine",
+        "sr-cyr": "Датум завршетка рока пре конфигурисане године",
+        "en": "End term date before configured year"
+      },
+      "message": {
+        "sr": "Datum završetka roka ({0}) u zapisu intelektualne svojine ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум завршетка рока ({0}) у запису интелектуалне својине не може бити пре {1}. године.",
+        "en": "The date end term ({0}) in intellectual property record can't be before the year {1}."
+      },
+      "target": "Document.otherDate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "numberOfPagesBelowMinimum": {
+      "title": {
+        "sr": "Broj strana ispod minimuma",
+        "sr-cyr": "Број страна испод минимума",
+        "en": "Number of pages below minimum"
+      },
+      "message": {
+        "sr": "Broj strana ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број страна ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of pages ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.pages",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfPagesAboveMaximum": {
+      "title": {
+        "sr": "Broj strana iznad maksimuma",
+        "sr-cyr": "Број страна изнад максимума",
+        "en": "Number of pages above maximum"
+      },
+      "message": {
+        "sr": "Broj strana ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број страна ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of pages ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.pages",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 5000
+      }
+    },
+    "numberOfChaptersBelowMinimum": {
+      "title": {
+        "sr": "Broj poglavlja ispod minimuma",
+        "sr-cyr": "Број поглавља испод минимума",
+        "en": "Number of chapters below minimum"
+      },
+      "message": {
+        "sr": "Broj poglavlja ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број поглавља ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of chapters ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.chapters",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfChaptersAboveMaximum": {
+      "title": {
+        "sr": "Broj poglavlja iznad maksimuma",
+        "sr-cyr": "Број поглавља изнад максимума",
+        "en": "Number of chapters above maximum"
+      },
+      "message": {
+        "sr": "Broj poglavlja ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број поглавља ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of chapters ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.chapters",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 30
+      }
+    },
+    "numberOfReferencesBelowMinimum": {
+      "title": {
+        "sr": "Broj referenci ispod minimuma",
+        "sr-cyr": "Број референци испод минимума",
+        "en": "Number of references below minimum"
+      },
+      "message": {
+        "sr": "Broj referenci ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број референци ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of references ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.references",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfReferencesAboveMaximum": {
+      "title": {
+        "sr": "Broj referenci iznad maksimuma",
+        "sr-cyr": "Број референци изнад максимума",
+        "en": "Number of references above maximum"
+      },
+      "message": {
+        "sr": "Broj referenci ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број референци ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of references ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.references",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 5000
+      }
+    },
+    "numberOfTablesBelowMinimum": {
+      "title": {
+        "sr": "Broj tabela ispod minimuma",
+        "sr-cyr": "Број табела испод минимума",
+        "en": "Number of tables below minimum"
+      },
+      "message": {
+        "sr": "Broj tabela ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број табела ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of tables ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.tables",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfTablesAboveMaximum": {
+      "title": {
+        "sr": "Broj tabela iznad maksimuma",
+        "sr-cyr": "Број табела изнад максимума",
+        "en": "Number of tables above maximum"
+      },
+      "message": {
+        "sr": "Broj tabela ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број табела ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of tables ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.tables",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 200
+      }
+    },
+    "numberOfIllustrationsBelowMinimum": {
+      "title": {
+        "sr": "Broj ilustracija ispod minimuma",
+        "sr-cyr": "Број илустрација испод минимума",
+        "en": "Number of illustrations below minimum"
+      },
+      "message": {
+        "sr": "Broj ilustracija ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број илустрација ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of illustrations ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.illustrations",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfIllustrationsAboveMaximum": {
+      "title": {
+        "sr": "Broj ilustracija iznad maksimuma",
+        "sr-cyr": "Број илустрација изнад максимума",
+        "en": "Number of illustrations above maximum"
+      },
+      "message": {
+        "sr": "Broj ilustracija ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број илустрација ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of illustrations ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.illustrations",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 200
+      }
+    },
+    "numberOfGraphsBelowMinimum": {
+      "title": {
+        "sr": "Broj grafikona ispod minimuma",
+        "sr-cyr": "Број графикона испод минимума",
+        "en": "Number of graphs below minimum"
+      },
+      "message": {
+        "sr": "Broj grafikona ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број графикона ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of graphs ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.graphs",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfGraphsAboveMaximum": {
+      "title": {
+        "sr": "Broj grafikona iznad maksimuma",
+        "sr-cyr": "Број графикона изнад максимума",
+        "en": "Number of graphs above maximum"
+      },
+      "message": {
+        "sr": "Broj grafikona ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број графикона ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of graphs ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.graphs",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 200
+      }
+    },
+    "numberOfAppendicesBelowMinimum": {
+      "title": {
+        "sr": "Broj priloga ispod minimuma",
+        "sr-cyr": "Број прилога испод минимума",
+        "en": "Number of appendices below minimum"
+      },
+      "message": {
+        "sr": "Broj priloga ({0}) u tezi mora biti veći ili jednak {1}.",
+        "sr-cyr": "Број прилога ({0}) у тези мора бити већи или једнак {1}.",
+        "en": "The number of appendices ({0}) in thesis record must be greater than or equal to {1}."
+      },
+      "target": "Document.appendices",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "numberOfAppendicesAboveMaximum": {
+      "title": {
+        "sr": "Broj priloga iznad maksimuma",
+        "sr-cyr": "Број прилога изнад максимума",
+        "en": "Number of appendices above maximum"
+      },
+      "message": {
+        "sr": "Broj priloga ({0}) u tezi mora biti manji ili jednak {1}.",
+        "sr-cyr": "Број прилога ({0}) у тези мора бити мањи или једнак {1}.",
+        "en": "The number of appendices ({0}) in thesis record must be less than or equal to {1}."
+      },
+      "target": "Document.appendices",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 30
+      }
+    },
+    "researchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju istraživačke oblasti",
+        "sr-cyr": "Недостају истраживачке области",
+        "en": "Missing research areas"
+      },
+      "message": {
+        "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom. Iako nije obavezna, preporučena je.",
+        "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом. Иако није обавезна, препоручена је.",
+        "en": "There is no research area linked with output record. Although research areas are not mandatory, they are recommended."
+      },
+      "target": "Document.researchAreas",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "metadataLicenseMissing": {
+      "title": {
+        "sr": "Nedostaje licenca metapodataka",
+        "sr-cyr": "Недостаје лиценца метаподатака",
+        "en": "Missing metadata license"
+      },
+      "message": {
+        "sr": "Licenca metapodataka mora biti definisana za zapis radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Лиценца метаподатака мора бити дефинисана за запис ради усклађености са FAIR принципима.",
+        "en": "The metadata license for record must be informed to comply with the FAIR Principles."
+      },
+      "target": "Document.license",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": true
+    },
+    "nameMissing": {
+      "title": {
+        "sr": "Nedostaje ime osobe",
+        "sr-cyr": "Недостаје име особе",
+        "en": "Missing person name"
+      },
+      "message": {
+        "sr": "Ime osobe nedostaje u zapisu. Polje je obavezno.",
+        "sr-cyr": "Име особе недостаје у запису. Поље је обавезно.",
+        "en": "The person's name is missing in record. The field is mandatory."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "firstNameMissing": {
+      "title": {
+        "sr": "Nedostaje lično ime",
+        "sr-cyr": "Недостаје лично име",
+        "en": "Missing first name"
+      },
+      "message": {
+        "sr": "Lično ime nedostaje u zapisu osobe.",
+        "sr-cyr": "Лично име недостаје у запису особе.",
+        "en": "The first name is missing in person record."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "firstNameTooLong": {
+      "title": {
+        "sr": "Lično ime je predugačko",
+        "sr-cyr": "Лично име је предугачко",
+        "en": "First name too long"
+      },
+      "message": {
+        "sr": "Lično ime \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Лично име \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The first name \"{0}\" in person record exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 100
+      }
+    },
+    "invalidFirstNameFormat": {
+      "title": {
+        "sr": "Neispravan format ličnog imena",
+        "sr-cyr": "Неисправан формат личног имена",
+        "en": "Invalid first name format"
+      },
+      "message": {
+        "sr": "Lično ime \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Лично име \"{0}\" у запису особе није у исправном формату.",
+        "en": "The first name \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'\\-]+$"
+      }
+    },
+    "lastNameMissing": {
+      "title": {
+        "sr": "Nedostaje prezime",
+        "sr-cyr": "Недостаје презиме",
+        "en": "Missing last name"
+      },
+      "message": {
+        "sr": "Prezime nedostaje u zapisu osobe.",
+        "sr-cyr": "Презиме недостаје у запису особе.",
+        "en": "The last name is missing in person record."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "lastNameTooLong": {
+      "title": {
+        "sr": "Prezime je predugačko",
+        "sr-cyr": "Презиме је предугачко",
+        "en": "Last name too long"
+      },
+      "message": {
+        "sr": "Prezime \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Презиме \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The last name \"{0}\" in person record exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 100
+      }
+    },
+    "invalidLastNameFormat": {
+      "title": {
+        "sr": "Neispravan format prezimena",
+        "sr-cyr": "Неисправан формат презимена",
+        "en": "Invalid last name format"
+      },
+      "message": {
+        "sr": "Prezime \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Презиме \"{0}\" у запису особе није у исправном формату.",
+        "en": "The last name \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'\\-]+$"
+      }
+    },
+    "birthDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum rođenja",
+        "sr-cyr": "Недостаје датум рођења",
+        "en": "Missing birth date"
+      },
+      "message": {
+        "sr": "Datum rođenja nedostaje u zapisu osobe.",
+        "sr-cyr": "Датум рођења недостаје у запису особе.",
+        "en": "The birth date is missing in person record."
+      },
+      "target": "Person.birthdate",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "birthDateBefore": {
+      "title": {
+        "sr": "Datum rođenja pre konfigurisane godine",
+        "sr-cyr": "Датум рођења пре конфигурисане године",
+        "en": "Birth date before configured year"
+      },
+      "message": {
+        "sr": "Datum rođenja ({0}) u zapisu osobe ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум рођења ({0}) у запису особе не може бити пре {1}. године.",
+        "en": "The birth date ({0}) in person record cannot be before the year {1}."
+      },
+      "target": "Person.birthdate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1900
+      }
+    },
+    "birthDateInFuture": {
+      "title": {
+        "sr": "Datum rođenja u budućnosti",
+        "sr-cyr": "Датум рођења у будућности",
+        "en": "Birth date in future"
+      },
+      "message": {
+        "sr": "Datum rođenja ({0}) u zapisu osobe ne može biti u budućnosti.",
+        "sr-cyr": "Датум рођења ({0}) у запису особе не може бити у будућности.",
+        "en": "The birth date ({0}) in person record cannot be in the future."
+      },
+      "target": "Person.birthdate",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "noOrcidPresent": {
+      "title": {
+        "sr": "Nedostaje ORCID",
+        "sr-cyr": "Недостаје ORCID",
+        "en": "Missing ORCID"
+      },
+      "message": {
+        "sr": "ORCID identifikator nije unet za osobu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "ORCID идентификатор није унет за особу. Иако није обавезан, препоручен је.",
+        "en": "The ORCID identifier is missing in person record. Although it is not mandatory, it is recommended."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "invalidOrcidFormat": {
+      "title": {
+        "sr": "Neispravan format ORCID-a",
+        "sr-cyr": "Неисправан формат ORCID-а",
+        "en": "Invalid ORCID format"
+      },
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The ORCID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$"
+      }
+    },
+    "duplicateOrcid": {
+      "title": {
+        "sr": "Dupliran ORCID",
+        "sr-cyr": "Дуплиран ORCID",
+        "en": "Duplicate ORCID"
+      },
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The ORCID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.orcid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "webOfScienceResearcherIdTooShort": {
+      "title": {
+        "sr": "Web of Science Researcher ID je prekratak",
+        "sr-cyr": "Web of Science Researcher ID је прекратак",
+        "en": "Web of Science Researcher ID too short"
+      },
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora sadržati tačno {1} karaktera.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора садржати тачно {1} карактера.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must contain exactly {1} characters."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 11
+      }
+    },
+    "webOfScienceResearcherIdTooLong": {
+      "title": {
+        "sr": "Web of Science Researcher ID je predugačak",
+        "sr-cyr": "Web of Science Researcher ID је предугачак",
+        "en": "Web of Science Researcher ID too long"
+      },
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora sadržati tačno {1} karaktera.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора садржати тачно {1} карактера.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must contain exactly {1} characters."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 11
+      }
+    },
+    "invalidWebOfScienceResearcherIdFormat": {
+      "title": {
+        "sr": "Neispravan format Web of Science Researcher ID-a",
+        "sr-cyr": "Неисправан формат Web of Science Researcher ID-а",
+        "en": "Invalid Web of Science Researcher ID format"
+      },
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[A-Z]{1,2}-\\d{4}-\\d{4}$"
+      }
+    },
+    "duplicateWebOfScienceResearcherId": {
+      "title": {
+        "sr": "Dupliran Web of Science Researcher ID",
+        "sr-cyr": "Дуплиран Web of Science Researcher ID",
+        "en": "Duplicate Web of Science Researcher ID"
+      },
+      "message": {
+        "sr": "Web of Science Researcher ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Web of Science Researcher ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Web of Science Researcher ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.wos",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidScopusAuthorIdFormat": {
+      "title": {
+        "sr": "Neispravan format Scopus Author ID-a",
+        "sr-cyr": "Неисправан формат Scopus Author ID-а",
+        "en": "Invalid Scopus Author ID format"
+      },
+      "message": {
+        "sr": "Scopus Author ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Scopus Author ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Scopus Author ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.scopus",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{10,12}$"
+      }
+    },
+    "duplicateScopusAuthorId": {
+      "title": {
+        "sr": "Dupliran Scopus Author ID",
+        "sr-cyr": "Дуплиран Scopus Author ID",
+        "en": "Duplicate Scopus Author ID"
+      },
+      "message": {
+        "sr": "Scopus Author ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Scopus Author ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Scopus Author ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.scopus",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidOpenAlexIdFormat": {
+      "title": {
+        "sr": "Neispravan format OpenAlex ID-a",
+        "sr-cyr": "Неисправан формат OpenAlex ID-а",
+        "en": "Invalid OpenAlex ID format"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The OpenAlex ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.openAlex",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^A\\d{4,10}$"
+      }
+    },
+    "duplicateOpenAlexId": {
+      "title": {
+        "sr": "Dupliran OpenAlex ID",
+        "sr-cyr": "Дуплиран OpenAlex ID",
+        "en": "Duplicate OpenAlex ID"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The OpenAlex ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.openAlex",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidGoogleScholarIdFormat": {
+      "title": {
+        "sr": "Neispravan format Google Scholar ID-a",
+        "sr-cyr": "Неисправан формат Google Scholar ID-а",
+        "en": "Invalid Google Scholar ID format"
+      },
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Google Scholar ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.scholar",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[A-Za-z0-9_-]{12}$"
+      }
+    },
+    "duplicateGoogleScholarId": {
+      "title": {
+        "sr": "Dupliran Google Scholar ID",
+        "sr-cyr": "Дуплиран Google Scholar ID",
+        "en": "Duplicate Google Scholar ID"
+      },
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The Google Scholar ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.scholar",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidLattesIdFormat": {
+      "title": {
+        "sr": "Neispravan format Lattes ID-a",
+        "sr-cyr": "Неисправан формат Lattes ID-а",
+        "en": "Invalid Lattes ID format"
+      },
+      "message": {
+        "sr": "Lattes ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Lattes ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Lattes ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.lattes",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{16}$"
+      }
+    },
+    "invalidCienciaIdFormat": {
+      "title": {
+        "sr": "Neispravan format Ciência ID-a",
+        "sr-cyr": "Неисправан формат Ciência ID-а",
+        "en": "Invalid Ciência ID format"
+      },
+      "message": {
+        "sr": "Ciência ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Ciência ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Ciência ID \"{0}\" in person record is not in a valid format."
+      },
+      "target": "Person.ciencia",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[A-Za-z0-9-]{4,50}$"
+      }
+    },
+    "duplicateAuthenticusId": {
+      "title": {
+        "sr": "Dupliran AuthentiCUS ID",
+        "sr-cyr": "Дуплиран AuthentiCUS ID",
+        "en": "Duplicate AuthentiCUS ID"
+      },
+      "message": {
+        "sr": "AuthentiCUS ID \"{0}\" u zapisu osobe mora biti jedinstven.",
+        "sr-cyr": "AuthentiCUS ID \"{0}\" у запису особе мора бити јединствен.",
+        "en": "The AuthentiCUS ID \"{0}\" in person record must be unique."
+      },
+      "target": "Person.authenticus",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "biographyMissing": {
+      "title": {
+        "sr": "Nedostaje biografija",
+        "sr-cyr": "Недостаје биографија",
+        "en": "Missing biography"
+      },
+      "message": {
+        "sr": "Biografija osobe mora biti uneta radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Биографија особе мора бити унета ради усклађености са FAIR принципима.",
+        "en": "The person's biography must be informed to comply with the FAIR Principles."
+      },
+      "target": "Person.biography",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": true
+    },
+    "organisationUnitNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv organizacione jedinice",
+        "sr-cyr": "Недостаје назив организационе јединице",
+        "en": "Missing organisation unit name"
+      },
+      "message": {
+        "sr": "Naziv organizacione jedinice nedostaje.",
+        "sr-cyr": "Назив организационе јединице недостаје.",
+        "en": "The organisation unit name is missing."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "organisationUnitNameTooLong": {
+      "title": {
+        "sr": "Naziv organizacione jedinice je predugačak",
+        "sr-cyr": "Назив организационе јединице је предугачак",
+        "en": "Organisation unit name too long"
+      },
+      "message": {
+        "sr": "Naziv organizacione jedinice \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив организационе јединице \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The organisation unit name \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidOrganisationUnitNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva organizacione jedinice",
+        "sr-cyr": "Неисправан формат назива организационе јединице",
+        "en": "Invalid organisation unit name format"
+      },
+      "message": {
+        "sr": "Naziv organizacione jedinice \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив организационе јединице \"{0}\" није у исправном формату.",
+        "en": "The organisation unit name \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'()&/\\-]+$"
+      }
+    },
+    "organisationUnitDescriptionMissing": {
+      "title": {
+        "sr": "Nedostaje opis organizacione jedinice",
+        "sr-cyr": "Недостаје опис организационе јединице",
+        "en": "Missing organisation unit description"
+      },
+      "message": {
+        "sr": "Opis organizacione jedinice mora biti unet radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Опис организационе јединице мора бити унет ради усклађености са FAIR принципима.",
+        "en": "The organisation unit description must be informed to comply with the FAIR Principles."
+      },
+      "target": "OrganisationUnit.description",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": true
+    },
+    "invalidRorFormat": {
+      "title": {
+        "sr": "Neispravan format ROR identifikatora",
+        "sr-cyr": "Неисправан формат ROR идентификатора",
+        "en": "Invalid ROR identifier format"
+      },
+      "message": {
+        "sr": "ROR identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "ROR идентификатор \"{0}\" није у исправном формату.",
+        "en": "The ROR identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^0[a-z0-9]{6}\\d{2}$"
+      }
+    },
+    "duplicateRor": {
+      "title": {
+        "sr": "Dupliran ROR identifikator",
+        "sr-cyr": "Дуплиран ROR идентификатор",
+        "en": "Duplicate ROR identifier"
+      },
+      "message": {
+        "sr": "ROR identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "ROR идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The ROR identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidIsniFormat": {
+      "title": {
+        "sr": "Neispravan format ISNI-ja",
+        "sr-cyr": "Неисправан формат ISNI-ја",
+        "en": "Invalid ISNI format"
+      },
+      "message": {
+        "sr": "ISNI \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "ISNI \"{0}\" није у исправном формату.",
+        "en": "The ISNI \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{4}\\s?\\d{4}\\s?\\d{4}\\s?[\\dX]{4}$"
+      }
+    },
+    "duplicateIsni": {
+      "title": {
+        "sr": "Dupliran ISNI",
+        "sr-cyr": "Дуплиран ISNI",
+        "en": "Duplicate ISNI"
+      },
+      "message": {
+        "sr": "ISNI \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "ISNI \"{0}\" мора бити јединствен.",
+        "en": "The ISNI \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidScopusAfidFormat": {
+      "title": {
+        "sr": "Neispravan format Scopus AFID-a",
+        "sr-cyr": "Неисправан формат Scopus AFID-а",
+        "en": "Invalid Scopus AFID format"
+      },
+      "message": {
+        "sr": "Scopus AFID \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Scopus AFID \"{0}\" није у исправном формату.",
+        "en": "The Scopus AFID \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{6,15}$"
+      }
+    },
+    "duplicateScopusAfid": {
+      "title": {
+        "sr": "Dupliran Scopus AFID",
+        "sr-cyr": "Дуплиран Scopus AFID",
+        "en": "Duplicate Scopus AFID"
+      },
+      "message": {
+        "sr": "Scopus AFID \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "Scopus AFID \"{0}\" мора бити јединствен.",
+        "en": "The Scopus AFID \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidGridFormat": {
+      "title": {
+        "sr": "Neispravan format GRID identifikatora",
+        "sr-cyr": "Неисправан формат GRID идентификатора",
+        "en": "Invalid GRID identifier format"
+      },
+      "message": {
+        "sr": "GRID identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "GRID идентификатор \"{0}\" није у исправном формату.",
+        "en": "The GRID identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "(?i)^grid\\.\\d+\\.[0-9a-f]{1,2}$"
+      }
+    },
+    "duplicateGrid": {
+      "title": {
+        "sr": "Dupliran GRID identifikator",
+        "sr-cyr": "Дуплиран GRID идентификатор",
+        "en": "Duplicate GRID identifier"
+      },
+      "message": {
+        "sr": "GRID identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "GRID идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The GRID identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidRinggoldFormat": {
+      "title": {
+        "sr": "Neispravan format Ringgold identifikatora",
+        "sr-cyr": "Неисправан формат Ringgold идентификатора",
+        "en": "Invalid Ringgold identifier format"
+      },
+      "message": {
+        "sr": "Ringgold identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Ringgold идентификатор \"{0}\" није у исправном формату.",
+        "en": "The Ringgold identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.ringgold",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^\\d{1,10}$"
+      }
+    },
+    "duplicateRinggold": {
+      "title": {
+        "sr": "Dupliran Ringgold identifikator",
+        "sr-cyr": "Дуплиран Ringgold идентификатор",
+        "en": "Duplicate Ringgold identifier"
+      },
+      "message": {
+        "sr": "Ringgold identifikator \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "Ringgold идентификатор \"{0}\" мора бити јединствен.",
+        "en": "The Ringgold identifier \"{0}\" must be unique."
+      },
+      "target": "OrganisationUnit.ringgold",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "invalidFundrefFormat": {
+      "title": {
+        "sr": "Neispravan format FundRef identifikatora",
+        "sr-cyr": "Неисправан формат FundRef идентификатора",
+        "en": "Invalid FundRef identifier format"
+      },
+      "message": {
+        "sr": "FundRef identifikator \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "FundRef идентификатор \"{0}\" није у исправном формату.",
+        "en": "The FundRef identifier \"{0}\" is not in a valid format."
+      },
+      "target": "OrganisationUnit.fundRef",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^10\\.13039/\\d{6,12}$"
+      }
+    },
+    "dateDissolvedBeforeEstablished": {
+      "title": {
+        "sr": "Datum gašenja pre datuma osnivanja",
+        "sr-cyr": "Датум гашења пре датума оснивања",
+        "en": "Dissolution date before establishment date"
+      },
+      "message": {
+        "sr": "Datum gašenja organizacione jedinice ({0}) ne može biti pre datuma osnivanja ({1}).",
+        "sr-cyr": "Датум гашења организационе јединице ({0}) не може бити пре датума оснивања ({1}).",
+        "en": "The organisation unit dissolution date ({0}) cannot be before the establishment date ({1})."
+      },
+      "target": "OrganisationUnit.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "lectureHoursOnlyForCourse": {
+      "title": {
+        "sr": "Časovi predavanja dozvoljeni samo za predmet",
+        "sr-cyr": "Часови предавања дозвољени само за предмет",
+        "en": "Lecture hours only allowed for course"
+      },
+      "message": {
+        "sr": "Broj časova predavanja može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова предавања може бити унет само за наставне активности повезане са предметом.",
+        "en": "Lecture hours can only be specified for teaching activities linked to a course."
+      },
+      "target": "Activity.teachingHours",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "tutorialHoursOnlyForCourse": {
+      "title": {
+        "sr": "Časovi vežbi dozvoljeni samo za predmet",
+        "sr-cyr": "Часови вежби дозвољени само за предмет",
+        "en": "Tutorial hours only allowed for course"
+      },
+      "message": {
+        "sr": "Broj časova vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова вежби може бити унет само за наставне активности повезане са предметом.",
+        "en": "Tutorial hours can only be specified for teaching activities linked to a course."
+      },
+      "target": "Activity.teachingHours",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "labHoursOnlyForCourse": {
+      "title": {
+        "sr": "Časovi laboratorijskih vežbi dozvoljeni samo za predmet",
+        "sr-cyr": "Часови лабораторијских вежби дозвољени само за предмет",
+        "en": "Lab hours only allowed for course"
+      },
+      "message": {
+        "sr": "Broj časova laboratorijskih vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова лабораторијских вежби може бити унет само за наставне активности повезане са предметом.",
+        "en": "Laboratory hours can only be specified for teaching activities linked to a course."
+      },
+      "target": "Activity.teachingHours",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "otherContactHoursOnlyForCourse": {
+      "title": {
+        "sr": "Ostali kontakt časovi dozvoljeni samo za predmet",
+        "sr-cyr": "Остали контакт часови дозвољени само за предмет",
+        "en": "Other contact hours only allowed for course"
+      },
+      "message": {
+        "sr": "Broj ostalih kontakt časova može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број осталих контакт часова може бити унет само за наставне активности повезане са предметом.",
+        "en": "Other contact hours can only be specified for teaching activities linked to a course."
+      },
+      "target": "Activity.teachingHours",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "numberOfReviewsTooHigh": {
+      "title": {
+        "sr": "Broj recenzija prekoračuje maksimum",
+        "sr-cyr": "Број рецензија прекорачује максимум",
+        "en": "Number of reviews exceeds maximum"
+      },
+      "message": {
+        "sr": "Broj recenzija ili ocena ({0}) ne može biti veći od {1}.",
+        "sr-cyr": "Број рецензија или оцена ({0}) не може бити већи од {1}.",
+        "en": "The number of reviews or assessments ({0}) cannot exceed {1}."
+      },
+      "target": "Activity.reviews",
+      "severity": "ERROR",
+      "dimension": "COMPLETENESS",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "max": 20
+      }
+    },
+    "numberOfReviewsOnlyForConferenceReviewer": {
+      "title": {
+        "sr": "Broj recenzija dozvoljen samo za recenzente konferencija",
+        "sr-cyr": "Број рецензија дозвољен само за рецензенте конференција",
+        "en": "Number of reviews only allowed for conference reviewers"
+      },
+      "message": {
+        "sr": "Broj recenzija ili ocena može biti unet samo za recenzente konferencija.",
+        "sr-cyr": "Број рецензија или оцена може бити унет само за рецензенте конференција.",
+        "en": "The number of reviews or assessments can only be specified for conference reviewers."
+      },
+      "target": "Activity.reviews",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "caseOnlyForTrial": {
+      "title": {
+        "sr": "Predmet dozvoljen samo za suđenje",
+        "sr-cyr": "Предмет дозвољен само за суђење",
+        "en": "Case only allowed for trial"
+      },
+      "message": {
+        "sr": "Predmet može biti povezan samo sa aktivnostima koje predstavljaju suđenje.",
+        "sr-cyr": "Предмет може бити повезан само са активностима које представљају суђење.",
+        "en": "A case can only be associated with trial activities."
+      },
+      "target": "Activity.trial",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "locationJurisdictionOnlyForTrial": {
+      "title": {
+        "sr": "Nadležnost dozvoljena samo za suđenje",
+        "sr-cyr": "Надлежност дозвољена само за суђење",
+        "en": "Jurisdiction only allowed for trial"
+      },
+      "message": {
+        "sr": "Nadležnost može biti povezana samo sa aktivnostima koje predstavljaju suđenje.",
+        "sr-cyr": "Надлежност може бити повезана само са активностима које представљају суђење.",
+        "en": "A jurisdiction can only be associated with trial activities."
+      },
+      "target": "Activity.trial",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "documentBeforePersonBirth": {
+      "title": {
+        "sr": "Datum dokumenta pre rođenja osobe",
+        "sr-cyr": "Датум документа пре рођења особе",
+        "en": "Document date before person's birth"
+      },
+      "message": {
+        "sr": "Datum dokumenta povezanog sa doprinosom ne može biti pre datuma rođenja povezane osobe.",
+        "sr-cyr": "Датум документа повезаног са доприносом не може бити пре датума рођења повезане особе.",
+        "en": "The document date cannot be before the linked person's birth date."
+      },
+      "target": "Activity.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "invalidMainContributorFlag": {
+      "title": {
+        "sr": "Neispravna oznaka glavnog autora",
+        "sr-cyr": "Неисправна ознака главног аутора",
+        "en": "Invalid main contributor flag"
+      },
+      "message": {
+        "sr": "Oznaka glavnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
+        "sr-cyr": "Ознака главног аутора није дозвољена за изабрану врсту доприноса ({0}).",
+        "en": "The main contributor flag is not allowed for the selected contribution type ({0})."
+      },
+      "target": "Activity.contributionType",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "invalidCorrespondingContributorFlag": {
+      "title": {
+        "sr": "Neispravna oznaka korespondentnog autora",
+        "sr-cyr": "Неисправна ознака кореспондентног аутора",
+        "en": "Invalid corresponding contributor flag"
+      },
+      "message": {
+        "sr": "Oznaka korespondentnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
+        "sr-cyr": "Ознака кореспондентног аутора није дозвољена за изабрану врсту доприноса ({0}).",
+        "en": "The corresponding contributor flag is not allowed for the selected contribution type ({0})."
+      },
+      "target": "Activity.contributionType",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "activityStartDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum početka aktivnosti",
+        "sr-cyr": "Недостаје датум почетка активности",
+        "en": "Missing activity start date"
+      },
+      "message": {
+        "sr": "Datum početka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "Датум почетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "The activity start date is missing. Although the activity start date field is not mandatory, it is recommended."
+      },
+      "target": "Activity.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "activityStartDateBefore": {
+      "title": {
+        "sr": "Datum početka aktivnosti pre konfigurisane godine",
+        "sr-cyr": "Датум почетка активности пре конфигурисане године",
+        "en": "Activity start date before configured year"
+      },
+      "message": {
+        "sr": "Datum početka aktivnosti ({0}) ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум почетка активности ({0}) не може бити пре {1}. године.",
+        "en": "The activity start date ({0}) cannot be before the year {1}."
+      },
+      "target": "Activity.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "activityStartDateBeforeMinAge": {
+      "title": {
+        "sr": "Datum početka aktivnosti pre nego što je osoba navršila minimalne godine",
+        "sr-cyr": "Датум почетка активности пре него што је особа навршила минималне године",
+        "en": "Activity start date before person reached minimum age"
+      },
+      "message": {
+        "sr": "Datum početka aktivnosti ({0}) ne može biti pre nego što je povezana osoba navršila {2} godina (datum rođenja: {1}).",
+        "sr-cyr": "Датум почетка активности ({0}) не може бити пре него што је повезана особа навршила {2} година (датум рођења: {1}).",
+        "en": "The activity start date ({0}) cannot be before the linked person turned {2} (birth date: {1})."
+      },
+      "target": "Activity.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minAgeYears": 15
+      }
+    },
+    "activityStartDateTooFarInFuture": {
+      "title": {
+        "sr": "Datum početka aktivnosti predaleko u budućnosti",
+        "sr-cyr": "Датум почетка активности предалеко у будућности",
+        "en": "Activity start date too far in future"
+      },
+      "message": {
+        "sr": "Datum početka aktivnosti ({0}) može biti najviše {1} godina u budućnosti.",
+        "sr-cyr": "Датум почетка активности ({0}) може бити највише {1} година у будућности.",
+        "en": "The activity start date ({0}) can be at most {1} years in the future."
+      },
+      "target": "Activity.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "activityEndDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum završetka aktivnosti",
+        "sr-cyr": "Недостаје датум завршетка активности",
+        "en": "Missing activity end date"
+      },
+      "message": {
+        "sr": "Datum završetka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "Датум завршетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "The activity end date is missing. Although the activity end date field is not mandatory, it is recommended."
+      },
+      "target": "Activity.date",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "activityEndDateBeforeStartDate": {
+      "title": {
+        "sr": "Datum završetka aktivnosti pre datuma početka",
+        "sr-cyr": "Датум завршетка активности пре датума почетка",
+        "en": "Activity end date before start date"
+      },
+      "message": {
+        "sr": "Datum završetka aktivnosti ({0}) ne može biti pre datuma početka aktivnosti ({1}).",
+        "sr-cyr": "Датум завршетка активности ({0}) не може бити пре датума почетка активности ({1}).",
+        "en": "The activity end date ({0}) cannot be before the activity start date ({1})."
+      },
+      "target": "Activity.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false
+    },
+    "activityResearchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju istraživačke oblasti aktivnosti",
+        "sr-cyr": "Недостају истраживачке области активности",
+        "en": "Missing activity research areas"
+      },
+      "message": {
+        "sr": "Za zapis aktivnosti nije povezana nijedna istraživačka oblast. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "За запис активности није повезана ниједна истраживачка област. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "There are no research areas linked with the activity record. Although the research area field is not mandatory, it is recommended."
+      },
+      "target": "Activity.researchAreas",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "identifierValueMissing": {
+      "title": {
+        "sr": "Nedostaje vrednost identifikatora",
+        "sr-cyr": "Недостаје вредност идентификатора",
+        "en": "Missing identifier value"
+      },
+      "message": {
+        "sr": "Vrednost identifikatora nedostaje. Polje je obavezno.",
+        "sr-cyr": "Вредност идентификатора недостаје. Поље је обавезно.",
+        "en": "The identifier value field is missing. The field is mandatory."
+      },
+      "target": "Identifier.value",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "identifierValueTooLong": {
+      "title": {
+        "sr": "Vrednost identifikatora je predugačka",
+        "sr-cyr": "Вредност идентификатора је предугачка",
+        "en": "Identifier value too long"
+      },
+      "message": {
+        "sr": "Vrednost identifikatora \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Вредност идентификатора \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The identifier value \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Identifier.value",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "identifierTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip identifikatora",
+        "sr-cyr": "Недостаје тип идентификатора",
+        "en": "Missing identifier type"
+      },
+      "message": {
+        "sr": "Tip identifikatora nedostaje. Polje je obavezno.",
+        "sr-cyr": "Тип идентификатора недостаје. Поље је обавезно.",
+        "en": "The identifier type field is missing. The field is mandatory."
+      },
+      "target": "Identifier.type",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "identifierTypeTooLong": {
+      "title": {
+        "sr": "Tip identifikatora je predugačak",
+        "sr-cyr": "Тип идентификатора је предугачак",
+        "en": "Identifier type too long"
+      },
+      "message": {
+        "sr": "Tip identifikatora \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Тип идентификатора \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The identifier type \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Identifier.type",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 100
+      }
+    },
+    "identifierRegularExpressionTooLong": {
+      "title": {
+        "sr": "Regularni izraz je predugačak",
+        "sr-cyr": "Регуларни израз је предугачак",
+        "en": "Regular expression too long"
+      },
+      "message": {
+        "sr": "Regularni izraz \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Регуларни израз \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The regular expression \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Identifier.pattern",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidIdentifierRegularExpression": {
+      "title": {
+        "sr": "Neispravan regularni izraz",
+        "sr-cyr": "Неисправан регуларни израз",
+        "en": "Invalid regular expression"
+      },
+      "message": {
+        "sr": "Regularni izraz \"{0}\" nije ispravan.",
+        "sr-cyr": "Регуларни израз \"{0}\" није исправан.",
+        "en": "The regular expression \"{0}\" is not valid."
+      },
+      "target": "Identifier.pattern",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false
+    },
+    "identifierUriTooLong": {
+      "title": {
+        "sr": "URI identifikatora je predugačak",
+        "sr-cyr": "URI идентификатора је предугачак",
+        "en": "Identifier URI too long"
+      },
+      "message": {
+        "sr": "URI identifikatora \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "URI идентификатора \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The identifier URI \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Identifier.uri",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidIdentifierUriFormat": {
+      "title": {
+        "sr": "Neispravan format URI-ja identifikatora",
+        "sr-cyr": "Неисправан формат URI-ја идентификатора",
+        "en": "Invalid identifier URI format"
+      },
+      "message": {
+        "sr": "URI identifikatora \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "URI идентификатора \"{0}\" није у исправном формату.",
+        "en": "The identifier URI \"{0}\" is not in a valid format."
+      },
+      "target": "Identifier.uri",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^(https?|ftp)://\\S+$"
+      }
+    },
+    "latitudeMissing": {
+      "title": {
+        "sr": "Nedostaje geografska širina",
+        "sr-cyr": "Недостаје географска ширина",
+        "en": "Missing latitude"
+      },
+      "message": {
+        "sr": "Geografska širina nije uneta. Polje je obavezno.",
+        "sr-cyr": "Географска ширина није унета. Поље је обавезно.",
+        "en": "The latitude field is missing. The field is mandatory."
+      },
+      "target": "GeoLocation.latitude",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "latitudeOutOfRange": {
+      "title": {
+        "sr": "Geografska širina van opsega",
+        "sr-cyr": "Географска ширина ван опсега",
+        "en": "Latitude out of range"
+      },
+      "message": {
+        "sr": "Geografska širina ({0}) mora biti između {1} i {2}.",
+        "sr-cyr": "Географска ширина ({0}) мора бити између {1} и {2}.",
+        "en": "The latitude ({0}) must be between {1} and {2}."
+      },
+      "target": "GeoLocation.latitude",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": -90,
+        "max": 90
+      }
+    },
+    "longitudeMissing": {
+      "title": {
+        "sr": "Nedostaje geografska dužina",
+        "sr-cyr": "Недостаје географска дужина",
+        "en": "Missing longitude"
+      },
+      "message": {
+        "sr": "Geografska dužina nije uneta. Polje je obavezno.",
+        "sr-cyr": "Географска дужина није унета. Поље је обавезно.",
+        "en": "The longitude field is missing. The field is mandatory."
+      },
+      "target": "GeoLocation.longitude",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "longitudeOutOfRange": {
+      "title": {
+        "sr": "Geografska dužina van opsega",
+        "sr-cyr": "Географска дужина ван опсега",
+        "en": "Longitude out of range"
+      },
+      "message": {
+        "sr": "Geografska dužina ({0}) mora biti između {1} i {2}.",
+        "sr-cyr": "Географска дужина ({0}) мора бити између {1} и {2}.",
+        "en": "The longitude ({0}) must be between {1} and {2}."
+      },
+      "target": "GeoLocation.longitude",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": -180,
+        "max": 180
+      }
+    },
+    "addressTooLong": {
+      "title": {
+        "sr": "Adresa je predugačka",
+        "sr-cyr": "Адреса је предугачка",
+        "en": "Address too long"
+      },
+      "message": {
+        "sr": "Adresa \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Адреса \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The address \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "GeoLocation.address",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 500
+      }
+    },
+    "invalidAddressFormat": {
+      "title": {
+        "sr": "Neispravan format adrese",
+        "sr-cyr": "Неисправан формат адресе",
+        "en": "Invalid address format"
+      },
+      "message": {
+        "sr": "Adresa \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Адреса \"{0}\" није у исправном формату.",
+        "en": "The address \"{0}\" is not in a valid format."
+      },
+      "target": "GeoLocation.address",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'()/#:&\\-]+$"
+      }
+    },
+    "contactEmailTooLong": {
+      "title": {
+        "sr": "Adresa e-pošte je predugačka",
+        "sr-cyr": "Адреса е-поште је предугачка",
+        "en": "Email address too long"
+      },
+      "message": {
+        "sr": "Adresa e-pošte \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Адреса е-поште \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The email address \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Contact.email",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidContactEmailFormat": {
+      "title": {
+        "sr": "Neispravan format adrese e-pošte",
+        "sr-cyr": "Неисправан формат адресе е-поште",
+        "en": "Invalid email address format"
+      },
+      "message": {
+        "sr": "Adresa e-pošte \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Адреса е-поште \"{0}\" није у исправном формату.",
+        "en": "The email address \"{0}\" is not in a valid format."
+      },
+      "target": "Contact.email",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+      }
+    },
+    "phoneNumberTooLong": {
+      "title": {
+        "sr": "Broj telefona je predugačak",
+        "sr-cyr": "Број телефона је предугачак",
+        "en": "Phone number too long"
+      },
+      "message": {
+        "sr": "Broj telefona \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Број телефона \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The phone number \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Contact.phone",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 30
+      }
+    },
+    "invalidPhoneNumberFormat": {
+      "title": {
+        "sr": "Neispravan format broja telefona",
+        "sr-cyr": "Неисправан формат броја телефона",
+        "en": "Invalid phone number format"
+      },
+      "message": {
+        "sr": "Broj telefona \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Број телефона \"{0}\" није у исправном формату.",
+        "en": "The phone number \"{0}\" is not in a valid format."
+      },
+      "target": "Contact.phone",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[+]?[0-9()\\- /]{5,30}$"
+      }
+    },
+    "mobilePhoneNumberTooLong": {
+      "title": {
+        "sr": "Broj mobilnog telefona je predugačak",
+        "sr-cyr": "Број мобилног телефона је предугачак",
+        "en": "Mobile phone number too long"
+      },
+      "message": {
+        "sr": "Broj mobilnog telefona \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Број мобилног телефона \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The mobile phone number \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Contact.mobilePhone",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 30
+      }
+    },
+    "invalidMobilePhoneNumberFormat": {
+      "title": {
+        "sr": "Neispravan format broja mobilnog telefona",
+        "sr-cyr": "Неисправан формат броја мобилног телефона",
+        "en": "Invalid mobile phone number format"
+      },
+      "message": {
+        "sr": "Broj mobilnog telefona \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Број мобилног телефона \"{0}\" није у исправном формату.",
+        "en": "The mobile phone number \"{0}\" is not in a valid format."
+      },
+      "target": "Contact.mobilePhone",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[+]?[0-9()\\- /]{5,30}$"
+      }
+    },
+    "faxNumberTooLong": {
+      "title": {
+        "sr": "Broj faksa je predugačak",
+        "sr-cyr": "Број факса је предугачак",
+        "en": "Fax number too long"
+      },
+      "message": {
+        "sr": "Broj faksa \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Број факса \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The fax number \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Contact.fax",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 30
+      }
+    },
+    "invalidFaxNumberFormat": {
+      "title": {
+        "sr": "Neispravan format broja faksa",
+        "sr-cyr": "Неисправан формат броја факса",
+        "en": "Invalid fax number format"
+      },
+      "message": {
+        "sr": "Broj faksa \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Број факса \"{0}\" није у исправном формату.",
+        "en": "The fax number \"{0}\" is not in a valid format."
+      },
+      "target": "Contact.fax",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[+]?[0-9()\\- /]{5,30}$"
+      }
+    },
+    "contactWebsiteTooLong": {
+      "title": {
+        "sr": "Veb adresa je predugačka",
+        "sr-cyr": "Веб адреса је предугачка",
+        "en": "Website URL too long"
+      },
+      "message": {
+        "sr": "Veb adresa \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Веб адреса \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The website URL \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Contact.website",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidContactWebsiteFormat": {
+      "title": {
+        "sr": "Neispravan format veb adrese",
+        "sr-cyr": "Неисправан формат веб адресе",
+        "en": "Invalid website URL format"
+      },
+      "message": {
+        "sr": "Veb adresa \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Веб адреса \"{0}\" није у исправном формату.",
+        "en": "The website URL \"{0}\" is not in a valid format."
+      },
+      "target": "Contact.website",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^(https?|ftp)://\\S+$"
+      }
+    },
+    "researchAreaNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv istraživačke oblasti",
+        "sr-cyr": "Недостаје назив истраживачке области",
+        "en": "Missing research area name"
+      },
+      "message": {
+        "sr": "Naziv istraživačke oblasti nedostaje. Polje je obavezno.",
+        "sr-cyr": "Назив истраживачке области недостаје. Поље је обавезно.",
+        "en": "The research area name field is missing. The field is mandatory."
+      },
+      "target": "ResearchArea.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "researchAreaNameTooLong": {
+      "title": {
+        "sr": "Naziv istraživačke oblasti je predugačak",
+        "sr-cyr": "Назив истраживачке области је предугачак",
+        "en": "Research area name too long"
+      },
+      "message": {
+        "sr": "Naziv istraživačke oblasti \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив истраживачке области \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The research area name \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "ResearchArea.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidResearchAreaNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva istraživačke oblasti",
+        "sr-cyr": "Неисправан формат назива истраживачке области",
+        "en": "Invalid research area name format"
+      },
+      "message": {
+        "sr": "Naziv istraživačke oblasti \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив истраживачке области \"{0}\" није у исправном формату.",
+        "en": "The research area name \"{0}\" is not in a valid format."
+      },
+      "target": "ResearchArea.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'():/&-]+$"
+      }
+    },
+    "researchAreaUriTooLong": {
+      "title": {
+        "sr": "URI istraživačke oblasti je predugačak",
+        "sr-cyr": "URI истраживачке области је предугачак",
+        "en": "Research area URI too long"
+      },
+      "message": {
+        "sr": "URI istraživačke oblasti \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "URI истраживачке области \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The research area URI \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "ResearchArea.uri",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidResearchAreaUriFormat": {
+      "title": {
+        "sr": "Neispravan format URI-ja istraživačke oblasti",
+        "sr-cyr": "Неисправан формат URI-ја истраживачке области",
+        "en": "Invalid research area URI format"
+      },
+      "message": {
+        "sr": "URI istraživačke oblasti \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "URI истраживачке области \"{0}\" није у исправном формату.",
+        "en": "The research area URI \"{0}\" is not in a valid format."
+      },
+      "target": "ResearchArea.uri",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^(https?|ftp)://\\S+$"
+      }
+    },
+    "duplicateResearchAreaUri": {
+      "title": {
+        "sr": "Dupliran URI istraživačke oblasti",
+        "sr-cyr": "Дуплиран URI истраживачке области",
+        "en": "Duplicate research area URI"
+      },
+      "message": {
+        "sr": "URI istraživačke oblasti \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "URI истраживачке области \"{0}\" мора бити јединствен.",
+        "en": "The research area URI \"{0}\" must be unique."
+      },
+      "target": "ResearchArea.uri",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "languageTagMissing": {
+      "title": {
+        "sr": "Nedostaje jezička oznaka",
+        "sr-cyr": "Недостаје језичка ознака",
+        "en": "Missing language tag"
+      },
+      "message": {
+        "sr": "Jezička oznaka nedostaje. Polje je obavezno.",
+        "sr-cyr": "Језичка ознака недостаје. Поље је обавезно.",
+        "en": "The language tag field is missing. The field is mandatory."
+      },
+      "target": "Language.tag",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "languageTagTooLong": {
+      "title": {
+        "sr": "Jezička oznaka je predugačka",
+        "sr-cyr": "Језичка ознака је предугачка",
+        "en": "Language tag too long"
+      },
+      "message": {
+        "sr": "Jezička oznaka \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Језичка ознака \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The language tag \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Language.tag",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 10
+      }
+    },
+    "invalidLanguageTagFormat": {
+      "title": {
+        "sr": "Neispravan format jezičke oznake",
+        "sr-cyr": "Неисправан формат језичке ознаке",
+        "en": "Invalid language tag format"
+      },
+      "message": {
+        "sr": "Jezička oznaka \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Језичка ознака \"{0}\" није у исправном формату.",
+        "en": "The language tag \"{0}\" is not in a valid format."
+      },
+      "target": "Language.tag",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+      }
+    },
+    "duplicateLanguageTag": {
+      "title": {
+        "sr": "Duplirana jezička oznaka",
+        "sr-cyr": "Дублирана језичка ознака",
+        "en": "Duplicate language tag"
+      },
+      "message": {
+        "sr": "Jezička oznaka \"{0}\" mora biti jedinstvena.",
+        "sr-cyr": "Језичка ознака \"{0}\" мора бити јединствена.",
+        "en": "The language tag \"{0}\" must be unique."
+      },
+      "target": "Language.tag",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "languageNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv jezika",
+        "sr-cyr": "Недостаје назив језика",
+        "en": "Missing language name"
+      },
+      "message": {
+        "sr": "Naziv jezika nedostaje. Polje je obavezno.",
+        "sr-cyr": "Назив језика недостаје. Поље је обавезно.",
+        "en": "The language name field is missing. The field is mandatory."
+      },
+      "target": "Language.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "languageNameTooLong": {
+      "title": {
+        "sr": "Naziv jezika je predugačak",
+        "sr-cyr": "Назив језика је предугачак",
+        "en": "Language name too long"
+      },
+      "message": {
+        "sr": "Naziv jezika \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив језика \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The language name \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Language.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidLanguageNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva jezika",
+        "sr-cyr": "Неисправан формат назива језика",
+        "en": "Invalid language name format"
+      },
+      "message": {
+        "sr": "Naziv jezika \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив језика \"{0}\" није у исправном формату.",
+        "en": "The language name \"{0}\" is not in a valid format."
+      },
+      "target": "Language.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'()\\-/&]+$"
+      }
+    },
+    "countryCodeMissing": {
+      "title": {
+        "sr": "Nedostaje kod države",
+        "sr-cyr": "Недостаје код државе",
+        "en": "Missing country code"
+      },
+      "message": {
+        "sr": "Kod države nedostaje. Polje je obavezno.",
+        "sr-cyr": "Код државе недостаје. Поље је обавезно.",
+        "en": "The country code field is missing. The field is mandatory."
+      },
+      "target": "Country.code",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "countryCodeInvalidLength": {
+      "title": {
+        "sr": "Neispravna dužina koda države",
+        "sr-cyr": "Неисправна дужина кода државе",
+        "en": "Invalid country code length"
+      },
+      "message": {
+        "sr": "Kod države \"{0}\" mora sadržati tačno {1} karaktera.",
+        "sr-cyr": "Код државе \"{0}\" мора садржати тачно {1} карактера.",
+        "en": "The country code \"{0}\" must contain exactly {1} characters."
+      },
+      "target": "Country.code",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "length": 2
+      }
+    },
+    "invalidCountryCodeFormat": {
+      "title": {
+        "sr": "Neispravan format koda države",
+        "sr-cyr": "Неисправан формат кода државе",
+        "en": "Invalid country code format"
+      },
+      "message": {
+        "sr": "Kod države \"{0}\" nije u ispravnom formatu. Očekuje se ISO 3166-1 alpha-2 kod malim slovima.",
+        "sr-cyr": "Код државе \"{0}\" није у исправном формату. Очекује се ISO 3166-1 alpha-2 код малим словима.",
+        "en": "The country code \"{0}\" is not in a valid format. Expected an ISO 3166-1 alpha-2 lowercase country code."
+      },
+      "target": "Country.code",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[a-z]{2}$"
+      }
+    },
+    "duplicateCountryCode": {
+      "title": {
+        "sr": "Dupliran kod države",
+        "sr-cyr": "Дуплиран код државе",
+        "en": "Duplicate country code"
+      },
+      "message": {
+        "sr": "Kod države \"{0}\" mora biti jedinstven.",
+        "sr-cyr": "Код државе \"{0}\" мора бити јединствен.",
+        "en": "The country code \"{0}\" must be unique."
+      },
+      "target": "Country.code",
+      "severity": "ERROR",
+      "dimension": "UNIQUENESS",
+      "blocking": true,
+      "points": 15,
+      "usedForFairCompliance": false
+    },
+    "countryNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv države",
+        "sr-cyr": "Недостаје назив државе",
+        "en": "Missing country name"
+      },
+      "message": {
+        "sr": "Naziv države nedostaje. Polje je obavezno.",
+        "sr-cyr": "Назив државе недостаје. Поље је обавезно.",
+        "en": "The country name field is missing. The field is mandatory."
+      },
+      "target": "Country.name",
+      "severity": "WARNING",
+      "dimension": "COMPLETENESS",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "countryNameTooLong": {
+      "title": {
+        "sr": "Naziv države je predugačak",
+        "sr-cyr": "Назив државе је предугачак",
+        "en": "Country name too long"
+      },
+      "message": {
+        "sr": "Naziv države \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив државе \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The country name \"{0}\" exceeds the maximum allowed length of {1} characters."
+      },
+      "target": "Country.name",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": true,
+      "points": 8,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidCountryNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva države",
+        "sr-cyr": "Неисправан формат назива државе",
+        "en": "Invalid country name format"
+      },
+      "message": {
+        "sr": "Naziv države \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив државе \"{0}\" није у исправном формату.",
+        "en": "The country name \"{0}\" is not in a valid format."
+      },
+      "target": "Country.name",
+      "severity": "ERROR",
+      "dimension": "VALIDITY",
+      "blocking": true,
+      "points": 10,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{N}\\p{M} .,'()\\-/&]+$"
+      }
+    }
+  }
+}

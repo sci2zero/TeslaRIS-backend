@@ -21,6 +21,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -66,6 +67,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final FundingIndexRepository fundingIndexRepository;
 
     private final DocumentFileService documentFileService;
+
+    private final InvolvementService involvementService;
 
     @Override
     protected JpaRepository<Funding, Integer> getEntityRepository() {
@@ -185,6 +188,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             funding.setFunder(null);
         }
 
+        if (Objects.nonNull(fundingDTO.getInvolvementId())) {
+            funding.setInvolvement(involvementService.findOne(fundingDTO.getInvolvementId()));
+        } else {
+            funding.setInvolvement(null);
+        }
+
         funding.setDateSubmitted(fundingDTO.getDateSubmitted());
         funding.setDateAwarded(fundingDTO.getDateAwarded());
         funding.setDateFrom(fundingDTO.getDateFrom());
@@ -230,6 +239,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
+        funding.setInternalInvestment(fundingDTO.getInternalInvestment());
 
         if (isCreate) {
             buildFundingParts(funding, fundingDTO);
