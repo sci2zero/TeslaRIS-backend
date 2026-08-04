@@ -34,6 +34,11 @@ public class FundingProgramController {
 
     private final FundingProgramService fundingProgramService;
 
+    @GetMapping("/{fundingProgramId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
+    public boolean canEditFundingProgram() {
+        return true;
+    }
 
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('READ_FUNDING_PROGRAMS')")

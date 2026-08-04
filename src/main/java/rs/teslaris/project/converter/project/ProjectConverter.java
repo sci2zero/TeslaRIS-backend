@@ -47,6 +47,8 @@ public class ProjectConverter {
         if (Objects.nonNull(project.getCosts())) {
             dto.getCosts().setAmount(project.getCosts().getAmount());
             dto.getCosts().setCurrencyId(project.getCosts().getCurrency().getId());
+            dto.getCosts().setCurrencyCode(project.getCosts().getCurrency().getCode());
+            dto.getCosts().setCurrencySymbol(project.getCosts().getCurrency().getSymbol());
         }
 
         project.getPersons().forEach(member ->

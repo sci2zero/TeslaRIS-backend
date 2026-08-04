@@ -3,11 +3,6 @@ package rs.teslaris.project.service.impl.funding;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +21,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
@@ -40,6 +36,12 @@ import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 import rs.teslaris.project.service.interfaces.funding.PersonFundingCallContributionService;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     private final OrganisationUnitService organisationUnitService;
 
     private final PersonFundingCallContributionService personFundingCallContributionService;
+
+    private final PersonContributionService personContributionService;
 
 
     @Override
@@ -167,6 +171,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFundingCalls() {
+        fundingCallIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -266,6 +272,11 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         fundingCall.getNameAbbreviation().clear();
         fundingCall.getKeywords().clear();
         fundingCall.getResearchAreas().clear();
+
+        fundingCall.getContributors().forEach(
+            contribution -> personContributionService.deleteContribution(
+                contribution.getId()));
+        fundingCall.getContributors().clear();
     }
 
     private FundingCallIndex indexCommonFields(FundingCall fundingCall,
@@ -294,6 +305,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
         if (Objects.nonNull(fundingCall.getFundingProgram())) {
             index.setProgramId(fundingCall.getFundingProgram().getId());
+        } else {
+            index.setProgramId(null);
         }
 
         index.setFunderId(fundingCall.getFunder().getId());

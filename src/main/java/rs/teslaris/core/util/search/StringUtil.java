@@ -1,5 +1,6 @@
 package rs.teslaris.core.util.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
@@ -29,6 +30,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
@@ -542,5 +545,29 @@ public class StringUtil {
         return index == -1
             ? filename
             : filename.substring(0, index);
+    }
+
+    @Nullable
+    public static String parseDateParts(JsonNode dateParts) {
+        if (!dateParts.isArray() || dateParts.isEmpty()) {
+            return null;
+        }
+
+        var firstDate = dateParts.get(0);
+        if (!firstDate.isArray() || firstDate.isEmpty()) {
+            return null;
+        }
+
+        var year = firstDate.get(0).asInt();
+        var month = firstDate.size() > 1 ? firstDate.get(1).asInt() : 1;
+        var day = firstDate.size() > 2 ? firstDate.get(2).asInt() : 1;
+
+        return String.format("%04d-%02d-%02d", year, month, day);
+    }
+
+    public static boolean looksLikeAbbreviation(String title) {
+        var trimmed = title.trim();
+        var wordCount = trimmed.split("\\s+").length;
+        return trimmed.length() <= 25 && wordCount <= 3;
     }
 }

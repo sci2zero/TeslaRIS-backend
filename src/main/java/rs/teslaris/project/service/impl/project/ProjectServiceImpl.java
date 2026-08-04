@@ -290,6 +290,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         return index;
     }
 
+    // TODO: Add team member
+    // TODO: Remove team member
+    // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
+
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
                                          LocalDate dateTo) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())

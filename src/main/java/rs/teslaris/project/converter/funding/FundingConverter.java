@@ -76,10 +76,12 @@ public class FundingConverter {
             .forEach(fp -> dto.getFundingParts().add(FundingPartConverter.toDTO(fp)));
         funding.getResearchAreas().forEach(ra -> dto.getResearchAreasId().add(ra.getId()));
 
-        dto.setAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(funding.getAmount())) {
+            dto.setAmount(new MonetaryAmountDTO());
             dto.getAmount().setAmount(funding.getAmount().getAmount());
             dto.getAmount().setCurrencyId(funding.getAmount().getCurrency().getId());
+            dto.getAmount().setCurrencyCode(funding.getAmount().getCurrency().getCode());
+            dto.getAmount().setCurrencySymbol(funding.getAmount().getCurrency().getSymbol());
         }
     }
 

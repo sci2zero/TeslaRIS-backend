@@ -96,7 +96,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     public Funding createFunding(FundingDTO fundingDTO) {
         var newFunding = new Funding();
 
-        setCommonFields(newFunding, fundingDTO);
+        setCommonFields(newFunding, fundingDTO, true);
 
         var savedFundingCall = save(newFunding);
 
@@ -113,7 +113,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var fundingToUpdate = findOne(fundingId);
 
         clearCommonFields(fundingToUpdate);
-        setCommonFields(fundingToUpdate, fundingDTO);
+        setCommonFields(fundingToUpdate, fundingDTO, false);
 
         fundingIndexRepository.findFundingIndexByDatabaseId(fundingId)
             .ifPresent(index -> {
@@ -129,6 +129,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addAgreementDocument(Integer fundingId,
                                                         DocumentFileDTO agreement) {
         var funding = findOne(fundingId);
@@ -150,6 +151,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public void deleteAgreementDocument(Integer agreementFileId, Integer fundingId) {
         var documentFile = documentFileService.findOne(agreementFileId);
         var fundingCall = findOne(fundingId);
@@ -159,7 +161,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         save(fundingCall);
     }
 
-    private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
+    private void setCommonFields(Funding funding, FundingDTO fundingDTO, boolean isCreate) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
             fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
@@ -238,8 +240,10 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
         funding.setInternalInvestment(fundingDTO.getInternalInvestment());
-        
-        buildFundingParts(funding, fundingDTO);
+
+        if (isCreate) {
+            buildFundingParts(funding, fundingDTO);
+        }
     }
 
     private void buildFundingParts(Funding funding,
@@ -265,9 +269,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             currencyService.findOne(partDTO.getAmount().getCurrencyId()));
         part.getAmount().setAmount(partDTO.getAmount().getAmount());
 
-        if (Objects.nonNull(partDTO.getFundingId())) {
-            part.setFunding(parent);
-        }
+        part.setFunding(parent);
 
         return part;
     }
@@ -275,6 +277,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFunding() {
+        fundingIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -337,6 +341,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         if (Objects.nonNull(funding.getFundingCall())) {
             index.setFundingCallId(funding.getFundingCall().getId());
+        } else {
+            index.setFundingCallId(null);
         }
 
         index.setDatabaseId(funding.getId());
