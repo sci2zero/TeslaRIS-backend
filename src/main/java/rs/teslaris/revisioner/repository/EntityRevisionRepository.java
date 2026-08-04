@@ -19,4 +19,11 @@ public interface EntityRevisionRepository extends JpaRepository<EntityRevision, 
     Optional<EntityRevision>
     findTopByEntityTypeAndEntityIdAndRevisionTimestampLessThanEqualOrderByRevisionTimestampDesc(
         String entityType, Integer entityId, Instant timestamp);
+
+    Optional<EntityRevision> findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+        String entityType, Integer entityId);
+
+    Optional<EntityRevision>
+    findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+        String entityType, Integer entityId, Integer majorVersion, Integer minorVersion);
 }

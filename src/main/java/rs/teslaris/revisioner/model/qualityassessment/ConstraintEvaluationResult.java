@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DataQualityIssue {
+public class ConstraintEvaluationResult {
 
     private String key;
 
@@ -22,7 +22,11 @@ public class DataQualityIssue {
 
     private IssueSeverity severity;
 
+    private String target;
+
     private QualityDimension dimension;
 
     private boolean blocking;
+
+    private boolean usedForFairCompliance;
 }

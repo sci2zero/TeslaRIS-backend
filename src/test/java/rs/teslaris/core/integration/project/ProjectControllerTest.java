@@ -1,12 +1,6 @@
 package rs.teslaris.core.integration.project;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,11 +14,16 @@ import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
+import rs.teslaris.project.model.project.*;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 public class ProjectControllerTest extends BaseTest {
@@ -46,7 +45,7 @@ public class ProjectControllerTest extends BaseTest {
         ));
 
         dto.setResearchAreasId(new HashSet<>(Set.of(1, 2)));
-        dto.setConsortiumIds(new HashSet<>(Set.of(1, 2)));
+        dto.setOrganisationIds(new HashSet<>(Set.of(1, 2)));
 
         dto.setDateFrom(LocalDate.of(2025, 1, 1));
         dto.setDateTo(LocalDate.of(2026, 3, 1));
@@ -62,12 +61,19 @@ public class ProjectControllerTest extends BaseTest {
         dto.setNotFunded(true);
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
 
-        dto.setTeam(List.of(buildTeamMember(
-            1, 1,
-            PersonProjectContributionType.TEAM_MEMBER,
-            PersonProjectInvestigationRole.RESEARCHER,
-            "Lead researcher",
-            "University of Novi Sad"
+        dto.setPersons(List.of(buildTeamMember(
+                1, 1,
+                PersonProjectContributionType.TEAM_MEMBER,
+                PersonProjectInvestigationRole.RESEARCHER,
+                "Lead researcher",
+                "University of Novi Sad"
+        )));
+
+        dto.setRelations(List.of(buildRelation(
+                2,
+                ProjectsRelationType.PART_OF,
+                "This project is part of the parent project",
+                "Parent project"
         )));
 
         return dto;
@@ -103,7 +109,33 @@ public class ProjectControllerTest extends BaseTest {
             List.of(buildMultilingualContent(contributionDescription)));
         member.setDisplayAffiliationStatement(List.of(buildMultilingualContent(affiliation)));
         member.setInstitutionIds(List.of(1));
+
+        member.setFavorite(true);
+        member.setKeywords(List.of(buildMultilingualContent("machine learning")));
+        member.setDateFrom(LocalDate.of(2025, 1, 1));
+        member.setDateTo(LocalDate.of(2026, 3, 1));
+        member.setUris(Set.of("https://example.com/contribution-proof"));
+        member.setIsMainContributor(true);
+        member.setIsInvitedContributor(false);
+        member.setDisplayProject(List.of(buildMultilingualContent("Test Project Display")));
+
         return member;
+    }
+
+    private static ProjectsRelationDTO buildRelation(
+            Integer targetProjectId,
+            ProjectsRelationType relationType,
+            String sourceDescription,
+            String targetDescription) {
+
+        var relation = new ProjectsRelationDTO();
+        relation.setTargetProjectId(targetProjectId);
+        relation.setRelationType(relationType);
+        relation.setDateFrom(LocalDate.of(2025, 1, 1));
+        relation.setDateTo(LocalDate.of(2026, 3, 1));
+        relation.setSourceProjectDescription(List.of(buildMultilingualContent(sourceDescription)));
+        relation.setTargetProjectDescription(List.of(buildMultilingualContent(targetDescription)));
+        return relation;
     }
 
     @Test
@@ -175,7 +207,7 @@ public class ProjectControllerTest extends BaseTest {
             "Project supervisor",
             "Faculty of Technical Sciences"
         );
-        payload.setTeam(List.of(payload.getTeam().getFirst(), secondMember));
+        payload.setPersons(List.of(payload.getPersons().getFirst(), secondMember));
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(
@@ -192,7 +224,7 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = getTestPayload();
-        payload.setTeam(List.of());
+        payload.setPersons(List.of());
 
         String requestBody = objectMapper.writeValueAsString(payload);
         mockMvc.perform(MockMvcRequestBuilders.put(

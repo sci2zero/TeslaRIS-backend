@@ -38,10 +38,12 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
@@ -81,6 +83,8 @@ public class FundingApplicationServiceTest {
 
     @Mock
     private SearchService<FundingApplicationIndex> searchService;
+
+    @Mock private PersonService personService;
 
     @InjectMocks
     private FundingApplicationServiceImpl fundingApplicationService;
@@ -700,5 +704,34 @@ public class FundingApplicationServiceTest {
         assertEquals("AWARDED", result.getContent().getFirst().getResult());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
             eq(FundingApplicationIndex.class), eq("funding_application"));
+    }
+
+    @Test
+    public void shouldSetSubmitterWhenSubmitterIdProvided() {
+        // given
+        var dto = createTestFundingApplicationDTO();
+        dto.setSubmitterId(5);
+
+        var submitter = new Person();
+        submitter.setId(5);
+
+        var savedApplication = createTestFundingApplication(1);
+        savedApplication.setSubmitter(submitter);
+
+        when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
+        when(personService.findOne(5)).thenReturn(submitter);
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(fundingApplicationRepository.save(any(FundingApplication.class)))
+                .thenReturn(savedApplication);
+        when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
+                .thenReturn(new FundingApplicationIndex());
+
+        // when
+        var result = fundingApplicationService.createFundingApplication(dto);
+
+        // then
+        assertNotNull(result);
+        verify(personService).findOne(5);
     }
 }

@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.ThesisUnarchivedEvent;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -730,6 +731,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 index.setIsArchived(thesis.getIsArchived());
                 documentPublicationIndexRepository.save(index);
             });
+
+        applicationEventPublisher.publishEvent(new ThesisUnarchivedEvent(thesisId));
     }
 
     @Override

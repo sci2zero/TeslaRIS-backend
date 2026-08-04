@@ -55,6 +55,9 @@ public class Project extends BaseEntity {
     @Column(name = "raid")
     private String raid;
 
+    @Column(name = "national_id")
+    private String nationalId;
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
@@ -74,16 +77,17 @@ public class Project extends BaseEntity {
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "sourceProject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 50)
     private Set<ProjectsRelation> relatedProjects = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
-    private Set<OrganisationUnitProjectContribution> consortium = new HashSet<>();
+    private Set<OrganisationUnitProjectContribution> organisations = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
-    private Set<PersonProjectContribution> team = new HashSet<>();
+    private Set<PersonProjectContribution> persons = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private Set<ProjectDocument> documents = new HashSet<>();
