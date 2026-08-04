@@ -1,11 +1,12 @@
 package rs.teslaris.project.converter.funding;
 
-import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.model.funding.Funding;
+
+import java.util.Objects;
 
 public class FundingConverter {
 
@@ -28,6 +29,7 @@ public class FundingConverter {
         dto.setDateTo(funding.getDateTo());
         dto.setOaMandated(funding.getOaMandated());
         dto.setOaMandateUrl(funding.getOaMandateUrl());
+        dto.setInternalInvestment(funding.getInternalInvestment());
 
         if (Objects.nonNull(funding.getProject())) {
             dto.setProjectId(funding.getProject().getId());
@@ -41,6 +43,10 @@ public class FundingConverter {
             dto.setFundingCallId(funding.getFundingCall().getId());
         }
 
+        if (Objects.nonNull(funding.getInvolvement())) {
+            dto.setInvolvementId(funding.getInvolvement().getId());
+        }
+        
         mapTranslations(funding, dto);
         mapCollectionsAndAmount(funding, dto);
 

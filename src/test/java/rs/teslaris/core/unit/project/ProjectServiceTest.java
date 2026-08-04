@@ -1,25 +1,6 @@
 package rs.teslaris.core.unit.project;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -36,17 +17,25 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
-import rs.teslaris.project.model.project.PersonProjectContribution;
-import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.*;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class ProjectServiceTest {
@@ -470,7 +459,7 @@ public class ProjectServiceTest {
 
         var member1 = new PersonProjectContributionDTO();
         var member2 = new PersonProjectContributionDTO();
-        projectDTO.setTeam(List.of(member1, member2));
+        projectDTO.setPersons(List.of(member1, member2));
 
         when(multilingualContentService.getMultilingualContent(anyList()))
             .thenReturn(Set.of(new MultiLingualContent()));
@@ -500,7 +489,7 @@ public class ProjectServiceTest {
         existingProject.setNameAbbreviation(new HashSet<>());
         existingProject.setKeywords(new HashSet<>());
         existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setTeam(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
         existingProject.setStatus(ProjectStatus.ONGOING);
         existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
         existingProject.setResearchType(ProjectResearchType.INNOVATION);
@@ -516,9 +505,9 @@ public class ProjectServiceTest {
         projectDTO.setResearchType(ProjectResearchType.INNOVATION);
         projectDTO.setDateFrom(LocalDate.now());
         projectDTO.setDateTo(LocalDate.now().plusYears(1));
-        projectDTO.setTeam(List.of(
-            new PersonProjectContributionDTO(),
-            new PersonProjectContributionDTO()
+        projectDTO.setPersons(List.of(
+                new PersonProjectContributionDTO(),
+                new PersonProjectContributionDTO()
         ));
 
         var projectIndex = new ProjectIndex();
@@ -556,7 +545,7 @@ public class ProjectServiceTest {
         existingProject.setNameAbbreviation(new HashSet<>());
         existingProject.setKeywords(new HashSet<>());
         existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setTeam(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
         existingProject.setStatus(ProjectStatus.ONGOING);
         existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
         existingProject.setResearchType(ProjectResearchType.INNOVATION);
@@ -572,7 +561,7 @@ public class ProjectServiceTest {
         projectDTO.setResearchType(ProjectResearchType.INNOVATION);
         projectDTO.setDateFrom(LocalDate.now());
         projectDTO.setDateTo(LocalDate.now().plusYears(1));
-        projectDTO.setTeam(List.of());
+        projectDTO.setPersons(List.of());
 
         when(projectRepository.findById(projectId))
             .thenReturn(Optional.of(existingProject));
@@ -593,6 +582,110 @@ public class ProjectServiceTest {
             .createContribution(any(), any());
     }
 
+    @Test
+    public void shouldCreateProjectWithRelations() {
+        // given
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var relation = new ProjectsRelationDTO();
+        relation.setRelationType(ProjectsRelationType.PART_OF);
+        relation.setDateFrom(LocalDate.now());
+        relation.setDateTo(LocalDate.now().plusYears(1));
+        relation.setTargetProjectId(2);
+        projectDTO.setRelations(List.of(relation));
+
+        var savedProject = new Project();
+        savedProject.setId(1);
+
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(projectRepository.findById(2))
+                .thenReturn(Optional.of(new Project()));
+        when(projectRepository.save(any(Project.class)))
+                .thenReturn(savedProject);
+        when(projectIndexRepository.save(any(ProjectIndex.class)))
+                .thenReturn(new ProjectIndex());
+
+        // when
+        var result = projectService.createProject(projectDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(projectRepository).findById(2);
+        verify(projectRepository).save(any(Project.class));
+    }
+
+    @Test
+    public void shouldUpdateProjectAndRebuildRelations() {
+        // given
+        var projectId = 1;
+        var existingProject = new Project();
+        existingProject.setId(projectId);
+        existingProject.setName(new HashSet<>());
+        existingProject.setDescription(new HashSet<>());
+        existingProject.setNameAbbreviation(new HashSet<>());
+        existingProject.setKeywords(new HashSet<>());
+        existingProject.setResearchAreas(new HashSet<>());
+        existingProject.setPersons(new HashSet<>());
+        existingProject.setRelatedProjects(new HashSet<>());
+        existingProject.setStatus(ProjectStatus.ONGOING);
+        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        existingProject.setResearchType(ProjectResearchType.INNOVATION);
+
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var relation = new ProjectsRelationDTO();
+        relation.setRelationType(ProjectsRelationType.PREDECESSOR);
+        relation.setDateFrom(LocalDate.now());
+        relation.setDateTo(LocalDate.now().plusYears(1));
+        relation.setTargetProjectId(2);
+        projectDTO.setRelations(List.of(relation));
+
+        var projectIndex = new ProjectIndex();
+        projectIndex.setDatabaseId(projectId);
+
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(existingProject));
+        when(projectRepository.findById(2))
+                .thenReturn(Optional.of(new Project()));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+                .thenReturn(Optional.of(projectIndex));
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        verify(projectRepository).findById(2);
+        verify(projectIndexRepository).save(any(ProjectIndex.class));
+        assertEquals(1, existingProject.getRelatedProjects().size());
+    }
     private ProjectIndex projectIndex() {
         var idx = new ProjectIndex();
         idx.setDatabaseId(1);

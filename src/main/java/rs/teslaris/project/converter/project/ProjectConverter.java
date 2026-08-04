@@ -1,10 +1,11 @@
 package rs.teslaris.project.converter.project;
 
-import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.Project;
+
+import java.util.Objects;
 
 public class ProjectConverter {
 
@@ -17,21 +18,22 @@ public class ProjectConverter {
         dto.setMergedIds(project.getMergedIds());
         dto.setDoi(project.getDoi());
         dto.setRaid(project.getRaid());
+        dto.setNationalId(project.getNationalId());
 
         dto.setName(
-            MultilingualContentConverter.getMultilingualContentDTO(project.getName()));
+                MultilingualContentConverter.getMultilingualContentDTO(project.getName()));
         dto.setDescription(
-            MultilingualContentConverter.getMultilingualContentDTO(project.getDescription()));
+                MultilingualContentConverter.getMultilingualContentDTO(project.getDescription()));
         dto.setNameAbbreviation(
-            MultilingualContentConverter.getMultilingualContentDTO(project.getNameAbbreviation()));
+                MultilingualContentConverter.getMultilingualContentDTO(project.getNameAbbreviation()));
         dto.setKeywords(
-            MultilingualContentConverter.getMultilingualContentDTO(project.getKeywords()));
+                MultilingualContentConverter.getMultilingualContentDTO(project.getKeywords()));
 
         project.getResearchAreas().forEach(researchArea ->
-            dto.getResearchAreasId().add(researchArea.getId()));
+                dto.getResearchAreasId().add(researchArea.getId()));
 
-        project.getConsortium().forEach(organisation ->
-            dto.getConsortiumIds().add(organisation.getId()));
+        project.getOrganisations().forEach(organisation ->
+                dto.getOrganisationIds().add(organisation.getId()));
 
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());
@@ -47,8 +49,11 @@ public class ProjectConverter {
             dto.getCosts().setCurrencyId(project.getCosts().getCurrency().getId());
         }
 
-        project.getTeam().forEach(member ->
-            dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
+        project.getPersons().forEach(member ->
+                dto.getPersons().add(PersonProjectContributionConverter.toDTO(member)));
+
+        project.getRelatedProjects().forEach(relation ->
+                dto.getRelations().add(ProjectsRelationConverter.toDTO(relation)));
 
         return dto;
     }

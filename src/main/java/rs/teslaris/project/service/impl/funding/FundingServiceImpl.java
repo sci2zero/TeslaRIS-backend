@@ -3,11 +3,6 @@ package rs.teslaris.project.service.impl.funding;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +21,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -41,6 +37,12 @@ import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +65,10 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final CurrencyService currencyService;
 
     private final FundingIndexRepository fundingIndexRepository;
+
     private final DocumentFileService documentFileService;
+
+    private final InvolvementService involvementService;
 
     @Override
     protected JpaRepository<Funding, Integer> getEntityRepository() {
@@ -181,6 +186,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             funding.setFunder(null);
         }
 
+        if (Objects.nonNull(fundingDTO.getInvolvementId())) {
+            funding.setInvolvement(involvementService.findOne(fundingDTO.getInvolvementId()));
+        } else {
+            funding.setInvolvement(null);
+        }
+
         funding.setDateSubmitted(fundingDTO.getDateSubmitted());
         funding.setDateAwarded(fundingDTO.getDateAwarded());
         funding.setDateFrom(fundingDTO.getDateFrom());
@@ -226,7 +237,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
-
+        funding.setInternalInvestment(fundingDTO.getInternalInvestment());
+        
         buildFundingParts(funding, fundingDTO);
     }
 
