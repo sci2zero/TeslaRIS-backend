@@ -664,7 +664,7 @@ public class FundingApplicationServiceTest {
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-            1, null, "AWARDED", null, null, null, null, pageable);
+            null, null, 1, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);
@@ -693,7 +693,7 @@ public class FundingApplicationServiceTest {
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-            1, null, "AWARDED", null, null, null, null, pageable);
+            null, null, 1, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);

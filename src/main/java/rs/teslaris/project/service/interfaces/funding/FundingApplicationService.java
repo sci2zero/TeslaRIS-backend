@@ -1,6 +1,7 @@
 package rs.teslaris.project.service.interfaces.funding;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +37,9 @@ public interface FundingApplicationService extends JPAService<FundingApplication
 
     void deleteFundingApplicationDocument(Integer documentFileId, Integer fundingApplicationId);
 
-    Page<FundingApplicationIndex> searchFundingApplications(Integer fundingCallId,
+    Page<FundingApplicationIndex> searchFundingApplications(List<String> tokens,
+                                                            Integer projectId,
+                                                            Integer fundingCallId,
                                                             Integer funderId,
                                                             String result,
                                                             LocalDate submissionDateFrom,
