@@ -84,7 +84,8 @@ public class FundingApplicationServiceTest {
     @Mock
     private SearchService<FundingApplicationIndex> searchService;
 
-    @Mock private PersonService personService;
+    @Mock
+    private PersonService personService;
 
     @InjectMocks
     private FundingApplicationServiceImpl fundingApplicationService;
@@ -721,11 +722,11 @@ public class FundingApplicationServiceTest {
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(personService.findOne(5)).thenReturn(submitter);
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(savedApplication);
+            .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(new FundingApplicationIndex());
+            .thenReturn(new FundingApplicationIndex());
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);

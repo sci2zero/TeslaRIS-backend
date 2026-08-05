@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--
+      Keeps Spring Boot's default console and file appenders (driven by logging.file.name in
+      application.properties) and adds a dedicated migration log.
+    -->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <appender name="MIGRATION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>application-logs/migration.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>application-logs/migration.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{ISO8601} %-5level %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- additivity=false: migration events go to migration.log only, not to application.log -->
+    <logger name="MIGRATION" level="INFO" additivity="false">
+        <appender-ref ref="MIGRATION_FILE"/>
+    </logger>
+
+</configuration>

@@ -84,12 +84,12 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setProject(parent);
         contribution.setFavorite(dto.getFavorite());
         contribution.setKeywords(
-                multilingualContentService.getMultilingualContent(dto.getKeywords()));
+            multilingualContentService.getMultilingualContent(dto.getKeywords()));
 
         if (Objects.nonNull(dto.getResearchAreasId()) && !dto.getResearchAreasId().isEmpty()) {
             contribution.setResearchAreas(new HashSet<>(
-                    researchAreaService.getResearchAreasByIds(
-                            dto.getResearchAreasId().stream().toList())));
+                researchAreaService.getResearchAreasByIds(
+                    dto.getResearchAreasId().stream().toList())));
         }
 
         contribution.setDateFrom(dto.getDateFrom());
@@ -99,7 +99,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setIsInvitedContributor(dto.getIsInvitedContributor());
 
         contribution.setDisplayProject(
-                multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
+            multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
 
         return contribution;
     }

@@ -1,6 +1,12 @@
 package rs.teslaris.core.integration.project;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,15 +21,12 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
-import rs.teslaris.project.model.project.*;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.ProjectsRelationType;
 
 @SpringBootTest
 public class ProjectControllerTest extends BaseTest {
@@ -62,18 +65,18 @@ public class ProjectControllerTest extends BaseTest {
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
 
         dto.setPersons(List.of(buildTeamMember(
-                1, 1,
-                PersonProjectContributionType.TEAM_MEMBER,
-                PersonProjectInvestigationRole.RESEARCHER,
-                "Lead researcher",
-                "University of Novi Sad"
+            1, 1,
+            PersonProjectContributionType.TEAM_MEMBER,
+            PersonProjectInvestigationRole.RESEARCHER,
+            "Lead researcher",
+            "University of Novi Sad"
         )));
 
         dto.setRelations(List.of(buildRelation(
-                2,
-                ProjectsRelationType.PART_OF,
-                "This project is part of the parent project",
-                "Parent project"
+            2,
+            ProjectsRelationType.PART_OF,
+            "This project is part of the parent project",
+            "Parent project"
         )));
 
         return dto;
@@ -123,10 +126,10 @@ public class ProjectControllerTest extends BaseTest {
     }
 
     private static ProjectsRelationDTO buildRelation(
-            Integer targetProjectId,
-            ProjectsRelationType relationType,
-            String sourceDescription,
-            String targetDescription) {
+        Integer targetProjectId,
+        ProjectsRelationType relationType,
+        String sourceDescription,
+        String targetDescription) {
 
         var relation = new ProjectsRelationDTO();
         relation.setTargetProjectId(targetProjectId);

@@ -1,6 +1,29 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -38,16 +61,6 @@ import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {
@@ -680,7 +693,7 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setProject(new Project());
 
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
-                Set.of(new MultiLingualContent()));
+            Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(projectService.findOne(1)).thenReturn(new Project());
         when(involvementService.findOne(3)).thenReturn(new Employment());
@@ -718,7 +731,7 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setProject(new Project());
 
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
-                Set.of(new MultiLingualContent()));
+            Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(projectService.findOne(1)).thenReturn(new Project());
         when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
@@ -767,15 +780,15 @@ public class FundingServiceTest extends BaseTest {
         fundingIndex.setDatabaseId(fundingId);
 
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.of(existingFunding));
+            .thenReturn(Optional.of(existingFunding));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(projectService.findOne(1))
-                .thenReturn(new Project());
+            .thenReturn(new Project());
         when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
-                .thenReturn(Optional.of(fundingIndex));
+            .thenReturn(Optional.of(fundingIndex));
 
         // when
         fundingService.updateFunding(fundingId, fundingDTO);

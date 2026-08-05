@@ -3,6 +3,11 @@ package rs.teslaris.project.service.impl.project;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +16,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.*;
+import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -28,12 +37,6 @@ import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -186,7 +189,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
-                projectDTO.getOrganisationIds().stream().toList());
+            projectDTO.getOrganisationIds().stream().toList());
         project.setOrganisations(new HashSet<>(organisations));
 
         project.setUris(projectDTO.getUris());
@@ -231,8 +234,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
             project.setPersons(new HashSet<>());
         }
         projectDTO.getPersons().forEach(memberDto ->
-                project.getPersons().add(
-                        personProjectContributionService.createContribution(memberDto, project)));
+            project.getPersons().add(
+                personProjectContributionService.createContribution(memberDto, project)));
     }
 
     private void rebuildRelations(Project project, ProjectDTO projectDTO) {
@@ -245,11 +248,11 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
             relation.setDateFrom(relationDto.getDateFrom());
             relation.setDateTo(relationDto.getDateTo());
             relation.setSourceProjectDescription(
-                    multilingualContentService.getMultilingualContent(
-                            relationDto.getSourceProjectDescription()));
+                multilingualContentService.getMultilingualContent(
+                    relationDto.getSourceProjectDescription()));
             relation.setTargetProjectDescription(
-                    multilingualContentService.getMultilingualContent(
-                            relationDto.getTargetProjectDescription()));
+                multilingualContentService.getMultilingualContent(
+                    relationDto.getTargetProjectDescription()));
 
             relation.setSourceProject(project);
             if (Objects.nonNull(relationDto.getTargetProjectId())) {
