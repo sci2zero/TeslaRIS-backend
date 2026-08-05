@@ -392,13 +392,13 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("call_closes")
+                            r.field("date_from")
                                 .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("call_opens")
+                            r.field("date_to")
                                 .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
@@ -407,9 +407,11 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                 }));
             }
 
-            b.must(sb -> sb.term(
-                m -> m.field("program_id").value(programId)
-            ));
+            if (Objects.nonNull(programId)) {
+                b.must(sb -> sb.term(
+                        m -> m.field("program_id").value(programId)
+                ));
+            }
 
             return b;
         })))._toQuery();
