@@ -27,10 +27,7 @@ import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectCon
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,6 +70,8 @@ public class ProjectServiceTest {
         var tokens = List.of("test");
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
+        var onlyActive = false;
+        var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
@@ -80,7 +79,7 @@ public class ProjectServiceTest {
             .thenReturn(Page.empty());
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
 
         // then
         assertNotNull(result);
@@ -95,6 +94,8 @@ public class ProjectServiceTest {
         var tokens = List.of("test");
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
+        var onlyActive = false;
+        var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
         var projectIndex = new ProjectIndex();
@@ -110,7 +111,7 @@ public class ProjectServiceTest {
             .thenReturn(expectedPage);
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
 
         // then
         assertNotNull(result);

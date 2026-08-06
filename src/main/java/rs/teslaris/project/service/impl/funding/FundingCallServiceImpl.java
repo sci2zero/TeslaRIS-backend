@@ -140,6 +140,9 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         }
 
         delete(fundingCallId);
+
+        var index = fundingCallIndexRepository.findFundingCallIndexByDatabaseId(fundingCallId);
+        index.ifPresent(fundingCallIndexRepository::delete);
     }
 
     @Override

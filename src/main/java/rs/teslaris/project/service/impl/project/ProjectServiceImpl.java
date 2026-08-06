@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
@@ -22,6 +23,7 @@ import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
@@ -66,9 +68,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
-    public Page<ProjectIndex> searchProjects(List<String> tokens, LocalDate dateFrom,
-                                             LocalDate dateTo, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo),
+    public Page<ProjectIndex> searchProjects(List<String> tokens,
+                                             LocalDate dateFrom,
+                                             LocalDate dateTo,
+                                             boolean onlyActive,
+                                             List<ProjectStatus> allowedStatuses,
+                                             Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedStatuses),
             pageable, ProjectIndex.class, "project");
     }
 
@@ -113,6 +119,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Transactional
     public void deleteProject(Integer projectId) {
         delete(projectId);
+
+        var index = projectIndexRepository.findProjectIndexByDatabaseId(projectId);
+        index.ifPresent(projectIndexRepository::delete);
     }
 
     @Override
@@ -336,7 +345,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
-                                         LocalDate dateTo) {
+                                         LocalDate dateTo, boolean onlyActive, List<ProjectStatus> allowedStatuses) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
             : (int) Math.ceil(tokens.size() * 0.8);
@@ -448,6 +457,25 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                     }
                     return dateBool;
                 }));
+            }
+
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                    .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
+            }
+
+            if (Objects.nonNull(allowedStatuses) && !allowedStatuses.isEmpty()) {
+                b.filter(sb -> sb.terms(t -> t
+                    .field("status")
+                    .terms(tv -> tv.value(
+                        allowedStatuses.stream()
+                            .map(status -> FieldValue.of(status.name()))
+                            .toList()
+                    ))
+                ));
             }
 
             return b;

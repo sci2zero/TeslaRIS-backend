@@ -63,6 +63,6 @@ public class ProjectIndex {
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
 
-    @Field(type = FieldType.Text, name = "status")
+    @Field(type = FieldType.Keyword, name = "status")
     private ProjectStatus status;
 }
