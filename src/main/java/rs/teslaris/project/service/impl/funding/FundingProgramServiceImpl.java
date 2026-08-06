@@ -69,9 +69,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     @Override
     public Page<FundingProgramIndex> searchFundingPrograms(List<String> tokens, LocalDate dateFrom,
-                                                           LocalDate dateTo, Integer funderId,
+                                                           LocalDate dateTo, boolean onlyActive, Integer funderId,
                                                            Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, funderId),
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, funderId),
             pageable, FundingProgramIndex.class, "funding_program");
     }
 
@@ -306,6 +306,7 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
+                                         boolean onlyActive,
                                          Integer funderId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
@@ -421,6 +422,14 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
                     return dateBool;
                 }));
+            }
+
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                        .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                        .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
             }
 
             if (Objects.nonNull(funderId)) {
