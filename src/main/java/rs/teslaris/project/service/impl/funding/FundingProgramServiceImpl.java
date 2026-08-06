@@ -120,6 +120,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
         }
 
         delete(fundingProgramId);
+
+        var index = fundingProgramIndexRepository.findFundingProgramIndexByDatabaseId(fundingProgramId);
+        index.ifPresent(fundingProgramIndexRepository::delete);
     }
 
     @Override
