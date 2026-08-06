@@ -5,8 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
-import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
-import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -14,7 +12,6 @@ import rs.teslaris.migrator.client.fetcher.HttpPagedFetcher;
 import rs.teslaris.migrator.client.hydrator.HydratorCVClient;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
-import rs.teslaris.migrator.converter.hydrator.EmploymentMigrationDTO;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
@@ -73,7 +70,8 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.ORGANISATION_UNIT,
             MigrationEntityType.PERSON,
             MigrationEntityType.PERSON_EMPLOYMENT,
-            MigrationEntityType.DOCUMENT);
+            MigrationEntityType.DOCUMENT
+        );
     }
 
     @Bean

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
-import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
