@@ -20,6 +20,7 @@ import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
@@ -265,7 +266,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            project.getName(), true);
+                project.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -274,20 +275,60 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            project.getNameAbbreviation(), false);
+                project.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOther(
-            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
         index.setDateFrom(project.getDateFrom());
         index.setDateTo(project.getDateTo());
         index.setDatabaseId(project.getId());
+        index.setStatus(project.getStatus());
+
+        indexCoordinatorFields(project, index);
 
         return index;
+    }
+
+    private void indexCoordinatorFields(Project project, ProjectIndex index) {
+        var coordinator = project.getCoordinator()
+                .map(OrganisationUnitProjectContribution::getOrganisationUnit)
+                .orElse(null);
+
+        if (Objects.isNull(coordinator)) {
+            index.setCoordinatorNameSr("");
+            index.setCoordinatorNameSrSortable("");
+            index.setCoordinatorNameOther("");
+            index.setCoordinatorNameOtherSortable("");
+            index.setCoordinatorId(null);
+            return;
+        }
+
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                coordinator.getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+
+        index.setCoordinatorNameSr(
+                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setCoordinatorNameSrSortable(index.getCoordinatorNameSr());
+        index.setCoordinatorNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setCoordinatorNameOtherSortable(index.getCoordinatorNameOther());
+        index.setCoordinatorId(coordinator.getId());
     }
 
     // TODO: Add team member
@@ -314,6 +355,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                         .should(sb -> sb.matchPhrase(
                                             mq -> mq.field("name_other")
                                                 .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("coordinator_name_sr")
+                                                .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("coordinator_name_other")
+                                                .query(token.replace("\"", ""))))
                                     )
                                 );
                             } else if (token.endsWith("*")) {
@@ -327,6 +374,15 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
                                         mq -> mq.field("name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_other")
                                             .value(wildcard + "*")
                                             .caseInsensitive(true)))
                                 ));
@@ -349,6 +405,22 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                             .query(token)))
                                     .should(sb -> sb.match(
                                         mq -> mq.field("name_other")
+                                            .query(token)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .value(
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                    "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_other")
+                                            .value(wildcard)
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .query(token)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("coordinator_name_other")
                                             .query(token)))
                                 ));
                             }
