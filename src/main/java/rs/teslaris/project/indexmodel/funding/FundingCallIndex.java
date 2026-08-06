@@ -2,7 +2,6 @@ package rs.teslaris.project.indexmodel.funding;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +10,10 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.project.model.funding.FundingType;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -71,6 +74,6 @@ public class FundingCallIndex {
     @Field(type = FieldType.Text, name = "currency_symbol")
     private String currencySymbol;
 
-    @Field(type = FieldType.Text, name = "types")
-    private String types;
+    @Field(type = FieldType.Keyword, name = "types")
+    private List<FundingType> types;
 }

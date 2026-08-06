@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.funding;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
@@ -34,6 +35,7 @@ import rs.teslaris.project.indexrepository.funding.FundingCallIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
@@ -80,10 +82,13 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
     @Override
     public Page<FundingCallIndex> searchFundingCalls(List<String> tokens, LocalDate dateFrom,
-                                                     LocalDate dateTo, boolean onlyActive, Integer programId,
+                                                     LocalDate dateTo,
+                                                     boolean onlyActive,
+                                                     List<FundingType> allowedTypes,
+                                                     Integer programId,
                                                      Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, programId),
-            pageable, FundingCallIndex.class, "funding_call");
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedTypes,
+                programId), pageable, FundingCallIndex.class, "funding_call");
     }
 
     @Override
@@ -323,6 +328,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             index.setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
         }
 
+        index.setTypes(fundingCall.getTypes().stream().toList());
+
         return index;
     }
 
@@ -358,6 +365,7 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
                                          boolean onlyActive,
+                                         List<FundingType> allowedTypes,
                                          Integer programId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
@@ -486,6 +494,17 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             if (Objects.nonNull(programId)) {
                 b.must(sb -> sb.term(
                         m -> m.field("program_id").value(programId)
+                ));
+            }
+
+            if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
+                b.filter(sb -> sb.terms(t -> t
+                    .field("types")
+                    .terms(tv -> tv.value(
+                        allowedTypes.stream()
+                            .map(type -> FieldValue.of(type.name()))
+                            .toList()
+                    ))
                 ));
             }
 
