@@ -29,8 +29,10 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingCallConverter;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
+import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingCallIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
@@ -78,9 +80,9 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
     @Override
     public Page<FundingCallIndex> searchFundingCalls(List<String> tokens, LocalDate dateFrom,
-                                                     LocalDate dateTo, Integer programId,
+                                                     LocalDate dateTo, boolean onlyActive, Integer programId,
                                                      Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, programId),
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, programId),
             pageable, FundingCallIndex.class, "funding_call");
     }
 
@@ -303,10 +305,11 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
-        if (Objects.nonNull(fundingCall.getFundingProgram())) {
-            index.setProgramId(fundingCall.getFundingProgram().getId());
+        if (Objects.nonNull(fundingCall.getFunder())) {
+            indexFundingProgramFields(fundingCall, index);
         } else {
-            index.setProgramId(null);
+            index.setProgramNameSrSortable("");
+            index.setProgramNameOtherSortable("");
         }
 
         index.setFunderId(fundingCall.getFunder().getId());
@@ -315,12 +318,46 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         index.setDateFrom(fundingCall.getDateFrom());
         index.setDateTo(fundingCall.getDateTo());
 
+        if (Objects.nonNull(fundingCall.getAmount())) {
+            index.setAmount(fundingCall.getAmount().getAmount());
+            index.setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
+        }
+
         return index;
+    }
+
+    private void indexFundingProgramFields(FundingCall fundingCall,
+                                   FundingCallIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                fundingCall.getFunder().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                fundingCall.getFundingProgram().getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setProgramNameSr(
+                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setProgramNameSrSortable(index.getProgramNameSr());
+        index.setProgramNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setProgramNameOtherSortable(index.getProgramNameOther());
+
+        index.setProgramId(fundingCall.getFundingProgram().getId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
+                                         boolean onlyActive,
                                          Integer programId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
@@ -405,6 +442,14 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
                     return dateBool;
                 }));
+            }
+
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                        .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                        .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
             }
 
             if (Objects.nonNull(programId)) {

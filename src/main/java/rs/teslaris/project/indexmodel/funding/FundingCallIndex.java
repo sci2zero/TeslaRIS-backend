@@ -37,6 +37,18 @@ public class FundingCallIndex {
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
+    @Field(type = FieldType.Text, name = "program_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String programNameSr;
+
+    @Field(type = FieldType.Keyword, name = "program_name_sr_sortable", normalizer = "serbian_normalizer")
+    private String programNameSrSortable;
+
+    @Field(type = FieldType.Text, name = "program_name_other", analyzer = "english", searchAnalyzer = "english")
+    private String programNameOther;
+
+    @Field(type = FieldType.Keyword, name = "program_name_other_sortable", normalizer = "english_normalizer")
+    private String programNameOtherSortable;
+
     @Field(type = FieldType.Integer, name = "program_id", store = true)
     private Integer programId;
 
@@ -51,4 +63,14 @@ public class FundingCallIndex {
 
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
+
+    @Field(type = FieldType.Double, name = "amount")
+    private double amount;
+
+    // Maybe swap with the currencyId?
+    @Field(type = FieldType.Text, name = "currency_symbol")
+    private String currencySymbol;
+
+    @Field(type = FieldType.Text, name = "types")
+    private String types;
 }

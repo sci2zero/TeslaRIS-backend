@@ -43,9 +43,11 @@ public class FundingCallController {
                                                      @RequestParam(required = false)
                                                      LocalDate dateTo,
                                                      @RequestParam(required = false)
+                                                     boolean onlyActive,
+                                                     @RequestParam(required = false)
                                                      Integer programId,
                                                      Pageable pageable) {
-        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, programId,
+        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, onlyActive, programId,
             pageable);
     }
 

@@ -17,7 +17,7 @@ import rs.teslaris.project.model.funding.FundingCall;
 public interface FundingCallService extends JPAService<FundingCall> {
 
     Page<FundingCallIndex> searchFundingCalls(List<String> tokens, LocalDate dateFrom,
-                                              LocalDate dateTo, Integer fundingProgramId,
+                                              LocalDate dateTo, boolean onlyActive, Integer fundingProgramId,
                                               Pageable pageable);
 
     FundingCallDTO readFundingCall(Integer fundingCallId);
