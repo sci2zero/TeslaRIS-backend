@@ -258,6 +258,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
         if (Objects.nonNull(fundingProgram.getFunder())) {
             indexFunderFields(fundingProgram, index);
+        } else {
+            index.setFunderNameSrSortable("");
+            index.setFunderNameOtherSortable("");
         }
 
         index.setDatabaseId(fundingProgram.getId());
@@ -344,14 +347,14 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                             .value(wildcard + "*")
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
-                                            mq -> mq.field("funder_name_sr")
-                                                    .value(StringUtil.performSimpleLatinPreprocessing(
-                                                            wildcard) + "*")
-                                                    .caseInsensitive(true)))
+                                        mq -> mq.field("funder_name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
-                                            mq -> mq.field("funder_name_other")
-                                                    .value(wildcard + "*")
-                                                    .caseInsensitive(true)))
+                                        mq -> mq.field("funder_name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
                                 ));
                             } else {
                                 var wildcard = token + "*";
@@ -405,13 +408,13 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_closes")
+                            r.field("date_from")
                                 .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_opens")
+                            r.field("date_to")
                                 .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
