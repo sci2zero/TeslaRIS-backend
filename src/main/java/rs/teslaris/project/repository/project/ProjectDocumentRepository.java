@@ -12,4 +12,7 @@ public interface ProjectDocumentRepository extends JpaRepository<ProjectDocument
     @Query("SELECT pd.document.id FROM ProjectDocument pd WHERE pd.project.id = :projectId")
     List<Integer> findDocumentIdsByProjectId(Integer projectId);
 
+    @Query("SELECT pd FROM ProjectDocument pd WHERE pd.project.id = :projectId")
+    List<ProjectDocument> findAllByProjectId(Integer projectId);
+
 }
