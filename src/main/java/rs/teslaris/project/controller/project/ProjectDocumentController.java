@@ -1,10 +1,12 @@
 package rs.teslaris.project.controller.project;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +23,12 @@ import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 public class ProjectDocumentController {
 
     private final ProjectDocumentService projectDocumentService;
+
+    @GetMapping("/{projectId}/documents")
+    @PreAuthorize("hasAuthority('READ_PROJECTS')")
+    public List<ProjectDocumentDTO> readProjectDocuments(@PathVariable Integer projectId) {
+        return projectDocumentService.readProjectDocuments(projectId);
+    }
 
     @PostMapping("/add-document")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")

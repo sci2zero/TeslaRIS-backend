@@ -24,8 +24,13 @@ public class ProjectEventDTO {
     @NotNull(message = "You have to provide project id.")
     private Integer projectId;
 
-    @NotNull(message = "You have to provide event id.")
     private Integer eventId;
+
+    private String eventNameSr;
+
+    private String eventNameOther;
+
+    private String eventType;
 
     @Valid
     private List<FundingPartDTO> fundingParts = new ArrayList<>();

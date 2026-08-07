@@ -11,12 +11,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.*;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.ProjectConverter;
+import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
@@ -37,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +67,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final ProjectEventRepository projectEventRepository;
 
     private final PersonProjectContributionService personProjectContributionService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final PersonService personService;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -195,10 +205,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
             projectDTO.getResearchAreasId().stream().toList());
         project.setResearchAreas(new HashSet<>(researchAreas));
 
-        var organisations = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
-                projectDTO.getOrganisationIds().stream().toList());
-        project.setOrganisations(new HashSet<>(organisations));
-
         project.setUris(projectDTO.getUris());
         project.setDoi(projectDTO.getDoi());
         project.setRaid(projectDTO.getRaid());
@@ -223,6 +229,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         rebuildTeam(project, projectDTO);
+        rebuildConsortium(project, projectDTO);
         rebuildRelations(project, projectDTO);
     }
 
@@ -232,7 +239,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getNameAbbreviation().clear();
         project.getKeywords().clear();
         project.getResearchAreas().clear();
-        project.getPersons().clear();
         project.getRelatedProjects().clear();
     }
 
@@ -240,9 +246,74 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         if (Objects.isNull(project.getPersons())) {
             project.setPersons(new HashSet<>());
         }
-        projectDTO.getPersons().forEach(memberDto ->
-                project.getPersons().add(
+
+        var keptContributionIds = projectDTO.getPersons().stream()
+                .map(PersonProjectContributionDTO::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        project.getPersons().removeIf(
+                contribution -> !keptContributionIds.contains(contribution.getId()));
+
+        projectDTO.getPersons().stream()
+                .filter(memberDto -> Objects.isNull(memberDto.getId()))
+                .forEach(memberDto -> project.getPersons().add(
                         personProjectContributionService.createContribution(memberDto, project)));
+    }
+
+    private void rebuildConsortium(Project project, ProjectDTO projectDTO) {
+        if (Objects.isNull(project.getOrganisations())) {
+            project.setOrganisations(new HashSet<>());
+        }
+
+        var keptContributionIds = projectDTO.getConsortium().stream()
+                .map(OrganisationUnitProjectContributionDTO::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        project.getOrganisations().removeIf(
+                contribution -> !keptContributionIds.contains(contribution.getId()));
+
+        projectDTO.getConsortium().stream()
+                .filter(memberDto -> Objects.isNull(memberDto.getId()))
+                .forEach(memberDto -> project.getOrganisations().add(
+                        createConsortiumMember(memberDto, project)));
+    }
+
+    private OrganisationUnitProjectContribution createConsortiumMember(
+            OrganisationUnitProjectContributionDTO memberDto, Project project) {
+        var contribution = new OrganisationUnitProjectContribution();
+
+        if (Objects.nonNull(memberDto.getOrganisationUnitId())) {
+            contribution.setOrganisationUnit(
+                    organisationUnitService.findOne(memberDto.getOrganisationUnitId()));
+        } else {
+            contribution.setDisplayOrganisationUnit(
+                    multilingualContentService.getMultilingualContent(
+                            memberDto.getDisplayOrganisationUnit()));
+        }
+
+        contribution.setContributionType(memberDto.getContributionType());
+        contribution.setContributionDescription(
+                multilingualContentService.getMultilingualContent(
+                        memberDto.getContributionDescription()));
+        contribution.setOrderNumber(memberDto.getOrderNumber());
+        contribution.setApproveStatus(ApproveStatus.APPROVED);
+        contribution.setDateFrom(memberDto.getDateFrom());
+        contribution.setDateTo(memberDto.getDateTo());
+        contribution.setUris(memberDto.getUris());
+        contribution.setMainContributor(
+                Objects.requireNonNullElse(memberDto.getIsMainContributor(), false));
+        contribution.setFavorite(Objects.requireNonNullElse(memberDto.getFavorite(), false));
+
+        if (Objects.nonNull(memberDto.getContactPersonId())) {
+            contribution.setContactPerson(
+                    personService.findOne(memberDto.getContactPersonId()));
+        }
+
+        contribution.setDisplayProject(
+                multilingualContentService.getMultilingualContent(memberDto.getDisplayProject()));
+        contribution.setProject(project);
+
+        return contribution;
     }
 
     private void rebuildRelations(Project project, ProjectDTO projectDTO) {

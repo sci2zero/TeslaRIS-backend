@@ -1,16 +1,23 @@
 package rs.teslaris.project.service.impl.project;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
+import rs.teslaris.project.converter.project.ProjectEventConverter;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.common.MonetaryAmount;
@@ -32,10 +39,53 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
     private final CurrencyService currencyService;
     private final ProjectService projectService;
     private final EventService eventService;
+    private final EventIndexRepository eventIndexRepository;
 
     @Override
     protected JpaRepository<ProjectEvent, Integer> getEntityRepository() {
         return projectEventRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectEventDTO> readProjectEvents(Integer projectId) {
+        var projectEvents = projectEventRepository.findAllByProjectId(projectId).stream()
+            .map(ProjectEventConverter::toDTO)
+            .toList();
+
+        setDisplayFieldsFromIndex(projectEvents);
+
+        return projectEvents;
+    }
+
+    private void setDisplayFieldsFromIndex(List<ProjectEventDTO> projectEvents) {
+        var eventIds = projectEvents.stream()
+            .map(ProjectEventDTO::getEventId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (eventIds.isEmpty()) {
+            return;
+        }
+
+        var indexes = eventIndexRepository
+            .findByDatabaseIdIn(eventIds, PageRequest.of(0, eventIds.size()))
+            .getContent().stream()
+            .collect(Collectors.toMap(EventIndex::getDatabaseId, index -> index,
+                (first, second) -> first));
+
+        projectEvents.forEach(projectEvent -> {
+            var index = indexes.get(projectEvent.getEventId());
+            if (Objects.nonNull(index)) {
+                projectEvent.setEventNameSr(index.getNameSr());
+                projectEvent.setEventNameOther(index.getNameOther());
+
+                if (Objects.nonNull(index.getEventType())) {
+                    projectEvent.setEventType(index.getEventType().name());
+                }
+            }
+        });
     }
 
     @Override
@@ -47,9 +97,11 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
 
         var savedProjectEvent = save(newProjectEvent);
 
-        indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
-            savedProjectEvent.getEvent().getId(), "project_id",
-            savedProjectEvent.getProject().getId());
+        if (Objects.nonNull(savedProjectEvent.getEvent())) {
+            indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
+                savedProjectEvent.getEvent().getId(), "project_id",
+                savedProjectEvent.getProject().getId());
+        }
 
         return savedProjectEvent;
     }
@@ -58,15 +110,23 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
     public void deleteProjectEvent(Integer projectEventId) {
         var projectEvent = findOne(projectEventId);
 
-        var eventId = projectEvent.getEvent().getId();
+        var event = projectEvent.getEvent();
 
         delete(projectEventId);
 
-        indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
-            eventId, "project_id", null);
+        if (Objects.nonNull(event)) {
+            indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
+                event.getId(), "project_id", null);
+        }
     }
 
     private void setCommonFields(ProjectEvent projectEvent, ProjectEventDTO dto) {
+        if (Objects.isNull(dto.getEventId()) &&
+            (Objects.isNull(dto.getTextualDescription()) ||
+                dto.getTextualDescription().isEmpty())) {
+            throw new MissingDataException(
+                "Either an event or a textual description has to be provided.");
+        }
 
         buildFundingParts(projectEvent, dto);
         projectEvent.setTextualDescription(
