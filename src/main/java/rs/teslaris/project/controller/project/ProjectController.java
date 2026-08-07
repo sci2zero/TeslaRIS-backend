@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @RestController
@@ -43,8 +44,12 @@ public class ProjectController {
                                              LocalDate dateFrom,
                                              @RequestParam(required = false)
                                              LocalDate dateTo,
+                                             @RequestParam(required = false)
+                                             boolean onlyActive,
+                                             @RequestParam(required = false)
+                                             List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses, pageable);
     }
 
     @GetMapping("/{projectId}")

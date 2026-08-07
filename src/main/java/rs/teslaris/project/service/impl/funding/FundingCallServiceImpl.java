@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.funding;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
@@ -29,9 +30,12 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingCallConverter;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
+import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingCallIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
@@ -78,10 +82,13 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
     @Override
     public Page<FundingCallIndex> searchFundingCalls(List<String> tokens, LocalDate dateFrom,
-                                                     LocalDate dateTo, Integer programId,
+                                                     LocalDate dateTo,
+                                                     boolean onlyActive,
+                                                     List<FundingType> allowedTypes,
+                                                     Integer programId,
                                                      Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, programId),
-            pageable, FundingCallIndex.class, "funding_call");
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedTypes,
+                programId), pageable, FundingCallIndex.class, "funding_call");
     }
 
     @Override
@@ -133,6 +140,9 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         }
 
         delete(fundingCallId);
+
+        var index = fundingCallIndexRepository.findFundingCallIndexByDatabaseId(fundingCallId);
+        index.ifPresent(fundingCallIndexRepository::delete);
     }
 
     @Override
@@ -304,9 +314,10 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         index.setNameOtherSortable(index.getNameOther());
 
         if (Objects.nonNull(fundingCall.getFundingProgram())) {
-            index.setProgramId(fundingCall.getFundingProgram().getId());
+            indexFundingProgramFields(fundingCall, index);
         } else {
-            index.setProgramId(null);
+            index.setProgramNameSrSortable("");
+            index.setProgramNameOtherSortable("");
         }
 
         index.setFunderId(fundingCall.getFunder().getId());
@@ -315,12 +326,49 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         index.setDateFrom(fundingCall.getDateFrom());
         index.setDateTo(fundingCall.getDateTo());
 
+        if (Objects.nonNull(fundingCall.getAmount())) {
+            index.setAmount(fundingCall.getAmount().getAmount());
+            index.setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
+        }
+
+        index.setTypes(fundingCall.getTypes().stream().toList());
+
         return index;
+    }
+
+    private void indexFundingProgramFields(FundingCall fundingCall,
+                                   FundingCallIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                fundingCall.getFundingProgram().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                fundingCall.getFundingProgram().getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setProgramNameSr(
+                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setProgramNameSrSortable(index.getProgramNameSr());
+        index.setProgramNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setProgramNameOtherSortable(index.getProgramNameOther());
+
+        index.setProgramId(fundingCall.getFundingProgram().getId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
+                                         boolean onlyActive,
+                                         List<FundingType> allowedTypes,
                                          Integer programId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
@@ -340,6 +388,12 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                         .should(sb -> sb.matchPhrase(
                                             mq -> mq.field("name_other")
                                                 .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("program_name_sr")
+                                                .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("program_name_other")
+                                                .query(token.replace("\"", ""))))
                                     )
                                 );
                             } else if (token.endsWith("*")) {
@@ -353,6 +407,15 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
                                         mq -> mq.field("name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("program_name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("program_name_other")
                                             .value(wildcard + "*")
                                             .caseInsensitive(true)))
                                 ));
@@ -376,6 +439,22 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                     .should(sb -> sb.match(
                                         mq -> mq.field("name_other")
                                             .query(token)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("program_name_sr")
+                                            .value(
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                    "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("program_name_other")
+                                            .value(wildcard)
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("program_name_sr")
+                                            .query(token)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("program_name_other")
+                                            .query(token)))
                                 ));
                             }
                         });
@@ -392,13 +471,13 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("call_closes")
+                            r.field("date_from")
                                 .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("call_opens")
+                            r.field("date_to")
                                 .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
@@ -407,9 +486,30 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                 }));
             }
 
-            b.must(sb -> sb.term(
-                m -> m.field("program_id").value(programId)
-            ));
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                        .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                        .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
+            }
+
+            if (Objects.nonNull(programId)) {
+                b.must(sb -> sb.term(
+                        m -> m.field("program_id").value(programId)
+                ));
+            }
+
+            if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
+                b.filter(sb -> sb.terms(t -> t
+                    .field("types")
+                    .terms(tv -> tv.value(
+                        allowedTypes.stream()
+                            .map(type -> FieldValue.of(type.name()))
+                            .toList()
+                    ))
+                ));
+            }
 
             return b;
         })))._toQuery();

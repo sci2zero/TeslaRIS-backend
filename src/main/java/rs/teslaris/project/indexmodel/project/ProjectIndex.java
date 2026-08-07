@@ -2,7 +2,6 @@ package rs.teslaris.project.indexmodel.project;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +10,9 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.project.model.project.ProjectStatus;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -37,6 +39,21 @@ public class ProjectIndex {
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
+    @Field(type = FieldType.Text, name = "coordinator_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String coordinatorNameSr;
+
+    @Field(type = FieldType.Keyword, name = "coordinator_name_sr_sortable", normalizer = "serbian_normalizer")
+    private String coordinatorNameSrSortable;
+
+    @Field(type = FieldType.Text, name = "coordinator_name_other", analyzer = "english", searchAnalyzer = "english")
+    private String coordinatorNameOther;
+
+    @Field(type = FieldType.Keyword, name = "coordinator_name_other_sortable", normalizer = "english_normalizer")
+    private String coordinatorNameOtherSortable;
+
+    @Field(type = FieldType.Integer, name = "coordinatorId", store = true)
+    private Integer coordinatorId;
+
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
@@ -45,4 +62,7 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
+
+    @Field(type = FieldType.Keyword, name = "status")
+    private ProjectStatus status;
 }

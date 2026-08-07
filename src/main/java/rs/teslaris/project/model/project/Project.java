@@ -10,6 +10,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -123,4 +124,11 @@ public class Project extends BaseEntity {
 
     @Embedded
     private MonetaryAmount costs;
+
+    public Optional<OrganisationUnitProjectContribution> getCoordinator() {
+        return organisations.stream()
+                .filter(o ->
+                        o.getContributionType() == OrganisationUnitProjectContributionType.COORDINATOR)
+                .findFirst();
+    }
 }

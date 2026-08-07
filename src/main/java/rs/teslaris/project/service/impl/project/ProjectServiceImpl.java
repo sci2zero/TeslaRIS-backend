@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
@@ -27,6 +28,7 @@ import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
@@ -76,9 +78,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
-    public Page<ProjectIndex> searchProjects(List<String> tokens, LocalDate dateFrom,
-                                             LocalDate dateTo, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo),
+    public Page<ProjectIndex> searchProjects(List<String> tokens,
+                                             LocalDate dateFrom,
+                                             LocalDate dateTo,
+                                             boolean onlyActive,
+                                             List<ProjectStatus> allowedStatuses,
+                                             Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedStatuses),
             pageable, ProjectIndex.class, "project");
     }
 
@@ -123,6 +129,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Transactional
     public void deleteProject(Integer projectId) {
         delete(projectId);
+
+        var index = projectIndexRepository.findProjectIndexByDatabaseId(projectId);
+        index.ifPresent(projectIndexRepository::delete);
     }
 
     @Override
@@ -337,7 +346,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            project.getName(), true);
+                project.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -346,20 +355,60 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            project.getNameAbbreviation(), false);
+                project.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOther(
-            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
         index.setDateFrom(project.getDateFrom());
         index.setDateTo(project.getDateTo());
         index.setDatabaseId(project.getId());
+        index.setStatus(project.getStatus());
+
+        indexCoordinatorFields(project, index);
 
         return index;
+    }
+
+    private void indexCoordinatorFields(Project project, ProjectIndex index) {
+        var coordinator = project.getCoordinator()
+                .map(OrganisationUnitProjectContribution::getOrganisationUnit)
+                .orElse(null);
+
+        if (Objects.isNull(coordinator)) {
+            index.setCoordinatorNameSr("");
+            index.setCoordinatorNameSrSortable("");
+            index.setCoordinatorNameOther("");
+            index.setCoordinatorNameOtherSortable("");
+            index.setCoordinatorId(null);
+            return;
+        }
+
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                coordinator.getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+
+        index.setCoordinatorNameSr(
+                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setCoordinatorNameSrSortable(index.getCoordinatorNameSr());
+        index.setCoordinatorNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setCoordinatorNameOtherSortable(index.getCoordinatorNameOther());
+        index.setCoordinatorId(coordinator.getId());
     }
 
     // TODO: Add team member
@@ -367,7 +416,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
-                                         LocalDate dateTo) {
+                                         LocalDate dateTo, boolean onlyActive, List<ProjectStatus> allowedStatuses) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
             : (int) Math.ceil(tokens.size() * 0.8);
@@ -386,6 +435,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                         .should(sb -> sb.matchPhrase(
                                             mq -> mq.field("name_other")
                                                 .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("coordinator_name_sr")
+                                                .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("coordinator_name_other")
+                                                .query(token.replace("\"", ""))))
                                     )
                                 );
                             } else if (token.endsWith("*")) {
@@ -399,6 +454,15 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
                                         mq -> mq.field("name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_other")
                                             .value(wildcard + "*")
                                             .caseInsensitive(true)))
                                 ));
@@ -421,6 +485,22 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                             .query(token)))
                                     .should(sb -> sb.match(
                                         mq -> mq.field("name_other")
+                                            .query(token)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .value(
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                    "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("coordinator_name_other")
+                                            .value(wildcard)
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("coordinator_name_sr")
+                                            .query(token)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("coordinator_name_other")
                                             .query(token)))
                                 ));
                             }
@@ -448,6 +528,25 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                     }
                     return dateBool;
                 }));
+            }
+
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                    .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
+            }
+
+            if (Objects.nonNull(allowedStatuses) && !allowedStatuses.isEmpty()) {
+                b.filter(sb -> sb.terms(t -> t
+                    .field("status")
+                    .terms(tv -> tv.value(
+                        allowedStatuses.stream()
+                            .map(status -> FieldValue.of(status.name()))
+                            .toList()
+                    ))
+                ));
             }
 
             return b;
