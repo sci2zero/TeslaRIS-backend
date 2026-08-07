@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexrepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,8 @@ public interface EventIndexRepository extends ElasticsearchRepository<EventIndex
     Optional<EventIndex> findByDatabaseId(Integer databaseId);
 
     Optional<EventIndex> findByEventTypeAndDatabaseId(EventType eventType, Integer databaseId);
+
+    Page<EventIndex> findByDatabaseIdIn(List<Integer> databaseIds, Pageable pageable);
 
     Long countByRelatedInstitutionIds(Integer institutionId);
 
