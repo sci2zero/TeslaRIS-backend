@@ -2,7 +2,6 @@ package rs.teslaris.project.indexmodel.funding;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +10,10 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.project.model.funding.FundingType;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,6 +40,18 @@ public class FundingCallIndex {
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
+    @Field(type = FieldType.Text, name = "program_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String programNameSr;
+
+    @Field(type = FieldType.Keyword, name = "program_name_sr_sortable", normalizer = "serbian_normalizer")
+    private String programNameSrSortable;
+
+    @Field(type = FieldType.Text, name = "program_name_other", analyzer = "english", searchAnalyzer = "english")
+    private String programNameOther;
+
+    @Field(type = FieldType.Keyword, name = "program_name_other_sortable", normalizer = "english_normalizer")
+    private String programNameOtherSortable;
+
     @Field(type = FieldType.Integer, name = "program_id", store = true)
     private Integer programId;
 
@@ -51,4 +66,14 @@ public class FundingCallIndex {
 
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
+
+    @Field(type = FieldType.Double, name = "amount")
+    private double amount;
+
+    // Maybe swap with the currencyId?
+    @Field(type = FieldType.Text, name = "currency_symbol")
+    private String currencySymbol;
+
+    @Field(type = FieldType.Keyword, name = "types")
+    private List<FundingType> types;
 }

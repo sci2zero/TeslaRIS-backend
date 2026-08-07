@@ -48,9 +48,11 @@ public class FundingProgramController {
                                                            @RequestParam(required = false)
                                                            LocalDate dateTo,
                                                            @RequestParam(required = false)
+                                                           boolean onlyActive,
+                                                           @RequestParam(required = false)
                                                            Integer funderId,
                                                            Pageable pageable) {
-        return fundingProgramService.searchFundingPrograms(tokens, dateFrom, dateTo, funderId,
+        return fundingProgramService.searchFundingPrograms(tokens, dateFrom, dateTo, onlyActive, funderId,
             pageable);
     }
 
