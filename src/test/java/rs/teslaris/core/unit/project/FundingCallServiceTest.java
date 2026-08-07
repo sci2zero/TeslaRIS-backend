@@ -73,6 +73,9 @@ public class FundingCallServiceTest {
     @Mock
     private OrganisationUnitService organisationUnitService;
 
+    @Mock
+    private PersonFundingCallContributionService personFundingCallContributionService;
+
     @InjectMocks
     private FundingCallServiceImpl fundingCallService;
 
@@ -429,7 +432,7 @@ public class FundingCallServiceTest {
     }
 
     @Test
-    public void shouldDeleteFundingCallWhenNoProposalsAndFudningExist() {
+    public void shouldDeleteFundingCallWhenNoProposalsAndFundingExist() {
         // given
         var fundingCallId = 1;
 
