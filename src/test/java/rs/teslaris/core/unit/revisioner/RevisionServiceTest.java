@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -28,6 +29,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
@@ -305,7 +307,8 @@ public class RevisionServiceTest {
     @Test
     public void shouldRestoreRevisionToRequestedVersion() {
         // given
-        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
+        var restoredContent = "{\"id\":1,\"title\":\"Old title\"}";
+        var revision = revisionWithContent(restoredContent, 1, 2);
         var restorer = stubRestorerFor(revision);
 
         when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
@@ -324,15 +327,47 @@ public class RevisionServiceTest {
             var savedRevision = captor.getValue();
             assertEquals(ENTITY_TYPE, savedRevision.getEntityType());
             assertEquals(1, savedRevision.getEntityId());
-            assertEquals(revision.getContentHash(), savedRevision.getContentHash());
-            assertTrue(CompressionUtil.decompress(savedRevision.getCompressedContent())
-                .contains("Old title"));
+
+            // The restorer cannot read the entity back, so the requested state is recorded and the
+            // hash is computed from it rather than copied from the restored revision.
+            var savedContent = CompressionUtil.decompress(savedRevision.getCompressedContent());
+            assertEquals(restoredContent, savedContent);
+            assertEquals(DigestUtils.sha256Hex(savedContent), savedRevision.getContentHash());
+            assertTrue(savedRevision.getRestorationWarnings().isEmpty());
 
             var eventCaptor = ArgumentCaptor.forClass(DataQualityAssessmentEvent.class);
             verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
 
             assertEquals(savedRevision, eventCaptor.getValue().entityRevision());
             assertTrue(eventCaptor.getValue().json().contains("Old title"));
+        }
+    }
+
+    @Test
+    public void shouldRecordStateEntityActuallyReachedWhenRestorerCanReadItBack() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
+        var restorer = stubRestorerFor(revision);
+
+        // Restoring dropped something, so the live entity differs from what was asked for.
+        doReturn(new DummyDTO(1, "Old title (degraded)")).when(restorer).readCurrentState(1);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 1, 4)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.restoreRevision(ENTITY_TYPE, 1, 1, 2);
+
+            // then
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+            var savedContent = CompressionUtil.decompress(savedRevision.getCompressedContent());
+
+            assertTrue(savedContent.contains("Old title (degraded)"));
+            assertEquals(DigestUtils.sha256Hex(savedContent), savedRevision.getContentHash());
         }
     }
 
@@ -421,12 +456,43 @@ public class RevisionServiceTest {
                 ENTITY_TYPE, 1)).thenReturn(
                 Optional.of(revisionWithContent("{}", 1, 0, storedHash)));
 
-            // when (the same state is reported again, as a restore's update event would)
+            // when (the same state is reported again)
             revisionService.createRevisionIfChanged(event);
 
             // then (no second revision is created)
             verify(revisionRepository).save(any());
         }
+    }
+
+    @Test
+    public void shouldNotCreateRevisionForUpdateTriggeredByRestoration() {
+        // given (the edit a restorer performs - the restore records its own revision)
+        var event = new RevisionCreateEvent(ENTITY_TYPE, 1, new DummyDTO(1, "Old title"),
+            new DummyDTO(1, "New title"), RevisionType.UPDATE, true);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.createRevisionIfChanged(event);
+
+            // then
+            verify(revisionRepository, never()).save(any());
+            verify(applicationEventPublisher, never()).publishEvent(any());
+        }
+    }
+
+    @Test
+    public void shouldFlagEventsCreatedWhileRestorationIsInProgress() {
+        // given
+        var eventsDuringRestoration = RestorationContext.collectDuring(() -> {
+            assertTrue(new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+                RevisionType.UPDATE).duringRestoration());
+            return null;
+        });
+
+        // then (context is closed again, so ordinary edits are unaffected)
+        assertTrue(eventsDuringRestoration.isEmpty());
+        assertFalse(new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+            RevisionType.UPDATE).duringRestoration());
     }
 
     @Test

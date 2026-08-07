@@ -29,4 +29,9 @@ public class IntangibleProductRevisionRestorer
     public void restore(Integer entityId, IntangibleProductDTO dto) {
         intangibleProductService.editIntangibleProduct(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return intangibleProductService.readIntangibleProductById(entityId);
+    }
 }

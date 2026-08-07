@@ -61,6 +61,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintExce
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
@@ -314,12 +315,30 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         return personName;
     }
 
+    private List<String> contributorNameParameters(PersonContributionDTO contributionDTO) {
+        if (Objects.isNull(contributionDTO.getPersonName())) {
+            return List.of(String.valueOf(contributionDTO.getPersonId()));
+        }
+
+        return List.of(
+            (Objects.toString(contributionDTO.getPersonName().getFirstname(), "") + " " +
+                Objects.toString(contributionDTO.getPersonName().getLastname(), "")).trim(),
+            String.valueOf(contributionDTO.getPersonId()));
+    }
+
     protected void setPersonContributionCommonFields(PersonContribution contribution,
                                                      PersonContributionDTO contributionDTO) {
         var affiliationStatement = new AffiliationStatement();
 
-        if (Objects.nonNull(contributionDTO.getPersonId())) {
-            var contributor = personService.findOne(contributionDTO.getPersonId());
+        var contributor = RestorationSupport.resolveDegradable(
+            contributionDTO.getPersonId(),
+            personService,
+            "contributions.personId",
+            "restoreContributorUnmanagedMessage",
+            contributorNameParameters(contributionDTO)
+        );
+
+        if (Objects.nonNull(contributor)) {
             contribution.setPerson(contributor);
             setAffiliationStatement(contribution, contributionDTO, contributor);
         } else {
@@ -331,12 +350,17 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionDTO.getContributionDescription()));
 
         contribution.setInstitutions(new HashSet<>());
-        if (Objects.nonNull(contributionDTO.getPersonId()) &&
+        if (Objects.nonNull(contributor) &&
             Objects.nonNull(contributionDTO.getInstitutionIds()) &&
             !contributionDTO.getInstitutionIds().isEmpty()) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
-                var organisationUnit = organisationUnitService.findOne(institutionId);
-                contribution.getInstitutions().add(organisationUnit);
+                var organisationUnit = RestorationSupport.resolveOptional(
+                    institutionId, organisationUnitService,
+                    "contributions.institutionIds", "restoreContributionInstitutionMissingMessage");
+
+                if (Objects.nonNull(organisationUnit)) {
+                    contribution.getInstitutions().add(organisationUnit);
+                }
             });
         } else {
             contribution.getAffiliationStatement().setDisplayAffiliationStatement(

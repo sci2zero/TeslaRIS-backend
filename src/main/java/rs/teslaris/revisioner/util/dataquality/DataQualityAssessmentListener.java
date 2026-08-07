@@ -28,6 +28,7 @@ public class DataQualityAssessmentListener {
 
     private final DataQualityAssessmentRepository repository;
 
+
     public static String resolveTargetType(String entityType) {
         try {
             return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(

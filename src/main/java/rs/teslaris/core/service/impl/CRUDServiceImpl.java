@@ -35,6 +35,11 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
     }
 
     @Override
+    public boolean exists(Integer id) {
+        return getEntityRepository().existsById(id);
+    }
+
+    @Override
     public T findOne(Integer id) {
         return getEntityRepository().findById(id)
             .orElseThrow(() -> new NotFoundException(

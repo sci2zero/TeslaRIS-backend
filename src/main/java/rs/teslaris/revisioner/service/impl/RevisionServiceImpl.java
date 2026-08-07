@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +26,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.core.util.restoration.DegradedReference;
+import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.revisioner.converter.RevisionConverter;
 import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
@@ -62,6 +65,11 @@ public class RevisionServiceImpl implements RevisionService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void createRevisionIfChanged(RevisionCreateEvent event) {
+        if (event.duringRestoration()) {
+            // The restore records its own revision with the state the entity actually reached.
+            return;
+        }
+
         try {
             var newJson = canonicalize(
                 objectMapper.writeValueAsString(event.newObject()),
@@ -90,8 +98,7 @@ public class RevisionServiceImpl implements RevisionService {
 
             if (latestRevision.isPresent() &&
                 latestRevision.get().getContentHash().equals(newHash)) {
-                // Restores record their own revision up front (see restoreRevision), so the update
-                // event they trigger would otherwise duplicate it.
+                // Nothing changed relative to what is already the newest recorded state.
                 return;
             }
 
@@ -234,11 +241,17 @@ public class RevisionServiceImpl implements RevisionService {
 
             var dto = objectMapper.treeToValue(tree, restorer.dtoClass());
 
-            restoreUnchecked(restorer, entityId, dto);
+            // References deleted since this state was captured are dropped or degraded rather than
+            // failing the restore. Whatever had to give way is collected here and stored with the
+            // revision that records the restore.
+            var degradedReferences = RestorationContext.collectDuring(() -> {
+                restoreUnchecked(restorer, entityId, dto);
+                return null;
+            });
 
-            recordRestoredRevision(entityType, entityId, revision, json);
+            recordRestoredRevision(entityType, entityId, revision, json, restorer,
+                degradedReferences);
         } catch (Exception e) {
-
             log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
                 majorVersion, minorVersion, entityType, entityId, e);
 
@@ -252,13 +265,19 @@ public class RevisionServiceImpl implements RevisionService {
     }
 
     private void recordRestoredRevision(String entityType, Integer entityId,
-                                        EntityRevision restoredRevision, String restoredJson) {
+                                        EntityRevision restoredRevision, String restoredJson,
+                                        RevisionRestorer<?> restorer,
+                                        List<DegradedReference> degradedReferences)
+        throws JsonProcessingException {
+
         var latestRevision = revisionRepository
             .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .orElse(restoredRevision);
 
         var sameMajorLine = Objects.equals(
             restoredRevision.getMajorVersion(), latestRevision.getMajorVersion());
+
+        var achievedJson = readAchievedState(entityType, entityId, restorer, restoredJson);
 
         var revision =
             EntityRevision.builder()
@@ -267,8 +286,9 @@ public class RevisionServiceImpl implements RevisionService {
                 .entityType(entityType)
                 .entityId(entityId)
                 .revisionTimestamp(Instant.now())
-                .contentHash(restoredRevision.getContentHash())
-                .compressedContent(restoredRevision.getCompressedContent())
+                .contentHash(sha256(achievedJson))
+                .compressedContent(CompressionUtil.compress(achievedJson))
+                .restorationWarnings(new ArrayList<>(degradedReferences))
                 .build();
 
         revision.setAdminNote(
@@ -279,11 +299,41 @@ public class RevisionServiceImpl implements RevisionService {
 
         revisionRepository.save(revision);
 
+        if (!degradedReferences.isEmpty()) {
+            log.warn("Restore of entity '{}' (ID={}) to revision {}.{} degraded {} reference(s).",
+                entityType, entityId, restoredRevision.getMajorVersion(),
+                restoredRevision.getMinorVersion(), degradedReferences.size());
+        }
+
         applicationEventPublisher.publishEvent(
-            new DataQualityAssessmentEvent(revision, restoredJson));
+            new DataQualityAssessmentEvent(revision, achievedJson));
 
         log.info("Recorded restored state of entity '{}' (ID={}) as revision {}.{}.",
             entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion());
+    }
+
+    /**
+     * The state the entity actually reached, which is not necessarily the state that was asked for.
+     */
+    private String readAchievedState(String entityType, Integer entityId,
+                                     RevisionRestorer<?> restorer, String restoredJson)
+        throws JsonProcessingException {
+
+        Object currentState;
+
+        try {
+            currentState = restorer.readCurrentState(entityId);
+        } catch (Exception e) {
+            log.warn("Unable to read back restored entity '{}' (ID={}), recording the requested " +
+                "state instead. Reason: {}", entityType, entityId, e.getMessage());
+            return restoredJson;
+        }
+
+        if (Objects.isNull(currentState)) {
+            return restoredJson;
+        }
+
+        return canonicalize(objectMapper.writeValueAsString(currentState), entityType);
     }
 
     private String canonicalize(String json, String entityType)

@@ -17,7 +17,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.util.restoration.DegradedReference;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 
 @Entity
@@ -72,6 +75,16 @@ public class EntityRevision extends BaseEntity {
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "compressed_content", nullable = false)
     private byte[] compressedContent;
+
+    /**
+     * References that could not be satisfied while restoring an earlier state, e.g. a contributor
+     * whose person record has since been deleted. Empty for every revision that is not the result of
+     * a restore.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "restoration_warnings", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<DegradedReference> restorationWarnings = new ArrayList<>();
 
 
     public void addAssessment(DataQualityAssessment assessment) {

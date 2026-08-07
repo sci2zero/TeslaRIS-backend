@@ -1214,6 +1214,10 @@ public class DataQualityCalculator {
     private void assessEntity(PersonContributionDTO dto, DataQualityAssessment assessment,
                               EventType eventType, OtherEventType otherEventType,
                               LocalDate documentDate) {
+        if (Objects.isNull(dto.getPersonId())) {
+            return;
+        }
+
         var person = personRepository.findById(dto.getPersonId());
         if (person.isEmpty()) {
             return;

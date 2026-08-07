@@ -1,7 +1,9 @@
 package rs.teslaris.revisioner.converter;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import rs.teslaris.core.util.restoration.DegradedReference;
 import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
@@ -22,7 +24,9 @@ public class RevisionConverter {
             revision.getMinorVersion(),
             revision.getAdminNote(),
             revision.getUpdatedBy(),
-            assessments
+            assessments,
+            Objects.requireNonNullElseGet(revision.getRestorationWarnings(),
+                List::<DegradedReference>of)
         );
     }
 }

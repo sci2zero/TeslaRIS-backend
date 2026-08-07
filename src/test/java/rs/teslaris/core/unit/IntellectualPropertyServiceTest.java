@@ -54,6 +54,7 @@ import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntellectualPropertyServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntellectualPropertyJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -100,6 +101,9 @@ public class IntellectualPropertyServiceTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private CountryService countryService;
 
     @InjectMocks
     private IntellectualPropertyServiceImpl intellectualPropertyService;

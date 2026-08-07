@@ -101,6 +101,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -1084,11 +1085,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setEdition(
             multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
-        if (Objects.nonNull(documentDTO.getCountryId())) {
-            document.setCountry(countryService.findOne(documentDTO.getCountryId()));
-        } else {
-            document.setCountry(null);
-        }
+        document.setCountry(RestorationSupport.resolveOptional(
+            documentDTO.getCountryId(), countryService, "countryId",
+            "restoreCountryMissingMessage"));
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
@@ -1120,9 +1119,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
 
-        if (Objects.nonNull(documentDTO.getEventId())) {
-            var event = eventService.findOne(documentDTO.getEventId());
+        var event = RestorationSupport.resolveOptional(
+            documentDTO.getEventId(), eventService, "eventId",
+            "restoreEventMissingMessage");
 
+        if (Objects.nonNull(event)) {
             if (event.getSerialEvent()) {
                 throw new ProceedingsReferenceConstraintViolationException(
                     "Proceedings cannot be bound to serial event.");

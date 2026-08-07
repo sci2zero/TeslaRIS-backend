@@ -17,6 +17,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -39,6 +40,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -196,13 +198,22 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
         if (Objects.nonNull(intangibleProductDTO.getAuthorReprint()) &&
             intangibleProductDTO.getAuthorReprint()) {
             intangibleProduct.setAuthorReprint(true);
-        } else if (Objects.nonNull(intangibleProductDTO.getPublisherId())) {
-            intangibleProduct.setPublisher(
-                publisherService.findOne(intangibleProductDTO.getPublisherId()));
+        } else {
+            // Neither the publisher nor the research areas are required for the product to exist,
+            // so a restore of a state that referenced deleted ones keeps everything else.
+            intangibleProduct.setPublisher(RestorationSupport.resolveOptional(
+                intangibleProductDTO.getPublisherId(), publisherService, "publisherId",
+                "restorePublisherMissingMessage"));
         }
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            intangibleProductDTO.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = intangibleProductDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(
+            requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(),
+            "researchAreasId", "restoreResearchAreaMissingMessage");
+
         intangibleProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 

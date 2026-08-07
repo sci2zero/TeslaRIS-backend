@@ -8,6 +8,8 @@ public interface CRUDService<T> {
 
     T findOne(Integer id);
 
+    boolean exists(Integer id);
+
     T save(T entity);
 
     T update(T entity);
