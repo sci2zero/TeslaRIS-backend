@@ -6,10 +6,13 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
@@ -54,7 +57,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
                                                         Project parent) {
         var contribution = new PersonProjectContribution();
 
-        contribution.setPerson(personService.findOne(dto.getPersonId()));
+        var contributor = personService.findOne(dto.getPersonId());
+        contribution.setPerson(contributor);
         contribution.setOrderNumber(dto.getOrderNumber());
         contribution.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -68,7 +72,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
             contribution.setInstitutions(institutions);
         }
 
-        contribution.setAffiliationStatement(buildAffiliationStatement(dto));
+        contribution.setAffiliationStatement(buildAffiliationStatement(dto, contributor));
 
         contribution.setContributionType(dto.getContributionType());
         contribution.setInvestigationRole(dto.getInvestigationRole());
@@ -95,8 +99,10 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setDateFrom(dto.getDateFrom());
         contribution.setDateTo(dto.getDateTo());
         contribution.setUris(dto.getUris());
-        contribution.setIsMainContributor(dto.getIsMainContributor());
-        contribution.setIsInvitedContributor(dto.getIsInvitedContributor());
+        contribution.setIsMainContributor(
+            Objects.requireNonNullElse(dto.getIsMainContributor(), false));
+        contribution.setIsInvitedContributor(
+            Objects.requireNonNullElse(dto.getIsInvitedContributor(), false));
 
         contribution.setDisplayProject(
                 multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
@@ -104,17 +110,15 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         return contribution;
     }
 
-    private AffiliationStatement buildAffiliationStatement(PersonProjectContributionDTO dto) {
+    private AffiliationStatement buildAffiliationStatement(PersonProjectContributionDTO dto,
+                                                           Person contributor) {
         var affiliation = new AffiliationStatement();
 
         affiliation.setDisplayAffiliationStatement(
             multilingualContentService.getMultilingualContent(
                 dto.getDisplayAffiliationStatement()));
 
-        if (Objects.nonNull(dto.getPersonName())) {
-            var personName = new PersonName();
-            affiliation.setDisplayPersonName(personName);
-        }
+        affiliation.setDisplayPersonName(buildDisplayPersonName(dto, contributor));
         if (Objects.nonNull(dto.getPostalAddress())) {
             var address = new PostalAddress();
             affiliation.setPostalAddress(address);
@@ -125,6 +129,29 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         }
 
         return affiliation;
+    }
+
+    private PersonName buildDisplayPersonName(PersonProjectContributionDTO dto,
+                                              Person contributor) {
+        var nameDto = dto.getPersonName();
+
+        if (Objects.nonNull(nameDto) &&
+            (StringUtils.hasText(nameDto.getFirstname()) ||
+                StringUtils.hasText(nameDto.getLastname()))) {
+            return new PersonName(nameDto.getFirstname(), nameDto.getOtherName(),
+                nameDto.getLastname(), nameDto.getDateFrom(), nameDto.getDateTo(),
+                Objects.requireNonNullElse(nameDto.getPersonNameType(),
+                    PersonNameType.CITATION_NAME));
+        }
+
+        if (Objects.nonNull(contributor) && Objects.nonNull(contributor.getName())) {
+            var name = contributor.getName();
+            return new PersonName(name.getFirstname(), name.getOtherName(), name.getLastname(),
+                name.getDateFrom(), name.getDateTo(),
+                Objects.requireNonNullElse(name.getNameType(), PersonNameType.CITATION_NAME));
+        }
+
+        return new PersonName();
     }
 
     private FundingPart buildContributionFundingPart(FundingPartDTO partDto,

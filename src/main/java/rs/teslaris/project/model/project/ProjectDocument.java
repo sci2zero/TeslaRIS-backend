@@ -34,7 +34,7 @@ public class ProjectDocument extends BaseEntity {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", nullable = false)
+    @JoinColumn(name = "document_id")
     private Document document;
 
     @OneToMany(mappedBy = "projectDocument", cascade = CascadeType.ALL, orphanRemoval = true)

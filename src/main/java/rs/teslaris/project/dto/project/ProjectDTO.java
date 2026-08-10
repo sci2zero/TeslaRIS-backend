@@ -51,7 +51,6 @@ public class ProjectDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    private Set<Integer> organisationIds = new HashSet<>();
 
     private Set<String> uris = new HashSet<>();
 
@@ -74,6 +73,9 @@ public class ProjectDTO {
 
     @Valid
     private List<PersonProjectContributionDTO> persons = new ArrayList<>();
+
+    @Valid
+    private List<OrganisationUnitProjectContributionDTO> consortium = new ArrayList<>();
 
     @Valid
     private List<ProjectsRelationDTO> relations = new ArrayList<>();
