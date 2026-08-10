@@ -1086,7 +1086,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
         document.setCountry(RestorationSupport.resolveOptional(
-            documentDTO.getCountryId(), countryService, "countryId",
+            documentDTO.getCountryId(), countryService, countryService::findOne, "countryId",
             "restoreCountryMissingMessage"));
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
@@ -1120,7 +1120,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         setCommonIdentifiers(document, documentDTO);
 
         var event = RestorationSupport.resolveOptional(
-            documentDTO.getEventId(), eventService, "eventId",
+            documentDTO.getEventId(), eventService, eventService::findOne, "eventId",
             "restoreEventMissingMessage");
 
         if (Objects.nonNull(event)) {

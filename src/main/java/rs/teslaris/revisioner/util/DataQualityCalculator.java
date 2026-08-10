@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -27,6 +28,7 @@ import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -43,6 +45,8 @@ import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.identifier.IdentifierResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
@@ -127,6 +131,8 @@ public class DataQualityCalculator {
                 (dto, assessment) -> assessEntity((PersonResponseDTO) dto, assessment)),
             Map.entry(EventDTO.class,
                 (dto, assessment) -> assessEntity((EventDTO) dto, assessment)),
+            Map.entry(PublicationSeriesDTO.class,
+                (dto, assessment) -> assessEntity((PublicationSeriesDTO) dto, assessment)),
             Map.entry(OrganisationUnitDTO.class,
                 (dto, assessment) -> assessEntity((OrganisationUnitDTO) dto, assessment)),
             Map.entry(CountryDTO.class,
@@ -140,7 +146,9 @@ public class DataQualityCalculator {
             Map.entry(IdentifierResponseDTO.class,
                 (dto, assessment) -> assessEntity((IdentifierResponseDTO) dto, assessment)),
             Map.entry(InvolvementDTO.class,
-                (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment))
+                (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment)),
+            Map.entry(PublisherDTO.class,
+                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment))
         );
 
 
@@ -148,18 +156,18 @@ public class DataQualityCalculator {
     public void assessDataQuality(DataQualityAssessment assessment, String json,
                                   ObjectMapper objectMapper,
                                   DataQualityAssessmentRepository repository,
-                                  String targetType) {
+                                  List<String> targetTypes) {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment, targetType);
+            assessEntity(dto, assessment, targetTypes);
 
             repository.save(assessment);
 
-            dataQualityAssessmentIndexer.index(assessment, targetType, dto);
+            dataQualityAssessmentIndexer.index(assessment, targetTypes, dto);
 
             log.info(
                 "Successfully completed data quality assessment that lasted {}s. revisionId={}, entityType={}, score={}, remarks={}",
@@ -189,8 +197,9 @@ public class DataQualityCalculator {
         }
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment, String targetType) {
-        BiConsumer<Object, DataQualityAssessment> assessor = assessors.get(dto.getClass());
+    private void assessEntity(Object dto, DataQualityAssessment assessment,
+                              List<String> targetTypes) {
+        BiConsumer<Object, DataQualityAssessment> assessor = resolveAssessor(dto.getClass());
 
         if (Objects.isNull(assessor)) {
             log.warn(
@@ -203,7 +212,27 @@ public class DataQualityCalculator {
         }
 
         assessor.accept(dto, assessment);
-        finishUpAssessment(assessment, targetType);
+        finishUpAssessment(assessment, targetTypes);
+    }
+
+    @Nullable
+    private BiConsumer<Object, DataQualityAssessment> resolveAssessor(Class<?> dtoClass) {
+        for (var type = dtoClass; Objects.nonNull(type) && !Object.class.equals(type);
+             type = type.getSuperclass()) {
+            var assessor = assessors.get(type);
+
+            if (Objects.nonNull(assessor)) {
+                if (!type.equals(dtoClass)) {
+                    log.debug("Assessing {} with the assessor registered for {}.",
+                        dtoClass.getSimpleName(), type.getSimpleName()
+                    );
+                }
+
+                return assessor;
+            }
+        }
+
+        return null;
     }
 
     private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
@@ -365,6 +394,12 @@ public class DataQualityCalculator {
             (dto instanceof MaterialProductDTO materialProduct &&
                 !CollectionOperations.containsValues(materialProduct.getResearchAreasId()))) {
             reportIssue(assessment, "researchAreasMissing");
+        }
+
+        if (dto instanceof IntangibleProductDTO intangibleProduct) {
+            assessResearchAreas(intangibleProduct.getResearchAreas(), assessment);
+        } else if (dto instanceof MaterialProductDTO materialProduct) {
+            assessResearchAreas(materialProduct.getResearchAreas(), assessment);
         }
 
         if (dto instanceof ThesisResponseDTO thesis) {
@@ -532,6 +567,23 @@ public class DataQualityCalculator {
                         ((OtherEventDTO) dto).getType() : null,
                     null)
         );
+
+        assessResearchAreas(dto.getResearchAreas(), assessment);
+    }
+
+    private void assessEntity(PublicationSeriesDTO dto, DataQualityAssessment assessment) {
+        dto.getContributions().forEach(
+            contribution ->
+                assessEntity(
+                    contribution, assessment,
+                    null, null,
+                    null
+                )
+        );
+    }
+
+    private void assessEntity(PublisherDTO dto, DataQualityAssessment assessment) {
+        // TODO: To be implemented
     }
 
     private void assessEntity(PersonResponseDTO dto, DataQualityAssessment assessment) {
@@ -835,6 +887,7 @@ public class DataQualityCalculator {
 
         assessEntity(dto.getContact(), assessment);
         assessEntity(dto.getLocation(), assessment);
+        assessResearchAreas(dto.getResearchAreas(), assessment);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1015,6 +1068,28 @@ public class DataQualityCalculator {
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
         // TODO lastModificationDateMissing
+    }
+
+    private void assessEntity(ResearchAreaHierarchyDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto)) {
+            return;
+        }
+
+        var researchArea = new ResearchAreaDTO();
+        researchArea.setId(dto.getId());
+        researchArea.setName(dto.getName());
+        researchArea.setDescription(dto.getDescription());
+
+        assessEntity(researchArea, assessment);
+    }
+
+    private void assessResearchAreas(Collection<ResearchAreaHierarchyDTO> researchAreas,
+                                     DataQualityAssessment assessment) {
+        if (Objects.isNull(researchAreas)) {
+            return;
+        }
+
+        researchAreas.forEach(researchArea -> assessEntity(researchArea, assessment));
     }
 
     private void assessEntity(ResearchAreaDTO dto, DataQualityAssessment assessment) {
@@ -1484,22 +1559,22 @@ public class DataQualityCalculator {
         );
     }
 
-    private void finishUpAssessment(DataQualityAssessment assessment, String target) {
+    private void finishUpAssessment(DataQualityAssessment assessment, List<String> targets) {
         assessment.setFinishedAt(Instant.now());
 
-        computeRuleCounts(assessment, target);
+        computeRuleCounts(assessment, targets);
 
         double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
             assessment.getProfileName(),
             assessment.getProfileVersion(),
-            target
+            targets
         );
 
         double totalPointsFair =
             DataQualityAssessmentConfigurationLoader.getTotalPointsWeighedFair(
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
-                target
+                targets
             );
 
         assessment.setTotalPoints(totalPoints);
@@ -1514,7 +1589,7 @@ public class DataQualityCalculator {
         assessment.setAchievedFairPointsNormalised(achievedFairPoints);
 
         assessment.setDimensionScores(
-            computeDimensionScores(assessment, target, deductions.perDimension()));
+            computeDimensionScores(assessment, targets, deductions.perDimension()));
 
         assessment.setQualityScore(percentage(achievedPoints, totalPoints));
         assessment.setQualityScoreFair(percentage(achievedFairPoints, totalPointsFair));
@@ -1529,7 +1604,7 @@ public class DataQualityCalculator {
 
     }
 
-    private void computeRuleCounts(DataQualityAssessment assessment, String target) {
+    private void computeRuleCounts(DataQualityAssessment assessment, List<String> targets) {
         assessment.setErrorFailedRules(
             (int) assessment.getIssues().stream()
                 .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
@@ -1549,7 +1624,7 @@ public class DataQualityCalculator {
             DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
-                target)
+                targets)
                 - assessment.getErrorFailedRules()
                 - assessment.getWarningFailedRules()
         );
@@ -1597,7 +1672,7 @@ public class DataQualityCalculator {
     }
 
     private EnumMap<QualityDimension, DimensionScore> computeDimensionScores(
-        DataQualityAssessment assessment, String target,
+        DataQualityAssessment assessment, List<String> targets,
         EnumMap<QualityDimension, Double> deductedPerDimension) {
 
         EnumMap<QualityDimension, DimensionScore> dimensionScores =
@@ -1609,7 +1684,7 @@ public class DataQualityCalculator {
                     .getTotalPointsWeighed(
                         assessment.getProfileName(),
                         assessment.getProfileVersion(),
-                        target,
+                        targets,
                         dimension
                     );
 

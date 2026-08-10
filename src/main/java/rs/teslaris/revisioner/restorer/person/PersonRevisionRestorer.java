@@ -54,4 +54,9 @@ public class PersonRevisionRestorer implements RevisionRestorer<PersonResponseDT
             personService.setPersonKeyword(dto.getKeyword(), entityId);
         }
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return personService.readPersonWithBasicInfo(entityId);
+    }
 }

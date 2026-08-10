@@ -9,19 +9,19 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentSimpleDTO;
 import rs.teslaris.revisioner.dto.DataQualityRuleResultDTO;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentListener;
 
 public class DataQualityAssessmentConverter {
 
     public static DataQualityAssessmentDTO toDTO(DataQualityAssessment assessment) {
-        var target = DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
-            EntityType.valueOf(assessment.getRevision().getEntityType()));
+        var targets = DataQualityAssessmentListener.resolveTargetTypes(
+            assessment.getRevision().getEntityType());
 
         Map<String, ConstraintEvaluationResult> failedIssues =
             assessment.getIssues().stream()
@@ -35,7 +35,7 @@ public class DataQualityAssessmentConverter {
         for (var entry : DataQualityAssessmentConfigurationLoader.getRulesForTarget(
             assessment.getProfileName(),
             assessment.getProfileVersion(),
-            target)) {
+            targets)) {
 
             String key = entry.getKey();
             var remark = entry.getValue();

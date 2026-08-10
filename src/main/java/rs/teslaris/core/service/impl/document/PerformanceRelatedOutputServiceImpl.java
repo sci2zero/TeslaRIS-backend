@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -272,8 +273,15 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
             multilingualContentService.getMultilingualContent(dto.getOtherActors()));
 
         if (CollectionOperations.containsValues(dto.getLanguageTagIds())) {
-            dto.getLanguageTagIds().forEach(languageTagId -> performanceRelatedOutput.getLanguages()
-                .add(languageTagService.findLanguageTagById(languageTagId)));
+            dto.getLanguageTagIds().forEach(languageTagId -> {
+                var languageTag = RestorationSupport.resolveOptional(languageTagId,
+                    languageTagService, languageTagService::findLanguageTagById, "languageTagIds",
+                    "restoreLanguageTagMissingMessage");
+
+                if (Objects.nonNull(languageTag)) {
+                    performanceRelatedOutput.getLanguages().add(languageTag);
+                }
+            });
         }
     }
 

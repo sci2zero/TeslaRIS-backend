@@ -13,9 +13,10 @@ import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.service.interfaces.ExistenceCheckable;
 
 @Service
-public interface JournalService {
+public interface JournalService extends ExistenceCheckable {
 
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 

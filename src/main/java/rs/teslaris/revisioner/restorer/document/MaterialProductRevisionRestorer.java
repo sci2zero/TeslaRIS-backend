@@ -28,4 +28,9 @@ public class MaterialProductRevisionRestorer implements RevisionRestorer<Materia
     public void restore(Integer entityId, MaterialProductDTO dto) {
         materialProductService.editMaterialProduct(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return materialProductService.readMaterialProductById(entityId);
+    }
 }

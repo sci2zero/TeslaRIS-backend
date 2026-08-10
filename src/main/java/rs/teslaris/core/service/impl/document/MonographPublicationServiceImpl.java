@@ -45,6 +45,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -267,6 +268,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setEndPage(monographPublicationDTO.getEndPage());
         monographPublication.setNumberOfPages(monographPublicationDTO.getNumberOfPages());
         monographPublication.setArticleNumber(monographPublicationDTO.getArticleNumber());
+
+        RestorationSupport.requireExists(monographPublicationDTO.getMonographId(),
+            monographService, "monographId");
 
         var monograph =
             monographService.findMonographById(monographPublicationDTO.getMonographId());

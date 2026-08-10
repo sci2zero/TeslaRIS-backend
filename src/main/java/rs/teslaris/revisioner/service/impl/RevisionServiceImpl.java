@@ -255,6 +255,10 @@ public class RevisionServiceImpl implements RevisionService {
             log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
                 majorVersion, minorVersion, entityType, entityId, e);
 
+            if (e instanceof RevisionRestoreException) {
+                throw (RevisionRestoreException) e;
+            }
+
             throw new RevisionRestoreException(
                 String.format("Unable to restore revision %d.%d. Reason: %s",
                     majorVersion, minorVersion, e.getMessage()));

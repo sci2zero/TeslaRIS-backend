@@ -202,7 +202,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             // Neither the publisher nor the research areas are required for the product to exist,
             // so a restore of a state that referenced deleted ones keeps everything else.
             intangibleProduct.setPublisher(RestorationSupport.resolveOptional(
-                intangibleProductDTO.getPublisherId(), publisherService, "publisherId",
+                intangibleProductDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
                 "restorePublisherMissingMessage"));
         }
 

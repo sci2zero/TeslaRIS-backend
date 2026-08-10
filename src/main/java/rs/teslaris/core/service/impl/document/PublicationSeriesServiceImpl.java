@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 
 @Service
 @Primary
@@ -90,8 +91,13 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         setCommonIdentifiers(publicationSeries, publicationSeriesDTO);
 
         publicationSeriesDTO.getLanguageIds().forEach(languageId -> {
-            publicationSeries.getLanguages()
-                .add(languageService.findLanguageById(languageId));
+            var language = RestorationSupport.resolveOptional(languageId, languageService,
+                languageService::findLanguageById, "languageIds",
+                "restoreLanguageMissingMessage");
+
+            if (Objects.nonNull(language)) {
+                publicationSeries.getLanguages().add(language);
+            }
         });
     }
 

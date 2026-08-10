@@ -28,4 +28,9 @@ public class ExhibitionRevisionRestorer implements RevisionRestorer<ExhibitionDT
     public void restore(Integer entityId, ExhibitionDTO dto) {
         exhibitionService.updateExhibition(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return exhibitionService.readExhibition(entityId);
+    }
 }

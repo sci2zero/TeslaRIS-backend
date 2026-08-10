@@ -62,6 +62,7 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -128,6 +129,9 @@ public class MonographServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private PublisherService publisherService;
 
     @InjectMocks
     private MonographServiceImpl monographService;

@@ -29,4 +29,9 @@ public class PerformanceRelatedOutputRevisionRestorer
     public void restore(Integer entityId, PerformanceRelatedOutputDTO dto) {
         performanceRelatedOutputService.editPerformanceRelatedOutput(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return performanceRelatedOutputService.readPerformanceRelatedOutputById(entityId);
+    }
 }

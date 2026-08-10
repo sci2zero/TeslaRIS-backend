@@ -2,7 +2,6 @@ package rs.teslaris.revisioner.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -60,8 +59,8 @@ public class DataQualityReindexServiceImpl implements DataQualityReindexService 
         var revision = assessment.getRevision();
         var entityType = revision.getEntityType();
 
-        var target = DataQualityAssessmentListener.resolveTargetType(entityType);
-        if (Objects.isNull(target)) {
+        var targets = DataQualityAssessmentListener.resolveTargetTypes(entityType);
+        if (targets.isEmpty()) {
             log.warn(
                 "Unable to resolve target type for entityType={}, skipping assessment {}.",
                 entityType, assessment.getId());
@@ -73,7 +72,7 @@ public class DataQualityReindexServiceImpl implements DataQualityReindexService 
 
         try {
             var dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
-            dataQualityAssessmentIndexer.index(assessment, target, dto);
+            dataQualityAssessmentIndexer.index(assessment, targets, dto);
         } catch (JsonProcessingException e) {
             log.warn(
                 "Failed to deserialize revision for assessment {} (entityType={}): {}",

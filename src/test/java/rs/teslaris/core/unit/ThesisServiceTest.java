@@ -89,6 +89,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -139,7 +140,7 @@ public class ThesisServiceTest {
     private PublisherService publisherService;
 
     @Mock
-    private LanguageTagService languageService;
+    private LanguageTagService languageTagService;
 
     @Mock
     private CommissionRepository commissionRepository;
@@ -170,6 +171,9 @@ public class ThesisServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private LanguageService languageService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;

@@ -28,4 +28,9 @@ public class MonographRevisionRestorer implements RevisionRestorer<MonographDTO>
     public void restore(Integer entityId, MonographDTO dto) {
         monographService.editMonograph(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return monographService.readMonographById(entityId);
+    }
 }

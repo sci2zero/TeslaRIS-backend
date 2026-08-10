@@ -29,4 +29,9 @@ public class ProceedingsPublicationRevisionRestorer
     public void restore(Integer entityId, ProceedingsPublicationDTO dto) {
         proceedingsPublicationService.editProceedingsPublication(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return proceedingsPublicationService.readProceedingsPublicationById(entityId);
+    }
 }

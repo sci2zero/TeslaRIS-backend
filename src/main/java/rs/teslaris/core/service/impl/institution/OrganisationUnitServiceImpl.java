@@ -58,6 +58,7 @@ import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.EmailConfiguration;
@@ -88,6 +89,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -725,6 +727,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
+
+        RestorationSupport.reportMissingFromBulkLookup(organisationUnitDTO.getResearchAreasId(),
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
 
         organisationUnit.setLocation(
@@ -866,7 +873,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
                 organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
                 organisationUnit.getPostalAddress().setCountry(
-                    countryService.findOne(organisationUnitDTO.getPostalAddress().getCountryId()));
+                    RestorationSupport.resolveOptional(
+                        organisationUnitDTO.getPostalAddress().getCountryId(), countryService,
+                        countryService::findOne, "postalAddress.countryId",
+                        "restoreCountryMissingMessage"));
             } else {
                 organisationUnit.getPostalAddress().setCountry(null);
             }

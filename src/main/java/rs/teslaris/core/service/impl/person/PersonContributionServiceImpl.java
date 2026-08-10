@@ -333,6 +333,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         var contributor = RestorationSupport.resolveDegradable(
             contributionDTO.getPersonId(),
             personService,
+            personService::findOne,
             "contributions.personId",
             "restoreContributorUnmanagedMessage",
             contributorNameParameters(contributionDTO)
@@ -355,7 +356,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             !contributionDTO.getInstitutionIds().isEmpty()) {
             contributionDTO.getInstitutionIds().forEach(institutionId -> {
                 var organisationUnit = RestorationSupport.resolveOptional(
-                    institutionId, organisationUnitService,
+                    institutionId, organisationUnitService, organisationUnitService::findOne,
                     "contributions.institutionIds", "restoreContributionInstitutionMissingMessage");
 
                 if (Objects.nonNull(organisationUnit)) {

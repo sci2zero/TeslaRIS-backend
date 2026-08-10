@@ -54,6 +54,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -136,6 +137,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.indexBulkUpdateService = indexBulkUpdateService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
         this.eventIndexRepository = eventIndexRepository;
+    }
+
+
+    @Override
+    public boolean exists(Integer id) {
+        return proceedingsJPAService.exists(id);
     }
 
     @Override
@@ -376,9 +383,18 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(proceedingsDTO.getAcronym()));
 
-        proceedingsDTO.getLanguageIds().forEach(languageId -> proceedings.getLanguages()
-            .add(languageService.findLanguageById(languageId)));
+        proceedingsDTO.getLanguageIds().forEach(languageId -> {
+            var language = RestorationSupport.resolveOptional(languageId, languageService,
+                languageService::findLanguageById, "languageIds",
+                "restoreLanguageMissingMessage");
 
+            if (Objects.nonNull(language)) {
+                proceedings.getLanguages().add(language);
+            }
+        });
+
+        // Proceedings without their event would be orphaned, so this one is not degradable.
+        RestorationSupport.requireExists(proceedingsDTO.getEventId(), eventService, "eventId");
         proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
         if (Objects.nonNull(proceedingsDTO.getPublicationSeriesId())) {
@@ -388,8 +404,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             if (optionalJournal.isPresent()) {
                 proceedings.setPublicationSeries(optionalJournal.get());
             } else {
-                var bookSeries = bookSeriesService.findBookSeriesById(
-                    proceedingsDTO.getPublicationSeriesId());
+                var bookSeries = RestorationSupport.resolveOptional(
+                    proceedingsDTO.getPublicationSeriesId(), bookSeriesService,
+                    bookSeriesService::findBookSeriesById, "publicationSeriesId",
+                    "restorePublicationSeriesMissingMessage");
                 proceedings.setPublicationSeries(bookSeries);
             }
         }
@@ -400,9 +418,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         if (Objects.nonNull(proceedingsDTO.getAuthorReprint()) &&
             proceedingsDTO.getAuthorReprint()) {
             proceedings.setAuthorReprint(true);
-        } else if (Objects.nonNull(proceedingsDTO.getPublisherId())) {
-            proceedings.setPublisher(
-                publisherService.findOne(proceedingsDTO.getPublisherId()));
+        } else {
+            proceedings.setPublisher(RestorationSupport.resolveOptional(
+                proceedingsDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
+                "restorePublisherMissingMessage"));
         }
 
         // Always valid

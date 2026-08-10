@@ -97,6 +97,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         this.commissionRepository = commissionRepository;
     }
 
+
+    @Override
+    public boolean exists(Integer id) {
+        return journalJPAService.exists(id);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {

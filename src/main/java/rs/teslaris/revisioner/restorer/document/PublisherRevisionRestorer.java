@@ -28,4 +28,9 @@ public class PublisherRevisionRestorer implements RevisionRestorer<PublisherDTO>
     public void restore(Integer entityId, PublisherDTO dto) {
         publisherService.editPublisher(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return publisherService.readPublisherById(entityId);
+    }
 }

@@ -29,4 +29,9 @@ public class MonographPublicationRevisionRestorer
     public void restore(Integer entityId, MonographPublicationDTO dto) {
         monographPublicationService.editMonographPublication(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return monographPublicationService.readMonographPublicationById(entityId);
+    }
 }

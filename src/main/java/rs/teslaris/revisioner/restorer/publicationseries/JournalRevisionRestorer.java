@@ -34,4 +34,9 @@ public class JournalRevisionRestorer implements RevisionRestorer<JournalDTO> {
     public void restore(Integer entityId, JournalDTO dto) {
         journalService.updateJournal(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return journalService.readJournal(entityId);
+    }
 }

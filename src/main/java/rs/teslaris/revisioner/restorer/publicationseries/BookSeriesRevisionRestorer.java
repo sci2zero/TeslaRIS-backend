@@ -28,4 +28,9 @@ public class BookSeriesRevisionRestorer implements RevisionRestorer<BookSeriesRe
     public void restore(Integer entityId, BookSeriesResponseDTO dto) {
         bookSeriesService.updateBookSeries(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return bookSeriesService.readBookSeries(entityId);
+    }
 }

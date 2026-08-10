@@ -45,6 +45,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -349,6 +350,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
+        RestorationSupport.requireExists(publicationDTO.getJournalId(), journalService,
+            "journalId");
         publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
 
         publication.setSection(

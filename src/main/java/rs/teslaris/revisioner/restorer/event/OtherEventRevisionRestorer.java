@@ -28,4 +28,9 @@ public class OtherEventRevisionRestorer implements RevisionRestorer<OtherEventDT
     public void restore(Integer entityId, OtherEventDTO dto) {
         otherEventService.updateOtherEvent(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return otherEventService.readOtherEvent(entityId);
+    }
 }

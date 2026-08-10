@@ -45,7 +45,8 @@ public class DataQualityAssessmentIndexer {
     private final PersonIndexRepository personIndexRepository;
 
 
-    public void index(DataQualityAssessment assessment, String target, Object dto) {
+    public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
+        var target = targets.getFirst();
         try {
             var revision = assessment.getRevision();
             var entityType = revision.getEntityType();
@@ -72,8 +73,8 @@ public class DataQualityAssessmentIndexer {
             index.setWarningFailedRules(assessment.getWarningFailedRules());
             index.setErrorFailedRules(assessment.getErrorFailedRules());
 
-            populateRuleKeys(index, assessment, target);
-            populateDimensionBreakdown(index, assessment, target);
+            populateRuleKeys(index, assessment, targets);
+            populateDimensionBreakdown(index, assessment, targets);
 
             supersedePreviousLatest(entityType, entityId, assessment.getProfileName(),
                 assessmentDate);
@@ -185,9 +186,9 @@ public class DataQualityAssessmentIndexer {
     }
 
     private void populateRuleKeys(DataQualityAssessmentIndex index,
-                                  DataQualityAssessment assessment, String target) {
+                                  DataQualityAssessment assessment, List<String> targets) {
         var rulesForTarget = DataQualityAssessmentConfigurationLoader.getRulesForTarget(
-            assessment.getProfileName(), assessment.getProfileVersion(), target);
+            assessment.getProfileName(), assessment.getProfileVersion(), targets);
 
         var failedKeys = assessment.getIssues().stream()
             .map(ConstraintEvaluationResult::getKey)
@@ -203,7 +204,8 @@ public class DataQualityAssessmentIndexer {
     }
 
     private void populateDimensionBreakdown(DataQualityAssessmentIndex index,
-                                            DataQualityAssessment assessment, String target) {
+                                            DataQualityAssessment assessment,
+                                            List<String> targets) {
         var profile = assessment.getProfileName();
         var version = assessment.getProfileVersion();
 
@@ -211,7 +213,7 @@ public class DataQualityAssessmentIndexer {
             .collect(Collectors.groupingBy(ConstraintEvaluationResult::getDimension));
 
         var rulesForTarget =
-            DataQualityAssessmentConfigurationLoader.getRulesForTarget(profile, version, target);
+            DataQualityAssessmentConfigurationLoader.getRulesForTarget(profile, version, targets);
 
         for (var dimension : QualityDimension.values()) {
             var dimensionScore = assessment.getDimensionScores().get(dimension);

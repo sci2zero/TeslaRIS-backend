@@ -28,4 +28,9 @@ public class GeneticMaterialRevisionRestorer implements RevisionRestorer<Genetic
     public void restore(Integer entityId, GeneticMaterialDTO dto) {
         geneticMaterialService.editGeneticMaterial(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return geneticMaterialService.readGeneticMaterialById(entityId);
+    }
 }

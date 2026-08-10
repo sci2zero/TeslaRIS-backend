@@ -28,4 +28,9 @@ public class CourseRevisionRestorer implements RevisionRestorer<CourseDTO> {
     public void restore(Integer entityId, CourseDTO dto) {
         courseService.updateCourse(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return courseService.readCourse(entityId);
+    }
 }

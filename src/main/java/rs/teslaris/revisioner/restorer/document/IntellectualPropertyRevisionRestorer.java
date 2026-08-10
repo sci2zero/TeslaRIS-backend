@@ -29,4 +29,9 @@ public class IntellectualPropertyRevisionRestorer
     public void restore(Integer entityId, IntellectualPropertyDTO dto) {
         intellectualPropertyService.editIntellectualProperty(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return intellectualPropertyService.readIntellectualPropertyById(entityId);
+    }
 }

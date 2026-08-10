@@ -96,11 +96,16 @@ import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.DegradationOutcome;
+import rs.teslaris.core.util.restoration.RestorationContext;
+import rs.teslaris.core.util.restoration.RestorationSupport;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -767,8 +772,34 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
     }
 
+    /**
+     * A thesis whose institution was deleted can only be kept if the restored payload already
+     * carries an external institution name - the deleted name cannot be recovered. Without it the
+     * restore is refused rather than leaving the thesis unattributed.
+     */
+    private boolean isDegradableToExternalInstitution(ThesisDTO thesisDTO) {
+        if (!RestorationContext.isActive() ||
+            organisationUnitService.exists(thesisDTO.getOrganisationUnitId())) {
+            return false;
+        }
+
+        if (!CollectionOperations.containsValues(thesisDTO.getExternalOrganisationUnitName())) {
+            throw new RevisionRestoreException(String.format(
+                "Cannot restore this version: it references organisationUnitId %d, which no longer "
+                    + "exists, and carries no external institution name to fall back on.",
+                thesisDTO.getOrganisationUnitId()));
+        }
+
+        RestorationContext.report("restoreThesisInstitutionExternalMessage", "organisationUnitId",
+            DegradationOutcome.DEGRADED,
+            java.util.List.of(String.valueOf(thesisDTO.getOrganisationUnitId())));
+
+        return true;
+    }
+
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
-        if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
+        if (Objects.nonNull(thesisDTO.getOrganisationUnitId()) &&
+            !isDegradableToExternalInstitution(thesisDTO)) {
             var institution = organisationUnitService.findOne(thesisDTO.getOrganisationUnitId());
 
             if (Objects.nonNull(thesisDTO.getThesisType()) &&
@@ -842,8 +873,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (Objects.nonNull(thesisDTO.getAuthorReprint()) && thesisDTO.getAuthorReprint()) {
             thesis.setAuthorReprint(true);
-        } else if (Objects.nonNull(thesisDTO.getPublisherId())) {
-            thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
+        } else {
+            thesis.setPublisher(RestorationSupport.resolveOptional(
+                thesisDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
+                "restorePublisherMissingMessage"));
         }
 
         thesis.setScientificArea(
@@ -860,16 +894,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setUdc(thesisDTO.getUdc());
         }
 
-        if (Objects.nonNull(thesisDTO.getLanguageId())) {
-            thesis.setLanguage(languageService.findOne(thesisDTO.getLanguageId()));
-        }
+        thesis.setLanguage(RestorationSupport.resolveOptional(
+            thesisDTO.getLanguageId(), languageService, languageService::findOne, "languageId",
+            "restoreLanguageMissingMessage"));
 
-        if (Objects.nonNull(thesisDTO.getWritingLanguageTagId())) {
-            thesis.setWritingLanguage(
-                languageTagService.findOne(thesisDTO.getWritingLanguageTagId()));
-        } else {
-            thesis.setWritingLanguage(null);
-        }
+        thesis.setWritingLanguage(RestorationSupport.resolveOptional(
+            thesisDTO.getWritingLanguageTagId(), languageTagService, languageTagService::findOne,
+            "writingLanguageTagId",
+            "restoreLanguageTagMissingMessage"));
 
         setCommonIdentifiers(thesis, thesisDTO);
 

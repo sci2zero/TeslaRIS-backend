@@ -6,9 +6,10 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.service.interfaces.ExistenceCheckable;
 
 @Service
-public interface ProceedingsService {
+public interface ProceedingsService extends ExistenceCheckable {
 
     ProceedingsResponseDTO readProceedingsById(Integer proceedingsId);
 

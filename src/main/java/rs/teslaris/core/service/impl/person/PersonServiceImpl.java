@@ -102,6 +102,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -410,10 +411,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personToUpdate.getBiography().clear();
         biographyDTO.stream().map(biography -> {
-            var languageTag = languageTagService.findOne(biography.getLanguageTagId());
-            return new MultiLingualContent(languageTag, biography.getContent(),
+            // A translation whose language tag is gone is dropped, the rest are kept.
+            var languageTag = RestorationSupport.resolveOptional(biography.getLanguageTagId(),
+                languageTagService, languageTagService::findOne, "biography.languageTagId",
+                "restoreLanguageTagMissingMessage");
+
+            return Objects.isNull(languageTag) ? null
+                : new MultiLingualContent(languageTag, biography.getContent(),
                 biography.getPriority());
-        }).forEach(biography -> {
+        }).filter(Objects::nonNull).forEach(biography -> {
             personToUpdate.getBiography().add(biography);
             this.save(personToUpdate);
         });
@@ -445,10 +451,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personToUpdate.getKeyword().clear();
         keywordDTO.stream().map(keyword -> {
-            var languageTag = languageTagService.findOne(keyword.getLanguageTagId());
-            return new MultiLingualContent(languageTag, keyword.getContent(),
+            // A translation whose language tag is gone is dropped, the rest are kept.
+            var languageTag = RestorationSupport.resolveOptional(keyword.getLanguageTagId(),
+                languageTagService, languageTagService::findOne, "keyword.languageTagId",
+                "restoreLanguageTagMissingMessage");
+
+            return Objects.isNull(languageTag) ? null
+                : new MultiLingualContent(languageTag, keyword.getContent(),
                 keyword.getPriority());
-        }).forEach(keyword -> {
+        }).filter(Objects::nonNull).forEach(keyword -> {
             personToUpdate.getKeyword().add(keyword);
             this.save(personToUpdate);
         });
@@ -737,8 +748,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return;
         }
 
-        var countryId = source.getCountryId();
-        target.setCountry(Objects.nonNull(countryId) ? countryService.findOne(countryId) : null);
+        target.setCountry(RestorationSupport.resolveOptional(source.getCountryId(),
+            countryService, countryService::findOne,
+            "personalInfo.postalAddress.countryId",
+            "restoreCountryMissingMessage"));
 
         target.getStreetAndNumber().clear();
         setPersonStreetAndNumberInfo(person, target, source);

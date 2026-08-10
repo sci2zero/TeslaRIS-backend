@@ -28,4 +28,9 @@ public class ThesisRevisionRestorer implements RevisionRestorer<ThesisResponseDT
     public void restore(Integer entityId, ThesisResponseDTO dto) {
         thesisService.editThesis(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return thesisService.readThesisById(entityId);
+    }
 }

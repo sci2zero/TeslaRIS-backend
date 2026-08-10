@@ -28,4 +28,9 @@ public class ConferenceRevisionRestorer implements RevisionRestorer<ConferenceDT
     public void restore(Integer entityId, ConferenceDTO dto) {
         conferenceService.updateConference(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return conferenceService.readConference(entityId);
+    }
 }

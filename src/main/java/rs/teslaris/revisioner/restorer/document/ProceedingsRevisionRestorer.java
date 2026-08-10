@@ -28,4 +28,9 @@ public class ProceedingsRevisionRestorer implements RevisionRestorer<Proceedings
     public void restore(Integer entityId, ProceedingsResponseDTO dto) {
         proceedingsService.updateProceedings(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return proceedingsService.readProceedingsById(entityId);
+    }
 }

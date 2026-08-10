@@ -1,7 +1,7 @@
 package rs.teslaris.revisioner.util.dataquality;
 
 import java.time.Instant;
-import java.util.Objects;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -29,15 +29,14 @@ public class DataQualityAssessmentListener {
     private final DataQualityAssessmentRepository repository;
 
 
-    public static String resolveTargetType(String entityType) {
+    public static List<String> resolveTargetTypes(String entityType) {
         try {
-            return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
+            return DataQualityAssessmentConfigurationLoader.getTargetTypesFromEntityType(
                 EntityType.valueOf(entityType));
         } catch (IllegalArgumentException ex) {
             try {
-                DocumentPublicationType.valueOf(entityType);
-                return DataQualityAssessmentConfigurationLoader.getTargetTypeFromEntityType(
-                    EntityType.PUBLICATION);
+                return DataQualityAssessmentConfigurationLoader.getTargetTypesFromDocumentType(
+                    DocumentPublicationType.valueOf(entityType));
             } catch (IllegalArgumentException ignored) {
                 throw ex;
             }
@@ -60,9 +59,9 @@ public class DataQualityAssessmentListener {
                 .startedAt(Instant.now())
                 .build();
 
-            var targetType = resolveTargetType(event.entityRevision().getEntityType());
+            var targetTypes = resolveTargetTypes(event.entityRevision().getEntityType());
 
-            if (Objects.isNull(targetType)) {
+            if (targetTypes.isEmpty()) {
                 log.error("Unable to find target type for {} and entity id {{}}",
                     event.entityRevision().getEntityType(), event.entityRevision().getId());
                 return;
@@ -71,7 +70,7 @@ public class DataQualityAssessmentListener {
             event.entityRevision().addAssessment(assessment);
 
             calculator.assessDataQuality(assessment, event.json(),
-                ObjectMapperProvider.provideObjectmapper(), repository, targetType);
+                ObjectMapperProvider.provideObjectmapper(), repository, targetTypes);
 
             entityRevisionRepository.save(event.entityRevision());
         });

@@ -28,4 +28,9 @@ public class OrganisationUnitRevisionRestorer implements RevisionRestorer<Organi
     public void restore(Integer entityId, OrganisationUnitDTO dto) {
         organisationUnitService.editOrganisationUnit(entityId, dto);
     }
+
+    @Override
+    public Object readCurrentState(Integer entityId) {
+        return organisationUnitService.readOrganisationUnitById(entityId);
+    }
 }
