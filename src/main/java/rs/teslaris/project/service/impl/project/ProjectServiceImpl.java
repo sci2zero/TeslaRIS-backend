@@ -28,6 +28,7 @@ import rs.teslaris.project.model.project.ProjectsRelation;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
+import rs.teslaris.project.repository.project.ProjectsRelationRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
@@ -56,11 +57,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final OrganisationUnitProjectContributionService
         organisationUnitProjectContributionService;
+
     private final ProjectDocumentRepository projectDocumentRepository;
+
     private final IndexBulkUpdateService indexBulkUpdateService;
+
     private final ProjectEventRepository projectEventRepository;
 
     private final PersonProjectContributionService personProjectContributionService;
+
+    private final ProjectsRelationRepository projectsRelationRepository;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -233,13 +239,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getKeywords().clear();
         project.getResearchAreas().clear();
         project.getPersons().clear();
-        project.getRelatedProjects().clear();
     }
 
     private void rebuildTeam(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getPersons())) {
             project.setPersons(new HashSet<>());
         }
+
         projectDTO.getPersons().forEach(memberDto ->
                 project.getPersons().add(
                         personProjectContributionService.createContribution(memberDto, project)));
@@ -249,6 +255,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         if (Objects.isNull(project.getRelatedProjects())) {
             project.setRelatedProjects(new HashSet<>());
         }
+
         projectDTO.getRelations().forEach(relationDto -> {
             var relation = new ProjectsRelation();
             relation.setRelationType(relationDto.getRelationType());
@@ -266,7 +273,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 relation.setTargetProject(findOne(relationDto.getTargetProjectId()));
             }
 
-            project.getRelatedProjects().add(relation);
+            project.getRelatedProjects().add(projectsRelationRepository.save(relation));
         });
     }
 
