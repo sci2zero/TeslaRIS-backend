@@ -36,6 +36,12 @@ public class FundingCallController {
     private final FundingCallService fundingCallService;
 
 
+    @GetMapping("/{fundingCallId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_CALLS')")
+    public boolean canEditFundingCall() {
+        return true;
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('READ_FUNDING_CALLS')")
     public Page<FundingCallIndex> searchFundingCalls(@RequestParam List<String> tokens,
