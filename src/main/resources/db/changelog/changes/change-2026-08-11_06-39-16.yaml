@@ -378,6 +378,7 @@ databaseChangeLog:
               nullable: false
             name: achieved_fair_points_normalised
             type: FLOAT8
+            defaultValueNumeric: 0
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-29
@@ -434,6 +435,7 @@ databaseChangeLog:
               nullable: false
             name: info_failed_rules
             type: INTEGER
+            defaultValueNumeric: 0
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-34
@@ -558,6 +560,7 @@ databaseChangeLog:
               nullable: false
             name: publication_candidate
             type: BOOLEAN
+            defaultValueBoolean: false
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-46
@@ -644,6 +647,7 @@ databaseChangeLog:
               nullable: false
             name: quality_score_fair
             type: FLOAT8
+            defaultValueNumeric: 0
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-54
@@ -698,6 +702,7 @@ databaseChangeLog:
               nullable: false
             name: total_points_fair
             type: FLOAT8
+            defaultValueNumeric: 0
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-59
@@ -810,6 +815,7 @@ databaseChangeLog:
               nullable: false
             name: dimension_scores
             type: JSONB
+            defaultValueJson: {}
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-70
