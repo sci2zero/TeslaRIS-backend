@@ -57,7 +57,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
                                                         Project parent) {
         var contribution = new PersonProjectContribution();
 
-        var contributor = personService.findOne(dto.getPersonId());
+        // Supports external affiliations (taken from core)
+        var contributor = Objects.nonNull(dto.getPersonId()) ? personService.findOne(dto.getPersonId()) : null;
         contribution.setPerson(contributor);
         contribution.setOrderNumber(dto.getOrderNumber());
         contribution.setApproveStatus(ApproveStatus.APPROVED);
@@ -107,7 +108,9 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setDisplayProject(
                 multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
 
-        return contribution;
+        // Returns saved contribution entity with id != null (if this part is omitted the Set will treat
+        // each entity with null value id as the same one, thus overwriting/ignoring it each time)
+        return personProjectContributionRepository.save(contribution);
     }
 
     private AffiliationStatement buildAffiliationStatement(PersonProjectContributionDTO dto,
