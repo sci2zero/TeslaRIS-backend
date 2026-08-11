@@ -815,7 +815,7 @@ databaseChangeLog:
               nullable: false
             name: dimension_scores
             type: JSONB
-            defaultValueJson: {}
+            defaultValueComputed: "'{}'::jsonb"
         tableName: data_quality_assessment
 - changeSet:
     id: 1786430367509-70
