@@ -355,86 +355,6 @@ databaseChangeLog:
         constraintName: organisation_unit_contributio_display_contact_person_name_i_key
         tableName: organisation_unit_contributions
 - changeSet:
-    id: 1786430367509-17
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_contact_person_name_id
-        constraintName: organisation_unit_project_con_display_contact_person_name_i_key
-        tableName: organisation_unit_project_contributions
-- changeSet:
-    id: 1786430367509-18
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_organisation_unit_id
-        constraintName: organisation_unit_contribution_display_organisation_unit_id_key
-        tableName: organisation_unit_contributions_display_organisation_unit
-- changeSet:
-    id: 1786430367509-19
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: proofs_id
-        constraintName: organisation_unit_contributions_proofs_proofs_id_key
-        tableName: organisation_unit_contributions_proofs
-- changeSet:
-    id: 1786430367509-20
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: contribution_description_id
-        constraintName: organisation_unit_contributions_contribution_description_id_key
-        tableName: organisation_unit_contributions_contribution_description
-- changeSet:
-    id: 1786430367509-21
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_project_id
-        constraintName: organisation_unit_project_contributions__display_project_id_key
-        tableName: organisation_unit_project_contributions_display_project
-- changeSet:
-    id: 1786430367509-22
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: keywords_id
-        constraintName: person_contributions_keywords_keywords_id_key
-        tableName: person_contributions_keywords
-- changeSet:
-    id: 1786430367509-23
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: proofs_id
-        constraintName: person_contributions_proofs_proofs_id_key
-        tableName: person_contributions_proofs
-- changeSet:
-    id: 1786430367509-24
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_project_id
-        constraintName: person_project_contribution_display_proj_display_project_id_key
-        tableName: person_project_contribution_display_project
-- changeSet:
-    id: 1786430367509-25
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: source_project_description_id
-        constraintName: project_relations_source_proj_source_project_description_id_key
-        tableName: project_relations_source_project_description
-- changeSet:
-    id: 1786430367509-26
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: target_project_description_id
-        constraintName: project_relations_target_proj_target_project_description_id_key
-        tableName: project_relations_target_project_description
-- changeSet:
     id: 1786430367509-27
     author: milospopovic (generated)
     changes:
@@ -1199,13 +1119,6 @@ databaseChangeLog:
         columnName: favorite
         tableName: expertise_or_skills
 - changeSet:
-    id: 1786430367509-2
-    author: milospopovic (generated)
-    changes:
-    - dropIndex:
-        indexName: idx_funding_parts_ou_cont
-        tableName: funding_parts
-- changeSet:
     id: 1786430367509-3
     author: milospopovic (generated)
     changes:
@@ -1216,13 +1129,7 @@ databaseChangeLog:
         indexName: idx_funding_parts_ou_cont
         tableName: funding_parts
         unique: false
-- changeSet:
-    id: 1786430367509-4
-    author: milospopovic (generated)
-    changes:
-    - dropIndex:
-        indexName: idx_funding_parts_person_cont
-        tableName: funding_parts
+
 - changeSet:
     id: 1786430367509-5
     author: milospopovic (generated)
@@ -1235,3 +1142,83 @@ databaseChangeLog:
         tableName: funding_parts
         unique: false
 
+- changeSet:
+    id: 1786430367509-17
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_contact_person_name_id
+        constraintName: organisation_unit_project_con_display_contact_person_name_i_key
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-18
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_organisation_unit_id
+        constraintName: organisation_unit_contribution_display_organisation_unit_id_key
+        tableName: organisation_unit_contributions_display_organisation_unit
+- changeSet:
+    id: 1786430367509-19
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: proofs_id
+        constraintName: organisation_unit_contributions_proofs_proofs_id_key
+        tableName: organisation_unit_contributions_proofs
+- changeSet:
+    id: 1786430367509-20
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: contribution_description_id
+        constraintName: organisation_unit_contributions_contribution_description_id_key
+        tableName: organisation_unit_contributions_contribution_description
+- changeSet:
+    id: 1786430367509-21
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_project_id
+        constraintName: organisation_unit_project_contributions__display_project_id_key
+        tableName: organisation_unit_project_contributions_display_project
+- changeSet:
+    id: 1786430367509-22
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: keywords_id
+        constraintName: person_contributions_keywords_keywords_id_key
+        tableName: person_contributions_keywords
+- changeSet:
+    id: 1786430367509-23
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: proofs_id
+        constraintName: person_contributions_proofs_proofs_id_key
+        tableName: person_contributions_proofs
+- changeSet:
+    id: 1786430367509-24
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_project_id
+        constraintName: person_project_contribution_display_proj_display_project_id_key
+        tableName: person_project_contribution_display_project
+- changeSet:
+    id: 1786430367509-25
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: source_project_description_id
+        constraintName: project_relations_source_proj_source_project_description_id_key
+        tableName: project_relations_source_project_description
+- changeSet:
+    id: 1786430367509-26
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: target_project_description_id
+        constraintName: project_relations_target_proj_target_project_description_id_key
+        tableName: project_relations_target_project_description
