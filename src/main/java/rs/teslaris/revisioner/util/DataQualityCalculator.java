@@ -1140,7 +1140,7 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(GeoLocationDTO dto, DataQualityAssessment assessment) {
-        if (Objects.isNull(dto.getLatitude())) {
+        if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
             reportIssue(assessment, "latitudeMissing");
         } else {
             var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
@@ -1151,7 +1151,7 @@ public class DataQualityCalculator {
             }
         }
 
-        if (Objects.isNull(dto.getLongitude())) {
+        if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
             reportIssue(assessment, "longitudeMissing");
         } else {
             var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
