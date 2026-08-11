@@ -1,0 +1,1237 @@
+databaseChangeLog:
+- changeSet:
+    id: 1786430367509-89
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_related_projects
+        constraintName: fk2eaooni72lebhx55vpy7c3pwo
+- changeSet:
+    id: 1786430367509-90
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_description
+        constraintName: fk3hlelb3u9h5ae2ijyfeoegjai
+- changeSet:
+    id: 1786430367509-91
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_related_projects
+        constraintName: fk4c47nr4ad3pc7xeqs2sx8a0xs
+- changeSet:
+    id: 1786430367509-92
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: funding_parts
+        constraintName: fkb4msmslgvkxvufqm2evm6499m
+- changeSet:
+    id: 1786430367509-93
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_displayou
+        constraintName: fkey2vcr58f3rhvbqqx8ng2fqu1
+- changeSet:
+    id: 1786430367509-94
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_displayou
+        constraintName: fkffdtt7f1fxf23e85sxtyud5j2
+- changeSet:
+    id: 1786430367509-95
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_funding_parts
+        constraintName: fkg0iixerylggqw13qe67hlu78d
+- changeSet:
+    id: 1786430367509-96
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: funding_parts
+        constraintName: fkhbxj0oodxxavo73k2f0dtjrm7
+- changeSet:
+    id: 1786430367509-97
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_funding_parts
+        constraintName: fkm4idu81v5dx7pacexedfrkdvk
+- changeSet:
+    id: 1786430367509-98
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_contact_point
+        constraintName: fkn7cmq5aqyv80dny27hmulcvpb
+- changeSet:
+    id: 1786430367509-99
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_description
+        constraintName: fkotb7gn6myxb3iwlpnmje9fxkt
+- changeSet:
+    id: 1786430367509-100
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: organisation_unit_project_contributions_contact_point
+        constraintName: fkpf6uwm01jeui0tdma27j6ibft
+- changeSet:
+    id: 1786430367509-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: approve_status
+            type: SMALLINT
+        - column:
+            name: contact_person_id
+            type: INTEGER
+        - column:
+            name: date_from
+            type: date
+        - column:
+            name: date_to
+            type: date
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            name: display_contact_person_name_id
+            type: INTEGER
+        - column:
+            name: favorite
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: is_main_contributor
+            type: BOOLEAN
+        - column:
+            name: order_number
+            type: INTEGER
+        - column:
+            name: organisation_unit_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: uris
+            type: JSONB
+        tableName: organisation_unit_contributions
+- changeSet:
+    id: 1786430367509-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_display_organisation_unit_pkey
+            name: display_organisation_unit_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_display_organisation_unit_pkey
+            name: organisation_unit_contribution_id
+            type: INTEGER
+        tableName: organisation_unit_contributions_display_organisation_unit
+- changeSet:
+    id: 1786430367509-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_proofs_pkey
+            name: organisation_unit_contribution_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_proofs_pkey
+            name: proofs_id
+            type: INTEGER
+        tableName: organisation_unit_contributions_proofs
+- changeSet:
+    id: 1786430367509-9
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_contribution_description_pkey
+            name: contribution_description_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_contributions_contribution_description_pkey
+            name: organisation_unit_contribution_id
+            type: INTEGER
+        tableName: organisation_unit_contributions_contribution_description
+- changeSet:
+    id: 1786430367509-10
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_project_contributions_display_project_pkey
+            name: display_project_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_unit_project_contributions_display_project_pkey
+            name: organisation_unit_project_contribution_id
+            type: INTEGER
+        tableName: organisation_unit_project_contributions_display_project
+- changeSet:
+    id: 1786430367509-11
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_keywords_pkey
+            name: keywords_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_keywords_pkey
+            name: person_contribution_id
+            type: INTEGER
+        tableName: person_contributions_keywords
+- changeSet:
+    id: 1786430367509-12
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_proofs_pkey
+            name: person_contribution_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_proofs_pkey
+            name: proofs_id
+            type: INTEGER
+        tableName: person_contributions_proofs
+- changeSet:
+    id: 1786430367509-13
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_project_contribution_display_project_pkey
+            name: display_project_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_project_contribution_display_project_pkey
+            name: person_project_contribution_id
+            type: INTEGER
+        tableName: person_project_contribution_display_project
+- changeSet:
+    id: 1786430367509-14
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: project_relations_source_project_description_pkey
+            name: projects_relation_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: project_relations_source_project_description_pkey
+            name: source_project_description_id
+            type: INTEGER
+        tableName: project_relations_source_project_description
+- changeSet:
+    id: 1786430367509-15
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: project_relations_target_project_description_pkey
+            name: projects_relation_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: project_relations_target_project_description_pkey
+            name: target_project_description_id
+            type: INTEGER
+        tableName: project_relations_target_project_description
+- changeSet:
+    id: 1786430367509-16
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_contact_person_name_id
+        constraintName: organisation_unit_contributio_display_contact_person_name_i_key
+        tableName: organisation_unit_contributions
+- changeSet:
+    id: 1786430367509-17
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_contact_person_name_id
+        constraintName: organisation_unit_project_con_display_contact_person_name_i_key
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-18
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_organisation_unit_id
+        constraintName: organisation_unit_contribution_display_organisation_unit_id_key
+        tableName: organisation_unit_contributions_display_organisation_unit
+- changeSet:
+    id: 1786430367509-19
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: proofs_id
+        constraintName: organisation_unit_contributions_proofs_proofs_id_key
+        tableName: organisation_unit_contributions_proofs
+- changeSet:
+    id: 1786430367509-20
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: contribution_description_id
+        constraintName: organisation_unit_contributions_contribution_description_id_key
+        tableName: organisation_unit_contributions_contribution_description
+- changeSet:
+    id: 1786430367509-21
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_project_id
+        constraintName: organisation_unit_project_contributions__display_project_id_key
+        tableName: organisation_unit_project_contributions_display_project
+- changeSet:
+    id: 1786430367509-22
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: keywords_id
+        constraintName: person_contributions_keywords_keywords_id_key
+        tableName: person_contributions_keywords
+- changeSet:
+    id: 1786430367509-23
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: proofs_id
+        constraintName: person_contributions_proofs_proofs_id_key
+        tableName: person_contributions_proofs
+- changeSet:
+    id: 1786430367509-24
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: display_project_id
+        constraintName: person_project_contribution_display_proj_display_project_id_key
+        tableName: person_project_contribution_display_project
+- changeSet:
+    id: 1786430367509-25
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: source_project_description_id
+        constraintName: project_relations_source_proj_source_project_description_id_key
+        tableName: project_relations_source_project_description
+- changeSet:
+    id: 1786430367509-26
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: target_project_description_id
+        constraintName: project_relations_target_proj_target_project_description_id_key
+        tableName: project_relations_target_project_description
+- changeSet:
+    id: 1786430367509-27
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: organisation_unit_contributions_seq
+        startValue: 1
+- changeSet:
+    id: 1786430367509-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: achieved_fair_points_normalised
+            type: FLOAT8
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: contact_person_id
+            type: INTEGER
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: major_version
+            type: INTEGER
+        tableName: entity_revision
+- changeSet:
+    id: 1786430367509-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: minor_version
+            type: INTEGER
+        tableName: entity_revision
+- changeSet:
+    id: 1786430367509-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_contributions
+- changeSet:
+    id: 1786430367509-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: info_failed_rules
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-34
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: display_contact_person_name_id
+            type: INTEGER
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-35
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1786430367509-36
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1786430367509-37
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_project_contribution
+- changeSet:
+    id: 1786430367509-38
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: organisation_unit_contribution_id
+            type: INTEGER
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-39
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-40
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_event_contributions
+- changeSet:
+    id: 1786430367509-41
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_contributions
+- changeSet:
+    id: 1786430367509-42
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: person_contribution_id
+            type: INTEGER
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-43
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1786430367509-44
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: main_contributor
+            type: BOOLEAN
+        tableName: person_contributions
+- changeSet:
+    id: 1786430367509-45
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: publication_candidate
+            type: BOOLEAN
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-46
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_event_contributions
+- changeSet:
+    id: 1786430367509-47
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1786430367509-48
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_project_contribution
+- changeSet:
+    id: 1786430367509-49
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: is_main_contributor
+            type: BOOLEAN
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-50
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: person_document_contribution
+- changeSet:
+    id: 1786430367509-51
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: main_contributor
+            type: BOOLEAN
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1786430367509-52
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: main_contributor
+            type: BOOLEAN
+        tableName: person_project_contribution
+- changeSet:
+    id: 1786430367509-53
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: quality_score_fair
+            type: FLOAT8
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-54
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: internal_investment
+            type: BOOLEAN
+        tableName: fundings
+- changeSet:
+    id: 1786430367509-55
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: main_contributor
+            type: BOOLEAN
+        tableName: person_event_contributions
+- changeSet:
+    id: 1786430367509-56
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: invited_contributor
+            type: BOOLEAN
+        tableName: person_document_contribution
+- changeSet:
+    id: 1786430367509-57
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: involvement_id
+            type: INTEGER
+        tableName: fundings
+- changeSet:
+    id: 1786430367509-58
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: total_points_fair
+            type: FLOAT8
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-59
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: submitter_id
+            type: INTEGER
+        tableName: funding_applications
+- changeSet:
+    id: 1786430367509-60
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: restoration_warnings
+            type: JSONB
+        tableName: entity_revision
+- changeSet:
+    id: 1786430367509-61
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_id
+            type: VARCHAR(255)
+        tableName: projects
+- changeSet:
+    id: 1786430367509-62
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_contributions
+- changeSet:
+    id: 1786430367509-63
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1786430367509-64
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1786430367509-65
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1786430367509-66
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_project_contribution
+- changeSet:
+    id: 1786430367509-67
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_document_contribution
+- changeSet:
+    id: 1786430367509-68
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: uris
+            type: JSONB
+        tableName: person_event_contributions
+- changeSet:
+    id: 1786430367509-69
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: dimension_scores
+            type: JSONB
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1786430367509-70
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: proofs_id
+        baseTableName: person_contributions_proofs
+        constraintName: fk2bp3cg9c89csitjrcsft9otmf
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: document_files
+        validate: true
+- changeSet:
+    id: 1786430367509-71
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: submitter_id
+        baseTableName: funding_applications
+        constraintName: fk3w73oy09o13y3g6c298dq3xxb
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1786430367509-72
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: contact_person_id
+        baseTableName: organisation_unit_contributions
+        constraintName: fk4uivu6o64b49m0e4t197540mt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1786430367509-73
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_contact_person_name_id
+        baseTableName: organisation_unit_contributions
+        constraintName: fk77musjf4b4tl74286pupikn1k
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_names
+        validate: true
+- changeSet:
+    id: 1786430367509-74
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_project_id
+        baseTableName: person_project_contribution_display_project
+        constraintName: fk84fdqxw458xrui5l6pw95h9mo
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-75
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: contact_person_id
+        baseTableName: organisation_unit_project_contributions
+        constraintName: fk_iyc67ruv39ua7nm9gteto52o4
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1786430367509-76
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_contact_person_name_id
+        baseTableName: organisation_unit_project_contributions
+        constraintName: fk_nk5r7mmiworaeplqy8kx7f6jp
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_names
+        validate: true
+- changeSet:
+    id: 1786430367509-77
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_project_contribution_id
+        baseTableName: person_project_contribution_display_project
+        constraintName: fkbnr45fk8lppgt7oad4us9y11w
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_project_contribution
+        validate: true
+- changeSet:
+    id: 1786430367509-78
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: projects_relation_id
+        baseTableName: project_relations_source_project_description
+        constraintName: fkby34s9dhe3sj8c6p5hg7h1k42
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: project_relations
+        validate: true
+- changeSet:
+    id: 1786430367509-79
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: keywords_id
+        baseTableName: person_contributions_keywords
+        constraintName: fke7u76k8akreuq7tuo5malm6i5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-80
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisation_unit_project_contribution_id
+        baseTableName: organisation_unit_project_contributions_display_project
+        constraintName: fkeg5nb1x30x9pni5tpq2ewx67v
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_unit_project_contributions
+        validate: true
+- changeSet:
+    id: 1786430367509-81
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: source_project_description_id
+        baseTableName: project_relations_source_project_description
+        constraintName: fkf6xe0g5e2d4etb8f9ud8xvamc
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-82
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: target_project_description_id
+        baseTableName: project_relations_target_project_description
+        constraintName: fkjrf937e1lqv70k01fw8f06f21
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-83
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_organisation_unit_id
+        baseTableName: organisation_unit_contributions_display_organisation_unit
+        constraintName: fklx4l9xcj16nj4130ysojbojp2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-84
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: display_project_id
+        baseTableName: organisation_unit_project_contributions_display_project
+        constraintName: fkn767fqvatyl7rvo6wa2l0tapa
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-85
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: contribution_description_id
+        baseTableName: organisation_unit_contributions_contribution_description
+        constraintName: fknqa88snsonbeosnywkfy34yjt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1786430367509-86
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: proofs_id
+        baseTableName: organisation_unit_contributions_proofs
+        constraintName: fknvaoew79bpquhs2b5fuy70wm8
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: document_files
+        validate: true
+- changeSet:
+    id: 1786430367509-87
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: projects_relation_id
+        baseTableName: project_relations_target_project_description
+        constraintName: fkqt23okssqird1jgat7libw1yr
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: project_relations
+        validate: true
+- changeSet:
+    id: 1786430367509-88
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisation_unit_id
+        baseTableName: organisation_unit_contributions
+        constraintName: fkreucqgnv85kdbntmmlimgjlu5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1786430367509-101
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: ou_project_contribution_id
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-102
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: person_project_contribution_id
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-1
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: boolean
+        columnName: favorite
+        tableName: expertise_or_skills
+- changeSet:
+    id: 1786430367509-2
+    author: milospopovic (generated)
+    changes:
+    - dropIndex:
+        indexName: idx_funding_parts_ou_cont
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-3
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: organisation_unit_contribution_id
+        indexName: idx_funding_parts_ou_cont
+        tableName: funding_parts
+        unique: false
+- changeSet:
+    id: 1786430367509-4
+    author: milospopovic (generated)
+    changes:
+    - dropIndex:
+        indexName: idx_funding_parts_person_cont
+        tableName: funding_parts
+- changeSet:
+    id: 1786430367509-5
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_contribution_id
+        indexName: idx_funding_parts_person_cont
+        tableName: funding_parts
+        unique: false
+
