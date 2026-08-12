@@ -11,26 +11,32 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.*;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.project.converter.project.OrganisationUnitProjectContributionConverter;
+import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
 import rs.teslaris.project.converter.project.ProjectConverter;
+import rs.teslaris.project.converter.project.ProjectsRelationConverter;
+import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
-import rs.teslaris.project.model.project.ProjectsRelation;
-import rs.teslaris.project.repository.project.*;
+import rs.teslaris.project.repository.project.ProjectDocumentRepository;
+import rs.teslaris.project.repository.project.ProjectEventRepository;
+import rs.teslaris.project.repository.project.ProjectRepository;
+import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -54,8 +60,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final SearchService<ProjectIndex> searchService;
 
-    private final OrganisationUnitProjectContributionRepository
-        organisationUnitProjectContributionRepository;
+    private final OrganisationUnitProjectContributionService
+        organisationUnitProjectContributionService;
 
     private final ProjectDocumentRepository projectDocumentRepository;
 
@@ -65,11 +71,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final PersonProjectContributionService personProjectContributionService;
 
-    private final OrganisationUnitService organisationUnitService;
-
-    private final PersonService personService;
-
-    private final ProjectsRelationRepository projectsRelationRepository;
+    private final ProjectsRelationService projectsRelationService;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -102,9 +104,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         var savedProject = save(newProject);
 
-        buildPersons(savedProject, projectDTO);
-        buildOrganisations(savedProject, projectDTO);
-        buildRelatedProjects(savedProject, projectDTO);
+        buildCollections(savedProject, projectDTO);
 
         projectIndexRepository.save(
             indexCommonFields(savedProject, new ProjectIndex()));
@@ -242,86 +242,95 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getResearchAreas().clear();
     }
 
-    private void buildPersons(Project project, ProjectDTO projectDTO) {
+    private void buildCollections(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getPersons())) {
             project.setPersons(new HashSet<>());
         }
 
         projectDTO.getPersons().forEach(personDto -> project.getPersons().add(
                 personProjectContributionService.createContribution(personDto, project)));
-    }
 
-    private void buildOrganisations(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getOrganisations())) {
             project.setOrganisations(new HashSet<>());
         }
 
-        projectDTO.getConsortium().forEach(organisationDto -> {
-            var contribution = new OrganisationUnitProjectContribution();
-
-            if (Objects.nonNull(organisationDto.getOrganisationUnitId())) {
-                contribution.setOrganisationUnit(
-                        organisationUnitService.findOne(organisationDto.getOrganisationUnitId()));
-            } else {
-                contribution.setDisplayOrganisationUnit(
-                        multilingualContentService.getMultilingualContent(
-                                organisationDto.getDisplayOrganisationUnit()));
-            }
-
-            contribution.setContributionType(organisationDto.getContributionType());
-            contribution.setContributionDescription(
-                    multilingualContentService.getMultilingualContent(
-                            organisationDto.getContributionDescription()));
-            contribution.setOrderNumber(organisationDto.getOrderNumber());
-            contribution.setApproveStatus(ApproveStatus.APPROVED);
-            contribution.setDateFrom(organisationDto.getDateFrom());
-            contribution.setDateTo(organisationDto.getDateTo());
-            contribution.setUris(organisationDto.getUris());
-            contribution.setMainContributor(
-                    Objects.requireNonNullElse(organisationDto.getIsMainContributor(), false));
-            contribution.setFavorite(Objects.requireNonNullElse(organisationDto.getFavorite(), false));
-
-            if (Objects.nonNull(organisationDto.getContactPersonId())) {
-                contribution.setContactPerson(
-                        personService.findOne(organisationDto.getContactPersonId()));
-            }
-
-            contribution.setDisplayProject(
-                    multilingualContentService.getMultilingualContent(organisationDto.getDisplayProject()));
-            contribution.setProject(project);
-
-            // Adds saved contribution entity with id != null (if this part is omitted the Set will treat
-            // each entity with null value id as the same one, thus overwriting/ignoring it each time)
-            project.getOrganisations().add(organisationUnitProjectContributionRepository.save(contribution));
+        projectDTO.getOrganisations().forEach(organisationDto -> {
+            project.getOrganisations().add(organisationUnitProjectContributionService.createContribution(organisationDto, project));
         });
-    }
 
-    private void buildRelatedProjects(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getRelatedProjects())) {
             project.setRelatedProjects(new HashSet<>());
         }
 
         projectDTO.getRelations().forEach(relationDto -> {
-            var relation = new ProjectsRelation();
-            relation.setRelationType(relationDto.getRelationType());
-            relation.setDateFrom(relationDto.getDateFrom());
-            relation.setDateTo(relationDto.getDateTo());
-            relation.setSourceProjectDescription(
-                    multilingualContentService.getMultilingualContent(
-                            relationDto.getSourceProjectDescription()));
-            relation.setTargetProjectDescription(
-                    multilingualContentService.getMultilingualContent(
-                            relationDto.getTargetProjectDescription()));
-
-            relation.setSourceProject(project);
-            if (Objects.nonNull(relationDto.getTargetProjectId())) {
-                relation.setTargetProject(findOne(relationDto.getTargetProjectId()));
-            }
-
-            // Adds saved relation entity with id != null (if this part is omitted the Set will treat
-            // each entity with null value id as the same one, thus overwriting/ignoring it each time)
-            project.getRelatedProjects().add(projectsRelationRepository.save(relation));
+            project.getRelatedProjects().add(projectsRelationService.createRelation(relationDto, project));
         });
+    }
+
+    @Override
+    @Transactional
+    public PersonProjectContributionDTO addPerson(Integer projectId, PersonProjectContributionDTO personDto) {
+        var project = findOne(projectId);
+        var person = personProjectContributionService.createContribution(personDto, project);
+
+        project.getPersons().add(person);
+        save(project);
+
+        return PersonProjectContributionConverter.toDTO(person);
+    }
+
+    @Override
+    @Transactional
+    public void removePerson(Integer projectId, Integer personId) {
+        var project = findOne(projectId);
+        var person = personProjectContributionService.findOne(personId);
+
+        project.getPersons().remove(person);
+        save(project);
+    }
+
+    @Override
+    @Transactional
+    public OrganisationUnitProjectContributionDTO addOrganisation(Integer projectId, OrganisationUnitProjectContributionDTO organisationDto) {
+        var project = findOne(projectId);
+        var organisation = organisationUnitProjectContributionService.createContribution(organisationDto, project);
+
+        project.getOrganisations().add(organisation);
+        save(project);
+
+        return OrganisationUnitProjectContributionConverter.toDTO(organisation);
+    }
+
+    @Override
+    @Transactional
+    public void removeOrganisation(Integer projectId, Integer organisationId) {
+        var project = findOne(projectId);
+        var organisation = organisationUnitProjectContributionService.findOne(organisationId);
+
+        project.getOrganisations().remove(organisation);
+        save(project);
+    }
+
+    @Override
+    @Transactional
+    public ProjectsRelationDTO addProjectRelation(Integer projectId, ProjectsRelationDTO relationDto) {
+        var project = findOne(projectId);
+        var relation = projectsRelationService.createRelation(relationDto, project);
+
+        project.getRelatedProjects().add(relation);
+        save(project);
+
+        return ProjectsRelationConverter.toDTO(relation);
+    }
+
+    @Override
+    @Transactional
+    public void removeProjectRelation(Integer projectId, Integer relationId) {
+        var project = findOne(projectId);
+        var relation = projectsRelationService.findOne(relationId);
+
+        project.getRelatedProjects().remove(relation);
+        save(project);
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {
@@ -393,18 +402,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         index.setCoordinatorNameOtherSortable(index.getCoordinatorNameOther());
         index.setCoordinatorId(coordinator.getId());
     }
-
-    // TODO: Add team member
-    // TODO: Remove team member
-    // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
-
-    // TODO: Add consortium
-    // TODO: Remove consortium
-    // TODO: Update consortium
-
-    // TODO: Add related project
-    // TODO: Remove related project
-    // TODO: Update related project
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
                                          LocalDate dateTo, boolean onlyActive, List<ProjectStatus> allowedStatuses) {
