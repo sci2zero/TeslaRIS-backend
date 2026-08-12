@@ -78,7 +78,8 @@ public class Project extends BaseEntity {
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @OneToMany(mappedBy = "sourceProject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sourceProject", fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+        orphanRemoval = true)
     @BatchSize(size = 50)
     private Set<ProjectsRelation> relatedProjects = new HashSet<>();
 
