@@ -26,7 +26,9 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.document.PublicationStatus;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -407,6 +409,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         if (Objects.nonNull(publication.getProceedings())) {
             publication.setDocumentDate(publication.getProceedings().getDocumentDate());
+
+            if (!FlexibleDate.isDatePresentAndValid(publication.getDocumentDate())) {
+                publication.setPublicationStatus(PublicationStatus.IN_PRINT);
+            } else {
+                publication.setPublicationStatus(PublicationStatus.PUBLISHED);
+            }
         }
 
         publication.setSection(

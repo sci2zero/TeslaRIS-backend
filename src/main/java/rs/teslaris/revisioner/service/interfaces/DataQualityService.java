@@ -14,5 +14,10 @@ public interface DataQualityService {
     List<DataQualityAssessmentDTO> findLatestAssessmentsForEntity(String entityType,
                                                                   Integer entityId);
 
+    List<DataQualityAssessmentDTO> findAssessmentsForEntityVersion(String entityType,
+                                                                   Integer entityId,
+                                                                   Integer majorVersion,
+                                                                   Integer minorVersion);
+
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
 }

@@ -72,8 +72,8 @@
         "en": "Missing title"
       },
       "message": {
-        "sr": "Polje naslov nedostaje u izlaznom zapisu. Polje naslov je obavezno.",
-        "sr-cyr": "Поље наслов недостаје у излазном запису. Поље наслов је обавезно.",
+        "sr": "Polje naslov nedostaje u publikaciji. Polje naslov je obavezno.",
+        "sr-cyr": "Поље наслов недостаје у публикацији. Поље наслов је обавезно.",
         "en": "The title field is missing in output record. The title field is mandatory."
       },
       "target": "Document.title",
@@ -90,8 +90,8 @@
         "en": "Title too long"
       },
       "message": {
-        "sr": "Naslov \"{0}\" u izlaznom zapisu prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
-        "sr-cyr": "Наслов \"{0}\" у излазном запису прелази максималну дозвољену дужину од {1} карактера.",
+        "sr": "Naslov \"{0}\" u publikaciji prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Наслов \"{0}\" у публикацији прелази максималну дозвољену дужину од {1} карактера.",
         "en": "The title \"{0}\" in output record exceeds the maximum allowed length of {1} characters."
       },
       "target": "Document.title",
@@ -111,8 +111,8 @@
         "en": "Invalid title format"
       },
       "message": {
-        "sr": "Naslov \"{0}\" u izlaznom zapisu sadrži nedozvoljene karaktere.",
-        "sr-cyr": "Наслов \"{0}\" у излазном запису садржи недозвољене карактере.",
+        "sr": "Naslov \"{0}\" u publikaciji sadrži nedozvoljene karaktere.",
+        "sr-cyr": "Наслов \"{0}\" у публикацији садржи недозвољене карактере.",
         "en": "The title \"{0}\" in output record contains invalid characters."
       },
       "target": "Document.title",
@@ -132,8 +132,8 @@
         "en": "Missing description"
       },
       "message": {
-        "sr": "Opis izlaznog zapisa mora biti unet radi usklađenosti sa FAIR principima.",
-        "sr-cyr": "Опис излазног записа мора бити унет ради усклађености са FAIR принципима.",
+        "sr": "Opis publikacije mora biti unet radi usklađenosti sa FAIR principima.",
+        "sr-cyr": "Опис публикације мора бити унет ради усклађености са FAIR принципима.",
         "en": "The output description for record must be informed to comply with the FAIR Principles."
       },
       "target": "Document.description",
@@ -150,8 +150,8 @@
         "en": "Missing contributors"
       },
       "message": {
-        "sr": "Polje autori/saradnici nedostaje u izlaznom zapisu. Polje je obavezno.",
-        "sr-cyr": "Поље аутори/сарадници недостаје у излазном запису. Поље је обавезно.",
+        "sr": "Polje autori/saradnici nedostaje u publikaciji. Polje je obavezno.",
+        "sr-cyr": "Поље аутори/сарадници недостаје у публикацији. Поље је обавезно.",
         "en": "The contributors field is missing in output record. The contributors field is mandatory."
       },
       "target": "Document.contributors",
@@ -168,8 +168,8 @@
         "en": "No managed contributor"
       },
       "message": {
-        "sr": "Najmanje jedna upravljana osoba mora biti povezana sa izlaznim zapisom.",
-        "sr-cyr": "Најмање једна управљана особа мора бити повезана са излазним записом.",
+        "sr": "Najmanje jedna upravljana osoba mora biti povezana sa publikacijom.",
+        "sr-cyr": "Најмање једна управљана особа мора бити повезана са публикацијом.",
         "en": "At least one managed person should be linked with output record."
       },
       "target": "Document.contributors",
@@ -186,8 +186,8 @@
         "en": "Missing publication date"
       },
       "message": {
-        "sr": "Datum publikovanja nedostaje u izlaznom zapisu. Polje je obavezno.",
-        "sr-cyr": "Датум публиковања недостаје у излазном запису. Поље је обавезно.",
+        "sr": "Datum publikovanja nedostaje u publikaciji. Polje je obavezno.",
+        "sr-cyr": "Датум публиковања недостаје у публикацији. Поље је обавезно.",
         "en": "The output publication date is missing in output record. The publication date field is mandatory."
       },
       "target": "Document.date",
@@ -204,8 +204,8 @@
         "en": "Publication date before configured year"
       },
       "message": {
-        "sr": "Datum publikovanja ({0}) u izlaznom zapisu ne može biti pre {1}. godine.",
-        "sr-cyr": "Датум публиковања ({0}) у излазном запису не може бити пре {1}. године.",
+        "sr": "Datum publikovanja ({0}) u publikaciji ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум публиковања ({0}) у публикацији не може бити пре {1}. године.",
         "en": "The output publication date ({0}) in output record cannot be before the year {1}."
       },
       "target": "Document.date",
@@ -225,8 +225,8 @@
         "en": "Publication date too far in future"
       },
       "message": {
-        "sr": "Datum publikovanja ({0}) u izlaznom zapisu može biti najviše {1} godina u budućnosti.",
-        "sr-cyr": "Датум публиковања ({0}) у излазном запису може бити највише {1} година у будућности.",
+        "sr": "Datum publikovanja ({0}) u publikaciji može biti najviše {1} godina u budućnosti.",
+        "sr-cyr": "Датум публиковања ({0}) у публикацији може бити највише {1} година у будућности.",
         "en": "The output publication date ({0}) in output record can only be at most {1} years in the future."
       },
       "target": "Document.date",
@@ -246,8 +246,8 @@
         "en": "Invalid publication date format"
       },
       "message": {
-        "sr": "Datum publikovanja \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
-        "sr-cyr": "Датум публиковања \"{0}\" у излазном запису није у исправном формату.",
+        "sr": "Datum publikovanja \"{0}\" u publikaciji nije u ispravnom formatu.",
+        "sr-cyr": "Датум публиковања \"{0}\" у публикацији није у исправном формату.",
         "en": "The publication date \"{0}\" in output record is not in a valid format."
       },
       "target": "Document.date",
@@ -264,8 +264,8 @@
         "en": "Missing DOI"
       },
       "message": {
-        "sr": "DOI nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
-        "sr-cyr": "DOI недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "sr": "DOI nedostaje u publikaciji. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "DOI недостаје у публикацији. Иако није обавезан, препоручен је.",
         "en": "The DOI field is missing in output record. Although the DOI field is not mandatory, it is recommended."
       },
       "target": "Document.doi",
@@ -282,8 +282,8 @@
         "en": "DOI too short"
       },
       "message": {
-        "sr": "DOI \"{0}\" u izlaznom zapisu mora sadržati najmanje {1} karaktera.",
-        "sr-cyr": "DOI \"{0}\" у излазном запису мора садржати најмање {1} карактера.",
+        "sr": "DOI \"{0}\" u publikaciji mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у публикацији мора садржати најмање {1} карактера.",
         "en": "The DOI \"{0}\" in output record must contain at least {1} characters."
       },
       "target": "Document.doi",
@@ -303,8 +303,8 @@
         "en": "DOI too long"
       },
       "message": {
-        "sr": "DOI \"{0}\" u izlaznom zapisu prelazi maksimalnu dužinu od {1} karaktera.",
-        "sr-cyr": "DOI \"{0}\" у излазном запису прелази максималну дужину од {1} карактера.",
+        "sr": "DOI \"{0}\" u publikaciji prelazi maksimalnu dužinu od {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у публикацији прелази максималну дужину од {1} карактера.",
         "en": "The DOI \"{0}\" in output record exceeds the maximum allowed length of {1} characters."
       },
       "target": "Document.doi",
@@ -324,8 +324,8 @@
         "en": "Invalid DOI format"
       },
       "message": {
-        "sr": "DOI \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
-        "sr-cyr": "DOI \"{0}\" у излазном запису није у исправном формату.",
+        "sr": "DOI \"{0}\" u publikaciji nije u ispravnom formatu.",
+        "sr-cyr": "DOI \"{0}\" у публикацији није у исправном формату.",
         "en": "The DOI \"{0}\" in output record is not in a valid format."
       },
       "target": "Document.doi",
@@ -345,8 +345,8 @@
         "en": "Duplicate DOI"
       },
       "message": {
-        "sr": "DOI \"{0}\" u izlaznom zapisu već postoji u drugom zapisu.",
-        "sr-cyr": "DOI \"{0}\" у излазном запису већ постоји у другом запису.",
+        "sr": "DOI \"{0}\" u publikaciji već postoji u drugom zapisu.",
+        "sr-cyr": "DOI \"{0}\" у публикацији већ постоји у другом запису.",
         "en": "The DOI \"{0}\" in output record must be unique."
       },
       "target": "Document.doi",
@@ -363,8 +363,8 @@
         "en": "DOI not resolvable"
       },
       "message": {
-        "sr": "DOI \"{0}\" u izlaznom zapisu nije razrešiv putem DOI sistema.",
-        "sr-cyr": "DOI \"{0}\" у излазном запису није разрешив путем DOI система.",
+        "sr": "DOI \"{0}\" u publikaciji nije razrešiv putem DOI sistema.",
+        "sr-cyr": "DOI \"{0}\" у публикацији није разрешив путем DOI система.",
         "en": "The DOI \"{0}\" in output record must be resolvable through DOI.org."
       },
       "target": "Document.doi",
@@ -381,8 +381,8 @@
         "en": "Missing Handle identifier"
       },
       "message": {
-        "sr": "Handle identifikator nedostaje u izlaznom zapisu. Iako nije obavezan, preporučen je.",
-        "sr-cyr": "Handle идентификатор недостаје у излазном запису. Иако није обавезан, препоручен је.",
+        "sr": "Handle identifikator nedostaje u publikaciji. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "Handle идентификатор недостаје у публикацији. Иако није обавезан, препоручен је.",
         "en": "The Handle field is missing in output record. Although the Handle field is not mandatory, it is recommended."
       },
       "target": "Document.handle",
@@ -399,8 +399,8 @@
         "en": "Invalid Handle format"
       },
       "message": {
-        "sr": "Handle \"{0}\" u izlaznom zapisu nije u ispravnom formatu.",
-        "sr-cyr": "Handle \"{0}\" у излазном запису није у исправном формату.",
+        "sr": "Handle \"{0}\" u publikaciji nije u ispravnom formatu.",
+        "sr-cyr": "Handle \"{0}\" у публикацији није у исправном формату.",
         "en": "The Handle \"{0}\" in output record is not in a valid format."
       },
       "target": "Document.handle",
@@ -420,8 +420,8 @@
         "en": "Duplicate Handle"
       },
       "message": {
-        "sr": "Handle \"{0}\" u izlaznom zapisu mora biti jedinstven.",
-        "sr-cyr": "Handle \"{0}\" у излазном запису мора бити јединствен.",
+        "sr": "Handle \"{0}\" u publikaciji mora biti jedinstven.",
+        "sr-cyr": "Handle \"{0}\" у публикацији мора бити јединствен.",
         "en": "The Handle \"{0}\" in output record must be unique."
       },
       "target": "Document.handle",
@@ -438,8 +438,8 @@
         "en": "Handle not resolvable"
       },
       "message": {
-        "sr": "Handle \"{0}\" u izlaznom zapisu nije razrešiv.",
-        "sr-cyr": "Handle \"{0}\" у излазном запису није разрешив.",
+        "sr": "Handle \"{0}\" u publikaciji nije razrešiv.",
+        "sr-cyr": "Handle \"{0}\" у публикацији није разрешив.",
         "en": "The Handle \"{0}\" in output record must be resolvable."
       },
       "target": "Document.handle",
@@ -498,8 +498,8 @@
         "en": "Missing identifier"
       },
       "message": {
-        "sr": "Izlazni zapis mora sadržati najmanje jedan identifikator.",
-        "sr-cyr": "Излазни запис мора садржати најмање један идентификатор.",
+        "sr": "Publikacija mora sadržati najmanje jedan identifikator.",
+        "sr-cyr": "Публикација мора садржати најмање један идентификатор.",
         "en": "The output record must contain at least one identifier."
       },
       "target": "Document.identifier",
@@ -516,8 +516,8 @@
         "en": "Missing open access field"
       },
       "message": {
-        "sr": "Polje 'Otvoreni pristup' nije definisano za izlazni zapis.",
-        "sr-cyr": "Поље 'Отворени приступ' није дефинисано за излазни запис.",
+        "sr": "Polje 'Otvoreni pristup' nije definisano za publikaciju.",
+        "sr-cyr": "Поље 'Отворени приступ' није дефинисано за публикацију.",
         "en": "The 'Open access' field is missing in output record. Although not mandatory, it is recommended."
       },
       "target": "Document.access",
@@ -1149,8 +1149,8 @@
         "en": "Missing research areas"
       },
       "message": {
-        "sr": "Nijedna istraživačka oblast nije povezana sa izlaznim zapisom. Iako nije obavezna, preporučena je.",
-        "sr-cyr": "Ниједна истраживачка област није повезана са излазним записом. Иако није обавезна, препоручена је.",
+        "sr": "Nijedna istraživačka oblast nije povezana sa publikacijom. Iako nije obavezna, preporučena je.",
+        "sr-cyr": "Ниједна истраживачка област није повезана са публикацијом. Иако није обавезна, препоручена је.",
         "en": "There is no research area linked with output record. Although research areas are not mandatory, they are recommended."
       },
       "target": "Document.researchAreas",

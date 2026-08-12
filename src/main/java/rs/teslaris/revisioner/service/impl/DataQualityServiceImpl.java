@@ -101,6 +101,23 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<DataQualityAssessmentDTO> findAssessmentsForEntityVersion(String entityType,
+                                                                          Integer entityId,
+                                                                          Integer majorVersion,
+                                                                          Integer minorVersion) {
+        var entityRevision = entityRevisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                entityType, entityId, majorVersion, minorVersion)
+            .orElseThrow(() -> new NotFoundException(
+                String.format("Revision %d.%d of %s with ID %d does not exist.",
+                    majorVersion, minorVersion, entityType, entityId)));
+
+        return entityRevision.getAssessments().stream().map(DataQualityAssessmentConverter::toDTO)
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DataQualityProfileDTO> listAllDataQualityProfiles() {
         var allProfiles = new ArrayList<DataQualityProfileDTO>();
 

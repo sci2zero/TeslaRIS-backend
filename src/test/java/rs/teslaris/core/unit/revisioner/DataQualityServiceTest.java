@@ -172,6 +172,99 @@ public class DataQualityServiceTest {
             .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
     }
 
+    private DataQualityAssessment fullyScoredAssessment(Integer majorVersion,
+                                                        Integer minorVersion) {
+        var revision = EntityRevision.builder()
+            .entityType(ENTITY_TYPE)
+            .entityId(1)
+            .majorVersion(majorVersion)
+            .minorVersion(minorVersion)
+            .revisionTimestamp(Instant.now())
+            .build();
+
+        var assessment = DataQualityAssessment.builder()
+            .revision(revision)
+            .profileName("PTCRIS")
+            .profileVersion("1.3")
+            .engineVersion("1.0.0")
+            .valid(true)
+            .publicationCandidate(true)
+            .passedRules(42)
+            .infoFailedRules(0)
+            .warningFailedRules(1)
+            .errorFailedRules(1)
+            .totalPoints(100.0)
+            .achievedPointsNormalised(91.3)
+            .qualityScore(91.3)
+            .totalPointsFair(50.0)
+            .achievedFairPointsNormalised(43.5)
+            .qualityScoreFair(87.0)
+            .startedAt(Instant.now())
+            .finishedAt(Instant.now())
+            .issues(List.of())
+            .build();
+
+        revision.getAssessments().add(assessment);
+
+        return assessment;
+    }
+
+    @Test
+    public void shouldReturnAssessmentsForRequestedVersion() {
+        // given
+        var assessment = fullyScoredAssessment(4, 2);
+
+        when(entityRevisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                ENTITY_TYPE, 1, 4, 2)).thenReturn(Optional.of(assessment.getRevision()));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getTargetTypesFromDocumentType(
+                    any()))
+                .thenReturn(List.of("Document"));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getRulesForTarget(
+                    anyString(), anyString(), any()))
+                .thenReturn(List.of());
+
+            // when
+            var result = dataQualityService.findAssessmentsForEntityVersion(ENTITY_TYPE, 1, 4, 2);
+
+            // then
+            assertEquals(1, result.size());
+
+            var assessmentDTO = result.getFirst();
+            assertEquals("PTCRIS", assessmentDTO.profileName());
+            assertEquals("1.3", assessmentDTO.profileVersion());
+            assertEquals(91.3, assessmentDTO.qualityScore());
+            assertEquals(87.0, assessmentDTO.qualityScoreFair());
+            assertEquals(50.0, assessmentDTO.totalPointsFair());
+            assertEquals(43.5, assessmentDTO.achievedFairPoints());
+            assertEquals(42, assessmentDTO.passedRules());
+            assertTrue(assessmentDTO.valid());
+        }
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenRequestedVersionDoesNotExist() {
+        // given
+        when(entityRevisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                ENTITY_TYPE, 1, 9, 9)).thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> dataQualityService.findAssessmentsForEntityVersion(ENTITY_TYPE, 1, 9, 9));
+
+        // then (NotFoundException should be thrown)
+        verify(entityRevisionRepository)
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                ENTITY_TYPE, 1, 9, 9);
+    }
+
     @Test
     public void shouldReturnEmptyProfileListWhenNoProfilesAreConfigured() {
         // given

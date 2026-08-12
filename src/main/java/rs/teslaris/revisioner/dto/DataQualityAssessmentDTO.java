@@ -24,9 +24,15 @@ public record DataQualityAssessmentDTO(
 
     double qualityScore,
 
+    double qualityScoreFair,
+
     double totalPoints,
 
+    double totalPointsFair,
+
     double achievedPoints,
+
+    double achievedFairPoints,
 
     int passedRules,
 

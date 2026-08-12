@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -21,12 +22,14 @@ public class Venue {
     protected String localIdentifier;
 
     @JsonProperty("entity_type")
+    @Builder.Default
     protected String entityType = "venue";
 
     @JsonProperty("type")
     protected String type;
 
     @JsonProperty("identifiers")
+    @Builder.Default
     protected List<SKGIFIdentifier> identifiers = new ArrayList<>();
 
     @JsonProperty("title")

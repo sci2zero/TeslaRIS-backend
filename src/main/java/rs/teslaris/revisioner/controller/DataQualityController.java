@@ -33,6 +33,16 @@ public class DataQualityController {
         return dataQualityService.findLatestAssessmentsForEntity(entityType, entityId);
     }
 
+    @GetMapping(value = "/assessments/{entityType}/{entityId}/{majorVersion}/{minorVersion}",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<DataQualityAssessmentDTO> findForVersion(@PathVariable String entityType,
+                                                         @PathVariable Integer entityId,
+                                                         @PathVariable Integer majorVersion,
+                                                         @PathVariable Integer minorVersion) {
+        return dataQualityService.findAssessmentsForEntityVersion(entityType, entityId,
+            majorVersion, minorVersion);
+    }
+
     @GetMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<DataQualityProfileDTO> listAllPolicies() {
         return dataQualityService.listAllDataQualityProfiles();

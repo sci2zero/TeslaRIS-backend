@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,9 +27,11 @@ public class ResearchProduct {
     private String localIdentifier;
 
     @JsonProperty("identifiers")
+    @Builder.Default
     private List<SKGIFIdentifier> identifiers = new ArrayList<>();
 
     @JsonProperty("entity_type")
+    @Builder.Default
     private String entityType = "product";
 
     @JsonProperty("titles")
@@ -44,9 +47,11 @@ public class ResearchProduct {
     private List<SKGIFTopic> topics;
 
     @JsonProperty("contributions")
+    @Builder.Default
     private List<SKGIFContribution> contributions = new ArrayList<>();
 
     @JsonProperty("manifestations")
+    @Builder.Default
     private List<Manifestation> manifestations = new ArrayList<>();
 
     @JsonProperty("relevant_organisations")
