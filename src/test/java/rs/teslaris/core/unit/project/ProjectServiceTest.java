@@ -23,7 +23,9 @@ import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.project.*;
+import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
+import rs.teslaris.project.repository.project.ProjectsRelationRepository;
 import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
@@ -49,9 +51,6 @@ public class ProjectServiceTest {
     private ResearchAreaService researchAreaService;
 
     @Mock
-    private OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
-
-    @Mock
     private CurrencyService currencyService;
 
     @Mock
@@ -70,7 +69,13 @@ public class ProjectServiceTest {
     private OrganisationUnitService organisationUnitService;
 
     @Mock
+    private OrganisationUnitProjectContributionRepository organisationUnitProjectContributionRepository;
+
+    @Mock
     private PersonService personService;
+
+    @Mock
+    private ProjectsRelationRepository projectsRelationRepository;
 
     @Test
     public void shouldReturnEmptyPageWhenNoProjectsFound() {
@@ -479,60 +484,6 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void shouldUpdateProjectAndRebuildTeam() {
-        // given
-        var projectId = 1;
-        var existingProject = new Project();
-        existingProject.setId(projectId);
-        existingProject.setName(new HashSet<>());
-        existingProject.setDescription(new HashSet<>());
-        existingProject.setNameAbbreviation(new HashSet<>());
-        existingProject.setKeywords(new HashSet<>());
-        existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setPersons(new HashSet<>());
-        existingProject.setStatus(ProjectStatus.ONGOING);
-        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
-        existingProject.setResearchType(ProjectResearchType.INNOVATION);
-
-        var projectDTO = new ProjectDTO();
-        projectDTO.setName(List.of());
-        projectDTO.setDescription(List.of());
-        projectDTO.setNameAbbreviation(List.of());
-        projectDTO.setKeywords(List.of());
-        projectDTO.setResearchAreasId(Set.of());
-        projectDTO.setStatus(ProjectStatus.ONGOING);
-        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
-        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
-        projectDTO.setDateFrom(LocalDate.now());
-        projectDTO.setDateTo(LocalDate.now().plusYears(1));
-        projectDTO.setPersons(List.of(
-                new PersonProjectContributionDTO(),
-                new PersonProjectContributionDTO()
-        ));
-
-        var projectIndex = new ProjectIndex();
-        projectIndex.setDatabaseId(projectId);
-
-        when(projectRepository.findById(projectId))
-            .thenReturn(Optional.of(existingProject));
-        when(multilingualContentService.getMultilingualContent(anyList()))
-            .thenReturn(Set.of(new MultiLingualContent()));
-        when(researchAreaService.getResearchAreasByIds(anyList()))
-            .thenReturn(List.of());
-        when(personProjectContributionService.createContribution(any(), any()))
-            .thenReturn(new PersonProjectContribution());
-        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-            .thenReturn(Optional.of(projectIndex));
-
-        // when
-        projectService.updateProject(projectId, projectDTO);
-
-        // then
-        verify(personProjectContributionService, times(2))
-            .createContribution(any(), any());
-    }
-
-    @Test
     public void shouldUpdateProjectWithEmptyTeam() {
         // given
         var projectId = 1;
@@ -622,64 +573,6 @@ public class ProjectServiceTest {
         verify(projectRepository).save(any(Project.class));
     }
 
-    @Test
-    public void shouldUpdateProjectAndRebuildRelations() {
-        // given
-        var projectId = 1;
-        var existingProject = new Project();
-        existingProject.setId(projectId);
-        existingProject.setName(new HashSet<>());
-        existingProject.setDescription(new HashSet<>());
-        existingProject.setNameAbbreviation(new HashSet<>());
-        existingProject.setKeywords(new HashSet<>());
-        existingProject.setResearchAreas(new HashSet<>());
-        existingProject.setPersons(new HashSet<>());
-        existingProject.setRelatedProjects(new HashSet<>());
-        existingProject.setStatus(ProjectStatus.ONGOING);
-        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
-        existingProject.setResearchType(ProjectResearchType.INNOVATION);
-
-        var projectDTO = new ProjectDTO();
-        projectDTO.setName(List.of());
-        projectDTO.setDescription(List.of());
-        projectDTO.setNameAbbreviation(List.of());
-        projectDTO.setKeywords(List.of());
-        projectDTO.setResearchAreasId(Set.of());
-        projectDTO.setStatus(ProjectStatus.ONGOING);
-        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
-        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
-        projectDTO.setDateFrom(LocalDate.now());
-        projectDTO.setDateTo(LocalDate.now().plusYears(1));
-
-        var relation = new ProjectsRelationDTO();
-        relation.setRelationType(ProjectsRelationType.PREDECESSOR);
-        relation.setDateFrom(LocalDate.now());
-        relation.setDateTo(LocalDate.now().plusYears(1));
-        relation.setTargetProjectId(2);
-        projectDTO.setRelations(List.of(relation));
-
-        var projectIndex = new ProjectIndex();
-        projectIndex.setDatabaseId(projectId);
-
-        when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(existingProject));
-        when(projectRepository.findById(2))
-                .thenReturn(Optional.of(new Project()));
-        when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
-        when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
-        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
-                .thenReturn(Optional.of(projectIndex));
-
-        // when
-        projectService.updateProject(projectId, projectDTO);
-
-        // then
-        verify(projectRepository).findById(2);
-        verify(projectIndexRepository).save(any(ProjectIndex.class));
-        assertEquals(1, existingProject.getRelatedProjects().size());
-    }
     private ProjectIndex projectIndex() {
         var idx = new ProjectIndex();
         idx.setDatabaseId(1);

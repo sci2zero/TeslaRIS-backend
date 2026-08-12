@@ -96,14 +96,16 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     public Funding createFunding(FundingDTO fundingDTO) {
         var newFunding = new Funding();
 
-        setCommonFields(newFunding, fundingDTO, true);
+        setCommonFields(newFunding, fundingDTO);
 
-        var savedFundingCall = save(newFunding);
+        var savedFunding = save(newFunding);
+
+        buildFundingParts(savedFunding, fundingDTO);
 
         fundingIndexRepository.save(
-            indexCommonFields(savedFundingCall, new FundingIndex()));
+            indexCommonFields(savedFunding, new FundingIndex()));
 
-        return savedFundingCall;
+        return savedFunding;
     }
 
     @Override
@@ -113,7 +115,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var fundingToUpdate = findOne(fundingId);
 
         clearCommonFields(fundingToUpdate);
-        setCommonFields(fundingToUpdate, fundingDTO, false);
+        setCommonFields(fundingToUpdate, fundingDTO);
 
         fundingIndexRepository.findFundingIndexByDatabaseId(fundingId)
             .ifPresent(index -> {
@@ -161,7 +163,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         save(fundingCall);
     }
 
-    private void setCommonFields(Funding funding, FundingDTO fundingDTO, boolean isCreate) {
+    private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
             fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
@@ -240,10 +242,6 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
         funding.setInternalInvestment(fundingDTO.getInternalInvestment());
-
-        if (isCreate) {
-            buildFundingParts(funding, fundingDTO);
-        }
     }
 
     private void buildFundingParts(Funding funding,

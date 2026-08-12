@@ -20,8 +20,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.ProjectConverter;
-import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
@@ -30,10 +28,7 @@ import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.model.project.ProjectsRelation;
-import rs.teslaris.project.repository.project.ProjectDocumentRepository;
-import rs.teslaris.project.repository.project.ProjectEventRepository;
-import rs.teslaris.project.repository.project.ProjectRepository;
-import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.repository.project.*;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
@@ -42,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,10 +54,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final SearchService<ProjectIndex> searchService;
 
-    private final OrganisationUnitProjectContributionService
-        organisationUnitProjectContributionService;
+    private final OrganisationUnitProjectContributionRepository
+        organisationUnitProjectContributionRepository;
+
     private final ProjectDocumentRepository projectDocumentRepository;
+
     private final IndexBulkUpdateService indexBulkUpdateService;
+
     private final ProjectEventRepository projectEventRepository;
 
     private final PersonProjectContributionService personProjectContributionService;
@@ -71,6 +68,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final OrganisationUnitService organisationUnitService;
 
     private final PersonService personService;
+
+    private final ProjectsRelationRepository projectsRelationRepository;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -102,6 +101,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         setCommonFields(newProject, projectDTO);
 
         var savedProject = save(newProject);
+
+        buildPersons(savedProject, projectDTO);
+        buildOrganisations(savedProject, projectDTO);
+        buildRelatedProjects(savedProject, projectDTO);
 
         projectIndexRepository.save(
             indexCommonFields(savedProject, new ProjectIndex()));
@@ -137,6 +140,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexProject() {
+        projectIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -227,10 +232,6 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         } else {
             project.setCosts(null);
         }
-
-        rebuildTeam(project, projectDTO);
-        rebuildConsortium(project, projectDTO);
-        rebuildRelations(project, projectDTO);
     }
 
     private void clearCommonFields(Project project) {
@@ -239,87 +240,67 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getNameAbbreviation().clear();
         project.getKeywords().clear();
         project.getResearchAreas().clear();
-        project.getRelatedProjects().clear();
     }
 
-    private void rebuildTeam(Project project, ProjectDTO projectDTO) {
+    private void buildPersons(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getPersons())) {
             project.setPersons(new HashSet<>());
         }
 
-        var keptContributionIds = projectDTO.getPersons().stream()
-                .map(PersonProjectContributionDTO::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        project.getPersons().removeIf(
-                contribution -> !keptContributionIds.contains(contribution.getId()));
-
-        projectDTO.getPersons().stream()
-                .filter(memberDto -> Objects.isNull(memberDto.getId()))
-                .forEach(memberDto -> project.getPersons().add(
-                        personProjectContributionService.createContribution(memberDto, project)));
+        projectDTO.getPersons().forEach(personDto -> project.getPersons().add(
+                personProjectContributionService.createContribution(personDto, project)));
     }
 
-    private void rebuildConsortium(Project project, ProjectDTO projectDTO) {
+    private void buildOrganisations(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getOrganisations())) {
             project.setOrganisations(new HashSet<>());
         }
 
-        var keptContributionIds = projectDTO.getConsortium().stream()
-                .map(OrganisationUnitProjectContributionDTO::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        project.getOrganisations().removeIf(
-                contribution -> !keptContributionIds.contains(contribution.getId()));
+        projectDTO.getConsortium().forEach(organisationDto -> {
+            var contribution = new OrganisationUnitProjectContribution();
 
-        projectDTO.getConsortium().stream()
-                .filter(memberDto -> Objects.isNull(memberDto.getId()))
-                .forEach(memberDto -> project.getOrganisations().add(
-                        createConsortiumMember(memberDto, project)));
-    }
+            if (Objects.nonNull(organisationDto.getOrganisationUnitId())) {
+                contribution.setOrganisationUnit(
+                        organisationUnitService.findOne(organisationDto.getOrganisationUnitId()));
+            } else {
+                contribution.setDisplayOrganisationUnit(
+                        multilingualContentService.getMultilingualContent(
+                                organisationDto.getDisplayOrganisationUnit()));
+            }
 
-    private OrganisationUnitProjectContribution createConsortiumMember(
-            OrganisationUnitProjectContributionDTO memberDto, Project project) {
-        var contribution = new OrganisationUnitProjectContribution();
-
-        if (Objects.nonNull(memberDto.getOrganisationUnitId())) {
-            contribution.setOrganisationUnit(
-                    organisationUnitService.findOne(memberDto.getOrganisationUnitId()));
-        } else {
-            contribution.setDisplayOrganisationUnit(
+            contribution.setContributionType(organisationDto.getContributionType());
+            contribution.setContributionDescription(
                     multilingualContentService.getMultilingualContent(
-                            memberDto.getDisplayOrganisationUnit()));
-        }
+                            organisationDto.getContributionDescription()));
+            contribution.setOrderNumber(organisationDto.getOrderNumber());
+            contribution.setApproveStatus(ApproveStatus.APPROVED);
+            contribution.setDateFrom(organisationDto.getDateFrom());
+            contribution.setDateTo(organisationDto.getDateTo());
+            contribution.setUris(organisationDto.getUris());
+            contribution.setMainContributor(
+                    Objects.requireNonNullElse(organisationDto.getIsMainContributor(), false));
+            contribution.setFavorite(Objects.requireNonNullElse(organisationDto.getFavorite(), false));
 
-        contribution.setContributionType(memberDto.getContributionType());
-        contribution.setContributionDescription(
-                multilingualContentService.getMultilingualContent(
-                        memberDto.getContributionDescription()));
-        contribution.setOrderNumber(memberDto.getOrderNumber());
-        contribution.setApproveStatus(ApproveStatus.APPROVED);
-        contribution.setDateFrom(memberDto.getDateFrom());
-        contribution.setDateTo(memberDto.getDateTo());
-        contribution.setUris(memberDto.getUris());
-        contribution.setMainContributor(
-                Objects.requireNonNullElse(memberDto.getIsMainContributor(), false));
-        contribution.setFavorite(Objects.requireNonNullElse(memberDto.getFavorite(), false));
+            if (Objects.nonNull(organisationDto.getContactPersonId())) {
+                contribution.setContactPerson(
+                        personService.findOne(organisationDto.getContactPersonId()));
+            }
 
-        if (Objects.nonNull(memberDto.getContactPersonId())) {
-            contribution.setContactPerson(
-                    personService.findOne(memberDto.getContactPersonId()));
-        }
+            contribution.setDisplayProject(
+                    multilingualContentService.getMultilingualContent(organisationDto.getDisplayProject()));
+            contribution.setProject(project);
 
-        contribution.setDisplayProject(
-                multilingualContentService.getMultilingualContent(memberDto.getDisplayProject()));
-        contribution.setProject(project);
-
-        return contribution;
+            // Adds saved contribution entity with id != null (if this part is omitted the Set will treat
+            // each entity with null value id as the same one, thus overwriting/ignoring it each time)
+            project.getOrganisations().add(organisationUnitProjectContributionRepository.save(contribution));
+        });
     }
 
-    private void rebuildRelations(Project project, ProjectDTO projectDTO) {
+    private void buildRelatedProjects(Project project, ProjectDTO projectDTO) {
         if (Objects.isNull(project.getRelatedProjects())) {
             project.setRelatedProjects(new HashSet<>());
         }
+
         projectDTO.getRelations().forEach(relationDto -> {
             var relation = new ProjectsRelation();
             relation.setRelationType(relationDto.getRelationType());
@@ -337,7 +318,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 relation.setTargetProject(findOne(relationDto.getTargetProjectId()));
             }
 
-            project.getRelatedProjects().add(relation);
+            // Adds saved relation entity with id != null (if this part is omitted the Set will treat
+            // each entity with null value id as the same one, thus overwriting/ignoring it each time)
+            project.getRelatedProjects().add(projectsRelationRepository.save(relation));
         });
     }
 
@@ -414,6 +397,14 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     // TODO: Add team member
     // TODO: Remove team member
     // TODO: Update team member (maybe should be added to PersonProjectContributionService?)
+
+    // TODO: Add consortium
+    // TODO: Remove consortium
+    // TODO: Update consortium
+
+    // TODO: Add related project
+    // TODO: Remove related project
+    // TODO: Update related project
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
                                          LocalDate dateTo, boolean onlyActive, List<ProjectStatus> allowedStatuses) {
