@@ -75,7 +75,7 @@ public class ProjectDTO {
     private List<PersonProjectContributionDTO> persons = new ArrayList<>();
 
     @Valid
-    private List<OrganisationUnitProjectContributionDTO> consortium = new ArrayList<>();
+    private List<OrganisationUnitProjectContributionDTO> organisations = new ArrayList<>();
 
     @Valid
     private List<ProjectsRelationDTO> relations = new ArrayList<>();

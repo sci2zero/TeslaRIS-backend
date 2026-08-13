@@ -169,9 +169,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
             currencyService.findOne(partDto.getAmount().getCurrencyId()));
         part.getAmount().setAmount(partDto.getAmount().getAmount());
 
-        if (Objects.nonNull(partDto.getFundingId())) {
-            part.setPersonContribution(contribution);
-        }
+        part.setPersonContribution(contribution);
 
         return part;
     }

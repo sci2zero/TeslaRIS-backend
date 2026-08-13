@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
@@ -85,4 +88,59 @@ public class ProjectController {
         projectService.deleteProject(projectId);
     }
 
+
+    @PostMapping("/{projectId}/add-person")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public PersonProjectContributionDTO addProjectPerson(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid PersonProjectContributionDTO personContribution) {
+        return projectService.addPerson(projectId, personContribution);
+    }
+
+    @DeleteMapping("/{projectId}/remove-person/{personContributionId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectPerson(@PathVariable Integer projectId,
+                                    @PathVariable Integer personContributionId) {
+        projectService.removePerson(projectId, personContributionId);
+    }
+
+    @PostMapping("/{projectId}/add-organisation")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public OrganisationUnitProjectContributionDTO addProjectOrganisation(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid OrganisationUnitProjectContributionDTO organisationContribution) {
+        return projectService.addOrganisation(projectId, organisationContribution);
+    }
+
+    @DeleteMapping("/{projectId}/remove-organisation/{organisationContributionId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectOrganisation(
+            @PathVariable Integer projectId,
+            @PathVariable Integer organisationContributionId) {
+        projectService.removeOrganisation(projectId, organisationContributionId);
+    }
+
+    @PostMapping("/{projectId}/add-relation")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public ProjectsRelationDTO addProjectRelation(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid ProjectsRelationDTO relation) {
+        return projectService.addProjectRelation(projectId, relation);
+    }
+
+    @DeleteMapping("/{projectId}/remove-relation/{relationId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectRelation(@PathVariable Integer projectId,
+                                      @PathVariable Integer relationId) {
+        projectService.removeProjectRelation(projectId, relationId);
+    }
 }
