@@ -396,7 +396,8 @@ public class DataQualityAssessmentConfigurationLoader {
 
     public static List<String> getTargetTypesFromDocumentType(
         DocumentPublicationType documentType) {
-        var targets = new ArrayList<>(getTargetTypesFromEntityType(EntityType.PUBLICATION));
+        var targets = new ArrayList<>(
+            Objects.requireNonNull(getTargetTypesFromEntityType(EntityType.PUBLICATION)));
 
         if (DocumentPublicationType.INTANGIBLE_PRODUCT.equals(documentType) ||
             DocumentPublicationType.MATERIAL_PRODUCT.equals(documentType)) {

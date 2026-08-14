@@ -77,6 +77,10 @@ public class RevisionServiceImpl implements RevisionService {
 
             var newHash = sha256(newJson);
 
+            var latestRevision =
+                revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                    event.entityType(), event.entityId());
+
             if (event.revisionType().equals(RevisionType.UPDATE)) {
                 var oldJson = canonicalize(
                     objectMapper.writeValueAsString(event.oldObject()),
@@ -87,14 +91,10 @@ public class RevisionServiceImpl implements RevisionService {
                 var oldHash = sha256(oldJson);
                 newHash = sha256(newJson);
 
-                if (oldHash.equals(newHash)) {
+                if (latestRevision.isPresent() && oldHash.equals(newHash)) {
                     return;
                 }
             }
-
-            var latestRevision =
-                revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-                    event.entityType(), event.entityId());
 
             if (latestRevision.isPresent() &&
                 latestRevision.get().getContentHash().equals(newHash)) {

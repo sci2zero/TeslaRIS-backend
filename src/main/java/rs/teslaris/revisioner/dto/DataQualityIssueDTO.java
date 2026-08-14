@@ -31,6 +31,10 @@ public record DataQualityIssueDTO(
 
     List<MultilingualContentDTO> title,
 
-    List<MultilingualContentDTO> message
+    List<MultilingualContentDTO> message,
+
+    String entityNameSr,
+
+    String entityNameOther
 ) {
 }

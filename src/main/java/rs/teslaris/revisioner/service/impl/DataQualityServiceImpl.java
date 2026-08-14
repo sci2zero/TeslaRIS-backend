@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -26,6 +25,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.converter.DataQualityAssessmentConverter;
 import rs.teslaris.revisioner.converter.DataQualityProfileConverter;
+import rs.teslaris.revisioner.converter.IssueConverter;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
@@ -240,10 +240,15 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                          QualityDimension dimension,
                                                          IssueSeverity severity,
                                                          String constraintKey, Pageable pageable) {
-        var query = buildIssueQuery(entityType, entityId, profileName, target);
+        var query = buildIssueQuery(entityType, entityId, profileName,
+            "Activity".equals(target) ? "Document" : target);
 
-        var assessments = searchService.runQuery(query, Pageable.ofSize(ISSUE_SEARCH_BATCH_SIZE),
-            DataQualityAssessmentIndex.class, ISSUE_INDEX_NAME);
+        var assessments = searchService.runQuery(
+            query,
+            Pageable.ofSize(ISSUE_SEARCH_BATCH_SIZE),
+            DataQualityAssessmentIndex.class,
+            ISSUE_INDEX_NAME
+        );
 
         var issues = new ArrayList<DataQualityIssueDTO>();
 
@@ -256,12 +261,15 @@ public class DataQualityServiceImpl implements DataQualityService {
                 .filter(applicableKeys::contains)
                 .filter(ruleKey -> Objects.isNull(constraintKey) || constraintKey.equals(ruleKey))
                 .sorted()
-                .forEach(ruleKey -> issues.add(toIssueDTO(assessment, ruleKey)));
+                .forEach(ruleKey -> issues.add(IssueConverter.toDTO(assessment, ruleKey)));
         });
 
-        issues.sort(Comparator.comparing((DataQualityIssueDTO issue) -> issue.severity().ordinal())
-            .thenComparing(DataQualityIssueDTO::ruleKey)
-            .thenComparing(DataQualityIssueDTO::entityId));
+        issues.sort(
+            Comparator
+                .comparing((DataQualityIssueDTO issue) -> issue.severity().ordinal())
+                .thenComparing(DataQualityIssueDTO::ruleKey)
+                .thenComparing(DataQualityIssueDTO::entityId)
+        );
 
         var from = (int) pageable.getOffset();
 
@@ -295,32 +303,6 @@ public class DataQualityServiceImpl implements DataQualityService {
         )._toQuery();
     }
 
-    private DataQualityIssueDTO toIssueDTO(DataQualityAssessmentIndex assessment, String ruleKey) {
-        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
-            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
-
-        return new DataQualityIssueDTO(
-            Integer.valueOf(assessment.getId()),
-            assessment.getEntityType(),
-            assessment.getEntityId(),
-            assessment.getTarget(),
-            assessment.getRecordMajorVersion(),
-            assessment.getRecordMinorVersion(),
-            assessment.getAssessmentDate(),
-            ruleKey,
-            remark.dimension(),
-            remark.severity(),
-            remark.blocking(),
-            MultilingualContentConverter.getMultilingualContentDTO(
-                DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
-                    assessment.getProfileName(), assessment.getProfileVersion(), ruleKey)),
-            MultilingualContentConverter.getMultilingualContentDTO(
-                DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
-                    assessment.getProfileName(), assessment.getProfileVersion(), ruleKey,
-                    List.of()))
-        );
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<DataQualityProfileDTO> listAllDataQualityProfiles() {
@@ -332,7 +314,8 @@ public class DataQualityServiceImpl implements DataQualityService {
                     DataQualityAssessmentConfigurationLoader.getProfile(profileAndVersion.a,
                         profileAndVersion.b);
 
-                allProfiles.add(DataQualityProfileConverter.toDTO(profile, languageTagService));
+                allProfiles.add(DataQualityProfileConverter.toDTO(profileAndVersion.a, profile,
+                    languageTagService));
             });
 
         return allProfiles;

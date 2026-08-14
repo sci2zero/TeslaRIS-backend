@@ -1,5 +1,6 @@
 package rs.teslaris.revisioner.indexmodel;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,14 @@ public class DataQualityAssessmentIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "entity_type")
     private String entityType;
+
+    @JsonAlias("entity_name_sr")
+    @Field(type = FieldType.Text, name = "entity_name_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    private String entityNameSr;
+
+    @JsonAlias("entity_name_other")
+    @Field(type = FieldType.Text, name = "entity_name_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    private String entityNameOther;
 
     @Field(type = FieldType.Keyword, store = true, name = "target")
     private String target;

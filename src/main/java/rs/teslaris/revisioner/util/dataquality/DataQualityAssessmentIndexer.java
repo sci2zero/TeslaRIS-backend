@@ -18,6 +18,8 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 import rs.teslaris.revisioner.indexrepository.DataQualityAssessmentIndexRepository;
@@ -43,6 +45,10 @@ public class DataQualityAssessmentIndexer {
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final EventIndexRepository eventIndexRepository;
+
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
 
     public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
@@ -82,6 +88,8 @@ public class DataQualityAssessmentIndexer {
 
             supersedePreviousLatest(entityType, entityId, assessment.getProfileName(),
                 assessmentDate);
+
+            setEntityName(index);
 
             indexRepository.save(index);
         } catch (Exception e) {
@@ -124,6 +132,42 @@ public class DataQualityAssessmentIndexer {
         }
 
         return List.of();
+    }
+
+    private void setEntityName(DataQualityAssessmentIndex index) {
+        if (TARGET_PERSON.equals(index.getTarget())) {
+            personIndexRepository.findByDatabaseId(index.getEntityId())
+                .ifPresent(personIndex -> {
+                    index.setEntityNameSr(personIndex.getName());
+                    index.setEntityNameOther(personIndex.getName());
+                });
+        }
+
+        if (TARGET_DOCUMENT.equals(index.getTarget())) {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    index.getEntityId())
+                .ifPresent(documentIndex -> {
+                    index.setEntityNameSr(documentIndex.getTitleSr());
+                    index.setEntityNameOther(documentIndex.getTitleOther());
+                });
+        }
+
+        if (TARGET_EVENT.equals(index.getTarget())) {
+            eventIndexRepository.findByDatabaseId(index.getEntityId())
+                .ifPresent(eventIndex -> {
+                    index.setEntityNameSr(eventIndex.getNameSr());
+                    index.setEntityNameOther(eventIndex.getNameOther());
+                });
+        }
+
+        if (TARGET_ORGANISATION_UNIT.equals(index.getTarget())) {
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                    index.getEntityId())
+                .ifPresent(organisationUnitIndex -> {
+                    index.setEntityNameSr(organisationUnitIndex.getNameSr());
+                    index.setEntityNameOther(organisationUnitIndex.getNameOther());
+                });
+        }
     }
 
     private List<Integer> contributionPersonIds(Object dto) {
