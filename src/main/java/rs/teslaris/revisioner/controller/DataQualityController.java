@@ -2,14 +2,21 @@ package rs.teslaris.revisioner.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
+import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
+import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 
 @RestController
@@ -41,6 +48,30 @@ public class DataQualityController {
                                                          @PathVariable Integer minorVersion) {
         return dataQualityService.findAssessmentsForEntityVersion(entityType, entityId,
             majorVersion, minorVersion);
+    }
+
+    @GetMapping(value = "/related/{entityType}/{entityId}",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ProfileRelatedQualityDTO> getRelatedQuality(@PathVariable String entityType,
+                                                            @PathVariable Integer entityId) {
+        return dataQualityService.getRelatedQualityForEntity(entityType, entityId);
+    }
+
+    @GetMapping(value = "/issues/{entityType}/{entityId}",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<DataQualityIssueDTO> findIssues(@PathVariable String entityType,
+                                                @PathVariable Integer entityId,
+                                                @RequestParam String profileName,
+                                                @RequestParam(required = false) String target,
+                                                @RequestParam(required = false)
+                                                QualityDimension dimension,
+                                                @RequestParam(required = false)
+                                                IssueSeverity severity,
+                                                @RequestParam(required = false)
+                                                String constraintKey,
+                                                Pageable pageable) {
+        return dataQualityService.findIssuesForEntity(entityType, entityId, profileName, target,
+            dimension, severity, constraintKey, pageable);
     }
 
     @GetMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -343,6 +343,25 @@ public class DataQualityAssessmentConfigurationLoader {
             .toList();
     }
 
+    public static Set<String> listRuleKeys(String profile, String version,
+                                           @Nullable String targetPrefix,
+                                           @Nullable QualityDimension dimension,
+                                           @Nullable IssueSeverity severity) {
+        return getProfile(profile.toLowerCase(), version)
+            .dataQualityRemarks()
+            .entrySet()
+            .stream()
+            .filter(entry -> Objects.isNull(targetPrefix) ||
+                (Objects.nonNull(entry.getValue().target()) &&
+                    entry.getValue().target().startsWith(targetPrefix)))
+            .filter(entry -> Objects.isNull(dimension) ||
+                dimension.equals(entry.getValue().dimension()))
+            .filter(entry -> Objects.isNull(severity) ||
+                severity.equals(entry.getValue().severity()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
     public static DataQualityRemark getIssue(String profile, String version, String issueKey) {
         return getRemark(profile.toLowerCase(), version, issueKey);
     }

@@ -153,6 +153,40 @@ public interface DocumentPublicationIndexRepository extends
     @CountQuery("""
         {
           "bool": {
+            "should": [
+              { "term": { "author_ids": "?0" } },
+              { "term": { "editor_ids": "?0" } },
+              { "term": { "reviewer_ids": "?0" } },
+              { "term": { "board_member_ids": "?0" } },
+              { "term": { "advisor_ids": "?0" } },
+              { "term": { "presenter_ids": "?0" } },
+              { "term": { "translator_ids": "?0" } },
+              { "term": { "assistant_staff_ids": "?0" } },
+              { "term": { "arguer_ids": "?0" } },
+              { "term": { "owner_ids": "?0" } },
+              { "term": { "associated_editor_ids": "?0" } },
+              { "term": { "invited_editor_ids": "?0" } }
+            ],
+            "minimum_should_match": 1
+          }
+        }
+        """)
+    Long countLinkedToPerson(Integer personId);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "organisation_unit_ids": "?0" } }
+            ]
+          }
+        }
+        """)
+    Long countLinkedToOrganisationUnit(Integer organisationUnitId);
+
+    @CountQuery("""
+        {
+          "bool": {
             "must": [
               { "range": { "year": { "gt": -1 } } }
             ],

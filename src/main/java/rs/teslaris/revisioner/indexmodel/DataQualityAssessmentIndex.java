@@ -19,6 +19,9 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Document(indexName = "data_quality_assessment")
 public class DataQualityAssessmentIndex {
 
+    public static final LocalDateTime OPEN_INTERVAL_END =
+        LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+
     @Id
     private String id;
 
@@ -42,8 +45,18 @@ public class DataQualityAssessmentIndex {
     private LocalDateTime assessmentDate;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis,
+        store = true, name = "valid_to")
+    private LocalDateTime validTo;
+
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis,
         store = true, name = "superseded_at")
     private LocalDateTime supersededAt;
+
+    @Field(type = FieldType.Integer, store = true, name = "record_major_version")
+    private Integer recordMajorVersion;
+
+    @Field(type = FieldType.Integer, store = true, name = "record_minor_version")
+    private Integer recordMinorVersion;
 
     @Field(type = FieldType.Boolean, store = true, name = "is_latest")
     private boolean isLatest;
@@ -65,6 +78,9 @@ public class DataQualityAssessmentIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "passed_rules")
     private int passedRules;
+
+    @Field(type = FieldType.Integer, store = true, name = "warning_failed_rules")
+    private int infoFailedRules;
 
     @Field(type = FieldType.Integer, store = true, name = "warning_failed_rules")
     private int warningFailedRules;

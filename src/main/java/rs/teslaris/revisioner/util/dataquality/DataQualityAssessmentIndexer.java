@@ -62,14 +62,18 @@ public class DataQualityAssessmentIndexer {
             index.setRelatedPersonIds(resolveRelatedPersonIds(target, entityId, dto));
             index.setOrganisationUnitIds(resolveOrganisationUnitIds(target, entityId, dto));
             index.setAssessmentDate(assessmentDate);
+            index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
             index.setSupersededAt(null);
             index.setLatest(true);
+            index.setRecordMajorVersion(revision.getMajorVersion());
+            index.setRecordMinorVersion(revision.getMinorVersion());
             index.setProfileName(assessment.getProfileName());
             index.setProfileVersion(assessment.getProfileVersion());
             index.setValid(assessment.getValid());
             index.setQualityScore(assessment.getQualityScore());
             index.setQualityScoreFair(assessment.getQualityScoreFair());
             index.setPassedRules(assessment.getPassedRules());
+            index.setInfoFailedRules(assessment.getInfoFailedRules());
             index.setWarningFailedRules(assessment.getWarningFailedRules());
             index.setErrorFailedRules(assessment.getErrorFailedRules());
 
@@ -95,6 +99,7 @@ public class DataQualityAssessmentIndexer {
                 profileName)
             .ifPresent(previous -> {
                 previous.setSupersededAt(newAssessmentDate);
+                previous.setValidTo(newAssessmentDate);
                 previous.setLatest(false);
                 indexRepository.save(previous);
             });
