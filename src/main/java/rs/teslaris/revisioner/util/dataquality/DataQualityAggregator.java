@@ -24,6 +24,7 @@ public class DataQualityAggregator {
 
     private final ElasticsearchClient elasticsearchClient;
 
+    
     public Optional<AssessmentAggregates> aggregateAssessments(Query query,
                                                                Collection<String> activityRuleKeys) {
         var request = new SearchRequest.Builder()
