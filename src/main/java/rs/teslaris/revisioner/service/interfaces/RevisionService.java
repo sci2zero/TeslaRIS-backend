@@ -12,6 +12,8 @@ public interface RevisionService {
 
     void createRevisionIfChanged(RevisionCreateEvent event);
 
+    boolean createRevisionFromCurrentState(String entityType, Integer entityId);
+
     List<RevisionDTO> getRevisions(String entityType, Integer entityId);
 
     Optional<String> getRevisionAtTimestamp(String entityType, Integer entityId, Instant timestamp);

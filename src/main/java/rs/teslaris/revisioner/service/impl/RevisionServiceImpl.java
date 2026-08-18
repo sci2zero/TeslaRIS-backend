@@ -158,6 +158,68 @@ public class RevisionServiceImpl implements RevisionService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean createRevisionFromCurrentState(String entityType, Integer entityId) {
+        if (revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .isPresent()) {
+            return false;
+        }
+
+        var restorer = revisionRestorerRegistry.get(entityType);
+
+        if (restorer.isEmpty()) {
+            log.warn("No revision restorer registered for entity type '{}', unable to capture " +
+                "current state of entity with ID {}.", entityType, entityId);
+            return false;
+        }
+
+        Object currentState;
+
+        try {
+            currentState = restorer.get().readCurrentState(entityId);
+        } catch (Exception e) {
+            log.warn("Unable to read current state of entity '{}' (ID={}). Reason: {}",
+                entityType, entityId, e.getMessage());
+            return false;
+        }
+
+        if (Objects.isNull(currentState)) {
+            return false;
+        }
+
+        try {
+            var json = canonicalize(objectMapper.writeValueAsString(currentState), entityType);
+
+            var revision =
+                EntityRevision.builder()
+                    .majorVersion(1)
+                    .minorVersion(0)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .revisionTimestamp(Instant.now())
+                    .contentHash(sha256(json))
+                    .compressedContent(CompressionUtil.compress(json))
+                    .build();
+
+            revision.setAdminNote("revisionBackfill");
+
+            revisionRepository.save(revision);
+
+            applicationEventPublisher.publishEvent(new DataQualityAssessmentEvent(revision, json));
+
+            log.info("Captured current state of entity '{}' (ID={}) as revision 1.0.",
+                entityType, entityId);
+
+            return true;
+        } catch (JsonProcessingException e) {
+            log.error("Unable to serialize current state of entity '{}' (ID={}).",
+                entityType, entityId, e);
+            return false;
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<RevisionDTO> getRevisions(String entityType, Integer entityId) {
         return revisionRepository

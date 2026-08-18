@@ -36,4 +36,6 @@ public interface DataQualityService {
                                                   Pageable pageable);
 
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
+
+    boolean reassessLatestRevision(String entityType, Integer entityId);
 }

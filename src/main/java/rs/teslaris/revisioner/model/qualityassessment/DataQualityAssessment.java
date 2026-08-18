@@ -19,6 +19,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.revisioner.model.EntityRevision;
 
@@ -116,4 +118,7 @@ public class DataQualityAssessment extends BaseEntity {
     @Builder.Default
     private Map<QualityDimension, DimensionScore> dimensionScores =
         new EnumMap<>(QualityDimension.class);
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

@@ -14,6 +14,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
@@ -83,26 +84,21 @@ import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentIndexer;
 @Slf4j
 public class DataQualityCalculator {
 
+    /**
+     * Targets whose issues are reported but never scored - their rules do not add to the total and
+     * their failures do not deduct. Remove an entry to start scoring that target again.
+     */
+    private static final Set<String> NON_SCORING_TARGETS = Set.of("Activity");
     private final Map<String, Pattern> compiledPatternCache = new ConcurrentHashMap<>();
-
     private final RevisionHydratorRegistry revisionHydratorRegistry;
-
     private final DocumentRepository documentRepository;
-
     private final PersonRepository personRepository;
-
     private final OrganisationUnitRepository organisationUnitRepository;
-
     private final CountryRepository countryRepository;
-
     private final LanguageRepository languageRepository;
-
     private final PublisherRepository publisherRepository;
-
     private final RestTemplateProvider restTemplateProvider;
-
     private final DataQualityAssessmentIndexer dataQualityAssessmentIndexer;
-
     private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
@@ -1223,6 +1219,11 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
+            (Objects.isNull(dto.getResearchAreas()) || dto.getResearchAreas().isEmpty())) {
+            return; // involvement is considered an activity if any of the following is set, otherwise don't check for any issues
+        }
+
         if (Objects.isNull(dto.getDateFrom())) {
             reportIssue(assessment, "activityStartDateMissing");
         } else {
@@ -1289,6 +1290,11 @@ public class DataQualityCalculator {
     private void assessEntity(PersonContributionDTO dto, DataQualityAssessment assessment,
                               EventType eventType, OtherEventType otherEventType,
                               LocalDate documentDate) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
+            (Objects.isNull(dto.getResearchAreas()) || dto.getResearchAreas().isEmpty())) {
+            return; // contribution is considered an activity if any of the following is set, otherwise don't check for any issues
+        }
+
         if (Objects.isNull(dto.getPersonId())) {
             return;
         }
@@ -1301,6 +1307,8 @@ public class DataQualityCalculator {
         var birthDate =
             Objects.requireNonNullElse(person.get().getPersonalInfo(), new PersonalInfo())
                 .getLocalBirthDate();
+
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
 
         if (Objects.isNull(dto.getDateFrom())) {
             reportIssue(assessment, "activityStartDateMissing");
@@ -1564,17 +1572,19 @@ public class DataQualityCalculator {
 
         computeRuleCounts(assessment, targets);
 
+        var scoringTargets = scoringTargets(targets);
+
         double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
             assessment.getProfileName(),
             assessment.getProfileVersion(),
-            targets
+            scoringTargets
         );
 
         double totalPointsFair =
             DataQualityAssessmentConfigurationLoader.getTotalPointsWeighedFair(
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
-                targets
+                scoringTargets
             );
 
         assessment.setTotalPoints(totalPoints);
@@ -1589,7 +1599,7 @@ public class DataQualityCalculator {
         assessment.setAchievedFairPointsNormalised(achievedFairPoints);
 
         assessment.setDimensionScores(
-            computeDimensionScores(assessment, targets, deductions.perDimension()));
+            computeDimensionScores(assessment, scoringTargets, deductions.perDimension()));
 
         assessment.setQualityScore(percentage(achievedPoints, totalPoints));
         assessment.setQualityScoreFair(percentage(achievedFairPoints, totalPointsFair));
@@ -1630,6 +1640,15 @@ public class DataQualityCalculator {
         );
     }
 
+    private List<String> scoringTargets(List<String> targets) {
+        return targets.stream().filter(this::isScoringTarget).toList();
+    }
+
+    private boolean isScoringTarget(String target) {
+        return Objects.isNull(target) ||
+            NON_SCORING_TARGETS.stream().noneMatch(target::startsWith);
+    }
+
     private Deductions computeDeductions(DataQualityAssessment assessment) {
         double deductedPoints = 0;
         double deductedFairPoints = 0;
@@ -1645,7 +1664,7 @@ public class DataQualityCalculator {
                     issue.getKey()
                 );
 
-            if (Objects.isNull(remark)) {
+            if (Objects.isNull(remark) || !isScoringTarget(remark.target())) {
                 continue;
             }
 

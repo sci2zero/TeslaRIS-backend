@@ -42,6 +42,8 @@ import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
+import rs.teslaris.revisioner.model.QualityAssessmentTarget;
+import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillService;
 
 @Component
 @RequiredArgsConstructor
@@ -78,6 +80,8 @@ public class DbInitializer implements ApplicationRunner {
     private final BrandingInformationRepository brandingInformationRepository;
 
     private final ReindexService reindexService;
+
+    private final QualityAssessmentBackfillService qualityAssessmentBackfillService;
 
 
     @Override
@@ -530,6 +534,13 @@ public class DbInitializer implements ApplicationRunner {
                     reindexService
                         .reindexDatabase(Arrays.asList(EntityType.values()),
                             false, null);
+
+                    // Every entity gets a revision and a first assessment, so the data quality
+                    // views have something to show right after a fresh start.
+                    qualityAssessmentBackfillService.performBackfill(
+                        Arrays.asList(QualityAssessmentTarget.values()),
+                        null, null, false
+                    );
                 }
             });
 

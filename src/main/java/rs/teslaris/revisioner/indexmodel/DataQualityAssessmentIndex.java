@@ -12,12 +12,14 @@ import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "data_quality_assessment")
+@Setting(settingPath = "/configuration/index-config.json")
 public class DataQualityAssessmentIndex {
 
     public static final LocalDateTime OPEN_INTERVAL_END =
@@ -88,8 +90,11 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Integer, store = true, name = "passed_rules")
     private int passedRules;
 
-    @Field(type = FieldType.Integer, store = true, name = "warning_failed_rules")
+    @Field(type = FieldType.Integer, store = true, name = "info_failed_rules")
     private int infoFailedRules;
+
+    @Field(type = FieldType.Integer, store = true, name = "activities_count")
+    private Integer activitiesCount;
 
     @Field(type = FieldType.Integer, store = true, name = "warning_failed_rules")
     private int warningFailedRules;

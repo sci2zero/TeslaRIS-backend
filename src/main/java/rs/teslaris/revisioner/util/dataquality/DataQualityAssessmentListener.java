@@ -57,6 +57,7 @@ public class DataQualityAssessmentListener {
                     DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName))
                 .profileName(profileName)
                 .startedAt(Instant.now())
+                .activitiesCount(0)
                 .build();
 
             var targetTypes = resolveTargetTypes(event.entityRevision().getEntityType());

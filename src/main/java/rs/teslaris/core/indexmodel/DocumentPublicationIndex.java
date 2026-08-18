@@ -298,4 +298,7 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
 
     @Field(type = FieldType.Integer, name = "project_id", store = true)
     private Integer projectId;
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

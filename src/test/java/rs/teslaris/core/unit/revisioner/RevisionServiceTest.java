@@ -125,9 +125,12 @@ public class RevisionServiceTest {
 
     @Test
     public void shouldNotCreateRevisionWhenContentIsUnchanged() {
-        // given
+        // given (the entity is already under revisioning, so an edit that changes nothing is a no-op)
         var event = new RevisionCreateEvent(ENTITY_TYPE, 1, new DummyDTO(1, "Title"),
             new DummyDTO(1, "Title"), RevisionType.UPDATE);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 1, 0)));
 
         try (var ignored = mockConfigurationLoader()) {
             // when
@@ -136,6 +139,34 @@ public class RevisionServiceTest {
             // then
             verify(revisionRepository, never()).save(any());
             verify(applicationEventPublisher, never()).publishEvent(any());
+        }
+    }
+
+    @Test
+    public void shouldCreateFirstRevisionForUnchangedUpdateWhenEntityHasNoRevisions() {
+        // given (an entity that predates revisioning - its current state has to be recorded even
+        // though the edit itself changed nothing)
+        var event = new RevisionCreateEvent(ENTITY_TYPE, 1, new DummyDTO(1, "Title"),
+            new DummyDTO(1, "Title"), RevisionType.UPDATE);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.createRevisionIfChanged(event);
+
+            // then
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+            assertEquals(1, savedRevision.getMajorVersion());
+            assertEquals(0, savedRevision.getMinorVersion());
+            assertTrue(CompressionUtil.decompress(savedRevision.getCompressedContent())
+                .contains("Title"));
+
+            verify(applicationEventPublisher).publishEvent(any(DataQualityAssessmentEvent.class));
         }
     }
 
@@ -200,6 +231,105 @@ public class RevisionServiceTest {
 
             // then (IllegalStateException should be thrown)
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private RevisionRestorer<DummyDTO> stubRestorerReturning(Object currentState) {
+        RevisionRestorer<DummyDTO> restorer =
+            (RevisionRestorer<DummyDTO>) mock(RevisionRestorer.class);
+
+        doReturn(currentState).when(restorer).readCurrentState(1);
+        doReturn(Optional.of(restorer)).when(revisionRestorerRegistry).get(ENTITY_TYPE);
+
+        return restorer;
+    }
+
+    @Test
+    public void shouldCaptureCurrentStateAsFirstRevisionWhenEntityHasNone() {
+        // given
+        stubRestorerReturning(new DummyDTO(1, "Title"));
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+
+            // then
+            assertTrue(created);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+            assertEquals(1, savedRevision.getMajorVersion());
+            assertEquals(0, savedRevision.getMinorVersion());
+            assertEquals(ENTITY_TYPE, savedRevision.getEntityType());
+            assertEquals(1, savedRevision.getEntityId());
+            assertEquals("revisionBackfill", savedRevision.getAdminNote());
+
+            var savedContent = CompressionUtil.decompress(savedRevision.getCompressedContent());
+            assertTrue(savedContent.contains("Title"));
+            assertEquals(DigestUtils.sha256Hex(savedContent), savedRevision.getContentHash());
+
+            var eventCaptor = ArgumentCaptor.forClass(DataQualityAssessmentEvent.class);
+            verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
+            assertEquals(savedRevision, eventCaptor.getValue().entityRevision());
+            assertEquals(savedContent, eventCaptor.getValue().json());
+        }
+    }
+
+    @Test
+    public void shouldNotCaptureCurrentStateWhenEntityAlreadyHasRevisions() {
+        // given
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 2, 3)));
+
+        // when
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+
+        // then
+        assertFalse(created);
+
+        verify(revisionRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    public void shouldNotCaptureCurrentStateWhenEntityTypeHasNoRestorer() {
+        // given
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+        when(revisionRestorerRegistry.get(ENTITY_TYPE)).thenReturn(Optional.empty());
+
+        // when
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+
+        // then
+        assertFalse(created);
+
+        verify(revisionRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    public void shouldNotCaptureCurrentStateWhenEntityCannotBeRead() {
+        // given
+        stubRestorerReturning(null);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        // when
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+
+        // then
+        assertFalse(created);
+
+        verify(revisionRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
