@@ -754,6 +754,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case BOARD_MEMBER ->
                 handleBoardMember(contribution, index, contributorName, personExists);
         }
+
+        if (Objects.nonNull(contribution.getDateFrom()) ||
+            Objects.nonNull(contribution.getDateTo()) ||
+            (Objects.nonNull(contribution.getResearchAreas()) &&
+                !contribution.getResearchAreas().isEmpty())) {
+            index.setActivitiesCount(index.getActivitiesCount() + 1);
+        }
     }
 
     private void handleAuthorContribution(PersonDocumentContribution contribution,
@@ -766,13 +773,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.getAuthorIds().add(personExists ? contribution.getPerson().getId() : -1);
         index.setAuthorNames(StringUtil.removeLeadingColonSpace(
             index.getAuthorNames() + "; " + contributorName));
-
-        if (Objects.isNull(contribution.getDateFrom()) &&
-            Objects.isNull(contribution.getDateTo()) &&
-            (Objects.isNull(contribution.getResearchAreas()) ||
-                contribution.getResearchAreas().isEmpty())) {
-            index.setActivitiesCount(index.getActivitiesCount() + 1);
-        }
     }
 
     private void handleGenericContribution(PersonContribution contribution,

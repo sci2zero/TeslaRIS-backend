@@ -2,13 +2,14 @@ package rs.teslaris.revisioner.service.impl;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +19,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.EntityType;
-import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -47,6 +47,7 @@ import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 import rs.teslaris.revisioner.util.CompressionUtil;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 
@@ -59,9 +60,19 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private static final String ACTIVITY_TARGET = "Activity";
 
-    private static final int ASSESSMENT_BATCH_SIZE = 500;
+    private static final int ISSUE_SCAN_BATCH_SIZE = 500;
 
-    private static final int ISSUE_SEARCH_BATCH_SIZE = 10000;
+    private static final List<String> DOCUMENT_PERSON_ROLE_FIELDS = List.of(
+        "author_ids", "editor_ids", "reviewer_ids", "board_member_ids", "advisor_ids",
+        "presenter_ids", "translator_ids", "assistant_staff_ids", "arguer_ids", "owner_ids",
+        "associated_editor_ids", "invited_editor_ids"
+    );
+
+    private static final Comparator<DataQualityIssueDTO> ISSUE_ORDER =
+        Comparator
+            .comparingInt((DataQualityIssueDTO issue) -> issue.severity().ordinal())
+            .thenComparing(DataQualityIssueDTO::ruleKey)
+            .thenComparing(DataQualityIssueDTO::entityType);
 
     private static final String ISSUE_INDEX_NAME = "data_quality_assessment";
 
@@ -69,13 +80,13 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private final LanguageTagService languageTagService;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
     private final DataQualityAssessmentIndexRepository dataQualityAssessmentIndexRepository;
 
     private final SearchService<DataQualityAssessmentIndex> searchService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final DataQualityAggregator dataQualityAggregator;
 
 
     @Override
@@ -179,147 +190,81 @@ public class DataQualityServiceImpl implements DataQualityService {
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
                 assessment.getFinishedAt(),
-                List.of(
-                    outputsQuality(entityType, entityId, assessment.getProfileName()),
-                    // TODO: projects have no quality assessments yet.
-                    RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
-                    activitiesQuality(entityType, entityId, assessment.getProfileName()),
-                    // TODO: fundings have no quality assessments yet.
-                    RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
-                )))
+                relatedQuality(entityType, entityId, assessment.getProfileName())))
             .toList()).orElseGet(List::of);
     }
 
-    private RelatedQualityDTO activitiesQuality(String entityType, Integer entityId,
-                                                String profileName) {
+    private List<RelatedQualityDTO> relatedQuality(String entityType, Integer entityId,
+                                                   String profileName) {
         var isPerson = EntityType.PERSON.name().equals(entityType);
         var isOrganisationUnit = EntityType.ORGANISATION_UNIT.name().equals(entityType);
 
         if (!isPerson && !isOrganisationUnit) {
-            return RelatedQualityDTO.unsupported(RelatedEntityType.ACTIVITIES);
+            return List.of(
+                RelatedQualityDTO.unsupported(RelatedEntityType.OUTPUTS),
+                RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
+                RelatedQualityDTO.unsupported(RelatedEntityType.ACTIVITIES),
+                RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
+            );
         }
 
-        long linkedActivities = 0;
+        var assessments = dataQualityAggregator
+            .aggregateAssessments(
+                relatedAssessmentsQuery(isPerson, entityId, profileName),
+                expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null))
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
-        var documentPageable = PageRequest.of(0, ASSESSMENT_BATCH_SIZE);
-        Page<DocumentPublicationIndex> documentPage;
+        var documents = dataQualityAggregator
+            .aggregateLinkedDocuments(linkedDocumentsQuery(isPerson, entityId))
+            .orElseGet(DataQualityAggregator.LinkedDocumentAggregates::empty);
 
-        do {
-            documentPage = isPerson
-                ? documentPublicationIndexRepository.findLinkedToPerson(entityId, documentPageable)
-                : documentPublicationIndexRepository.findLinkedToOrganisationUnit(entityId,
-                documentPageable);
-
-            for (var document : documentPage.getContent()) {
-                linkedActivities += Objects.requireNonNullElse(document.getActivitiesCount(), 0);
-            }
-
-            documentPageable = documentPageable.next();
-        } while (documentPage.hasNext());
-
-        long affectedActivities = 0;
-        long openIssues = 0;
-
-        var activityRuleKeysPerVersion = new HashMap<String, Set<String>>();
-
-        var pageable = PageRequest.of(0, ASSESSMENT_BATCH_SIZE);
-        Page<DataQualityAssessmentIndex> page;
-
-        do {
-            page = isPerson
-                ? dataQualityAssessmentIndexRepository
-                .findByTargetAndProfileNameAndIsLatestTrueAndRelatedPersonIds(
-                    DOCUMENT_TARGET, profileName, entityId, pageable)
-                : dataQualityAssessmentIndexRepository
-                .findByTargetAndProfileNameAndIsLatestTrueAndOrganisationUnitIds(
-                    DOCUMENT_TARGET, profileName, entityId, pageable);
-
-            for (var assessment : page.getContent()) {
-                affectedActivities +=
-                    Objects.requireNonNullElse(assessment.getActivitiesCount(), 0);
-                openIssues += countIssuesForTarget(assessment, activityRuleKeysPerVersion);
-            }
-
-            pageable = pageable.next();
-        } while (page.hasNext());
-
-        return new RelatedQualityDTO(
-            RelatedEntityType.ACTIVITIES,
-            linkedActivities,
-            affectedActivities,
-            openIssues,
-            null,
-            true
+        return List.of(
+            new RelatedQualityDTO(
+                RelatedEntityType.OUTPUTS,
+                documents.linkedRecords(),
+                assessments.affectedRecords(),
+                assessments.openIssues() - assessments.activityIssues(),
+                assessments.averageScore(),
+                true
+            ),
+            // TODO: projects have no quality assessments yet.
+            RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
+            // Activities live on other records, so both figures are sums of activity counters, and
+            // there is no score because the Activity target is never scored.
+            new RelatedQualityDTO(
+                RelatedEntityType.ACTIVITIES,
+                documents.linkedActivities(),
+                assessments.activitiesCount(),
+                assessments.activityIssues(),
+                null,
+                true
+            ),
+            // TODO: fundings have no quality assessments yet.
+            RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
         );
     }
 
-    private long countIssuesForTarget(DataQualityAssessmentIndex assessment,
-                                      Map<String, Set<String>> ruleKeysPerVersion) {
-        var failedKeys =
-            Objects.requireNonNullElse(assessment.getFailedRuleKeys(), List.<String>of());
+    private Query relatedAssessmentsQuery(boolean isPerson, Integer entityId, String profileName) {
+        var relatedField = isPerson ? "related_person_ids" : "organisation_unit_ids";
 
-        if (failedKeys.isEmpty()) {
-            return 0;
-        }
-
-        var applicableKeys = ruleKeysPerVersion.computeIfAbsent(
-            assessment.getProfileVersion(),
-            version -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                assessment.getProfileName(), version, ACTIVITY_TARGET, null, null));
-
-        return failedKeys.stream()
-            .filter(applicableKeys::contains)
-            .count();
+        return BoolQuery.of(b -> b
+            .must(m -> m.term(t -> t.field("target").value(DOCUMENT_TARGET)))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(m -> m.term(t -> t.field(relatedField).value(entityId)))
+        )._toQuery();
     }
 
-    private RelatedQualityDTO outputsQuality(String entityType, Integer entityId,
-                                             String profileName) {
-        var isPerson = EntityType.PERSON.name().equals(entityType);
-        var isOrganisationUnit = EntityType.ORGANISATION_UNIT.name().equals(entityType);
-
-        if (!isPerson && !isOrganisationUnit) {
-            return RelatedQualityDTO.unsupported(RelatedEntityType.OUTPUTS);
+    private Query linkedDocumentsQuery(boolean isPerson, Integer entityId) {
+        if (!isPerson) {
+            return TermQuery.of(t -> t.field("organisation_unit_ids").value(entityId))._toQuery();
         }
 
-        var linkedRecords = isPerson
-            ? documentPublicationIndexRepository.countLinkedToPerson(entityId)
-            : documentPublicationIndexRepository.countLinkedToOrganisationUnit(entityId);
+        var roleClauses = DOCUMENT_PERSON_ROLE_FIELDS.stream()
+            .map(field -> TermQuery.of(t -> t.field(field).value(entityId))._toQuery())
+            .toList();
 
-        long affectedRecords = 0;
-        long openIssues = 0;
-        double totalScore = 0;
-
-        var pageable = PageRequest.of(0, ASSESSMENT_BATCH_SIZE);
-        Page<DataQualityAssessmentIndex> page;
-
-        do {
-            page = isPerson
-                ? dataQualityAssessmentIndexRepository
-                .findByTargetAndProfileNameAndIsLatestTrueAndRelatedPersonIds(
-                    DOCUMENT_TARGET, profileName, entityId, pageable)
-                : dataQualityAssessmentIndexRepository
-                .findByTargetAndProfileNameAndIsLatestTrueAndOrganisationUnitIds(
-                    DOCUMENT_TARGET, profileName, entityId, pageable);
-
-            for (var assessment : page.getContent()) {
-                affectedRecords++;
-                openIssues +=
-                    assessment.getErrorFailedRules() + assessment.getWarningFailedRules() +
-                        assessment.getInfoFailedRules();
-                totalScore += assessment.getQualityScore();
-            }
-
-            pageable = pageable.next();
-        } while (page.hasNext());
-
-        return new RelatedQualityDTO(
-            RelatedEntityType.OUTPUTS,
-            Objects.requireNonNullElse(linkedRecords, 0L),
-            affectedRecords,
-            openIssues,
-            affectedRecords > 0 ? totalScore / affectedRecords : null,
-            true
-        );
+        return BoolQuery.of(b -> b.should(roleClauses).minimumShouldMatch("1"))._toQuery();
     }
 
     @Override
@@ -330,45 +275,163 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                          IssueSeverity severity,
                                                          String constraintKey, Pageable pageable) {
         var query = buildIssueQuery(entityType, entityId, profileName,
-            "Activity".equals(target) ? "Document" : target);
+            ACTIVITY_TARGET.equals(target) ? DOCUMENT_TARGET : target);
 
-        var assessments = searchService.runQuery(
-            query,
-            Pageable.ofSize(ISSUE_SEARCH_BATCH_SIZE),
-            DataQualityAssessmentIndex.class,
-            ISSUE_INDEX_NAME
-        );
+        var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
+            (int) pageable.getOffset(), pageable.getPageSize());
 
-        var issues = new ArrayList<DataQualityIssueDTO>();
+        var totalIssues = countIssues(query, profileName, target, dimension, severity,
+            constraintKey, window.scannedIssues());
 
-        assessments.getContent().forEach(assessment -> {
-            var applicableKeys = DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                assessment.getProfileName(), assessment.getProfileVersion(), target, dimension,
-                severity);
+        return new PageImpl<>(window.issues(), pageable, totalIssues);
+    }
 
-            Objects.requireNonNullElse(assessment.getFailedRuleKeys(), List.<String>of()).stream()
-                .filter(applicableKeys::contains)
-                .filter(ruleKey -> Objects.isNull(constraintKey) || constraintKey.equals(ruleKey))
-                .sorted()
-                .forEach(ruleKey -> issues.add(IssueConverter.toDTO(assessment, ruleKey)));
-        });
+    private IssueWindow collectIssueWindow(Query query, String target, QualityDimension dimension,
+                                           IssueSeverity severity, String constraintKey,
+                                           int offset, int pageSize) {
+        var window = new ArrayList<DataQualityIssueDTO>();
+        var block = new ArrayList<DataQualityIssueDTO>();
 
-        issues.sort(
-            Comparator
-                .comparing(DataQualityIssueDTO::entityId)
-                .thenComparingInt(issue -> issue.severity().ordinal())
-                .thenComparing(DataQualityIssueDTO::ruleKey)
-        );
+        var emittedAtWatermark = new HashSet<String>();
+        Integer watermark = null;
+        Integer blockEntityId = null;
+        var scanned = 0;
 
-        var from = (int) pageable.getOffset();
+        while (true) {
+            var batch = searchService.runQuery(
+                withWatermark(query, watermark),
+                PageRequest.of(0, ISSUE_SCAN_BATCH_SIZE, Sort.by(Sort.Direction.ASC, "entity_id")),
+                DataQualityAssessmentIndex.class,
+                ISSUE_INDEX_NAME
+            ).getContent();
 
-        if (from >= issues.size()) {
-            return new PageImpl<>(List.of(), pageable, issues.size());
+            if (batch.isEmpty()) {
+                break;
+            }
+
+            var progressed = false;
+
+            for (var assessment : batch) {
+                // The watermark is inclusive so that a batch boundary cannot cut a group of
+                // assessments sharing one entity id in half; whatever was already emitted at that
+                // id is skipped here instead.
+                if (!emittedAtWatermark.add(assessment.getId())) {
+                    continue;
+                }
+
+                progressed = true;
+
+                if (!Objects.equals(blockEntityId, assessment.getEntityId())) {
+                    scanned += flushBlock(block, window, offset, pageSize, scanned);
+                    blockEntityId = assessment.getEntityId();
+                }
+
+                if (!Objects.equals(watermark, assessment.getEntityId())) {
+                    watermark = assessment.getEntityId();
+                    emittedAtWatermark.clear();
+                    emittedAtWatermark.add(assessment.getId());
+                }
+
+                expandIssues(assessment, target, dimension, severity, constraintKey, block);
+            }
+
+            if (window.size() >= pageSize) {
+                // The window is complete; everything still unscanned sorts after it. The scanned
+                // count is only a fallback for the exact aggregated total, so a lower bound is fine.
+                return new IssueWindow(window, scanned);
+            }
+
+            if (batch.size() < ISSUE_SCAN_BATCH_SIZE) {
+                break;
+            }
+
+            if (!progressed) {
+                // A single entity id filled an entire batch; step past it rather than rescanning it
+                // forever.
+                log.warn("More than {} assessments share entity id {}, skipping the remainder.",
+                    ISSUE_SCAN_BATCH_SIZE, watermark);
+
+                watermark = Objects.requireNonNullElse(watermark, 0) + 1;
+                emittedAtWatermark.clear();
+            }
         }
 
-        var to = Math.min(from + pageable.getPageSize(), issues.size());
+        scanned += flushBlock(block, window, offset, pageSize, scanned);
 
-        return new PageImpl<>(issues.subList(from, to), pageable, issues.size());
+        return new IssueWindow(window, scanned);
+    }
+
+    private int flushBlock(List<DataQualityIssueDTO> block, List<DataQualityIssueDTO> window,
+                           int offset, int pageSize, int scanned) {
+        if (block.isEmpty()) {
+            return 0;
+        }
+
+        block.sort(ISSUE_ORDER);
+
+        for (var issue : block) {
+            if (scanned >= offset && window.size() < pageSize) {
+                window.add(issue);
+            }
+
+            scanned++;
+        }
+
+        var contributed = block.size();
+        block.clear();
+
+        return contributed;
+    }
+
+    private void expandIssues(DataQualityAssessmentIndex assessment, String target,
+                              QualityDimension dimension, IssueSeverity severity,
+                              String constraintKey, List<DataQualityIssueDTO> collector) {
+        var applicableKeys = DataQualityAssessmentConfigurationLoader.listRuleKeys(
+            assessment.getProfileName(), assessment.getProfileVersion(), target, dimension,
+            severity);
+
+        Objects.requireNonNullElse(assessment.getFailedRuleKeys(), List.<String>of()).stream()
+            .filter(applicableKeys::contains)
+            .filter(ruleKey -> Objects.isNull(constraintKey) || constraintKey.equals(ruleKey))
+            .forEach(ruleKey -> collector.add(IssueConverter.toDTO(assessment, ruleKey)));
+    }
+
+    private Query withWatermark(Query query, Integer watermark) {
+        if (Objects.isNull(watermark)) {
+            return query;
+        }
+
+        return BoolQuery.of(b -> b
+            .must(query)
+            .must(m -> m.range(r -> r.field("entity_id").gte(JsonData.of(watermark))))
+        )._toQuery();
+    }
+
+    private long countIssues(Query query, String profileName, String target,
+                             QualityDimension dimension, IssueSeverity severity,
+                             String constraintKey, long fallback) {
+        return dataQualityAggregator
+            .countIssues(query,
+                expandRuleKeys(profileName, target, dimension, severity, constraintKey))
+            .orElse(fallback);
+    }
+
+    private Set<String> expandRuleKeys(String profileName, String target,
+                                       QualityDimension dimension, IssueSeverity severity,
+                                       String constraintKey) {
+        var keys = new HashSet<String>();
+
+        DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion().stream()
+            .filter(profileAndVersion -> profileAndVersion.a.equals(profileName))
+            .forEach(profileAndVersion -> keys.addAll(
+                DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    profileAndVersion.a, profileAndVersion.b, target, dimension, severity)));
+
+        if (Objects.nonNull(constraintKey)) {
+            keys.retainAll(Set.of(constraintKey));
+        }
+
+        return keys;
     }
 
     private Query buildIssueQuery(String entityType, Integer entityId, String profileName,
@@ -437,5 +500,8 @@ public class DataQualityServiceImpl implements DataQualityService {
             entityId);
 
         return true;
+    }
+
+    private record IssueWindow(List<DataQualityIssueDTO> issues, int scannedIssues) {
     }
 }

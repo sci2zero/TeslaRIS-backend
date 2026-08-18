@@ -1220,7 +1220,7 @@ public class DataQualityCalculator {
 
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
-            (Objects.isNull(dto.getResearchAreas()) || dto.getResearchAreas().isEmpty())) {
+            (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
             return; // involvement is considered an activity if any of the following is set, otherwise don't check for any issues
         }
 
@@ -1291,7 +1291,7 @@ public class DataQualityCalculator {
                               EventType eventType, OtherEventType otherEventType,
                               LocalDate documentDate) {
         if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
-            (Objects.isNull(dto.getResearchAreas()) || dto.getResearchAreas().isEmpty())) {
+            (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
             return; // contribution is considered an activity if any of the following is set, otherwise don't check for any issues
         }
 

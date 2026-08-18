@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -228,7 +229,9 @@ public class DataQualityAssessmentIndexer {
         }
 
         var institutionIds = new HashSet<Integer>();
-        personIndexRepository.findAllByDatabaseId(contributorPersonIds)
+        personIndexRepository
+            .findByDatabaseIdIn(contributorPersonIds,
+                PageRequest.of(0, contributorPersonIds.size()))
             .forEach(
                 personIndex -> institutionIds.addAll(personIndex.getEmploymentInstitutionsId()));
 
