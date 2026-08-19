@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
@@ -72,6 +73,13 @@ public class DataQualityController {
                                                 Pageable pageable) {
         return dataQualityService.findIssuesForEntity(entityType, entityId, profileName, target,
             dimension, severity, constraintKey, pageable);
+    }
+
+    @GetMapping(value = "/issue/{assessmentId}/{ruleKey}",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public DataQualityIssueDetailsDTO findIssueDetails(@PathVariable Integer assessmentId,
+                                                       @PathVariable String ruleKey) {
+        return dataQualityService.findIssueDetails(assessmentId, ruleKey);
     }
 
     @GetMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -143,6 +143,7 @@ public class DataQualityAssessmentConfigurationLoader {
         return new DataQualityProfile(
             version,
             config.minimumRequiredScore(),
+            Objects.requireNonNullElse(config.dimensionDefinitions(), Map.of()),
             config.targetWeights(),
             config.dataQualityRemarks(),
             totalPointsByTarget,
@@ -312,6 +313,7 @@ public class DataQualityAssessmentConfigurationLoader {
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
+                    Collections.emptyMap(),
                     Collections.emptyMap()
                 )
             ).dataQualityRemarks();
@@ -360,6 +362,19 @@ public class DataQualityAssessmentConfigurationLoader {
                 severity.equals(entry.getValue().severity()))
             .map(Map.Entry::getKey)
             .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public static Set<MultiLingualContent> getDimensionDefinition(String profile, String version,
+                                                                  QualityDimension dimension) {
+        var definition = getProfile(profile.toLowerCase(), version)
+            .dimensionDefinitions()
+            .get(dimension);
+
+        if (Objects.isNull(definition)) {
+            return Collections.emptySet();
+        }
+
+        return StringUtil.buildMultilingualContent(languageTagService, definition);
     }
 
     public static DataQualityRemark getIssue(String profile, String version, String issueKey) {
@@ -413,6 +428,9 @@ public class DataQualityAssessmentConfigurationLoader {
 
         @JsonProperty(value = "minimumRequiredScore")
         Double minimumRequiredScore,
+
+        @JsonProperty(value = "dimensionDefinitions")
+        Map<QualityDimension, Map<String, String>> dimensionDefinitions,
 
         @JsonProperty(value = "targetWeights", required = true)
         Map<String, Double> targetWeights,

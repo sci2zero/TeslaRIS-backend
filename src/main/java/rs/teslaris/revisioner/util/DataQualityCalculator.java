@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,7 @@ import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -44,6 +47,7 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
+import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
@@ -53,6 +57,7 @@ import rs.teslaris.core.dto.identifier.IdentifierResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EventType;
@@ -444,8 +449,8 @@ public class DataQualityCalculator {
                     reportIssue(
                         assessment,
                         "defenceBeforeAcceptance",
-                        thesis.getTopicAcceptanceDate(),
-                        thesis.getThesisDefenceDate());
+                        thesis.getThesisDefenceDate(),
+                        thesis.getTopicAcceptanceDate());
                 }
 
                 var defenceMaxFutureYears =
@@ -876,8 +881,8 @@ public class DataQualityCalculator {
             reportIssue(
                 assessment,
                 "dateDissolvedBeforeEstablished",
-                dto.getDateEstablished(),
-                dto.getDateDissolved()
+                dto.getDateDissolved(),
+                dto.getDateEstablished()
             );
         }
 
@@ -1218,14 +1223,91 @@ public class DataQualityCalculator {
         // TODO lastModificationDateMissing
     }
 
+    /**
+     * Activity remarks describe a contribution or an involvement rather than the record itself, so
+     * every one of them carries the identity of the activity it failed on - without it a record with
+     * a dozen contributors reports a dozen indistinguishable remarks.
+     * <p>
+     * The type stays in its enum form: message parameters are stored once and reused for every
+     * language, so there is nowhere to keep a translated form of it.
+     */
+    private String activityTypeToken(PersonContributionDTO dto) {
+        var type = contributionType(dto);
+
+        return type.isBlank() ? "-" : "contributionType." + type;
+    }
+
+    private String activityTypeToken(InvolvementDTO dto) {
+        return Objects.isNull(dto.getInvolvementType())
+            ? "-"
+            : "involvementType." + dto.getInvolvementType().name();
+    }
+
+    private String activityName(PersonContributionDTO dto) {
+        var name = personDisplayName(dto.getPersonName());
+
+        return name.isBlank() ? "-" : name;
+    }
+
+    private String activityName(InvolvementDTO dto) {
+        var organisationUnit = firstContent(
+            CollectionOperations.containsValues(dto.getOrganisationUnitName())
+                ? dto.getOrganisationUnitName()
+                : dto.getDisplayOrganisationUnit());
+
+        return organisationUnit.isBlank() ? "-" : organisationUnit;
+    }
+
+    private String contributionType(PersonContributionDTO dto) {
+        if (dto instanceof PersonDocumentContributionDTO documentContribution &&
+            Objects.nonNull(documentContribution.getContributionType())) {
+            return documentContribution.getContributionType().name();
+        }
+
+        if (dto instanceof PersonEventContributionDTO eventContribution &&
+            Objects.nonNull(eventContribution.getEventContributionType())) {
+            return eventContribution.getEventContributionType().name();
+        }
+
+        if (dto instanceof PersonPublicationSeriesContributionDTO seriesContribution &&
+            Objects.nonNull(seriesContribution.getContributionType())) {
+            return seriesContribution.getContributionType().name();
+        }
+
+        return "";
+    }
+
+    private String personDisplayName(PersonNameDTO personName) {
+        if (Objects.isNull(personName)) {
+            return "";
+        }
+
+        return Stream.of(personName.getFirstname(), personName.getOtherName(),
+                personName.getLastname())
+            .filter(StringUtil::valueExists)
+            .collect(Collectors.joining(" "))
+            .trim();
+    }
+
+    private String firstContent(List<MultilingualContentDTO> content) {
+        if (!CollectionOperations.containsValues(content)) {
+            return "";
+        }
+
+        return Objects.requireNonNullElse(content.getFirst().getContent(), "");
+    }
+
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
             (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
             return; // involvement is considered an activity if any of the following is set, otherwise don't check for any issues
         }
 
+        var activityType = activityTypeToken(dto);
+        var activityName = activityName(dto);
+
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
         } else {
             var startDateMinYear =
                 getIntConstraint(assessment, "activityStartDateBefore", "minYear");
@@ -1233,10 +1315,8 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore",
-                    dto.getDateFrom(),
-                    startDateMinYear
-                );
+                    "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
             }
 
             var minAgeYears = getIntConstraint(
@@ -1245,11 +1325,9 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(dto.getPersonBirthDate().plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforeMinAge",
-                    dto.getDateFrom(),
+                    "activityStartDateBeforeMinAge", dto.getDateFrom(),
                     dto.getPersonBirthDate(),
-                    minAgeYears
-                );
+                    minAgeYears, activityType, activityName);
             }
 
             var startDateMaxFutureYears =
@@ -1258,27 +1336,23 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateTooFarInFuture",
-                    dto.getDateFrom(),
-                    startDateMaxFutureYears
-                );
+                    "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
             }
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
                 assessment,
-                "activityEndDateBeforeStartDate",
-                dto.getDateTo(),
-                dto.getDateFrom()
-            );
+                "activityEndDateBeforeStartDate", dto.getDateTo(),
+                dto.getDateFrom(), activityType, activityName);
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing", "", activityType, activityName);
         }
 
         // TODO metadataLicenseMissing
@@ -1310,8 +1384,11 @@ public class DataQualityCalculator {
 
         assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
 
+        var activityType = activityTypeToken(dto);
+        var activityName = activityName(dto);
+
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
         } else {
             var startDateMinYear =
                 getIntConstraint(assessment, "activityStartDateBefore", "minYear");
@@ -1319,10 +1396,8 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore",
-                    dto.getDateFrom(),
-                    startDateMinYear
-                );
+                    "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
             }
 
             var minAgeYears = getIntConstraint(
@@ -1331,11 +1406,9 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(birthDate.plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforeMinAge",
-                    dto.getDateFrom(),
+                    "activityStartDateBeforeMinAge", dto.getDateFrom(),
                     birthDate,
-                    minAgeYears
-                );
+                    minAgeYears, activityType, activityName);
             }
 
             var startDateMaxFutureYears =
@@ -1344,26 +1417,23 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateTooFarInFuture",
-                    dto.getDateFrom(),
-                    startDateMaxFutureYears
-                );
+                    "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
             }
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
                 assessment,
-                "activityEndDateBeforeStartDate",
-                dto.getDateTo(), dto.getDateFrom()
-            );
+                "activityEndDateBeforeStartDate", dto.getDateTo(), dto.getDateFrom(), activityType,
+                activityName);
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing", "", activityType, activityName);
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1372,22 +1442,22 @@ public class DataQualityCalculator {
             if (!linkedWithCourse) {
                 if (Objects.nonNull(eventContribution.getLectureHoursPerWeek())) {
                     reportIssue(assessment,
-                        "lectureHoursOnlyForCourse");
+                        "lectureHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getTutorialHoursPerWeek())) {
                     reportIssue(assessment,
-                        "tutorialHoursOnlyForCourse");
+                        "tutorialHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getLabHoursPerWeek())) {
                     reportIssue(assessment,
-                        "labHoursOnlyForCourse");
+                        "labHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getOtherContactHoursPerWeek())) {
                     reportIssue(assessment,
-                        "otherContactHoursOnlyForCourse");
+                        "otherContactHoursOnlyForCourse", "", activityType, activityName);
                 }
             }
 
@@ -1404,12 +1474,12 @@ public class DataQualityCalculator {
                         assessment,
                         "numberOfReviewsTooHigh",
                         eventContribution.getNumberOfReviewsOrAssessment(),
-                        maxReviews
-                    );
+                        maxReviews, activityType, activityName);
                 }
 
                 if (!(linkedWithConference && reviewerContribution)) {
-                    reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer");
+                    reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer", "",
+                        activityType, activityName);
                 }
             }
 
@@ -1417,19 +1487,21 @@ public class DataQualityCalculator {
                 otherEventType.equals(OtherEventType.TRIAL);
 
             if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
-                reportIssue(assessment, "caseOnlyForTrial");
+                reportIssue(assessment, "caseOnlyForTrial", "", activityType, activityName);
             }
 
             if (CollectionOperations.containsValues(eventContribution.getLocationJurisdiction()) &&
                 !trial) {
-                reportIssue(assessment, "locationJurisdictionOnlyForTrial");
+                reportIssue(assessment, "locationJurisdictionOnlyForTrial", "", activityType,
+                    activityName);
             }
         }
 
         if (dto instanceof PersonDocumentContributionDTO documentContribution) {
             if (Objects.nonNull(documentDate) && Objects.nonNull(birthDate) &&
                 documentDate.isBefore(birthDate)) {
-                reportIssue(assessment, "documentBeforePersonBirth");
+                reportIssue(assessment, "documentBeforePersonBirth", "", activityType,
+                    activityName);
             }
 
             if (Boolean.TRUE.equals(documentContribution.getIsMainContributor()) &&
@@ -1443,9 +1515,8 @@ public class DataQualityCalculator {
                     .contains(documentContribution.getContributionType())) {
                 reportIssue(
                     assessment,
-                    "invalidMainContributorFlag",
-                    documentContribution.getContributionType().name()
-                );
+                    "invalidMainContributorFlag", documentContribution.getContributionType().name(),
+                    activityType, activityName);
             }
 
             if (Boolean.TRUE.equals(documentContribution.getIsCorrespondingContributor()) &&
@@ -1457,8 +1528,7 @@ public class DataQualityCalculator {
                 reportIssue(
                     assessment,
                     "invalidCorrespondingContributorFlag",
-                    documentContribution.getContributionType().name()
-                );
+                    documentContribution.getContributionType().name(), activityType, activityName);
             }
         }
 

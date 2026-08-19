@@ -1,5 +1,47 @@
 {
   "minimumRequiredScore": 60.0,
+  "dimensionDefinitions": {
+    "COMPLETENESS": {
+      "sr": "Ova dimenzija obezbeđuje da su svi obavezni podaci prisutni i popunjeni, bez nedostajućih vrednosti koje sprečavaju upotrebu zapisa.",
+      "sr-cyr": "Ова димензија обезбеђује да су сви обавезни подаци присутни и попуњени, без недостајућих вредности које спречавају употребу записа.",
+      "en": "This dimension ensures that all mandatory data elements are present and populated, without missing values that would prevent the record from being used."
+    },
+    "VALIDITY": {
+      "sr": "Ova dimenzija obezbeđuje da vrednosti podataka odgovaraju definisanom formatu, tipu i opsegu propisanom za dato polje.",
+      "sr-cyr": "Ова димензија обезбеђује да вредности података одговарају дефинисаном формату, типу и опсегу прописаном за дато поље.",
+      "en": "This dimension ensures that data values conform to the format, type and range defined for the field they belong to."
+    },
+    "UNIQUENESS": {
+      "sr": "Ova dimenzija obezbeđuje da isti entitet nije zabeležen više puta i da su identifikatori jedinstveni u okviru repozitorijuma.",
+      "sr-cyr": "Ова димензија обезбеђује да исти ентитет није забележен више пута и да су идентификатори јединствени у оквиру репозиторијума.",
+      "en": "This dimension ensures that the same entity is not recorded more than once and that identifiers remain unique across the repository."
+    },
+    "CONSISTENCY": {
+      "sr": "Ova dimenzija obezbeđuje da podaci ne protivreče jedni drugima, ni unutar zapisa ni između povezanih zapisa.",
+      "sr-cyr": "Ова димензија обезбеђује да подаци не противрече једни другима, ни унутар записа ни између повезаних записа.",
+      "en": "This dimension ensures that data does not contradict itself, neither within a record nor across related records."
+    },
+    "TIMELINESS": {
+      "sr": "Ova dimenzija obezbeđuje da su podaci dostupni i ažurirani u trenutku kada su potrebni i da odražavaju aktuelno stanje.",
+      "sr-cyr": "Ова димензија обезбеђује да су подаци доступни и ажурирани у тренутку када су потребни и да одражавају актуелно стање.",
+      "en": "This dimension ensures that data is available and up to date when it is needed, reflecting the current state of what it describes."
+    },
+    "ACCURACY": {
+      "sr": "Ova dimenzija obezbeđuje da zabeležene vrednosti verno opisuju stvarnost koju predstavljaju i da se mogu proveriti u odnosu na pouzdan izvor.",
+      "sr-cyr": "Ова димензија обезбеђује да забележене вредности верно описују стварност коју представљају и да се могу проверити у односу на поуздан извор.",
+      "en": "This dimension ensures that recorded values faithfully describe the reality they represent and can be verified against a trusted source."
+    },
+    "CONFORMITY": {
+      "sr": "Ova dimenzija obezbeđuje da svaki podatak koristi dozvoljene vrednosti definisane za njega, sprečavajući neželjene vrednosti van propisanog skupa.",
+      "sr-cyr": "Ова димензија обезбеђује да сваки податак користи дозвољене вредности дефинисане за њега, спречавајући нежељене вредности ван прописаног скупа.",
+      "en": "This dimension ensures that each data element uses the acceptable data values defined for it, preventing unwanted or out-of-scope values."
+    },
+    "INTEGRITY": {
+      "sr": "Ova dimenzija obezbeđuje da su veze između zapisa očuvane i da referencirani entiteti zaista postoje.",
+      "sr-cyr": "Ова димензија обезбеђује да су везе између записа очуване и да референцирани ентитети заиста постоје.",
+      "en": "This dimension ensures that relationships between records are preserved and that referenced entities actually exist."
+    }
+  },
   "targetWeights": {
     "Document.title": 5,
     "Document.description": 5,
@@ -2025,9 +2067,9 @@
         "en": "Lecture hours only allowed for course"
       },
       "message": {
-        "sr": "Broj časova predavanja može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
-        "sr-cyr": "Број часова предавања може бити унет само за наставне активности повезане са предметом.",
-        "en": "Lecture hours can only be specified for teaching activities linked to a course."
+        "sr": "Broj časova predavanja ({1} - {2}) može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова предавања ({1} - {2}) може бити унет само за наставне активности повезане са предметом.",
+        "en": "Lecture hours ({1} - {2}) can only be entered for teaching activities linked to a course."
       },
       "target": "Activity.teachingHours",
       "severity": "ERROR",
@@ -2043,9 +2085,9 @@
         "en": "Tutorial hours only allowed for course"
       },
       "message": {
-        "sr": "Broj časova vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
-        "sr-cyr": "Број часова вежби може бити унет само за наставне активности повезане са предметом.",
-        "en": "Tutorial hours can only be specified for teaching activities linked to a course."
+        "sr": "Broj časova vežbi ({1} - {2}) može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова вежби ({1} - {2}) може бити унет само за наставне активности повезане са предметом.",
+        "en": "Tutorial hours ({1} - {2}) can only be entered for teaching activities linked to a course."
       },
       "target": "Activity.teachingHours",
       "severity": "ERROR",
@@ -2061,9 +2103,9 @@
         "en": "Lab hours only allowed for course"
       },
       "message": {
-        "sr": "Broj časova laboratorijskih vežbi može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
-        "sr-cyr": "Број часова лабораторијских вежби може бити унет само за наставне активности повезане са предметом.",
-        "en": "Laboratory hours can only be specified for teaching activities linked to a course."
+        "sr": "Broj časova laboratorijskih vežbi ({1} - {2}) može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број часова лабораторијских вежби ({1} - {2}) може бити унет само за наставне активности повезане са предметом.",
+        "en": "Laboratory hours ({1} - {2}) can only be entered for teaching activities linked to a course."
       },
       "target": "Activity.teachingHours",
       "severity": "ERROR",
@@ -2079,9 +2121,9 @@
         "en": "Other contact hours only allowed for course"
       },
       "message": {
-        "sr": "Broj ostalih kontakt časova može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
-        "sr-cyr": "Број осталих контакт часова може бити унет само за наставне активности повезане са предметом.",
-        "en": "Other contact hours can only be specified for teaching activities linked to a course."
+        "sr": "Broj ostalih kontakt časova ({1} - {2}) može biti unet samo za nastavne aktivnosti povezane sa predmetom.",
+        "sr-cyr": "Број осталих контакт часова ({1} - {2}) може бити унет само за наставне активности повезане са предметом.",
+        "en": "Other contact hours ({1} - {2}) can only be entered for teaching activities linked to a course."
       },
       "target": "Activity.teachingHours",
       "severity": "ERROR",
@@ -2097,9 +2139,9 @@
         "en": "Number of reviews exceeds maximum"
       },
       "message": {
-        "sr": "Broj recenzija ili ocena ({0}) ne može biti veći od {1}.",
-        "sr-cyr": "Број рецензија или оцена ({0}) не може бити већи од {1}.",
-        "en": "The number of reviews or assessments ({0}) cannot exceed {1}."
+        "sr": "Broj recenzija ili ocena ({0}) na aktivnosti ({2} - {3}) ne može biti veći od {1}.",
+        "sr-cyr": "Број рецензија или оцена ({0}) на активности ({2} - {3}) не може бити већи од {1}.",
+        "en": "The number of reviews or assessments ({0}) on the activity ({2} - {3}) cannot exceed {1}."
       },
       "target": "Activity.reviews",
       "severity": "ERROR",
@@ -2118,9 +2160,9 @@
         "en": "Number of reviews only allowed for conference reviewers"
       },
       "message": {
-        "sr": "Broj recenzija ili ocena može biti unet samo za recenzente konferencija.",
-        "sr-cyr": "Број рецензија или оцена може бити унет само за рецензенте конференција.",
-        "en": "The number of reviews or assessments can only be specified for conference reviewers."
+        "sr": "Broj recenzija ili ocena ({1} - {2}) može biti unet samo za recenzente konferencija.",
+        "sr-cyr": "Број рецензија или оцена ({1} - {2}) може бити унет само за рецензенте конференција.",
+        "en": "The number of reviews or assessments ({1} - {2}) can only be entered for conference reviewers."
       },
       "target": "Activity.reviews",
       "severity": "ERROR",
@@ -2136,9 +2178,9 @@
         "en": "Case only allowed for trial"
       },
       "message": {
-        "sr": "Predmet može biti povezan samo sa aktivnostima koje predstavljaju suđenje.",
-        "sr-cyr": "Предмет може бити повезан само са активностима које представљају суђење.",
-        "en": "A case can only be associated with trial activities."
+        "sr": "Predmet ({1} - {2}) može biti povezan samo sa aktivnostima koje predstavljaju suđenje.",
+        "sr-cyr": "Предмет ({1} - {2}) може бити повезан само са активностима које представљају суђење.",
+        "en": "The case ({1} - {2}) can only be linked to activities that represent a trial."
       },
       "target": "Activity.trial",
       "severity": "ERROR",
@@ -2154,9 +2196,9 @@
         "en": "Jurisdiction only allowed for trial"
       },
       "message": {
-        "sr": "Nadležnost može biti povezana samo sa aktivnostima koje predstavljaju suđenje.",
-        "sr-cyr": "Надлежност може бити повезана само са активностима које представљају суђење.",
-        "en": "A jurisdiction can only be associated with trial activities."
+        "sr": "Nadležnost ({1} - {2}) može biti povezana samo sa aktivnostima koje predstavljaju suđenje.",
+        "sr-cyr": "Надлежност ({1} - {2}) може бити повезана само са активностима које представљају суђење.",
+        "en": "The jurisdiction ({1} - {2}) can only be linked to activities that represent a trial."
       },
       "target": "Activity.trial",
       "severity": "ERROR",
@@ -2172,9 +2214,9 @@
         "en": "Document date before person's birth"
       },
       "message": {
-        "sr": "Datum dokumenta povezanog sa doprinosom ne može biti pre datuma rođenja povezane osobe.",
-        "sr-cyr": "Датум документа повезаног са доприносом не може бити пре датума рођења повезане особе.",
-        "en": "The document date cannot be before the linked person's birth date."
+        "sr": "Datum dokumenta povezanog sa doprinosom ({1} - {2}) ne može biti pre datuma rođenja povezane osobe.",
+        "sr-cyr": "Датум документа повезаног са доприносом ({1} - {2}) не може бити пре датума рођења повезане особе.",
+        "en": "The date of the document linked to the contribution ({1} - {2}) cannot be before the birth date of the linked person."
       },
       "target": "Activity.date",
       "severity": "ERROR",
@@ -2190,9 +2232,9 @@
         "en": "Invalid main contributor flag"
       },
       "message": {
-        "sr": "Oznaka glavnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
-        "sr-cyr": "Ознака главног аутора није дозвољена за изабрану врсту доприноса ({0}).",
-        "en": "The main contributor flag is not allowed for the selected contribution type ({0})."
+        "sr": "Oznaka glavnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}) na aktivnosti ({1} - {2}).",
+        "sr-cyr": "Ознака главног аутора није дозвољена за изабрану врсту доприноса ({0}) на активности ({1} - {2}).",
+        "en": "The main contributor flag is not allowed for the selected contribution type ({0}) on the activity ({1} - {2})."
       },
       "target": "Activity.contributionType",
       "severity": "ERROR",
@@ -2208,9 +2250,9 @@
         "en": "Invalid corresponding contributor flag"
       },
       "message": {
-        "sr": "Oznaka korespondentnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}).",
-        "sr-cyr": "Ознака кореспондентног аутора није дозвољена за изабрану врсту доприноса ({0}).",
-        "en": "The corresponding contributor flag is not allowed for the selected contribution type ({0})."
+        "sr": "Oznaka korespondentnog autora nije dozvoljena za izabranu vrstu doprinosa ({0}) na aktivnosti ({1} - {2}).",
+        "sr-cyr": "Ознака кореспондентног аутора није дозвољена за изабрану врсту доприноса ({0}) на активности ({1} - {2}).",
+        "en": "The corresponding contributor flag is not allowed for the selected contribution type ({0}) on the activity ({1} - {2})."
       },
       "target": "Activity.contributionType",
       "severity": "ERROR",
@@ -2226,9 +2268,9 @@
         "en": "Missing activity start date"
       },
       "message": {
-        "sr": "Datum početka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
-        "sr-cyr": "Датум почетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
-        "en": "The activity start date is missing. Although the activity start date field is not mandatory, it is recommended."
+        "sr": "Datum početka aktivnosti ({1} - {2}) nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "Датум почетка активности ({1} - {2}) није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "The activity start date ({1} - {2}) is not entered. Although the field is not mandatory, filling it in is recommended."
       },
       "target": "Activity.date",
       "severity": "WARNING",
@@ -2244,9 +2286,9 @@
         "en": "Activity start date before configured year"
       },
       "message": {
-        "sr": "Datum početka aktivnosti ({0}) ne može biti pre {1}. godine.",
-        "sr-cyr": "Датум почетка активности ({0}) не може бити пре {1}. године.",
-        "en": "The activity start date ({0}) cannot be before the year {1}."
+        "sr": "Datum početka aktivnosti ({2} - {3}) ({0}) ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум почетка активности ({2} - {3}) ({0}) не може бити пре {1}. године.",
+        "en": "The activity start date ({0}) on the activity ({2} - {3}) cannot be before the year {1}."
       },
       "target": "Activity.date",
       "severity": "ERROR",
@@ -2265,9 +2307,9 @@
         "en": "Activity start date before person reached minimum age"
       },
       "message": {
-        "sr": "Datum početka aktivnosti ({0}) ne može biti pre nego što je povezana osoba navršila {2} godina (datum rođenja: {1}).",
-        "sr-cyr": "Датум почетка активности ({0}) не може бити пре него што је повезана особа навршила {2} година (датум рођења: {1}).",
-        "en": "The activity start date ({0}) cannot be before the linked person turned {2} (birth date: {1})."
+        "sr": "Datum početka aktivnosti ({3} - {4}) ({0}) ne može biti pre nego što je povezana osoba navršila {2} godina (datum rođenja: {1}).",
+        "sr-cyr": "Датум почетка активности ({3} - {4}) ({0}) не може бити пре него што је повезана особа навршила {2} година (датум рођења: {1}).",
+        "en": "The activity start date ({0}) on the activity ({3} - {4}) cannot be before the linked person turned {2} (birth date: {1})."
       },
       "target": "Activity.date",
       "severity": "ERROR",
@@ -2286,9 +2328,9 @@
         "en": "Activity start date too far in future"
       },
       "message": {
-        "sr": "Datum početka aktivnosti ({0}) može biti najviše {1} godina u budućnosti.",
-        "sr-cyr": "Датум почетка активности ({0}) може бити највише {1} година у будућности.",
-        "en": "The activity start date ({0}) can be at most {1} years in the future."
+        "sr": "Datum početka aktivnosti ({2} - {3}) ({0}) može biti najviše {1} godina u budućnosti.",
+        "sr-cyr": "Датум почетка активности ({2} - {3}) ({0}) може бити највише {1} година у будућности.",
+        "en": "The activity start date ({0}) on the activity ({2} - {3}) can be at most {1} years in the future."
       },
       "target": "Activity.date",
       "severity": "ERROR",
@@ -2307,9 +2349,9 @@
         "en": "Missing activity end date"
       },
       "message": {
-        "sr": "Datum završetka aktivnosti nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
-        "sr-cyr": "Датум завршетка активности није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
-        "en": "The activity end date is missing. Although the activity end date field is not mandatory, it is recommended."
+        "sr": "Datum završetka aktivnosti ({1} - {2}) nije unet. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "Датум завршетка активности ({1} - {2}) није унет. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "The activity end date ({1} - {2}) is not entered. Although the field is not mandatory, filling it in is recommended."
       },
       "target": "Activity.date",
       "severity": "WARNING",
@@ -2325,9 +2367,9 @@
         "en": "Activity end date before start date"
       },
       "message": {
-        "sr": "Datum završetka aktivnosti ({0}) ne može biti pre datuma početka aktivnosti ({1}).",
-        "sr-cyr": "Датум завршетка активности ({0}) не може бити пре датума почетка активности ({1}).",
-        "en": "The activity end date ({0}) cannot be before the activity start date ({1})."
+        "sr": "Datum završetka aktivnosti ({2} - {3}) ({0}) ne može biti pre datuma početka aktivnosti ({1}).",
+        "sr-cyr": "Датум завршетка активности ({2} - {3}) ({0}) не може бити пре датума почетка активности ({1}).",
+        "en": "The activity end date ({0}) on the activity ({2} - {3}) cannot be before the activity start date ({1})."
       },
       "target": "Activity.date",
       "severity": "ERROR",
@@ -2343,9 +2385,9 @@
         "en": "Missing activity research areas"
       },
       "message": {
-        "sr": "Za zapis aktivnosti nije povezana nijedna istraživačka oblast. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
-        "sr-cyr": "За запис активности није повезана ниједна истраживачка област. Иако поље није обавезно, његово попуњавање је препоручено.",
-        "en": "There are no research areas linked with the activity record. Although the research area field is not mandatory, it is recommended."
+        "sr": "Za zapis aktivnosti ({1} - {2}) nije povezana nijedna istraživačka oblast. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "За запис активности ({1} - {2}) није повезана ниједна истраживачка област. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "No research area is linked to the activity record ({1} - {2}). Although the field is not mandatory, filling it in is recommended."
       },
       "target": "Activity.researchAreas",
       "severity": "WARNING",

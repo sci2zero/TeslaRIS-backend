@@ -32,8 +32,10 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.converter.DataQualityAssessmentConverter;
 import rs.teslaris.revisioner.converter.DataQualityProfileConverter;
 import rs.teslaris.revisioner.converter.IssueConverter;
+import rs.teslaris.revisioner.converter.IssueDetailsConverter;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
@@ -41,9 +43,11 @@ import rs.teslaris.revisioner.dto.RelatedQualityDTO;
 import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 import rs.teslaris.revisioner.indexrepository.DataQualityAssessmentIndexRepository;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
+import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
+import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 import rs.teslaris.revisioner.util.CompressionUtil;
@@ -77,6 +81,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private static final String ISSUE_INDEX_NAME = "data_quality_assessment";
 
     private final EntityRevisionRepository entityRevisionRepository;
+
+    private final DataQualityAssessmentRepository dataQualityAssessmentRepository;
 
     private final LanguageTagService languageTagService;
 
@@ -453,6 +459,31 @@ public class DataQualityServiceImpl implements DataQualityService {
                 ? m.matchAll(ma -> ma)
                 : m.term(tq -> tq.field("target").value(target)))
         )._toQuery();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DataQualityIssueDetailsDTO findIssueDetails(Integer assessmentId, String ruleKey) {
+        var assessment = dataQualityAssessmentRepository
+            .findWithRevisionById(assessmentId)
+            .orElseThrow(() -> new NotFoundException(
+                "Assessment with ID " + assessmentId + " does not exist."));
+
+        // A rule evaluated per contributor or per title fails once per offending value, while the
+        // index keeps only the distinct key - so every occurrence of the key belongs to this issue.
+        var occurrences = Objects.requireNonNullElse(assessment.getIssues(),
+                List.<ConstraintEvaluationResult>of())
+            .stream()
+            .filter(issue -> ruleKey.equals(issue.getKey()))
+            .toList();
+
+        if (occurrences.isEmpty()) {
+            throw new NotFoundException(
+                String.format("Assessment %d records no failure of rule '%s'.", assessmentId,
+                    ruleKey));
+        }
+
+        return IssueDetailsConverter.toDTO(assessment, ruleKey, occurrences);
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
@@ -34,6 +35,8 @@ public interface DataQualityService {
                                                   IssueSeverity severity,
                                                   String constraintKey,
                                                   Pageable pageable);
+
+    DataQualityIssueDetailsDTO findIssueDetails(Integer assessmentId, String ruleKey);
 
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
 

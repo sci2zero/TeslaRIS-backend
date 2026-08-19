@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
@@ -50,6 +51,7 @@ import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
+import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.impl.DataQualityServiceImpl;
 import rs.teslaris.revisioner.util.CompressionUtil;
@@ -78,6 +80,9 @@ public class DataQualityServiceTest {
 
     @Mock
     private DataQualityAssessmentIndexRepository dataQualityAssessmentIndexRepository;
+
+    @Mock
+    private DataQualityAssessmentRepository dataQualityAssessmentRepository;
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
@@ -794,6 +799,233 @@ public class DataQualityServiceTest {
         verifyNoInteractions(dataQualityAssessmentIndexRepository);
     }
 
+    private DataQualityAssessmentConfigurationLoader.DataQualityRemark remarkForTarget(
+        String target, IssueSeverity severity, QualityDimension dimension, boolean blocking,
+        boolean fairRelated) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
+            Map.of("en", "Resolvable ORCID"), Map.of("en", "The ORCID could not be resolved."),
+            target, severity, dimension, blocking, 8.0, fairRelated, Map.of());
+    }
+
+    private ConstraintEvaluationResult occurrence(String ruleKey, String... parameters) {
+        return ConstraintEvaluationResult.builder()
+            .key(ruleKey)
+            .parameters(List.of(parameters))
+            .build();
+    }
+
+    private DataQualityAssessment assessmentWithIssues(Integer assessmentId,
+                                                       List<ConstraintEvaluationResult> issues) {
+        var revision = EntityRevision.builder()
+            .entityType(PERSON_ENTITY_TYPE)
+            .entityId(11)
+            .majorVersion(4)
+            .minorVersion(2)
+            .revisionTimestamp(Instant.now())
+            .build();
+
+        var assessment = DataQualityAssessment.builder()
+            .revision(revision)
+            .profileName("PTCRIS")
+            .profileVersion("1.3")
+            .startedAt(Instant.now())
+            .finishedAt(Instant.now())
+            .issues(issues)
+            .build();
+
+        assessment.setId(assessmentId);
+        revision.getAssessments().add(assessment);
+
+        return assessment;
+    }
+
+    private void stubIssueConfiguration(
+        MockedStatic<DataQualityAssessmentConfigurationLoader> configurationLoader,
+        DataQualityAssessmentConfigurationLoader.DataQualityRemark remark) {
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                anyString(), anyString(), anyString()))
+            .thenReturn(remark);
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getWeightedPoints(
+                anyString(), anyString(), any()))
+            .thenReturn(24.0);
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getTargetWeights(
+                anyString(), anyString()))
+            .thenReturn(Map.of(remark.target(), 3.0));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                anyString(), anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("Resolvable ORCID")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                anyString(), anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("The ORCID could not be resolved.")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
+                anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("This dimension ensures accuracy.")));
+    }
+
+    @Test
+    public void shouldReturnDetailsOfFailedRule() {
+        // given
+        var assessment = assessmentWithIssues(7,
+            List.of(occurrence("orcidNotResolvable", "0000-0002-1847-302X")));
+
+        when(dataQualityAssessmentRepository.findWithRevisionById(7))
+            .thenReturn(Optional.of(assessment));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader,
+                remarkForTarget("Person.ORCID", IssueSeverity.ERROR, QualityDimension.ACCURACY,
+                    true, true));
+
+            // when
+            var result = dataQualityService.findIssueDetails(7, "orcidNotResolvable");
+
+            // then
+            assertEquals(7, result.assessmentId());
+            assertEquals("orcidNotResolvable", result.ruleKey());
+            assertEquals(PERSON_ENTITY_TYPE, result.entityType());
+            assertEquals(11, result.entityId());
+            assertEquals(4, result.recordMajorVersion());
+            assertEquals(2, result.recordMinorVersion());
+            assertEquals(assessment.getFinishedAt(), result.assessmentDate());
+
+            // A failed constraint always scores zero of what it was worth.
+            assertEquals(0.0, result.score());
+            assertEquals(24.0, result.maximumScore());
+
+            assertEquals(IssueSeverity.ERROR, result.severity());
+            assertEquals(QualityDimension.ACCURACY, result.dimension());
+            assertEquals("Person", result.targetEntityType());
+            assertEquals("Person.ORCID", result.targetObject());
+            assertEquals(3.0, result.constraintWeight());
+            assertTrue(result.fairRelated());
+            assertTrue(result.blocking());
+            assertEquals("PTCRIS", result.policy());
+            assertEquals("1.3", result.policyVersion());
+
+            assertEquals("Resolvable ORCID", result.title().getFirst().getContent());
+            assertEquals("This dimension ensures accuracy.",
+                result.dimensionDefinition().getFirst().getContent());
+
+            assertEquals(1, result.occurrences().size());
+            assertEquals(List.of("0000-0002-1847-302X"),
+                result.occurrences().getFirst().actualValue());
+            assertEquals("The ORCID could not be resolved.",
+                result.occurrences().getFirst().message().getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldReturnEveryOccurrenceRecordedUnderTheSameRuleKey() {
+        // given (a rule checked once per contributor fails once per offending value)
+        var assessment = assessmentWithIssues(7, List.of(
+            occurrence("orcidNotResolvable", "0000-0002-1847-302X"),
+            occurrence("titleMissing"),
+            occurrence("orcidNotResolvable", "0000-0001-0000-111X"),
+            occurrence("orcidNotResolvable", "0000-0003-9999-222X")));
+
+        when(dataQualityAssessmentRepository.findWithRevisionById(7))
+            .thenReturn(Optional.of(assessment));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader,
+                remarkForTarget("Person.ORCID", IssueSeverity.ERROR, QualityDimension.ACCURACY,
+                    false, false));
+
+            // when
+            var result = dataQualityService.findIssueDetails(7, "orcidNotResolvable");
+
+            // then
+            assertEquals(3, result.occurrences().size());
+            assertEquals(List.of("0000-0002-1847-302X"),
+                result.occurrences().getFirst().actualValue());
+            assertEquals(List.of("0000-0001-0000-111X"),
+                result.occurrences().get(1).actualValue());
+            assertEquals(List.of("0000-0003-9999-222X"),
+                result.occurrences().get(2).actualValue());
+
+            assertFalse(result.fairRelated());
+            assertFalse(result.blocking());
+        }
+    }
+
+    @Test
+    public void shouldReturnTargetObjectAsEntityTypeWhenTargetHasNoField() {
+        // given
+        var assessment = assessmentWithIssues(7, List.of(occurrence("contactMissing")));
+
+        when(dataQualityAssessmentRepository.findWithRevisionById(7))
+            .thenReturn(Optional.of(assessment));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader,
+                remarkForTarget("Contact", IssueSeverity.WARNING, QualityDimension.COMPLETENESS,
+                    false, false));
+
+            // when
+            var result = dataQualityService.findIssueDetails(7, "contactMissing");
+
+            // then
+            assertEquals("Contact", result.targetEntityType());
+            assertEquals("Contact", result.targetObject());
+        }
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenAssessmentDoesNotExist() {
+        // given
+        when(dataQualityAssessmentRepository.findWithRevisionById(9))
+            .thenReturn(Optional.empty());
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> dataQualityService.findIssueDetails(9, "orcidNotResolvable"));
+
+        // then (NotFoundException should be thrown)
+        verify(dataQualityAssessmentRepository).findWithRevisionById(9);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenAssessmentRecordsNoFailureOfThatRule() {
+        // given
+        var assessment = assessmentWithIssues(7, List.of(occurrence("titleMissing")));
+
+        when(dataQualityAssessmentRepository.findWithRevisionById(7))
+            .thenReturn(Optional.of(assessment));
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> dataQualityService.findIssueDetails(7, "orcidNotResolvable"));
+
+        // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenAssessmentHasNoIssuesAtAll() {
+        // given
+        var assessment = assessmentWithIssues(7, null);
+
+        when(dataQualityAssessmentRepository.findWithRevisionById(7))
+            .thenReturn(Optional.of(assessment));
+
+        // when
+        assertThrows(NotFoundException.class,
+            () -> dataQualityService.findIssueDetails(7, "orcidNotResolvable"));
+
+        // then (NotFoundException should be thrown)
+    }
+
     @Test
     public void shouldReturnEmptyProfileListWhenNoProfilesAreConfigured() {
         // given
@@ -817,7 +1049,7 @@ public class DataQualityServiceTest {
     public void shouldReturnAllConfiguredDataQualityProfiles() {
         // given
         var profile = new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.3", 70.0, Map.of(), Map.of(), Map.of(), Map.of(),
+            "1.3", 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
             Map.of("DOCUMENT", new EnumMap<>(QualityDimension.class)));
 
         try (var configurationLoader = mockStatic(
