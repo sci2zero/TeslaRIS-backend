@@ -11,7 +11,7 @@ import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrepopulatedConsortiumMemberDTO {
+public class PrepopulatedOrganisationDTO {
 
     // TODO: Add MLC and CountryDTO
     private String organisationName;

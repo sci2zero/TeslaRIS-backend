@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrepopulatedInvestigatorDTO {
+public class PrepopulatedPersonDTO {
 
     // TODO: Add MLC
     private String givenName;

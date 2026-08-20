@@ -15,7 +15,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.project.dto.project.PrepopulatedInvestigatorDTO;
+import rs.teslaris.project.dto.project.PrepopulatedPersonDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectMetadataPrepopulationService;
@@ -166,11 +166,11 @@ public class ProjectMetadataPrepopulationServiceImpl
 
         var investigatorArray = projectNode.path("investigator");
         investigatorArray.forEach(invNode ->
-                metadata.getInvestigators().add(mapInvestigator(invNode)));
+                metadata.getPersons().add(mapInvestigator(invNode)));
     }
 
-    private PrepopulatedInvestigatorDTO mapInvestigator(JsonNode invNode) {
-        var investigator = new PrepopulatedInvestigatorDTO();
+    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode) {
+        var investigator = new PrepopulatedPersonDTO();
         investigator.setGivenName(invNode.path("given").asText(null));
         investigator.setFamilyName(invNode.path("family").asText(null));
         investigator.setOrcid(invNode.path("ORCID").asText(null));

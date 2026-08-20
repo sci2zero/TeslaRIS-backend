@@ -39,9 +39,9 @@ public class PrepopulatedProjectMetadataDTO {
 
     private List<MultilingualContentDTO> funderName = new ArrayList<>();
 
-    private List<PrepopulatedInvestigatorDTO> investigators = new ArrayList<>();
+    private List<PrepopulatedPersonDTO> persons = new ArrayList<>();
 
-    private List<PrepopulatedConsortiumMemberDTO> consortiumMembers = new ArrayList<>();
+    private List<PrepopulatedOrganisationDTO> organisations = new ArrayList<>();
 
     private List<PrepopulatedEventDTO> events = new ArrayList<>();
 }

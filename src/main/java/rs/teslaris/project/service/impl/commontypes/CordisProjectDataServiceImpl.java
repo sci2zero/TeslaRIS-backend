@@ -16,7 +16,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.project.dto.project.PrepopulatedConsortiumMemberDTO;
+import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
@@ -193,7 +193,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
 
         for (var i = 0; i < organizationNodes.getLength(); i++) {
             var orgElement = (Element) organizationNodes.item(i);
-            metadata.getConsortiumMembers().add(mapConsortiumMember(orgElement, xpath));
+            metadata.getOrganisations().add(mapConsortiumMember(orgElement, xpath));
         }
 
         var eventNodes = (NodeList) xpath.evaluate(
@@ -209,9 +209,9 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
     }
 
     // TODO: Add LanguageTag argument for MLCs inside ConsortiumMembers
-    private PrepopulatedConsortiumMemberDTO mapConsortiumMember(Element orgElement, XPath xpath)
+    private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath)
             throws Exception {
-        var member = new PrepopulatedConsortiumMemberDTO();
+        var member = new PrepopulatedOrganisationDTO();
 
         var type = orgElement.getAttribute("type");
         member.setContributionType(mapCordisTypeToContributionType(type));
