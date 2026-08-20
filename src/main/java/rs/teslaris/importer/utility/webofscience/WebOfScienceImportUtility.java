@@ -14,6 +14,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -34,6 +35,9 @@ public class WebOfScienceImportUtility {
     @Value("${wos.api.key}")
     private String apiKey;
 
+    @Value("${wos.max.retries:1}")
+    private int maxRetries;
+
 
     public List<WosPublication> getPublicationsForAuthors(List<String> wosIds, String dateFrom,
                                                           String dateTo) {
@@ -50,15 +54,7 @@ public class WebOfScienceImportUtility {
     }
 
     private String buildAuthorQuery(List<String> wosIds) {
-        StringBuilder query = new StringBuilder("AI=(");
-        for (var researcherId : wosIds) {
-            query.append(researcherId);
-            if (!researcherId.equals(wosIds.getLast())) {
-                query.append(" OR ");
-            }
-        }
-
-        return query + ")";
+        return "AI=(" + String.join(" OR ", wosIds) + ")";
     }
 
     private List<WosPublication> fetchPublications(String query, String dateFrom,
@@ -66,6 +62,7 @@ public class WebOfScienceImportUtility {
         int page = 1;
         int limit = 50;
         var allPublications = new ArrayList<WosPublication>();
+        var retries = 0;
 
         while (true) {
             var url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
@@ -89,35 +86,54 @@ public class WebOfScienceImportUtility {
                     request,
                     String.class
                 );
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                if (retries++ >= maxRetries) {
+                    log.warn("WoS rate limit reached, keeping the {} record(s) harvested so far.",
+                        allPublications.size());
+                    break;
+                }
+
+                RestTemplateProvider.sleepBeforeRetry(
+                    Objects.nonNull(e.getResponseHeaders()) ?
+                        e.getResponseHeaders().getFirst("Retry-After") : null);
+                continue;
+            } catch (HttpClientErrorException | HttpServerErrorException e) {
+                log.error("HTTP error while harvesting from WoS: {}", e.getMessage());
+                break;
             } catch (ResourceAccessException e) {
                 log.warn(
                     "Unable to access WoS service while performing harvest, aborting... Reason: {}",
                     e.getMessage());
-                return allPublications;
+                break;
             }
 
-            if (response.getStatusCode().is2xxSuccessful() && Objects.nonNull(response.getBody())) {
-                WoSResults results;
-                try {
-                    results = objectMapper.readValue(response.getBody(), WoSResults.class);
-                } catch (JsonProcessingException e) {
-                    log.error("Unable to parse WoS response. Reason: {}", e.getMessage());
-                    break;
-                }
-                List<WosPublication> records = results.hits();
-                allPublications.addAll(records);
-
-                if (results.metadata().page() * results.metadata().limit() >=
-                    results.metadata().total()) {
-                    break;
-                }
-
-                page++;
-            } else {
+            if (!response.getStatusCode().is2xxSuccessful() || Objects.isNull(response.getBody())) {
                 log.error("Unable to parse WoS response. Response status: {}",
                     response.getStatusCode());
                 break;
             }
+
+            WoSResults results;
+            try {
+                results = objectMapper.readValue(response.getBody(), WoSResults.class);
+            } catch (JsonProcessingException e) {
+                log.error("Unable to parse WoS response. Reason: {}", e.getMessage());
+                break;
+            }
+
+            var records = results.hits();
+            if (Objects.nonNull(records)) {
+                allPublications.addAll(records);
+            }
+
+            if (Objects.isNull(records) || records.isEmpty() ||
+                Objects.isNull(results.metadata()) ||
+                results.metadata().page() * results.metadata().limit() >=
+                    results.metadata().total()) {
+                break;
+            }
+
+            page++;
         }
 
         return allPublications;
@@ -161,6 +177,8 @@ public class WebOfScienceImportUtility {
             }
         } catch (HttpClientErrorException.NotFound e) {
             log.warn("WoS publication not found for DOI {}", doi);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("HTTP error fetching WoS publication for DOI {}: {}", doi, e.getMessage());
         } catch (JsonProcessingException e) {
             log.error("Unable to parse WoS response for DOI {}: {}", doi, e.getMessage());
         } catch (ResourceAccessException e) {

@@ -76,8 +76,8 @@
       "unpaywall": 40
     },
     "rateLimits": {
-      "scopus": 2000,
-      "openAlex": 15000,
+      "scopus": 1000,
+      "openAlex": 500,
       "openCitations": 1000000,
       "unpaywall": 1000000
     }

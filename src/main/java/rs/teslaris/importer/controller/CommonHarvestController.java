@@ -3,7 +3,6 @@ package rs.teslaris.importer.controller;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -82,12 +81,14 @@ public class CommonHarvestController {
     @GetMapping("/documents-by-author-or-institution")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void harvestPublicationsForAuthor(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
-        @RequestParam LocalDate dateTo, @RequestParam(required = false) Integer institutionId) {
+        @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
+        @RequestParam RelativeDateDTO dateTo,
+        @RequestParam(required = false) Integer institutionId) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        commonHarvester.performHarvestAsync(userId, userRole, dateFrom, dateTo, institutionId);
+        commonHarvester.performHarvestAsync(userId, userRole, dateFrom.computeDate(),
+            dateTo.computeDate(), institutionId);
     }
 
     @PostMapping("/schedule/documents-by-author-or-institution")

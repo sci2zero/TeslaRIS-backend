@@ -13,6 +13,10 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class RestTemplateProvider {
 
+    private static final long DEFAULT_BACKOFF_MILLIS = 2000;
+
+    private static final long MAX_BACKOFF_MILLIS = 10000;
+
     private final RestTemplate restTemplate;
 
     @Value("${proxy.enabled:false}")
@@ -33,6 +37,25 @@ public class RestTemplateProvider {
         this.restTemplate = restTemplateBuilder
             .requestFactory(this::createRequestFactory)
             .build();
+    }
+
+    public static void sleepBeforeRetry(String retryAfterHeader) {
+        var backoffMillis = DEFAULT_BACKOFF_MILLIS;
+
+        if (Objects.nonNull(retryAfterHeader)) {
+            try {
+                backoffMillis =
+                    Math.min(Long.parseLong(retryAfterHeader.trim()) * 1000, MAX_BACKOFF_MILLIS);
+            } catch (NumberFormatException ignored) {
+                backoffMillis = DEFAULT_BACKOFF_MILLIS;
+            }
+        }
+
+        try {
+            Thread.sleep(backoffMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private SimpleClientHttpRequestFactory createRequestFactory() {
