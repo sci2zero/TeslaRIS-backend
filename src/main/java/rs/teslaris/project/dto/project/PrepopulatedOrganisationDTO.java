@@ -13,6 +13,8 @@ import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType
 @AllArgsConstructor
 public class PrepopulatedOrganisationDTO {
 
+    private Integer organisationId;
+
     // TODO: Add MLC and CountryDTO
     private String organisationName;
 

@@ -11,6 +11,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PrepopulatedPersonDTO {
 
+    private Integer personId;
+
     // TODO: Add MLC
     private String givenName;
 
