@@ -107,7 +107,7 @@ public class QualityAssessmentBackfillServiceTest {
     @Test
     public void shouldDoNothingWhenNoTargetIsRequested() {
         // when
-        qualityAssessmentBackfillService.performBackfill(List.of(), null, null, false);
+        qualityAssessmentBackfillService.performBackfill(List.of(), null, null, "PTCRIS", false);
 
         // then
         verifyNoInteractions(personSearchService);
@@ -118,7 +118,7 @@ public class QualityAssessmentBackfillServiceTest {
     @Test
     public void shouldDoNothingWhenTargetsAreNull() {
         // when
-        qualityAssessmentBackfillService.performBackfill(null, List.of(1), null, false);
+        qualityAssessmentBackfillService.performBackfill(null, List.of(1), null, "PTCRIS", false);
 
         // then
         verifyNoInteractions(personSearchService);
@@ -130,16 +130,18 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1), person(2));
 
-        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt()))
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
             .thenReturn(true);
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), List.of(1, 2), null, false);
+            List.of(QualityAssessmentTarget.PERSON), List.of(1, 2), null, "PTCRIS", false);
 
         // then
-        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 1);
-        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 2);
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 1,
+            "PTCRIS");
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 2,
+            "PTCRIS");
 
         // A record that had no revision is assessed by the revision it just got.
         verifyNoInteractions(dataQualityService);
@@ -150,15 +152,15 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1));
 
-        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt()))
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
             .thenReturn(false);
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, true);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", true);
 
         // then
-        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 1);
+        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 1, "PTCRIS");
     }
 
     @Test
@@ -166,15 +168,16 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1));
 
-        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt()))
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
             .thenReturn(false);
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, false);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", false);
 
         // then
-        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 1);
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 1,
+            "PTCRIS");
         verifyNoInteractions(dataQualityService);
     }
 
@@ -189,13 +192,13 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.DOCUMENT), null, List.of(7), false);
+            List.of(QualityAssessmentTarget.DOCUMENT), null, List.of(7), "PTCRIS", false);
 
         // then
         verify(revisionService).createRevisionFromCurrentState(
-            DocumentPublicationType.THESIS.name(), 5);
+            DocumentPublicationType.THESIS.name(), 5, "PTCRIS");
         verify(revisionService).createRevisionFromCurrentState(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), 6);
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), 6, "PTCRIS");
     }
 
     @Test
@@ -208,11 +211,13 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.EVENT), null, null, false);
+            List.of(QualityAssessmentTarget.EVENT), null, null, "PTCRIS", false);
 
         // then
-        verify(revisionService).createRevisionFromCurrentState(EventType.CONFERENCE.name(), 1);
-        verify(revisionService, never()).createRevisionFromCurrentState(anyString(), eq(2));
+        verify(revisionService).createRevisionFromCurrentState(EventType.CONFERENCE.name(), 1,
+            "PTCRIS");
+        verify(revisionService, never()).createRevisionFromCurrentState(anyString(), eq(2),
+            anyString());
     }
 
     @Test
@@ -222,11 +227,13 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, false);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", false);
 
         // then
-        verify(revisionService, times(1)).createRevisionFromCurrentState(anyString(), anyInt());
-        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 3);
+        verify(revisionService, times(1)).createRevisionFromCurrentState(anyString(), anyInt(),
+            anyString());
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 3,
+            "PTCRIS");
     }
 
     @Test
@@ -234,17 +241,18 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1), person(2));
 
-        when(revisionService.createRevisionFromCurrentState(EntityType.PERSON.name(), 1))
+        when(revisionService.createRevisionFromCurrentState(EntityType.PERSON.name(), 1, "PTCRIS"))
             .thenThrow(new RuntimeException("entity is gone"));
-        when(revisionService.createRevisionFromCurrentState(EntityType.PERSON.name(), 2))
+        when(revisionService.createRevisionFromCurrentState(EntityType.PERSON.name(), 2, "PTCRIS"))
             .thenReturn(true);
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, false);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", false);
 
         // then
-        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 2);
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PERSON.name(), 2,
+            "PTCRIS");
     }
 
     @Test
@@ -261,13 +269,13 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, false);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", false);
 
         // then
         verify(personSearchService, times(2))
             .runQuery(any(), any(), eq(PersonIndex.class), anyString());
         verify(revisionService, times(PAGE_SIZE + 1))
-            .createRevisionFromCurrentState(anyString(), anyInt());
+            .createRevisionFromCurrentState(anyString(), anyInt(), anyString());
     }
 
     @Test
@@ -281,7 +289,7 @@ public class QualityAssessmentBackfillServiceTest {
         // when
         qualityAssessmentBackfillService.performBackfill(
             List.of(QualityAssessmentTarget.PERSON, QualityAssessmentTarget.PUBLISHER),
-            null, null, false);
+            null, null, "PTCRIS", false);
 
         // then
         verify(personSearchService).runQuery(any(), any(), eq(PersonIndex.class), anyString());
@@ -303,7 +311,7 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.BOOK_SERIES), List.of(1), List.of(2), false);
+            List.of(QualityAssessmentTarget.BOOK_SERIES), List.of(1), List.of(2), "PTCRIS", false);
 
         // then
         verify(bookSeriesSearchService)
@@ -318,7 +326,7 @@ public class QualityAssessmentBackfillServiceTest {
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.ORGANISATION_UNIT), null, null, true);
+            List.of(QualityAssessmentTarget.ORGANISATION_UNIT), null, null, "PTCRIS", true);
 
         // then
         verifyNoInteractions(revisionService);
@@ -330,17 +338,17 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1), person(2));
 
-        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt()))
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
             .thenReturn(false);
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, true);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", true);
 
         // then
-        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 1);
-        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 2);
-        verify(dataQualityService, never()).reassessLatestRevision(anyString(), eq(3));
+        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 1, "PTCRIS");
+        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 2, "PTCRIS");
+        verify(dataQualityService, never()).reassessLatestRevision(anyString(), eq(3), anyString());
     }
 
     @Test
@@ -348,16 +356,16 @@ public class QualityAssessmentBackfillServiceTest {
         // given
         stubPersons(person(1), person(2));
 
-        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt()))
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
             .thenReturn(false);
-        when(dataQualityService.reassessLatestRevision(EntityType.PERSON.name(), 1))
+        when(dataQualityService.reassessLatestRevision(EntityType.PERSON.name(), 1, "PTCRIS"))
             .thenThrow(new RuntimeException("elasticsearch is down"));
 
         // when
         qualityAssessmentBackfillService.performBackfill(
-            List.of(QualityAssessmentTarget.PERSON), null, null, true);
+            List.of(QualityAssessmentTarget.PERSON), null, null, "PTCRIS", true);
 
         // then
-        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 2);
+        verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 2, "PTCRIS");
     }
 }

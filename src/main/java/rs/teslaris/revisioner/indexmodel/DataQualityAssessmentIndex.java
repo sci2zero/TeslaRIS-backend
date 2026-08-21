@@ -102,6 +102,9 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Integer, store = true, name = "error_failed_rules")
     private int errorFailedRules;
 
+    @Field(type = FieldType.Integer, store = true, name = "databaseId")
+    private Integer databaseId;
+
     // --- rule-centric reporting: plain key lists, aggregatable via terms (no nested needed) ---
 
     @Field(type = FieldType.Keyword, store = true, name = "failed_rule_keys")

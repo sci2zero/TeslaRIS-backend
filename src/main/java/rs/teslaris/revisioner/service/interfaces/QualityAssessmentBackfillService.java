@@ -8,5 +8,6 @@ import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 public interface QualityAssessmentBackfillService {
 
     void performBackfill(List<QualityAssessmentTarget> targets, List<Integer> personIds,
-                         List<Integer> organisationUnitIds, boolean rewriteExistingAssessments);
+                         List<Integer> organisationUnitIds, String profileName,
+                         boolean rewriteExistingAssessments);
 }

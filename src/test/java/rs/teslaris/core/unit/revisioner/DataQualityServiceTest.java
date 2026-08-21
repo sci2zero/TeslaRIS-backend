@@ -766,7 +766,7 @@ public class DataQualityServiceTest {
             ENTITY_TYPE, 1)).thenReturn(Optional.of(revision));
 
         // when
-        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1);
+        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1, "PTCRIS");
 
         // then
         assertTrue(result);
@@ -783,13 +783,63 @@ public class DataQualityServiceTest {
     }
 
     @Test
+    public void shouldDropOnlyTheRequestedProfileWhenReassessing() {
+        // given (assessments of the other profiles describe the same revision and stay valid)
+        var revision = revisionWithProfiles(ENTITY_TYPE, "PTCRIS", "ZENODO");
+        revision.setCompressedContent(CompressionUtil.compress("{\"id\":1}"));
+        revision.getAssessments().getFirst().setId(7);
+        revision.getAssessments().get(1).setId(8);
+
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revision));
+
+        // when
+        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1, "PTCRIS");
+
+        // then
+        assertTrue(result);
+        assertEquals(1, revision.getAssessments().size());
+        assertEquals("ZENODO", revision.getAssessments().getFirst().getProfileName());
+
+        verify(dataQualityAssessmentIndexRepository).deleteById("7");
+        verify(dataQualityAssessmentIndexRepository, never()).deleteById("8");
+
+        var captor = ArgumentCaptor.forClass(DataQualityAssessmentEvent.class);
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+
+        assertEquals("PTCRIS", captor.getValue().profileName());
+    }
+
+    @Test
+    public void shouldDropEveryProfileWhenNoneIsRequested() {
+        // given
+        var revision = revisionWithProfiles(ENTITY_TYPE, "PTCRIS", "ZENODO");
+        revision.setCompressedContent(CompressionUtil.compress("{\"id\":1}"));
+        revision.getAssessments().getFirst().setId(7);
+        revision.getAssessments().get(1).setId(8);
+
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revision));
+
+        // when
+        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1, null);
+
+        // then
+        assertTrue(result);
+        assertTrue(revision.getAssessments().isEmpty());
+
+        verify(dataQualityAssessmentIndexRepository).deleteById("7");
+        verify(dataQualityAssessmentIndexRepository).deleteById("8");
+    }
+
+    @Test
     public void shouldNotPublishReassessmentEventWhenEntityHasNoRevisions() {
         // given
         when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
             ENTITY_TYPE, 1)).thenReturn(Optional.empty());
 
         // when
-        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1);
+        var result = dataQualityService.reassessLatestRevision(ENTITY_TYPE, 1, "PTCRIS");
 
         // then
         assertFalse(result);

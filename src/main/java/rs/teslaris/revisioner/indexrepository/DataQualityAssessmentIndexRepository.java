@@ -1,5 +1,6 @@
 package rs.teslaris.revisioner.indexrepository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,11 @@ import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 @Repository
 public interface DataQualityAssessmentIndexRepository extends
     ElasticsearchRepository<DataQualityAssessmentIndex, String> {
+
+    Optional<DataQualityAssessmentIndex> findByDatabaseId(Integer databaseId);
+
+    List<DataQualityAssessmentIndex> findByEntityTypeAndEntityIdAndIsLatestTrue(
+        String entityType, Integer entityId);
 
     Optional<DataQualityAssessmentIndex> findByEntityTypeAndEntityIdAndProfileNameAndIsLatestTrue(
         String entityType, Integer entityId, String profileName);

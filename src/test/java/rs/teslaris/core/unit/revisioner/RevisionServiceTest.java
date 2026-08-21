@@ -254,7 +254,7 @@ public class RevisionServiceTest {
 
         try (var ignored = mockConfigurationLoader()) {
             // when
-            var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+            var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
 
             // then
             assertTrue(created);
@@ -288,7 +288,7 @@ public class RevisionServiceTest {
             ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 2, 3)));
 
         // when
-        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
 
         // then
         assertFalse(created);
@@ -305,7 +305,7 @@ public class RevisionServiceTest {
         when(revisionRestorerRegistry.get(ENTITY_TYPE)).thenReturn(Optional.empty());
 
         // when
-        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
 
         // then
         assertFalse(created);
@@ -323,7 +323,7 @@ public class RevisionServiceTest {
             ENTITY_TYPE, 1)).thenReturn(Optional.empty());
 
         // when
-        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1);
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
 
         // then
         assertFalse(created);

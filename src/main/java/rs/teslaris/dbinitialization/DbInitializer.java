@@ -254,6 +254,8 @@ public class DbInitializer implements ApplicationRunner {
         var readProjects = new Privilege("READ_PROJECTS");
         var editProjects = new Privilege("EDIT_PROJECTS");
         var restoreEntityRevision = new Privilege("RESTORE_ENTITY_REVISION");
+        var backfillEntityRevision = new Privilege("BACKFILL_ENTITY_REVISION");
+        var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -302,7 +304,7 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
                 editFundingApplications, readFunding, editFunding, readProjects, editProjects,
-                restoreEntityRevision
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality
             ));
 
         // AUTHORITIES
@@ -350,7 +352,7 @@ public class DbInitializer implements ApplicationRunner {
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
                 editFundingApplications, readFunding, editFunding, readProjects, editProjects,
-                restoreEntityRevision
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -377,7 +379,8 @@ public class DbInitializer implements ApplicationRunner {
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
                     saveChartDisplayConfiguration, getTopCollaborators, changePublicationType,
-                    createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata)));
+                    createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata,
+                    assessDataQuality)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -389,7 +392,8 @@ public class DbInitializer implements ApplicationRunner {
 
         var viceDeanForScienceAuthority =
             new Authority(UserRole.VICE_DEAN_FOR_SCIENCE.toString(), new HashSet<>(List.of(
-                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports
+                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports,
+                assessDataQuality
             )));
 
         var institutionalLibrarianAuthority =
@@ -539,7 +543,8 @@ public class DbInitializer implements ApplicationRunner {
                     // views have something to show right after a fresh start.
                     qualityAssessmentBackfillService.performBackfill(
                         Arrays.asList(QualityAssessmentTarget.values()),
-                        null, null, false
+                        null, null,
+                        "ptcris", false
                     );
                 }
             });

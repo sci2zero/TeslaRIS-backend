@@ -40,5 +40,6 @@ public interface DataQualityService {
 
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
 
-    boolean reassessLatestRevision(String entityType, Integer entityId);
+    boolean reassessLatestRevision(String entityType, Integer entityId,
+                                   String profileName);
 }

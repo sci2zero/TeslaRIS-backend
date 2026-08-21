@@ -37,7 +37,7 @@ public class QualityAssessmentBackfillController {
 
 
     @PostMapping("/schedule")
-    @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'BACKFILL_ENTITY_REVISION')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleQualityAssessmentBackfill(
         @RequestHeader("Authorization") String bearerToken,
@@ -45,6 +45,7 @@ public class QualityAssessmentBackfillController {
         @RequestParam(value = "personIds", required = false) List<Integer> personIds,
         @RequestParam(value = "organisationUnitIds", required = false)
         List<Integer> organisationUnitIds,
+        @RequestParam("profileName") String profileName,
         @RequestParam(value = "rewriteExistingAssessments", defaultValue = "false")
         Boolean rewriteExistingAssessments,
         @RequestParam("timestamp") LocalDateTime timestamp,
@@ -56,7 +57,7 @@ public class QualityAssessmentBackfillController {
                 entityTypes.stream().map(Enum::name).collect(Collectors.joining("_")) +
                 "-" + UUID.randomUUID(), timestamp,
             () -> qualityAssessmentBackfillService.performBackfill(entityTypes, personIds,
-                organisationUnitIds, rewriteExistingAssessments),
+                organisationUnitIds, profileName, rewriteExistingAssessments),
             userId, recurrenceType);
 
         taskManagerService.saveTaskMetadata(
@@ -65,6 +66,7 @@ public class QualityAssessmentBackfillController {
                 put("entityTypes", entityTypes.stream().map(Enum::name).toList());
                 put("personIds", personIds);
                 put("organisationUnitIds", organisationUnitIds);
+                put("profileName", profileName);
                 put("rewriteExistingAssessments", rewriteExistingAssessments);
                 put("userId", userId);
             }}, recurrenceType));

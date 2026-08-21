@@ -159,7 +159,8 @@ public class RevisionServiceImpl implements RevisionService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean createRevisionFromCurrentState(String entityType, Integer entityId) {
+    public boolean createRevisionFromCurrentState(String entityType, Integer entityId,
+                                                  String profileName) {
         if (revisionRepository
             .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
             .isPresent()) {
@@ -206,7 +207,8 @@ public class RevisionServiceImpl implements RevisionService {
 
             revisionRepository.save(revision);
 
-            applicationEventPublisher.publishEvent(new DataQualityAssessmentEvent(revision, json));
+            applicationEventPublisher.publishEvent(
+                new DataQualityAssessmentEvent(revision, json, profileName));
 
             log.info("Captured current state of entity '{}' (ID={}) as revision 1.0.",
                 entityType, entityId);

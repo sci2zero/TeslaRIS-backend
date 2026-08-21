@@ -506,7 +506,8 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean reassessLatestRevision(String entityType, Integer entityId) {
+    public boolean reassessLatestRevision(String entityType, Integer entityId,
+                                          String profileName) {
         var latestRevision = entityRevisionRepository
             .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
 
@@ -516,15 +517,22 @@ public class DataQualityServiceImpl implements DataQualityService {
 
         var revision = latestRevision.get();
 
-        revision.getAssessments().forEach(assessment ->
+        // Only the profile being reassessed is dropped; assessments of the other profiles describe
+        // the same revision and stay valid.
+        var supersededAssessments = revision.getAssessments().stream()
+            .filter(assessment -> Objects.isNull(profileName) ||
+                profileName.equalsIgnoreCase(assessment.getProfileName()))
+            .toList();
+
+        supersededAssessments.forEach(assessment ->
             dataQualityAssessmentIndexRepository.deleteById(String.valueOf(assessment.getId())));
 
-        revision.getAssessments().clear();
+        revision.getAssessments().removeAll(supersededAssessments);
 
         entityRevisionRepository.save(revision);
 
         applicationEventPublisher.publishEvent(new DataQualityAssessmentEvent(
-            revision, CompressionUtil.decompress(revision.getCompressedContent())));
+            revision, CompressionUtil.decompress(revision.getCompressedContent()), profileName));
 
         log.info("Dropped assessments of revision {}.{} of entity '{}' (ID={}), reassessment " +
                 "scheduled.", revision.getMajorVersion(), revision.getMinorVersion(), entityType,

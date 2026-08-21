@@ -2,6 +2,7 @@ package rs.teslaris.revisioner.util.dataquality;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -46,7 +47,11 @@ public class DataQualityAssessmentListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(DataQualityAssessmentEvent event) {
-        var profiles = DataQualityAssessmentConfigurationLoader.listAvailableProfiles();
+        var profiles = DataQualityAssessmentConfigurationLoader.listAvailableProfiles()
+            .stream()
+            .filter(profile -> Objects.isNull(event.profileName()) ||
+                profile.equalsIgnoreCase(event.profileName()))
+            .toList();
 
         profiles.forEach(profileName -> {
             var assessment = DataQualityAssessment

@@ -65,7 +65,7 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
 
     @Override
     public void performBackfill(List<QualityAssessmentTarget> targets, List<Integer> personIds,
-                                List<Integer> organisationUnitIds,
+                                List<Integer> organisationUnitIds, String profileName,
                                 boolean rewriteExistingAssessments) {
         if (Objects.isNull(targets) || targets.isEmpty()) {
             log.warn("No target index specified, nothing to backfill.");
@@ -80,43 +80,43 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
                     List.of("databaseId"), List.of("employment_institutions_id"),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.PERSON.name(), index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case ORGANISATION_UNIT -> scan("organisation_unit", OrganisationUnitIndex.class,
                     organisationUnitSearchService,
                     List.of(), List.of("databaseId"),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.ORGANISATION_UNIT.name(),
                         index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case EVENT -> scan("events", EventIndex.class, eventSearchService,
                     List.of("related_person_ids"), List.of("related_institution_ids"),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(
                         Objects.nonNull(index.getEventType()) ? index.getEventType().name() : null,
                         index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case DOCUMENT -> scan("document_publication", DocumentPublicationIndex.class,
                     documentSearchService,
                     DOCUMENT_PERSON_FIELDS, List.of("organisation_unit_ids"),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(index.getType(), index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case JOURNAL -> scan("journal", JournalIndex.class, journalSearchService,
                     List.of(), List.of("related_institution_ids"),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.JOURNAL.name(), index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case BOOK_SERIES -> scan("book_series", BookSeriesIndex.class,
                     bookSeriesSearchService,
                     List.of(), List.of(),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.BOOK_SERIES.name(), index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
                 case PUBLISHER -> scan("publisher", PublisherIndex.class, publisherSearchService,
                     List.of(), List.of(),
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.PUBLISHER.name(), index.getDatabaseId()),
-                    rewriteExistingAssessments);
+                    profileName, rewriteExistingAssessments);
             }
         });
 
@@ -133,7 +133,7 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
     private <T> void scan(String indexName, Class<T> indexClass, SearchService<T> searchService,
                           List<String> personFields, List<String> organisationUnitFields,
                           List<Integer> personIds, List<Integer> organisationUnitIds,
-                          Function<T, Pair<String, Integer>> entityResolver,
+                          Function<T, Pair<String, Integer>> entityResolver, String profileName,
                           boolean rewriteExistingAssessments) {
         var pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.ASC, "databaseId"));
         Integer lastSeenId = null;
@@ -159,7 +159,7 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
                 lastSeenId = entity.b;
 
                 if (Objects.nonNull(entity.a)) {
-                    process(entity.a, entity.b, rewriteExistingAssessments);
+                    process(entity.a, entity.b, profileName, rewriteExistingAssessments);
                 }
             }
 
@@ -211,15 +211,15 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
         )._toQuery();
     }
 
-    private void process(String entityType, Integer entityId,
+    private void process(String entityType, Integer entityId, String profileName,
                          boolean rewriteExistingAssessments) {
         try {
-            if (revisionService.createRevisionFromCurrentState(entityType, entityId)) {
+            if (revisionService.createRevisionFromCurrentState(entityType, entityId, profileName)) {
                 return;
             }
 
             if (rewriteExistingAssessments) {
-                dataQualityService.reassessLatestRevision(entityType, entityId);
+                dataQualityService.reassessLatestRevision(entityType, entityId, profileName);
             }
         } catch (Exception e) {
             log.warn("Unable to backfill quality assessment for entity '{}' (ID={}). Reason: {}",

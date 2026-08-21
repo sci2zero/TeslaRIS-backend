@@ -12,7 +12,8 @@ public interface RevisionService {
 
     void createRevisionIfChanged(RevisionCreateEvent event);
 
-    boolean createRevisionFromCurrentState(String entityType, Integer entityId);
+    boolean createRevisionFromCurrentState(String entityType, Integer entityId,
+                                           String profileName);
 
     List<RevisionDTO> getRevisions(String entityType, Integer entityId);
 
