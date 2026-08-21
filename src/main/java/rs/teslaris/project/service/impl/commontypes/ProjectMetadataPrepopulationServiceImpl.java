@@ -8,16 +8,19 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.project.dto.project.PrepopulatedPersonDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectMetadataPrepopulationService;
 
@@ -39,16 +42,39 @@ public class ProjectMetadataPrepopulationServiceImpl
 
     private final CordisProjectDataService cordisProjectDataService;
 
+    private final PersonService personService;
+
     @Override
     public PrepopulatedProjectMetadataDTO fetchProjectDataForDoi(String doi) {
-        if (isEuHorizonDoi(doi)) {
-            return fetchFromCordis(doi);
-        }
-        return fetchFromCrossref(doi);
+        var metadata = isEuHorizonDoi(doi) ? fetchFromCordis(doi) : fetchFromCrossref(doi);
+
+        resolveExistingEntities(metadata);
+
+        return metadata;
     }
 
     private boolean isEuHorizonDoi(String doi) {
         return doi.startsWith("10.3030/");
+    }
+
+    // Currently only resolves persons from Crossref metadata
+    private void resolveExistingEntities(PrepopulatedProjectMetadataDTO metadata) {
+        metadata.getPersons().forEach(person -> {
+            if (!StringUtils.hasText(person.getOrcid())) {
+                return;
+            }
+
+            var orcid = StringUtil.normalizeIdentifier(person.getOrcid());
+
+            try {
+                var index = personService.findPersonByImportIdentifier(orcid);
+                if (Objects.nonNull(index)) {
+                    person.setPersonId(index.getDatabaseId());
+                }
+            } catch (Exception e) {
+                log.warn("Person lookup by ORCID {} failed: {}", orcid, e.getMessage());
+            }
+        });
     }
 
     private PrepopulatedProjectMetadataDTO fetchFromCordis(String doi) {
@@ -165,16 +191,21 @@ public class ProjectMetadataPrepopulationServiceImpl
             }
         }
 
-        // TODO: Add a new field to DTO that will mark the PRINCIPAL_INVESTIGATOR
         projectNode.path("lead-investigator").forEach(invNode ->
-                metadata.getPersons().add(mapInvestigator(invNode, english)));
+                metadata.getPersons().add(mapInvestigator(invNode, english,
+                        PersonProjectContributionType.PRINCIPLE_INVESTIGATOR)));
 
+        // Should we set the TEAM_MEMBER as the default contributionRole?
         projectNode.path("investigator").forEach(invNode ->
-                metadata.getPersons().add(mapInvestigator(invNode, english)));
+                metadata.getPersons().add(mapInvestigator(invNode, english,
+                        PersonProjectContributionType.TEAM_MEMBER)));
     }
 
-    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode, LanguageTag english) {
+    // TODO: Replace hardcoded EN language tag with the right one
+    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode, LanguageTag english,
+                                                  PersonProjectContributionType contributionType) {
         var investigator = new PrepopulatedPersonDTO();
+        investigator.setContributionType(contributionType);
         investigator.setGivenName(invNode.path("given").asText(null));
         investigator.setFamilyName(invNode.path("family").asText(null));
         investigator.setOrcid(invNode.path("ORCID").asText(null));
@@ -185,7 +216,6 @@ public class ProjectMetadataPrepopulationServiceImpl
 
             var affiliationName = affiliation.path("name").asText(null);
             if (Objects.nonNull(affiliationName)) {
-                // Crossref grant records are English-only, so the tag is known rather than guessed.
                 investigator.getAffiliationName().add(new MultilingualContentDTO(
                         english.getId(), english.getLanguageTag(), affiliationName, 1));
             }
