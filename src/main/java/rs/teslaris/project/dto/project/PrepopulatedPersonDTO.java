@@ -1,9 +1,12 @@
 package rs.teslaris.project.dto.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 @Getter
 @Setter
@@ -13,14 +16,13 @@ public class PrepopulatedPersonDTO {
 
     private Integer personId;
 
-    // TODO: Add MLC
     private String givenName;
 
     private String familyName;
 
     private String orcid;
 
-    private String affiliationName;
+    private List<MultilingualContentDTO> affiliationName = new ArrayList<>();
 
     private String affiliationRor;
 }

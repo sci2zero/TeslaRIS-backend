@@ -193,7 +193,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
 
         for (var i = 0; i < organizationNodes.getLength(); i++) {
             var orgElement = (Element) organizationNodes.item(i);
-            metadata.getOrganisations().add(mapConsortiumMember(orgElement, xpath));
+            metadata.getOrganisations().add(mapConsortiumMember(orgElement, xpath, english));
         }
 
         var eventNodes = (NodeList) xpath.evaluate(
@@ -208,16 +208,21 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         // data isn't publicly exposed, so "investigators" field stays empty here.
     }
 
-    // TODO: Add LanguageTag argument for MLCs inside ConsortiumMembers
-    private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath)
+    // TODO: Replace hardcoded EN language tag with the right one
+    private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath,
+                                                            LanguageTag lang)
             throws Exception {
         var member = new PrepopulatedOrganisationDTO();
 
         var type = orgElement.getAttribute("type");
         member.setContributionType(mapCordisTypeToContributionType(type));
 
-        member.setOrganisationName(
-                evaluateText(xpath, orgElement, "./*[local-name()='legalName']"));
+        var legalName = evaluateText(xpath, orgElement, "./*[local-name()='legalName']");
+        if (Objects.nonNull(legalName)) {
+            member.getOrganisationName().add(new MultilingualContentDTO(
+                    lang.getId(), lang.getLanguageTag(), legalName, 1));
+        }
+
         member.setCountry(evaluateText(xpath, orgElement,
                 "./*[local-name()='address']/*[local-name()='country']"));
 

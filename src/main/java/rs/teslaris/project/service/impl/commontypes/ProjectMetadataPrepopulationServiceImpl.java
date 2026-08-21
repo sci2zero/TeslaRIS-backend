@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.search.StringUtil;
@@ -164,12 +165,15 @@ public class ProjectMetadataPrepopulationServiceImpl
             }
         }
 
-        var investigatorArray = projectNode.path("investigator");
-        investigatorArray.forEach(invNode ->
-                metadata.getPersons().add(mapInvestigator(invNode)));
+        // TODO: Add a new field to DTO that will mark the PRINCIPAL_INVESTIGATOR
+        projectNode.path("lead-investigator").forEach(invNode ->
+                metadata.getPersons().add(mapInvestigator(invNode, english)));
+
+        projectNode.path("investigator").forEach(invNode ->
+                metadata.getPersons().add(mapInvestigator(invNode, english)));
     }
 
-    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode) {
+    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode, LanguageTag english) {
         var investigator = new PrepopulatedPersonDTO();
         investigator.setGivenName(invNode.path("given").asText(null));
         investigator.setFamilyName(invNode.path("family").asText(null));
@@ -178,7 +182,13 @@ public class ProjectMetadataPrepopulationServiceImpl
         var affiliationArray = invNode.path("affiliation");
         if (affiliationArray.isArray() && !affiliationArray.isEmpty()) {
             var affiliation = affiliationArray.get(0);
-            investigator.setAffiliationName(affiliation.path("name").asText(null));
+
+            var affiliationName = affiliation.path("name").asText(null);
+            if (Objects.nonNull(affiliationName)) {
+                // Crossref grant records are English-only, so the tag is known rather than guessed.
+                investigator.getAffiliationName().add(new MultilingualContentDTO(
+                        english.getId(), english.getLanguageTag(), affiliationName, 1));
+            }
 
             for (var idNode : affiliation.path("id")) {
                 if ("ROR".equals(idNode.path("id-type").asText())) {
