@@ -8,6 +8,7 @@ import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
+import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
@@ -39,6 +40,8 @@ public interface DataQualityService {
     DataQualityIssueDetailsDTO findIssueDetails(Integer assessmentId, String ruleKey);
 
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
+
+    List<DataQualityProfileSummaryDTO> listDataQualityProfileNames();
 
     boolean reassessLatestRevision(String entityType, Integer entityId,
                                    String profileName);

@@ -105,6 +105,9 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 
+    @Field(type = FieldType.Boolean, store = true, name = "publication_candidate")
+    private boolean publicationCandidate;
+
     // --- rule-centric reporting: plain key lists, aggregatable via terms (no nested needed) ---
 
     @Field(type = FieldType.Keyword, store = true, name = "failed_rule_keys")

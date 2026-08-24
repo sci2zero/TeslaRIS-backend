@@ -1429,7 +1429,7 @@
       "target": "Person.orcid",
       "severity": "ERROR",
       "dimension": "COMPLETENESS",
-      "blocking": true,
+      "blocking": false,
       "points": 8,
       "usedForFairCompliance": false
     },

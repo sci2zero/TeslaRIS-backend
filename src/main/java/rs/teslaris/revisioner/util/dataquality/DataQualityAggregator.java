@@ -36,7 +36,9 @@ public class DataQualityAggregator {
             .aggregations("warningFailures", a -> a.sum(s -> s.field("warning_failed_rules")))
             .aggregations("infoFailures", a -> a.sum(s -> s.field("info_failed_rules")))
             .aggregations("activities", a -> a.sum(s -> s.field("activities_count")))
-            .aggregations("averageScore", a -> a.avg(avg -> avg.field("quality_score")));
+            .aggregations("averageScore", a -> a.avg(avg -> avg.field("quality_score")))
+            .aggregations("publicationCandidates", a -> a
+                .filter(f -> f.term(term -> term.field("publication_candidate").value(true))));
 
         if (!activityRuleKeys.isEmpty()) {
             request.aggregations("activityIssues", a -> a
@@ -62,6 +64,7 @@ public class DataQualityAggregator {
                     sum(response, "infoFailures"),
                 sum(response, "activities"),
                 bucketTotal(response, "activityIssues"),
+                filterTotal(response, "publicationCandidates"),
                 affectedRecords > 0 ? average(response) : null
             ));
         } catch (Exception e) {
@@ -95,6 +98,28 @@ public class DataQualityAggregator {
             log.warn("Unable to aggregate linked documents. Reason: {}", e.getMessage());
 
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Counts the records of any index the given query matches, without transferring them.
+     */
+    public long countRecords(String indexName, Query query) {
+        var request = new SearchRequest.Builder()
+            .index(indexName)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(true))
+            .query(query)
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            return Objects.isNull(response) ? 0 : totalHits(response.hits().total());
+        } catch (Exception e) {
+            log.warn("Unable to count records of index {}. Reason: {}", indexName, e.getMessage());
+
+            return 0;
         }
     }
 
@@ -154,6 +179,13 @@ public class DataQualityAggregator {
         return Double.isNaN(value) ? 0 : (long) value;
     }
 
+    private long filterTotal(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response,
+                             String aggregationName) {
+        var aggregate = response.aggregations().get(aggregationName);
+
+        return Objects.isNull(aggregate) ? 0 : aggregate.filter().docCount();
+    }
+
     private long bucketTotal(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response,
                              String aggregationName) {
         var aggregate = response.aggregations().get(aggregationName);
@@ -180,10 +212,11 @@ public class DataQualityAggregator {
     }
 
     public record AssessmentAggregates(long affectedRecords, long openIssues, long activitiesCount,
-                                       long activityIssues, Double averageScore) {
+                                       long activityIssues, long publicationCandidates,
+                                       Double averageScore) {
 
         public static AssessmentAggregates empty() {
-            return new AssessmentAggregates(0, 0, 0, 0, null);
+            return new AssessmentAggregates(0, 0, 0, 0, 0, null);
         }
     }
 

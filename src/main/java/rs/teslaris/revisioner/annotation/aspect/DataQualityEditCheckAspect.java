@@ -2,6 +2,7 @@ package rs.teslaris.revisioner.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -10,6 +11,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.annotation.aspect.AspectUtil;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -27,6 +29,8 @@ public class DataQualityEditCheckAspect {
     private final DataQualityAssessmentIndexRepository dataQualityAssessmentIndexRepository;
 
     private final UserService userService;
+
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Around("@annotation(rs.teslaris.revisioner.annotation.DataQualityEditCheck)")
@@ -74,8 +78,14 @@ public class DataQualityEditCheckAspect {
             case ADMIN:
                 break;
             case INSTITUTIONAL_EDITOR, VICE_DEAN_FOR_SCIENCE:
-                if (!assessment.getOrganisationUnitIds()
-                    .contains(userService.getUserOrganisationUnitId(userId))) {
+                // A unit answers for everything below it, and records are indexed under the unit
+                // they belong to rather than its ancestors - so the user's sub-hierarchy is what
+                // decides, otherwise an editor of a faculty could not open a record of its own
+                // department.
+                var scopeIds = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    userService.getUserOrganisationUnitId(userId));
+
+                if (Collections.disjoint(assessment.getOrganisationUnitIds(), scopeIds)) {
                     throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
                 }
 

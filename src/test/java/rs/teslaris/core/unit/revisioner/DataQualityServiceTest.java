@@ -40,6 +40,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.dto.RelatedQualityDTO;
@@ -89,6 +90,9 @@ public class DataQualityServiceTest {
 
     @Mock
     private DataQualityAggregator dataQualityAggregator;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private DataQualityServiceImpl dataQualityService;
@@ -551,7 +555,7 @@ public class DataQualityServiceTest {
                                 long linkedActivities) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                affectedRecords, openIssues, activitiesCount, activityIssues, averageScore)));
+                affectedRecords, openIssues, activitiesCount, activityIssues, 0, averageScore)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
                 linkedRecords, linkedActivities)));
@@ -630,6 +634,9 @@ public class DataQualityServiceTest {
             .thenReturn(
                 Optional.of(revisionWithProfiles(ORGANISATION_UNIT_ENTITY_TYPE, "PTCRIS")));
 
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2));
+
         stubAggregates(1, 3, 7, 0, 80.0, 42, 7);
 
         // when
@@ -647,6 +654,53 @@ public class DataQualityServiceTest {
         verify(dataQualityAggregator).aggregateAssessments(queryCaptor.capture(), any());
 
         assertTrue(queryCaptor.getValue().toString().contains("organisation_unit_ids"));
+    }
+
+    @Test
+    public void shouldScopeOrganisationUnitReportToItsSubHierarchy() {
+        // given (a unit answers for the records of everything below it)
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ORGANISATION_UNIT_ENTITY_TYPE, 1))
+            .thenReturn(
+                Optional.of(revisionWithProfiles(ORGANISATION_UNIT_ENTITY_TYPE, "PTCRIS")));
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2, 3));
+
+        stubAggregates(1, 3, 7, 0, 80.0, 42, 7);
+
+        // when
+        dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1);
+
+        // then
+        var assessmentQuery = ArgumentCaptor.forClass(Query.class);
+        verify(dataQualityAggregator).aggregateAssessments(assessmentQuery.capture(), any());
+
+        var documentQuery = ArgumentCaptor.forClass(Query.class);
+        verify(dataQualityAggregator).aggregateLinkedDocuments(documentQuery.capture());
+
+        List.of(assessmentQuery.getValue().toString(), documentQuery.getValue().toString())
+            .forEach(query -> {
+                assertTrue(query.contains("organisation_unit_ids"));
+                assertTrue(query.contains("2"));
+                assertTrue(query.contains("3"));
+            });
+    }
+
+    @Test
+    public void shouldNotResolveHierarchyForPersonReports() {
+        // given (persons have no sub-hierarchy - their records are matched by person id)
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        stubAggregates(2, 5, 4, 1, 92.0, 186, 5);
+
+        // when
+        dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1);
+
+        // then
+        verifyNoInteractions(organisationUnitService);
     }
 
     @Test
@@ -1074,6 +1128,72 @@ public class DataQualityServiceTest {
             () -> dataQualityService.findIssueDetails(7, "orcidNotResolvable"));
 
         // then (NotFoundException should be thrown)
+    }
+
+    @Test
+    public void shouldListProfileNamesWithTheirLatestVersion() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(
+                    new Pair<>("ptcris", "1.0.0"),
+                    new Pair<>("zenodo", "2.1.0"))));
+
+            // when
+            var result = dataQualityService.listDataQualityProfileNames();
+
+            // then
+            assertEquals(2, result.size());
+            assertEquals("ptcris", result.getFirst().profileName());
+            assertEquals("1.0.0", result.getFirst().version());
+            assertEquals("zenodo", result.get(1).profileName());
+            assertEquals("2.1.0", result.get(1).version());
+        }
+    }
+
+    @Test
+    public void shouldListProfileNamesWithoutTouchingTheDatabase() {
+        // given (the full listing resolves a language tag per translated string of every rule,
+        // which is exactly what the pickers must avoid)
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(new Pair<>("ptcris", "1.0.0"))));
+
+            // when
+            dataQualityService.listDataQualityProfileNames();
+
+            // then
+            verifyNoInteractions(languageTagService);
+
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.getProfile(anyString(), anyString()),
+                never());
+        }
+    }
+
+    @Test
+    public void shouldReturnEmptyProfileNameListWhenNoProfilesAreConfigured() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>());
+
+            // when
+            var result = dataQualityService.listDataQualityProfileNames();
+
+            // then
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test

@@ -1,8 +1,10 @@
 package rs.teslaris.revisioner.service.impl;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -27,6 +29,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.converter.DataQualityAssessmentConverter;
@@ -37,6 +40,7 @@ import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
+import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.dto.RelatedQualityDTO;
@@ -93,6 +97,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final DataQualityAggregator dataQualityAggregator;
+
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Override
@@ -214,14 +220,20 @@ public class DataQualityServiceImpl implements DataQualityService {
             );
         }
 
+        // An organisation unit answers for everything below it, and not every record carries its
+        // ancestors: a thesis is indexed under its own institution only, and person, event and
+        // organisation unit assessments under their direct one. Expanding the sub-hierarchy here
+        // makes the scope hold whatever the indexer stored.
+        var scopeIds = organisationUnitScope(isOrganisationUnit, entityId);
+
         var assessments = dataQualityAggregator
             .aggregateAssessments(
-                relatedAssessmentsQuery(isPerson, entityId, profileName),
+                relatedAssessmentsQuery(isPerson, entityId, scopeIds, profileName),
                 expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null))
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
         var documents = dataQualityAggregator
-            .aggregateLinkedDocuments(linkedDocumentsQuery(isPerson, entityId))
+            .aggregateLinkedDocuments(linkedDocumentsQuery(isPerson, entityId, scopeIds))
             .orElseGet(DataQualityAggregator.LinkedDocumentAggregates::empty);
 
         return List.of(
@@ -250,20 +262,22 @@ public class DataQualityServiceImpl implements DataQualityService {
         );
     }
 
-    private Query relatedAssessmentsQuery(boolean isPerson, Integer entityId, String profileName) {
-        var relatedField = isPerson ? "related_person_ids" : "organisation_unit_ids";
-
+    private Query relatedAssessmentsQuery(boolean isPerson, Integer entityId,
+                                          List<Integer> scopeIds, String profileName) {
         return BoolQuery.of(b -> b
             .must(m -> m.term(t -> t.field("target").value(DOCUMENT_TARGET)))
             .must(m -> m.term(t -> t.field("is_latest").value(true)))
             .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
-            .must(m -> m.term(t -> t.field(relatedField).value(entityId)))
+            .must(isPerson
+                ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds))
         )._toQuery();
     }
 
-    private Query linkedDocumentsQuery(boolean isPerson, Integer entityId) {
+    private Query linkedDocumentsQuery(boolean isPerson, Integer entityId,
+                                       List<Integer> scopeIds) {
         if (!isPerson) {
-            return TermQuery.of(t -> t.field("organisation_unit_ids").value(entityId))._toQuery();
+            return termsQuery("organisation_unit_ids", scopeIds);
         }
 
         var roleClauses = DOCUMENT_PERSON_ROLE_FIELDS.stream()
@@ -280,8 +294,9 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                          QualityDimension dimension,
                                                          IssueSeverity severity,
                                                          String constraintKey, Pageable pageable) {
-        var query = buildIssueQuery(entityType, entityId, profileName,
-            ACTIVITY_TARGET.equals(target) ? DOCUMENT_TARGET : target);
+        var query = buildIssueQuery(entityType, entityId,
+            organisationUnitScope(EntityType.ORGANISATION_UNIT.name().equals(entityType), entityId),
+            profileName, ACTIVITY_TARGET.equals(target) ? DOCUMENT_TARGET : target);
 
         var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
             (int) pageable.getOffset(), pageable.getPageSize());
@@ -422,6 +437,24 @@ public class DataQualityServiceImpl implements DataQualityService {
             .orElse(fallback);
     }
 
+    /**
+     * @return the organisation units a report for this entity covers - the unit itself and its
+     * sub-hierarchy - or just the entity itself when it is not an organisation unit and no
+     * hierarchy applies
+     */
+    private List<Integer> organisationUnitScope(boolean isOrganisationUnit, Integer entityId) {
+        return isOrganisationUnit
+            ? organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(entityId)
+            : List.of(entityId);
+    }
+
+    private Query termsQuery(String field, List<Integer> values) {
+        return TermsQuery.of(terms -> terms
+            .field(field)
+            .terms(termValues -> termValues.value(values.stream().map(FieldValue::of).toList()))
+        )._toQuery();
+    }
+
     private Set<String> expandRuleKeys(String profileName, String target,
                                        QualityDimension dimension, IssueSeverity severity,
                                        String constraintKey) {
@@ -440,18 +473,20 @@ public class DataQualityServiceImpl implements DataQualityService {
         return keys;
     }
 
-    private Query buildIssueQuery(String entityType, Integer entityId, String profileName,
-                                  String target) {
-        var relatedField = EntityType.PERSON.name().equals(entityType)
-            ? "related_person_ids" : "organisation_unit_ids";
+    private Query buildIssueQuery(String entityType, Integer entityId, List<Integer> scopeIds,
+                                  String profileName, String target) {
+        var isPerson = EntityType.PERSON.name().equals(entityType);
+
+        var relatedClause = isPerson
+            ? TermQuery.of(tq -> tq.field("related_person_ids").value(entityId))._toQuery()
+            : termsQuery("organisation_unit_ids", scopeIds);
 
         return BoolQuery.of(topLevel -> topLevel
             .must(scope -> scope.bool(b -> b
                 .should(own -> own.bool(ownEntity -> ownEntity
                     .must(m -> m.term(tq -> tq.field("entity_type").value(entityType)))
                     .must(m -> m.term(tq -> tq.field("entity_id").value(entityId)))))
-                .should(related -> related.term(
-                    tq -> tq.field(relatedField).value(entityId)))
+                .should(relatedClause)
                 .minimumShouldMatch("1")))
             .must(m -> m.term(tq -> tq.field("is_latest").value(true)))
             .must(m -> m.term(tq -> tq.field("profile_name").value(profileName)))
@@ -484,6 +519,17 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return IssueDetailsConverter.toDTO(assessment, ruleKey, occurrences);
+    }
+
+    @Override
+    public List<DataQualityProfileSummaryDTO> listDataQualityProfileNames() {
+        // Answered from the loaded configuration alone - no rules are converted and no language tag
+        // is resolved, which is what makes the full listing expensive.
+        return DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion()
+            .stream()
+            .map(profileAndVersion -> new DataQualityProfileSummaryDTO(
+                profileAndVersion.a, profileAndVersion.b))
+            .toList();
     }
 
     @Override

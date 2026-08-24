@@ -16,6 +16,7 @@ import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
+import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
@@ -101,6 +102,12 @@ public class DataQualityController {
     public DataQualityIssueDetailsDTO findIssueDetails(@PathVariable Integer assessmentId,
                                                        @PathVariable String ruleKey) {
         return dataQualityService.findIssueDetails(assessmentId, ruleKey);
+    }
+
+    @GetMapping(value = "/profiles/names", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public List<DataQualityProfileSummaryDTO> listPolicyNames() {
+        return dataQualityService.listDataQualityProfileNames();
     }
 
     @GetMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
