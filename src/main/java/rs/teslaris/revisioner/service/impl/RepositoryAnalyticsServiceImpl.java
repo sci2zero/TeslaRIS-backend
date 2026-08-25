@@ -15,17 +15,25 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
@@ -44,12 +52,16 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
+    private static final String EMPTY_VALUE = "-";
+
     private static final DateTimeFormatter INSTANT_FORMAT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     private final DataQualityAggregator dataQualityAggregator;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final MessageSource messageSource;
 
 
     @Override
@@ -114,6 +126,137 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             // TODO: fundings carry no quality assessments yet.
             EntityTypeQualityDTO.unsupported(RepositoryEntityType.FUNDINGS)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DimensionQualityDTO> getQualityByDimension(String profileName,
+                                                           Integer organisationUnitId,
+                                                           @Nullable LocalDate assessmentDate) {
+        var scopeOrganisationUnitIds = Objects.isNull(organisationUnitId)
+            ? List.<Integer>of()
+            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        // Dimensions describe the repository as a whole, so every assessed record counts regardless
+        // of what kind of record it is.
+        var aggregates = dataQualityAggregator
+            .aggregateDimensions(assessmentQuery(profileName, scopeOrganisationUnitIds,
+                assessmentDate, MatchAllQuery.of(matchAll -> matchAll)._toQuery()))
+            .orElseGet(Map::of);
+
+        return Arrays.stream(QualityDimension.values())
+            .map(dimension -> {
+                var dimensionAggregates = aggregates.get(dimension);
+
+                return Objects.isNull(dimensionAggregates)
+                    ? new DimensionQualityDTO(dimension, null, 0, 0)
+                    : new DimensionQualityDTO(
+                    dimension,
+                    dimensionAggregates.averageScore(),
+                    dimensionAggregates.openIssues(),
+                    dimensionAggregates.affectedRecords());
+            })
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportQualityByEntityType(String profileName,
+                                                         Integer organisationUnitId,
+                                                         @Nullable LocalDate assessmentDate,
+                                                         String language) {
+        var rows = reportContext("repositoryAnalytics.qualityByEntityType", profileName,
+            assessmentDate, language);
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.records", language),
+            label("repositoryAnalytics.header.averageScore", language),
+            label("repositoryAnalytics.header.publicationCandidates", language),
+            label("repositoryAnalytics.header.affectedRecords", language),
+            label("repositoryAnalytics.header.openIssues", language)
+        ));
+
+        getQualityByEntityType(profileName, organisationUnitId, assessmentDate).forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+                count(row.supported(), row.records()),
+                percentage(row.averageScore()),
+                percentage(row.publicationCandidatePercentage()),
+                count(row.supported(), row.affectedRecords()),
+                count(row.supported(), row.openIssues())
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportQualityByDimension(String profileName,
+                                                        Integer organisationUnitId,
+                                                        @Nullable LocalDate assessmentDate,
+                                                        String language) {
+        var rows = reportContext("repositoryAnalytics.qualityByDimension", profileName,
+            assessmentDate, language);
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.dimension", language),
+            label("repositoryAnalytics.header.averageScore", language),
+            label("repositoryAnalytics.header.openIssues", language),
+            label("repositoryAnalytics.header.affectedRecords", language)
+        ));
+
+        getQualityByDimension(profileName, organisationUnitId, assessmentDate).forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.dimension." + row.dimension().name(), language),
+                percentage(row.averageScore()),
+                row.openIssues(),
+                row.affectedRecords()
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    /**
+     * The exported file has to say what it describes - without the profile and the day it was taken
+     * for, the numbers cannot be told apart from another export.
+     */
+    private List<List<Object>> reportContext(String titleKey, String profileName,
+                                             @Nullable LocalDate assessmentDate, String language) {
+        var rows = new ArrayList<List<Object>>();
+
+        rows.add(List.of(label(titleKey, language)));
+        rows.add(List.of(label("repositoryAnalytics.profile", language), profileName));
+        rows.add(List.of(
+            label("repositoryAnalytics.assessmentDate", language),
+            Objects.isNull(assessmentDate)
+                ? label("repositoryAnalytics.currentState", language)
+                : assessmentDate.toString()));
+        rows.add(List.of());
+
+        return rows;
+    }
+
+    private String label(String key, String language) {
+        try {
+            return messageSource.getMessage(key, null, Locale.forLanguageTag(language));
+        } catch (Exception e) {
+            return key;
+        }
+    }
+
+    /**
+     * @return a numeric percentage cell, or the placeholder when there is nothing to report - a
+     * dash keeps an empty row readable, and a zero would read as a real score
+     */
+    private Object percentage(@Nullable Double value) {
+        return Objects.isNull(value)
+            ? EMPTY_VALUE
+            : new TableExportHelper.PercentageValue(value);
+    }
+
+    private Object count(boolean supported, long value) {
+        return supported ? value : EMPTY_VALUE;
     }
 
     private EntityTypeQualityDTO constructQualityByEntityTypeRowData(

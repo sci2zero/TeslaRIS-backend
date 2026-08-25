@@ -1778,7 +1778,7 @@ public class DataQualityCalculator {
                     );
 
             if (dimensionTotal == 0) {
-                continue;
+                dimensionTotal = 100.00;
             }
 
             double achieved =

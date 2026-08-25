@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
@@ -42,6 +43,8 @@ public interface DataQualityService {
     List<DataQualityProfileDTO> listAllDataQualityProfiles();
 
     List<DataQualityProfileSummaryDTO> listDataQualityProfileNames();
+
+    List<ConstraintSummaryDTO> listProfileConstraints(String profileName, String target);
 
     boolean reassessLatestRevision(String entityType, Integer entityId,
                                    String profileName);

@@ -1131,6 +1131,123 @@ public class DataQualityServiceTest {
     }
 
     @Test
+    public void shouldListConstraintsOfTheRequestedTarget() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    "ptcris", "1.0.0", "Document", null, null))
+                .thenReturn(new LinkedHashSet<>(List.of("titleTooLong", "doiNotResolvable")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Title")));
+
+            // when
+            var result = dataQualityService.listProfileConstraints("ptcris", "Document");
+
+            // then
+            assertEquals(2, result.size());
+
+            // Sorted by key, so the picker is stable regardless of profile order.
+            assertEquals("doiNotResolvable", result.getFirst().key());
+            assertEquals("titleTooLong", result.get(1).key());
+
+            assertEquals("Title", result.getFirst().title().getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldListEveryConstraintWhenNoTargetIsRequested() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    "ptcris", "1.0.0", null, null, null))
+                .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Title")));
+
+            // when
+            var result = dataQualityService.listProfileConstraints("ptcris", null);
+
+            // then
+            assertEquals(1, result.size());
+            assertEquals("titleTooLong", result.getFirst().key());
+        }
+    }
+
+    @Test
+    public void shouldReturnEmptyConstraintListWhenTargetHasNoRules() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>());
+
+            // when
+            var result = dataQualityService.listProfileConstraints("ptcris", "Funding");
+
+            // then
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    public void shouldListConstraintsOfTheLatestProfileVersion() {
+        // given (a profile with an older version still configured alongside the current one)
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("2.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Title")));
+
+            // when
+            dataQualityService.listProfileConstraints("ptcris", "Document");
+
+            // then (the picker must describe the rules currently in force)
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    "ptcris", "2.0.0", "Document", null, null));
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    "ptcris", "2.0.0", "titleTooLong"));
+        }
+    }
+
+    @Test
     public void shouldListProfileNamesWithTheirLatestVersion() {
         // given
         try (var configurationLoader = mockStatic(

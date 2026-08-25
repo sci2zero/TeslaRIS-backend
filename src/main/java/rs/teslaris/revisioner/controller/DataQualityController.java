@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.revisioner.annotation.DataQualityEditCheck;
+import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
@@ -102,6 +103,15 @@ public class DataQualityController {
     public DataQualityIssueDetailsDTO findIssueDetails(@PathVariable Integer assessmentId,
                                                        @PathVariable String ruleKey) {
         return dataQualityService.findIssueDetails(assessmentId, ruleKey);
+    }
+
+    @GetMapping(value = "/profiles/{profileName}/constraints",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public List<ConstraintSummaryDTO> listProfileConstraints(@PathVariable String profileName,
+                                                             @RequestParam(required = false)
+                                                             String target) {
+        return dataQualityService.listProfileConstraints(profileName, target);
     }
 
     @GetMapping(value = "/profiles/names", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -36,6 +37,7 @@ import rs.teslaris.revisioner.converter.DataQualityAssessmentConverter;
 import rs.teslaris.revisioner.converter.DataQualityProfileConverter;
 import rs.teslaris.revisioner.converter.IssueConverter;
 import rs.teslaris.revisioner.converter.IssueDetailsConverter;
+import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
@@ -519,6 +521,26 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return IssueDetailsConverter.toDTO(assessment, ruleKey, occurrences);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConstraintSummaryDTO> listProfileConstraints(String profileName, String target) {
+        var version = DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName);
+
+        // The rules of a target family are what the issues table can be filtered by, and the family
+        // is known here - the picker does not need the rest of the profile to work it out. A null
+        // target means every rule of the profile.
+        return DataQualityAssessmentConfigurationLoader
+            .listRuleKeys(profileName, version, target, null, null)
+            .stream()
+            .sorted()
+            .map(ruleKey -> new ConstraintSummaryDTO(
+                ruleKey,
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                        profileName, version, ruleKey))))
+            .toList();
     }
 
     @Override

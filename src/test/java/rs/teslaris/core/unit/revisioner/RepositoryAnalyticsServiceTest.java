@@ -15,17 +15,25 @@ import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.impl.RepositoryAnalyticsServiceImpl;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
@@ -41,6 +49,9 @@ public class RepositoryAnalyticsServiceTest {
 
     @Mock
     private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private RepositoryAnalyticsServiceImpl repositoryAnalyticsService;
@@ -286,6 +297,225 @@ public class RepositoryAnalyticsServiceTest {
             var countQuery = ArgumentCaptor.forClass(Query.class);
             verify(dataQualityAggregator).countRecords(eq("person"), countQuery.capture());
             assertTrue(countQuery.getValue().toString().contains("employment_institutions_id"));
+        }
+    }
+
+    private List<List<Object>> exportedRows(InputStreamResource report) {
+        try (var workbook = new XSSFWorkbook(report.getInputStream())) {
+            var rows = new ArrayList<List<Object>>();
+
+            workbook.getSheetAt(0).forEach(row -> {
+                var values = new ArrayList<Object>();
+
+                row.forEach(cell -> values.add(
+                    cell.getCellType() == CellType.NUMERIC
+                        ? cell.getNumericCellValue()
+                        : cell.getStringCellValue()));
+
+                rows.add(values);
+            });
+
+            return rows;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private List<Object> rowStartingWith(List<List<Object>> rows, String firstCell) {
+        return rows.stream()
+            .filter(row -> !row.isEmpty() && firstCell.equals(row.getFirst()))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    @Test
+    public void shouldExportEveryEntityTypeRowToASpreadsheet() {
+        // given
+        when(dataQualityAggregator.countRecords(eq("person"), any())).thenReturn(48620L);
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var rows = exportedRows(repositoryAnalyticsService.exportQualityByEntityType(
+                PROFILE, null, LocalDate.of(2026, 7, 18), "en"));
+
+            // then (the file has to say what it describes)
+            assertEquals("repositoryAnalytics.qualityByEntityType", rows.getFirst().getFirst());
+            assertEquals(PROFILE, rowStartingWith(rows, "repositoryAnalytics.profile").get(1));
+            assertEquals("2026-07-18",
+                rowStartingWith(rows, "repositoryAnalytics.assessmentDate").get(1));
+
+            var persons = rowStartingWith(rows, "repositoryAnalytics.entityType.PERSONS");
+
+            // Counts and percentages are numbers, not text - percentages as Excel fractions.
+            assertEquals(48620.0, persons.get(1));
+            assertEquals(0.92, (double) persons.get(2), 0.0001);
+            assertEquals(0.90, (double) persons.get(3), 0.0001);
+            assertEquals(50.0, persons.get(4));
+            assertEquals(120.0, persons.get(5));
+
+            // Unsupported rows carry no figures at all.
+            var projects = rowStartingWith(rows, "repositoryAnalytics.entityType.PROJECTS");
+            assertEquals("-", projects.get(1));
+            assertEquals("-", projects.get(2));
+        }
+    }
+
+    @Test
+    public void shouldExportDimensionsToASpreadsheet() {
+        // given
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubDimensions(Map.of(
+            QualityDimension.ACCURACY,
+            new DataQualityAggregator.DimensionAggregates(82.4, 6428, 24190)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var rows = exportedRows(repositoryAnalyticsService.exportQualityByDimension(
+                PROFILE, null, null, "en"));
+
+            // then
+            assertEquals("repositoryAnalytics.qualityByDimension", rows.getFirst().getFirst());
+
+            // No date means the repository as it stands now.
+            assertEquals("repositoryAnalytics.currentState",
+                rowStartingWith(rows, "repositoryAnalytics.assessmentDate").get(1));
+
+            var accuracy = rowStartingWith(rows, "repositoryAnalytics.dimension.ACCURACY");
+            assertEquals(0.824, (double) accuracy.get(1), 0.0001);
+            assertEquals(6428.0, accuracy.get(2));
+            assertEquals(24190.0, accuracy.get(3));
+
+            // A dimension nothing was assessed against reports no score.
+            var integrity = rowStartingWith(rows, "repositoryAnalytics.dimension.INTEGRITY");
+            assertEquals("-", integrity.get(1));
+        }
+    }
+
+    private void stubDimensions(
+        Map<QualityDimension, DataQualityAggregator.DimensionAggregates> aggregates) {
+        when(dataQualityAggregator.aggregateDimensions(any())).thenReturn(Optional.of(aggregates));
+    }
+
+    @Test
+    public void shouldReturnOneRowPerQualityDimension() {
+        // given
+        stubDimensions(Map.of());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var result = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null);
+
+            // then
+            assertEquals(QualityDimension.values().length, result.size());
+            assertEquals(List.of(QualityDimension.values()),
+                result.stream().map(row -> row.dimension()).toList());
+        }
+    }
+
+    @Test
+    public void shouldCarryFiguresOfEveryAggregatedDimension() {
+        // given
+        stubDimensions(Map.of(
+            QualityDimension.ACCURACY,
+            new DataQualityAggregator.DimensionAggregates(82.4, 6428, 24190),
+            QualityDimension.CONSISTENCY,
+            new DataQualityAggregator.DimensionAggregates(86.0, 4190, 17448)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var result = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null);
+
+            // then
+            var accuracy = result.stream()
+                .filter(row -> row.dimension() == QualityDimension.ACCURACY)
+                .findFirst()
+                .orElseThrow();
+
+            assertEquals(82.4, accuracy.averageScore());
+            assertEquals(6428, accuracy.openIssues());
+            assertEquals(24190, accuracy.affectedRecords());
+
+            var consistency = result.stream()
+                .filter(row -> row.dimension() == QualityDimension.CONSISTENCY)
+                .findFirst()
+                .orElseThrow();
+
+            assertEquals(86.0, consistency.averageScore());
+            assertEquals(4190, consistency.openIssues());
+        }
+    }
+
+    @Test
+    public void shouldReturnEmptyFiguresForDimensionsNothingWasAssessedAgainst() {
+        // given (a dimension no rule of the profile touches)
+        stubDimensions(Map.of(
+            QualityDimension.ACCURACY,
+            new DataQualityAggregator.DimensionAggregates(82.4, 6428, 24190)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var integrity = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null)
+                .stream()
+                .filter(row -> row.dimension() == QualityDimension.INTEGRITY)
+                .findFirst()
+                .orElseThrow();
+
+            // then
+            assertNull(integrity.averageScore());
+            assertEquals(0, integrity.openIssues());
+            assertEquals(0, integrity.affectedRecords());
+        }
+    }
+
+    @Test
+    public void shouldReturnEveryDimensionEmptyWhenAggregationIsUnavailable() {
+        // given
+        when(dataQualityAggregator.aggregateDimensions(any())).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var result = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null);
+
+            // then
+            assertEquals(QualityDimension.values().length, result.size());
+            result.forEach(row -> {
+                assertNull(row.averageScore());
+                assertEquals(0, row.openIssues());
+                assertEquals(0, row.affectedRecords());
+            });
+        }
+    }
+
+    @Test
+    public void shouldScopeDimensionsToTheOrganisationUnitSubHierarchyAndRequestedDay() {
+        // given
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
+            .thenReturn(List.of(7, 8));
+
+        stubDimensions(Map.of());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            repositoryAnalyticsService.getQualityByDimension(
+                PROFILE, 7, LocalDate.of(2026, 7, 18));
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator).aggregateDimensions(captor.capture());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("organisation_unit_ids"));
+            assertTrue(query.contains("8"));
+            assertTrue(query.contains("2026-07-18T23:59:59.999"));
+
+            // Dimensions describe every kind of record, so nothing narrows the entity type.
+            assertFalse(query.contains("entity_type"));
         }
     }
 

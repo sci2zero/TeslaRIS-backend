@@ -4,14 +4,19 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.json.JsonData;
+import jakarta.annotation.Nullable;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 
 @Component
 @RequiredArgsConstructor
@@ -96,6 +101,58 @@ public class DataQualityAggregator {
             ));
         } catch (Exception e) {
             log.warn("Unable to aggregate linked documents. Reason: {}", e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Every dimension keeps its figures in flat fields named after it, so one request answers
+     * all of them: an average of the score, a sum of the issue count, and a count of the records
+     * whose issue count is above zero.
+     */
+    public Optional<Map<QualityDimension, DimensionAggregates>> aggregateDimensions(Query query) {
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query);
+
+        for (var dimension : QualityDimension.values()) {
+            var prefix = dimension.name().toLowerCase();
+
+            request.aggregations(prefix + "Score", a -> a.avg(avg -> avg.field(prefix + "_score")));
+            request.aggregations(prefix + "Issues",
+                a -> a.sum(sum -> sum.field(prefix + "_issue_count")));
+            request.aggregations(prefix + "Affected", a -> a
+                .filter(f -> f.range(range -> range
+                    .field(prefix + "_issue_count")
+                    .gt(JsonData.of(0)))));
+        }
+
+        try {
+            var response = elasticsearchClient.search(request.build(), Void.class);
+
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
+
+            var aggregates = new EnumMap<QualityDimension, DimensionAggregates>(
+                QualityDimension.class);
+
+            for (var dimension : QualityDimension.values()) {
+                var prefix = dimension.name().toLowerCase();
+
+                aggregates.put(dimension, new DimensionAggregates(
+                    average(response, prefix + "Score"),
+                    sum(response, prefix + "Issues"),
+                    filterTotal(response, prefix + "Affected")
+                ));
+            }
+
+            return Optional.of(aggregates);
+        } catch (Exception e) {
+            log.warn("Unable to aggregate quality dimensions. Reason: {}", e.getMessage());
 
             return Optional.empty();
         }
@@ -200,7 +257,12 @@ public class DataQualityAggregator {
     }
 
     private Double average(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response) {
-        var aggregate = response.aggregations().get("averageScore");
+        return average(response, "averageScore");
+    }
+
+    private Double average(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response,
+                           String aggregationName) {
+        var aggregate = response.aggregations().get(aggregationName);
 
         if (Objects.isNull(aggregate)) {
             return null;
@@ -218,6 +280,10 @@ public class DataQualityAggregator {
         public static AssessmentAggregates empty() {
             return new AssessmentAggregates(0, 0, 0, 0, 0, null);
         }
+    }
+
+    public record DimensionAggregates(@Nullable Double averageScore, long openIssues,
+                                      long affectedRecords) {
     }
 
     public record LinkedDocumentAggregates(long linkedRecords, long linkedActivities) {
