@@ -11,6 +11,7 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -159,6 +160,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
+            Objects.nonNull(SecurityContextHolder.getContext().getAuthentication()) &&
             !proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }

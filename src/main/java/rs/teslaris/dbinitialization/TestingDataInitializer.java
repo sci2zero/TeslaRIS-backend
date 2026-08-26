@@ -366,6 +366,7 @@ public class TestingDataInitializer {
         var proceedings2 = new Proceedings();
         proceedings2.getTitle().add(new MultiLingualContent(englishTag, "Proceedings 2", 1));
         proceedings2.setApproveStatus(ApproveStatus.REQUESTED);
+        proceedings1.setDocumentDate(new FlexibleDate(2020));
         proceedings2.setEISBN("978-3-16-145410-0");
         proceedings2.setEvent(conferenceEvent1);
         proceedingsRepository.save(proceedings2);

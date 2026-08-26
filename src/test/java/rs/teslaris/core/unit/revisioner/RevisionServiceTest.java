@@ -7,10 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -26,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.PlatformTransactionManager;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
@@ -59,6 +62,9 @@ public class RevisionServiceTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private RevisionServiceImpl revisionService;
@@ -279,6 +285,30 @@ public class RevisionServiceTest {
             assertEquals(savedRevision, eventCaptor.getValue().entityRevision());
             assertEquals(savedContent, eventCaptor.getValue().json());
         }
+    }
+
+    @Test
+    public void shouldSkipRecordsWhoseEntityNoLongerExists() {
+        // given (the index still lists a record the database no longer has - the entity's own
+        // service throws, and that must not poison the revision write)
+        var restorer = stubRestorerReturning(null);
+        doThrow(new NotFoundException("Proceedings with given ID does not exist."))
+            .when(restorer).readCurrentState(1);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        // when
+        var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
+
+        // then
+        assertFalse(created);
+
+        verify(revisionRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+
+        // Nothing of ours was ever enrolled in a transaction, so nothing can be left rollback-only.
+        verifyNoInteractions(transactionManager);
     }
 
     @Test

@@ -2,11 +2,13 @@ package rs.teslaris.revisioner.util.dataquality;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +161,53 @@ public class DataQualityAggregator {
     }
 
     /**
+     * The rule that failed most often within a family, decided in the shards from the keyword
+     * array's ordinals, the bucket count is bounded by the profile.
+     * <p>
+     * Ties are broken by rule key ascending, done here rather than with an aggregation order so the
+     * result does not depend on how the client spells composite ordering.
+     */
+    public Optional<TopFailedRule> topFailedRule(Query query, Collection<String> ruleKeys) {
+        if (ruleKeys.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .aggregations("topRules", a -> a
+                .terms(terms -> terms
+                    .field("failed_rule_keys")
+                    .include(include -> include.terms(List.copyOf(ruleKeys)))
+                    .size(ruleKeys.size())
+                    .minDocCount(1)))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            if (Objects.isNull(response) ||
+                Objects.isNull(response.aggregations().get("topRules"))) {
+                return Optional.empty();
+            }
+
+            return response.aggregations().get("topRules").sterms().buckets().array().stream()
+                .max(Comparator
+                    .comparingLong(StringTermsBucket::docCount)
+                    .thenComparing(bucket -> bucket.key().stringValue(),
+                        Comparator.reverseOrder()))
+                .map(bucket -> new TopFailedRule(bucket.key().stringValue(), bucket.docCount()));
+        } catch (Exception e) {
+            log.warn("Unable to aggregate the most frequent failed rule. Reason: {}",
+                e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Counts the records of any index the given query matches, without transferring them.
      */
     public long countRecords(String indexName, Query query) {
@@ -276,10 +325,19 @@ public class DataQualityAggregator {
     public record AssessmentAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                        long activityIssues, long publicationCandidates,
                                        Double averageScore) {
-
         public static AssessmentAggregates empty() {
-            return new AssessmentAggregates(0, 0, 0, 0, 0, null);
+            return new AssessmentAggregates(
+                0,
+                0,
+                0,
+                0,
+                0,
+                null
+            );
         }
+    }
+
+    public record TopFailedRule(String ruleKey, long occurrences) {
     }
 
     public record DimensionAggregates(@Nullable Double averageScore, long openIssues,

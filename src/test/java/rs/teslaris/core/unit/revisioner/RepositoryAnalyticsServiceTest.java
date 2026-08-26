@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,8 @@ import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.InputStreamResource;
+import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
@@ -68,6 +72,13 @@ public class RepositoryAnalyticsServiceTest {
                 anyString(), anyString(), any(), any(), any()))
             .thenReturn(new LinkedHashSet<>(List.of("activityEndDateMissing")));
 
+        // Without this the mocked static hands back null, and the version-taking stubs below stop
+        // matching, because anyString() does not match null.
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                anyString()))
+            .thenReturn("1.0.0");
+
         return configurationLoader;
     }
 
@@ -89,6 +100,144 @@ public class RepositoryAnalyticsServiceTest {
             .aggregateAssessments(captor.capture(), any());
 
         return captor.getValue().toString();
+    }
+
+    private MultiLingualContent multilingualContent(String content) {
+        var languageTag = new LanguageTag();
+        languageTag.setId(1);
+        languageTag.setLanguageTag("EN");
+
+        return new MultiLingualContent(languageTag, content, 1);
+    }
+
+    private void stubTopFailedRule(String ruleKey, long occurrences) {
+        when(dataQualityAggregator.topFailedRule(any(), any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.TopFailedRule(ruleKey, occurrences)));
+    }
+
+    @Test
+    public void shouldSummariseTheWholeRepositoryRegardlessOfEntityType() {
+        // given
+        stubAggregates(1483281, 18426, 30, 8, 1278000, 84.7, 1000, 300);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var overview = repositoryAnalyticsService.getOverview(PROFILE, null, null);
+
+            // then
+            assertEquals(84.7, overview.averageScore());
+            assertEquals(18426, overview.openIssues());
+            assertEquals(1483281, overview.recordsAssessed());
+
+            // 1278000 of 1483281 assessed records are publication candidates.
+            assertEquals(86.2, overview.publicationCandidatePercentage(), 0.05);
+        }
+    }
+
+    @Test
+    public void shouldNotNarrowTheEntityTypeOfTheSummary() {
+        // given
+        stubAggregates(10, 5, 0, 0, 5, 90.0, 10, 0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            repositoryAnalyticsService.getOverview(PROFILE, null, null);
+
+            // then (the first aggregation is the summary, and it spans every kind of record)
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator, atLeastOnce())
+                .aggregateAssessments(captor.capture(), any());
+
+            assertFalse(captor.getAllValues().getFirst().toString().contains("entity_type"));
+        }
+    }
+
+    @Test
+    public void shouldCarryTheEntityTypeTableIntoTheOverview() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var overview = repositoryAnalyticsService.getOverview(PROFILE, null, null);
+
+            // then
+            assertEquals(6, overview.qualityByEntityType().size());
+            assertEquals(RepositoryEntityType.PERSONS,
+                overview.qualityByEntityType().getFirst().entityType());
+        }
+    }
+
+    @Test
+    public void shouldReportTheMostFrequentIssueOfEveryEntityType() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubTopFailedRule("orcidNotResolvable", 4281);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var issues = repositoryAnalyticsService.getOverview(PROFILE, null, null)
+                .issuesRequiringAttention();
+
+            // then
+            assertEquals(6, issues.size());
+            assertEquals(RepositoryEntityType.PERSONS, issues.getFirst().entityType());
+            assertEquals("orcidNotResolvable", issues.getFirst().ruleKey());
+            assertEquals(4281, issues.getFirst().occurrences());
+
+            // The rules of each family are what the aggregation is restricted to.
+            verify(dataQualityAggregator, times(4)).topFailedRule(any(), any());
+        }
+    }
+
+    @Test
+    public void shouldReportNoIssueForEntityTypesWithoutAssessments() {
+        // given (nothing has failed, or the type carries no assessments at all)
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        when(dataQualityAggregator.topFailedRule(any(), any())).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var issues = repositoryAnalyticsService.getOverview(PROFILE, null, null)
+                .issuesRequiringAttention();
+
+            // then
+            issues.forEach(issue -> {
+                assertNull(issue.ruleKey());
+                assertEquals(0, issue.occurrences());
+                assertTrue(issue.title().isEmpty());
+            });
+
+            // Projects and fundings are never even queried.
+            assertEquals(RepositoryEntityType.PROJECTS, issues.get(4).entityType());
+            assertEquals(RepositoryEntityType.FUNDINGS, issues.get(5).entityType());
+        }
+    }
+
+    @Test
+    public void shouldScopeTheOverviewToTheOrganisationUnitSubHierarchy() {
+        // given
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
+            .thenReturn(List.of(7, 8));
+
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubTopFailedRule("orcidNotResolvable", 12);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            repositoryAnalyticsService.getOverview(PROFILE, 7, LocalDate.of(2026, 7, 18));
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator, atLeastOnce()).topFailedRule(captor.capture(), any());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("organisation_unit_ids"));
+            assertTrue(query.contains("8"));
+            assertTrue(query.contains("2026-07-18T23:59:59.999"));
+        }
     }
 
     @Test
@@ -326,6 +475,75 @@ public class RepositoryAnalyticsServiceTest {
             .filter(row -> !row.isEmpty() && firstCell.equals(row.getFirst()))
             .findFirst()
             .orElseThrow();
+    }
+
+    @Test
+    public void shouldExportTheOverviewPanelsToASpreadsheet() {
+        // given
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubAggregates(1483281, 18426, 30, 8, 1278000, 84.7, 1000, 300);
+        stubTopFailedRule("orcidNotResolvable", 4281);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var rows = exportedRows(repositoryAnalyticsService.exportOverview(
+                PROFILE, null, LocalDate.of(2026, 7, 18), "en"));
+
+            // then
+            assertEquals("repositoryAnalytics.repositoryQualityOverview",
+                rows.getFirst().getFirst());
+
+            // The four cards, as numeric cells.
+            assertEquals(0.847,
+                (double) rowStartingWith(rows, "repositoryAnalytics.header.averageScore").get(1),
+                0.0001);
+            assertEquals(18426.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.openIssues").get(1));
+            assertEquals(1483281.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.recordsAssessed").get(1));
+
+            // Both panels follow, each behind its own heading.
+            assertTrue(rows.stream().anyMatch(
+                row -> !row.isEmpty() &&
+                    "repositoryAnalytics.qualityByEntityType".equals(row.getFirst())));
+            assertTrue(rows.stream().anyMatch(
+                row -> !row.isEmpty() &&
+                    "repositoryAnalytics.issuesRequiringAttention".equals(row.getFirst())));
+
+            var persons = rowStartingWith(rows, "repositoryAnalytics.entityType.PERSONS");
+            assertEquals(3, persons.size());
+        }
+    }
+
+    @Test
+    public void shouldExportThePrevalentIssueTitleOfTheRequestedLanguage() {
+        // given
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubAggregates(10, 5, 0, 0, 5, 90.0, 10, 0);
+        stubTopFailedRule("orcidNotResolvable", 4281);
+
+        try (var configurationLoader = mockConfigurationLoader()) {
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Resolvable ORCID")));
+
+            // when
+            var rows = exportedRows(repositoryAnalyticsService.exportOverview(
+                PROFILE, null, null, "en"));
+
+            // then (the issue rows carry the title, not the rule key)
+            var issueRow = rows.stream()
+                .filter(row -> row.size() == 3 && "4281.0".equals(String.valueOf(row.get(2))))
+                .findFirst()
+                .orElseThrow();
+
+            assertEquals("Resolvable ORCID", issueRow.get(1));
+        }
     }
 
     @Test

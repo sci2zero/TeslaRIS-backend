@@ -21,6 +21,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 
 @RestController
@@ -34,6 +35,31 @@ public class RepositoryAnalyticsController {
 
     private final UserService userService;
 
+
+    @GetMapping(value = "/overview", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public RepositoryOverviewDTO getOverview(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestHeader("Authorization") String bearerToken) {
+        return repositoryAnalyticsService.getOverview(profileName,
+            resolveOrganisationUnitId(bearerToken), assessmentDate);
+    }
+
+    @GetMapping("/overview/download")
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public ResponseEntity<InputStreamResource> downloadOverview(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestParam(defaultValue = "en") String language,
+        @RequestHeader("Authorization") String bearerToken) {
+        return serveResponseFile(
+            repositoryAnalyticsService.exportOverview(profileName,
+                resolveOrganisationUnitId(bearerToken), assessmentDate, language),
+            "repository-quality-overview");
+    }
 
     @GetMapping("/entity-types/download")
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
@@ -63,28 +89,6 @@ public class RepositoryAnalyticsController {
             "quality-by-dimension");
     }
 
-    private ResponseEntity<InputStreamResource> serveResponseFile(InputStreamResource report,
-                                                                  String fileName) {
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(fileName + ".xlsx"))
-            .body(report);
-    }
-
-    /**
-     * @return the unit an institutional editor or a vice dean for science is bound to, or
-     * {@code null} for an admin, who sees the whole repository
-     */
-    @Nullable
-    private Integer resolveOrganisationUnitId(String bearerToken) {
-        var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
-
-        return Objects.nonNull(user.getOrganisationUnit())
-            ? user.getOrganisationUnit().getId()
-            : null;
-    }
-
     @GetMapping(value = "/dimensions", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public List<DimensionQualityDTO> getQualityByDimension(
@@ -92,17 +96,8 @@ public class RepositoryAnalyticsController {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate assessmentDate,
         @RequestHeader("Authorization") String bearerToken) {
-        var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
-
-        if (Objects.nonNull(user.getOrganisationUnit())) {
-            // User is institutional editor or research information editor (vice dean for science)
-            return repositoryAnalyticsService.getQualityByDimension(profileName,
-                user.getOrganisationUnit().getId(), assessmentDate);
-        }
-
-        // User is admin
-        return repositoryAnalyticsService.getQualityByDimension(
-            profileName, null, assessmentDate
+        return repositoryAnalyticsService.getQualityByDimension(profileName,
+            resolveOrganisationUnitId(bearerToken), assessmentDate
         );
     }
 
@@ -113,17 +108,26 @@ public class RepositoryAnalyticsController {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate assessmentDate,
         @RequestHeader("Authorization") String bearerToken) {
+        return repositoryAnalyticsService.getQualityByEntityType(
+            profileName, resolveOrganisationUnitId(bearerToken), assessmentDate
+        );
+    }
+
+    private ResponseEntity<InputStreamResource> serveResponseFile(InputStreamResource report,
+                                                                  String fileName) {
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(fileName + ".xlsx"))
+            .body(report);
+    }
+
+    @Nullable
+    private Integer resolveOrganisationUnitId(String bearerToken) {
         var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
 
-        if (Objects.nonNull(user.getOrganisationUnit())) {
-            // User is institutional editor or research information editor (vice dean for science)
-            return repositoryAnalyticsService.getQualityByEntityType(profileName,
-                user.getOrganisationUnit().getId(), assessmentDate);
-        }
-
-        // User is admin
-        return repositoryAnalyticsService.getQualityByEntityType(
-            profileName, null, assessmentDate
-        );
+        return Objects.nonNull(user.getOrganisationUnit())
+            ? user.getOrganisationUnit().getId()
+            : null;
     }
 }

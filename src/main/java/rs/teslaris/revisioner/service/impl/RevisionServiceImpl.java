@@ -19,10 +19,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
@@ -56,6 +59,8 @@ public class RevisionServiceImpl implements RevisionService {
     private final RevisionRestorerRegistry revisionRestorerRegistry;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PlatformTransactionManager transactionManager;
 
     private final ObjectMapper objectMapper = ObjectMapperProvider.provideObjectmapper();
 
@@ -157,8 +162,14 @@ public class RevisionServiceImpl implements RevisionService {
         }
     }
 
+    /**
+     * Deliberately not transactional. Reading the current state goes through the entity's own
+     * service, which is transactional and throws when the record is gone - if that ran inside our
+     * transaction it would mark it rollback-only, and catching the exception would not undo that:
+     * the commit would then fail with "transaction silently rolled back". Letting the read own its
+     * transaction keeps a missing record a skipped record.
+     */
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean createRevisionFromCurrentState(String entityType, Integer entityId,
                                                   String profileName) {
         if (revisionRepository
@@ -189,36 +200,50 @@ public class RevisionServiceImpl implements RevisionService {
             return false;
         }
 
+        String json;
+
         try {
-            var json = canonicalize(objectMapper.writeValueAsString(currentState), entityType);
-
-            var revision =
-                EntityRevision.builder()
-                    .majorVersion(1)
-                    .minorVersion(0)
-                    .entityType(entityType)
-                    .entityId(entityId)
-                    .revisionTimestamp(Instant.now())
-                    .contentHash(sha256(json))
-                    .compressedContent(CompressionUtil.compress(json))
-                    .build();
-
-            revision.setAdminNote("revisionBackfill");
-
-            revisionRepository.save(revision);
-
-            applicationEventPublisher.publishEvent(
-                new DataQualityAssessmentEvent(revision, json, profileName));
-
-            log.info("Captured current state of entity '{}' (ID={}) as revision 1.0.",
-                entityType, entityId);
-
-            return true;
+            json = canonicalize(objectMapper.writeValueAsString(currentState), entityType);
         } catch (JsonProcessingException e) {
             log.error("Unable to serialize current state of entity '{}' (ID={}).",
                 entityType, entityId, e);
             return false;
         }
+
+        var revision =
+            EntityRevision.builder()
+                .majorVersion(1)
+                .minorVersion(0)
+                .entityType(entityType)
+                .entityId(entityId)
+                .revisionTimestamp(Instant.now())
+                .contentHash(sha256(json))
+                .compressedContent(CompressionUtil.compress(json))
+                .build();
+
+        revision.setAdminNote("revisionBackfill");
+
+        // The assessment listener reacts after commit, so the write has to happen in a transaction
+        // of its own rather than outside one, or the event would never be delivered.
+        newTransaction().executeWithoutResult(status -> {
+            revisionRepository.save(revision);
+
+            applicationEventPublisher.publishEvent(
+                new DataQualityAssessmentEvent(revision, json, profileName));
+        });
+
+        log.info("Captured current state of entity '{}' (ID={}) as revision 1.0.",
+            entityType, entityId);
+
+        return true;
+    }
+
+    private TransactionTemplate newTransaction() {
+        var transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(
+            TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        return transactionTemplate;
     }
 
     @Override

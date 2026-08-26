@@ -491,11 +491,15 @@ public class DbInitializer implements ApplicationRunner {
         hungarianLanguage.setLanguageCode(LanguageAbbreviations.HUNGARIAN);
         hungarianLanguage.setName(
             new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Mađarski", 1))));
+        var portugueseLanguage = new Language();
+        portugueseLanguage.setLanguageCode(LanguageAbbreviations.PORTUGUESE);
+        portugueseLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Portugalski", 1))));
 
         languageRepository.saveAll(
             List.of(serbianLanguage, englishLanguage, yuLanguage, germanLanguage, frenchLanguage,
                 spanishLanguage, russianLanguage, croatianLanguage, italianLanguage,
-                slovenianLanguage, hungarianLanguage));
+                slovenianLanguage, hungarianLanguage, portugueseLanguage));
 
         // ADMIN USER
         var adminUser =

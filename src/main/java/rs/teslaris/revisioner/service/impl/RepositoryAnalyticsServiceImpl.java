@@ -28,11 +28,15 @@ import org.springframework.context.MessageSource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.PrevalentIssueDTO;
+import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
@@ -47,6 +51,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     private static final String DOCUMENT_TARGET = "Document";
 
     private static final String ACTIVITY_TARGET = "Activity";
+
+    private static final String PERSON_TARGET = "Person";
+
+    private static final String ORGANISATION_UNIT_TARGET = "OrganisationUnit";
 
     private static final String PERSON_INDEX = "person";
 
@@ -66,14 +74,88 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     @Override
     @Transactional(readOnly = true)
+    public RepositoryOverviewDTO getOverview(String profileName, Integer organisationUnitId,
+                                             @Nullable LocalDate assessmentDate) {
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
+
+        // The cards describe the repository as a whole, so nothing narrows the kind of record.
+        var everything = dataQualityAggregator
+            .aggregateAssessments(
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    MatchAllQuery.of(matchAll -> matchAll)._toQuery()),
+                Set.of())
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        return new RepositoryOverviewDTO(
+            everything.averageScore(),
+            percentage(everything.publicationCandidates(), everything.affectedRecords()),
+            everything.openIssues(),
+            everything.affectedRecords(),
+            getQualityByEntityType(profileName, organisationUnitId, assessmentDate),
+            issuesRequiringAttention(profileName, scopeOrganisationUnitIds, assessmentDate)
+        );
+    }
+
+    /**
+     * The rule that fails most often for each entity type. One aggregation per row,
+     * each bounded by the rule keys of that row's target family.
+     */
+    private List<PrevalentIssueDTO> issuesRequiringAttention(
+        String profileName, List<Integer> scopeOrganisationUnitIds,
+        @Nullable LocalDate assessmentDate) {
+
+        return List.of(
+            prevalentIssue(RepositoryEntityType.PERSONS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("entity_type", EntityType.PERSON.name())),
+                PERSON_TARGET),
+            prevalentIssue(RepositoryEntityType.ORGANISATION_UNITS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("entity_type", EntityType.ORGANISATION_UNIT.name())),
+                ORGANISATION_UNIT_TARGET),
+            prevalentIssue(RepositoryEntityType.OUTPUTS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", DOCUMENT_TARGET)),
+                DOCUMENT_TARGET),
+            prevalentIssue(RepositoryEntityType.ACTIVITIES, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", DOCUMENT_TARGET)),
+                ACTIVITY_TARGET),
+            // TODO: projects carry no quality assessments yet.
+            PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
+            // TODO: fundings carry no quality assessments yet.
+            PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
+        );
+    }
+
+    private PrevalentIssueDTO prevalentIssue(RepositoryEntityType entityType, String profileName,
+                                             Query query, String target) {
+        var topRule = dataQualityAggregator.topFailedRule(query, ruleKeys(profileName, target));
+
+        if (topRule.isEmpty()) {
+            return PrevalentIssueDTO.none(entityType);
+        }
+
+        var version = DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName);
+
+        return new PrevalentIssueDTO(
+            entityType,
+            topRule.get().ruleKey(),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                DataQualityAssessmentConfigurationLoader.getDataQualityTitle(profileName, version,
+                    topRule.get().ruleKey())),
+            topRule.get().occurrences()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<EntityTypeQualityDTO> getQualityByEntityType(String profileName,
                                                              Integer organisationUnitId,
                                                              @Nullable LocalDate assessmentDate) {
         var activityRuleKeys = activityRuleKeys(profileName);
 
-        var scopeOrganisationUnitIds = Objects.isNull(organisationUnitId)
-            ? List.<Integer>of()
-            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
 
         var persons = dataQualityAggregator
             .aggregateAssessments(
@@ -133,9 +215,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     public List<DimensionQualityDTO> getQualityByDimension(String profileName,
                                                            Integer organisationUnitId,
                                                            @Nullable LocalDate assessmentDate) {
-        var scopeOrganisationUnitIds = Objects.isNull(organisationUnitId)
-            ? List.<Integer>of()
-            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
 
         // Dimensions describe the repository as a whole, so every assessed record counts regardless
         // of what kind of record it is.
@@ -157,6 +237,78 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                     dimensionAggregates.affectedRecords());
             })
             .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportOverview(String profileName, Integer organisationUnitId,
+                                              @Nullable LocalDate assessmentDate,
+                                              String language) {
+        var overview = getOverview(profileName, organisationUnitId, assessmentDate);
+
+        var rows = reportContext("repositoryAnalytics.repositoryQualityOverview", profileName,
+            assessmentDate, language);
+
+        // The three panels of the tab, one after another, each behind its own heading.
+        rows.add(List.of(label("repositoryAnalytics.header.averageScore", language),
+            percentage(overview.averageScore())));
+        rows.add(List.of(label("repositoryAnalytics.header.publicationCandidates", language),
+            percentage(overview.publicationCandidatePercentage())));
+        rows.add(List.of(label("repositoryAnalytics.header.openIssues", language),
+            overview.openIssues()));
+        rows.add(List.of(label("repositoryAnalytics.header.recordsAssessed", language),
+            overview.recordsAssessed()));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.qualityByEntityType", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.averageScore", language),
+            label("repositoryAnalytics.header.openIssues", language)
+        ));
+
+        overview.qualityByEntityType().forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+                percentage(row.averageScore()),
+                count(row.supported(), row.openIssues())
+            )));
+
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.issuesRequiringAttention", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.constraint", language),
+            label("repositoryAnalytics.header.occurrences", language)
+        ));
+
+        overview.issuesRequiringAttention().forEach(issue ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + issue.entityType().name(), language),
+                issueTitle(issue, language),
+                Objects.isNull(issue.ruleKey()) ? EMPTY_VALUE : issue.occurrences()
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    /**
+     * @return the localised title of the prevalent issue, falling back to its key when the profile
+     * carries no title for it, or the placeholder when the entity type has no issues at all
+     */
+    private Object issueTitle(PrevalentIssueDTO issue, String language) {
+        if (Objects.isNull(issue.ruleKey())) {
+            return EMPTY_VALUE;
+        }
+
+        return issue.title().stream()
+            .filter(title -> title.getLanguageTag().equalsIgnoreCase(language))
+            .findFirst()
+            .map(MultilingualContentDTO::getContent)
+            .orElseGet(() -> issue.title().isEmpty()
+                ? issue.ruleKey()
+                : issue.title().getFirst().getContent());
     }
 
     @Override
@@ -359,14 +511,33 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     }
 
     private Set<String> activityRuleKeys(String profileName) {
+        return ruleKeys(profileName, ACTIVITY_TARGET);
+    }
+
+    /**
+     * Documents of several profile versions can coexist under one profile name, so a family's keys
+     * are the union of every configured version's.
+     */
+    private Set<String> ruleKeys(String profileName, String target) {
         var keys = new HashSet<String>();
 
         DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion().stream()
             .filter(profileAndVersion -> profileAndVersion.a.equalsIgnoreCase(profileName))
             .forEach(profileAndVersion -> keys.addAll(
                 DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    profileAndVersion.a, profileAndVersion.b, ACTIVITY_TARGET, null, null)));
+                    profileAndVersion.a, profileAndVersion.b, target, null, null)));
 
         return keys;
+    }
+
+    /**
+     * An organisation unit stands for everything below it, so the whole sub-hierarchy scopes a
+     * report - both the assessments it aggregates and the totals they are shown against, otherwise
+     * a unit would be measured against the whole repository.
+     */
+    private List<Integer> organisationUnitScope(Integer organisationUnitId) {
+        return Objects.isNull(organisationUnitId)
+            ? List.of()
+            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
     }
 }
