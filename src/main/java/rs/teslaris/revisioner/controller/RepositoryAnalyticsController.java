@@ -21,6 +21,7 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.PublicationCandidateAnalysisDTO;
 import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 
@@ -45,6 +46,31 @@ public class RepositoryAnalyticsController {
         @RequestHeader("Authorization") String bearerToken) {
         return repositoryAnalyticsService.getOverview(profileName,
             resolveOrganisationUnitId(bearerToken), assessmentDate);
+    }
+
+    @GetMapping(value = "/publication-candidates", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public PublicationCandidateAnalysisDTO getPublicationCandidateAnalysis(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestHeader("Authorization") String bearerToken) {
+        return repositoryAnalyticsService.getPublicationCandidateAnalysis(profileName,
+            resolveOrganisationUnitId(bearerToken), assessmentDate);
+    }
+
+    @GetMapping("/publication-candidates/download")
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public ResponseEntity<InputStreamResource> downloadPublicationCandidateAnalysis(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestParam(defaultValue = "en") String language,
+        @RequestHeader("Authorization") String bearerToken) {
+        return serveResponseFile(
+            repositoryAnalyticsService.exportPublicationCandidateAnalysis(profileName,
+                resolveOrganisationUnitId(bearerToken), assessmentDate, language),
+            "publication-candidate-analysis");
     }
 
     @GetMapping("/overview/download")

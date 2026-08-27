@@ -90,6 +90,9 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(name = "error_failed_rules", nullable = false)
     private Integer errorFailedRules;
 
+    @Column(name = "blocking_failed_rules", nullable = false)
+    private Integer blockingFailedRules;
+
     @Column(name = "total_points", nullable = false)
     private Double totalPoints;
 

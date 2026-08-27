@@ -81,6 +81,7 @@ public class DataQualityAssessmentIndexer {
             index.setQualityScoreFair(assessment.getQualityScoreFair());
             index.setPassedRules(assessment.getPassedRules());
             index.setInfoFailedRules(assessment.getInfoFailedRules());
+            index.setBlockingFailedRules(assessment.getBlockingFailedRules());
             index.setWarningFailedRules(assessment.getWarningFailedRules());
             index.setErrorFailedRules(assessment.getErrorFailedRules());
             index.setActivitiesCount(assessment.getActivitiesCount());
@@ -249,12 +250,20 @@ public class DataQualityAssessmentIndexer {
             .map(ConstraintEvaluationResult::getKey)
             .collect(Collectors.toSet());
 
+        // A rule that blocks publication is the one a candidate report cares about, so those keys
+        // are kept apart rather than filtered out of the full set at query time.
+        var blockingKeys = assessment.getIssues().stream()
+            .filter(ConstraintEvaluationResult::isBlocking)
+            .map(ConstraintEvaluationResult::getKey)
+            .collect(Collectors.toSet());
+
         var passedKeys = rulesForTarget.stream()
             .map(Map.Entry::getKey)
             .filter(key -> !failedKeys.contains(key))
             .toList();
 
         index.setFailedRuleKeys(new ArrayList<>(failedKeys));
+        index.setBlockingRuleKeys(new ArrayList<>(blockingKeys));
         index.setPassedRuleKeys(passedKeys);
     }
 

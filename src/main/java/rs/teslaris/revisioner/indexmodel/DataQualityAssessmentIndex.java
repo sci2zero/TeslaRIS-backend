@@ -102,6 +102,9 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Integer, store = true, name = "error_failed_rules")
     private int errorFailedRules;
 
+    @Field(type = FieldType.Integer, store = true, name = "blocking_failed_rules")
+    private int blockingFailedRules;
+
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 
@@ -115,6 +118,9 @@ public class DataQualityAssessmentIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "passed_rule_keys")
     private List<String> passedRuleKeys;
+
+    @Field(type = FieldType.Keyword, store = true, name = "blocking_rule_keys")
+    private List<String> blockingRuleKeys;
 
     // --- one {score, issue_count, passed_count, fair_score} quadruple per QualityDimension value ---
 

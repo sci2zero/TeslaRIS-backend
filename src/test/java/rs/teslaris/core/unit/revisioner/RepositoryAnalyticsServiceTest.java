@@ -116,6 +116,139 @@ public class RepositoryAnalyticsServiceTest {
                 new DataQualityAggregator.TopFailedRule(ruleKey, occurrences)));
     }
 
+    private void stubBlocking(long distinctConstraints, long blockingIssues) {
+        when(dataQualityAggregator.aggregateBlocking(any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.BlockingAggregates(distinctConstraints, blockingIssues)));
+    }
+
+    @Test
+    public void shouldSummarisePublicationCandidatesAcrossTheRepository() {
+        // given
+        stubAggregates(1483281, 18426, 30, 8, 1278610, 84.7, 1000, 300);
+        stubBlocking(14, 204671);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var analysis = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null);
+
+            // then
+            assertEquals(1278610, analysis.publicationCandidates());
+
+            // Everything assessed that is not a candidate.
+            assertEquals(204671, analysis.notPublicationCandidates());
+            assertEquals(86.2, analysis.candidateRate(), 0.05);
+
+            assertEquals(14, analysis.blockingConstraints());
+            assertEquals(204671, analysis.blockingIssues());
+        }
+    }
+
+    @Test
+    public void shouldCarryTheCandidateRateOfEveryEntityTypeIntoTheAnalysis() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubBlocking(3, 40);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var analysis = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null);
+
+            // then
+            assertEquals(6, analysis.candidateRateByEntityType().size());
+            assertEquals(90.0,
+                analysis.candidateRateByEntityType().getFirst().publicationCandidatePercentage(),
+                0.0001);
+        }
+    }
+
+    @Test
+    public void shouldReportTheMostFrequentBlockingConstraintPerEntityType() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubBlocking(5, 60);
+        when(dataQualityAggregator.topFailedRule(any(), any(), anyString()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.TopFailedRule("titleMissing", 986)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var constraints = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null).mostCommonBlockingConstraints();
+
+            // then
+            assertEquals(6, constraints.size());
+            assertEquals("titleMissing", constraints.getFirst().ruleKey());
+            assertEquals(986, constraints.getFirst().occurrences());
+
+            // Only blocking failures can keep a record from being a candidate, so the aggregation
+            // reads the blocking key field rather than every failed rule.
+            var field = ArgumentCaptor.forClass(String.class);
+            verify(dataQualityAggregator, times(4))
+                .topFailedRule(any(), any(), field.capture());
+            assertEquals("blocking_rule_keys", field.getValue());
+        }
+    }
+
+    @Test
+    public void shouldReportNoBlockingConstraintForEntityTypesWithoutOne() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubBlocking(0, 0);
+        when(dataQualityAggregator.topFailedRule(any(), any(), anyString()))
+            .thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var constraints = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null).mostCommonBlockingConstraints();
+
+            // then
+            constraints.forEach(constraint -> {
+                assertNull(constraint.ruleKey());
+                assertEquals(0, constraint.occurrences());
+            });
+        }
+    }
+
+    @Test
+    public void shouldReportNoCandidateRateWhenNothingIsAssessed() {
+        // given
+        stubAggregates(0, 0, 0, 0, 0, null, 0, 0);
+        stubBlocking(0, 0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var analysis = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null);
+
+            // then
+            assertNull(analysis.candidateRate());
+            assertEquals(0, analysis.publicationCandidates());
+            assertEquals(0, analysis.notPublicationCandidates());
+        }
+    }
+
+    @Test
+    public void shouldFallBackToEmptyBlockingFiguresWhenAggregationIsUnavailable() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        when(dataQualityAggregator.aggregateBlocking(any())).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var analysis = repositoryAnalyticsService.getPublicationCandidateAnalysis(
+                PROFILE, null, null);
+
+            // then
+            assertEquals(0, analysis.blockingConstraints());
+            assertEquals(0, analysis.blockingIssues());
+            assertEquals(45, analysis.publicationCandidates());
+        }
+    }
+
     @Test
     public void shouldSummariseTheWholeRepositoryRegardlessOfEntityType() {
         // given

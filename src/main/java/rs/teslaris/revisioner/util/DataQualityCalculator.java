@@ -1700,6 +1700,11 @@ public class DataQualityCalculator {
                 .filter(i -> i.getSeverity() == IssueSeverity.INFO)
                 .count());
 
+        assessment.setBlockingFailedRules(
+            (int) assessment.getIssues().stream()
+                .filter(ConstraintEvaluationResult::isBlocking)
+                .count());
+
         assessment.setPassedRules(
             DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
                 assessment.getProfileName(),

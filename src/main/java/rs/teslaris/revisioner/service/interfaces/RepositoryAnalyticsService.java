@@ -7,6 +7,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.PublicationCandidateAnalysisDTO;
 import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 
 @Service
@@ -15,6 +16,9 @@ public interface RepositoryAnalyticsService {
     RepositoryOverviewDTO getOverview(String profileName, Integer organisationUnitId,
                                       @Nullable LocalDate assessmentDate);
 
+    PublicationCandidateAnalysisDTO getPublicationCandidateAnalysis(
+        String profileName, Integer organisationUnitId, @Nullable LocalDate assessmentDate);
+
     List<EntityTypeQualityDTO> getQualityByEntityType(String profileName,
                                                       Integer organisationUnitId,
                                                       @Nullable LocalDate assessmentDate);
@@ -22,6 +26,11 @@ public interface RepositoryAnalyticsService {
     List<DimensionQualityDTO> getQualityByDimension(String profileName,
                                                     Integer organisationUnitId,
                                                     @Nullable LocalDate assessmentDate);
+
+    InputStreamResource exportPublicationCandidateAnalysis(String profileName,
+                                                           Integer organisationUnitId,
+                                                           @Nullable LocalDate assessmentDate,
+                                                           String language);
 
     InputStreamResource exportOverview(String profileName, Integer organisationUnitId,
                                        @Nullable LocalDate assessmentDate, String language);

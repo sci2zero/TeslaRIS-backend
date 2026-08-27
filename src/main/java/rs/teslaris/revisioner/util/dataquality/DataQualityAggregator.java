@@ -168,6 +168,11 @@ public class DataQualityAggregator {
      * result does not depend on how the client spells composite ordering.
      */
     public Optional<TopFailedRule> topFailedRule(Query query, Collection<String> ruleKeys) {
+        return topFailedRule(query, ruleKeys, "failed_rule_keys");
+    }
+
+    public Optional<TopFailedRule> topFailedRule(Query query, Collection<String> ruleKeys,
+                                                 String field) {
         if (ruleKeys.isEmpty()) {
             return Optional.empty();
         }
@@ -179,7 +184,7 @@ public class DataQualityAggregator {
             .query(query)
             .aggregations("topRules", a -> a
                 .terms(terms -> terms
-                    .field("failed_rule_keys")
+                    .field(field)
                     .include(include -> include.terms(List.copyOf(ruleKeys)))
                     .size(ruleKeys.size())
                     .minDocCount(1)))
@@ -202,6 +207,42 @@ public class DataQualityAggregator {
         } catch (Exception e) {
             log.warn("Unable to aggregate the most frequent failed rule. Reason: {}",
                 e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * How many distinct constraints block publication across the matched records, and how many
+     * blocking failures there are in total. The cardinality is exact here: the profile bounds the
+     * key space far below the aggregation's precision threshold.
+     */
+    public Optional<BlockingAggregates> aggregateBlocking(Query query) {
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .aggregations("distinctBlockingRules",
+                a -> a.cardinality(c -> c.field("blocking_rule_keys")))
+            .aggregations("blockingFailures", a -> a.sum(s -> s.field("blocking_failed_rules")))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
+
+            var distinct = response.aggregations().get("distinctBlockingRules");
+
+            return Optional.of(new BlockingAggregates(
+                Objects.isNull(distinct) ? 0 : distinct.cardinality().value(),
+                sum(response, "blockingFailures")
+            ));
+        } catch (Exception e) {
+            log.warn("Unable to aggregate blocking constraints. Reason: {}", e.getMessage());
 
             return Optional.empty();
         }
@@ -338,6 +379,13 @@ public class DataQualityAggregator {
     }
 
     public record TopFailedRule(String ruleKey, long occurrences) {
+    }
+
+    public record BlockingAggregates(long distinctBlockingConstraints, long blockingIssues) {
+
+        public static BlockingAggregates empty() {
+            return new BlockingAggregates(0, 0);
+        }
     }
 
     public record DimensionAggregates(@Nullable Double averageScore, long openIssues,

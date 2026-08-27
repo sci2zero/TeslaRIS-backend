@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
 import rs.teslaris.revisioner.dto.PrevalentIssueDTO;
+import rs.teslaris.revisioner.dto.PublicationCandidateAnalysisDTO;
 import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
@@ -55,6 +57,8 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     private static final String PERSON_TARGET = "Person";
 
     private static final String ORGANISATION_UNIT_TARGET = "OrganisationUnit";
+
+    private static final String BLOCKING_RULE_KEYS_FIELD = "blocking_rule_keys";
 
     private static final String PERSON_INDEX = "person";
 
@@ -96,6 +100,76 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         );
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PublicationCandidateAnalysisDTO getPublicationCandidateAnalysis(
+        String profileName, Integer organisationUnitId, @Nullable LocalDate assessmentDate) {
+
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
+        var repositoryWide = assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+            MatchAllQuery.of(matchAll -> matchAll)._toQuery());
+
+        var everything = dataQualityAggregator
+            .aggregateAssessments(repositoryWide, Set.of())
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        var blocking = dataQualityAggregator
+            .aggregateBlocking(repositoryWide)
+            .orElseGet(DataQualityAggregator.BlockingAggregates::empty);
+
+        return new PublicationCandidateAnalysisDTO(
+            everything.publicationCandidates(),
+            everything.affectedRecords() - everything.publicationCandidates(),
+            percentage(everything.publicationCandidates(), everything.affectedRecords()),
+            blocking.distinctBlockingConstraints(),
+            blocking.blockingIssues(),
+            getQualityByEntityType(profileName, organisationUnitId, assessmentDate),
+            mostCommonBlockingConstraints(profileName, scopeOrganisationUnitIds, assessmentDate)
+        );
+    }
+
+    /**
+     * The blocking rule that fails most often for each entity type. Only rules the profile marks as
+     * blocking can keep a record from being a publication candidate, so the report is restricted to
+     * those - both the rule keys it considers and the index field it aggregates.
+     */
+    private List<PrevalentIssueDTO> mostCommonBlockingConstraints(
+        String profileName, List<Integer> scopeOrganisationUnitIds,
+        @Nullable LocalDate assessmentDate) {
+
+        return List.of(
+            prevalentBlockingIssue(RepositoryEntityType.PERSONS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("entity_type", EntityType.PERSON.name())),
+                PERSON_TARGET),
+            prevalentBlockingIssue(RepositoryEntityType.ORGANISATION_UNITS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("entity_type", EntityType.ORGANISATION_UNIT.name())),
+                ORGANISATION_UNIT_TARGET),
+            prevalentBlockingIssue(RepositoryEntityType.OUTPUTS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", DOCUMENT_TARGET)),
+                DOCUMENT_TARGET),
+            prevalentBlockingIssue(RepositoryEntityType.ACTIVITIES, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", DOCUMENT_TARGET)),
+                ACTIVITY_TARGET),
+            // TODO: projects carry no quality assessments yet.
+            PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
+            // TODO: fundings carry no quality assessments yet.
+            PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
+        );
+    }
+
+    private PrevalentIssueDTO prevalentBlockingIssue(RepositoryEntityType entityType,
+                                                     String profileName, Query query,
+                                                     String target) {
+        var topRule = dataQualityAggregator.topFailedRule(query,
+            blockingRuleKeys(profileName, target), BLOCKING_RULE_KEYS_FIELD);
+
+        return describeTopRule(entityType, profileName, topRule);
+    }
+
     /**
      * The rule that fails most often for each entity type. One aggregation per row,
      * each bounded by the rule keys of that row's target family.
@@ -130,7 +204,13 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private PrevalentIssueDTO prevalentIssue(RepositoryEntityType entityType, String profileName,
                                              Query query, String target) {
-        var topRule = dataQualityAggregator.topFailedRule(query, ruleKeys(profileName, target));
+        return describeTopRule(entityType, profileName,
+            dataQualityAggregator.topFailedRule(query, ruleKeys(profileName, target)));
+    }
+
+    private PrevalentIssueDTO describeTopRule(
+        RepositoryEntityType entityType, String profileName,
+        Optional<DataQualityAggregator.TopFailedRule> topRule) {
 
         if (topRule.isEmpty()) {
             return PrevalentIssueDTO.none(entityType);
@@ -237,6 +317,60 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                     dimensionAggregates.affectedRecords());
             })
             .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportPublicationCandidateAnalysis(
+        String profileName, Integer organisationUnitId, @Nullable LocalDate assessmentDate,
+        String language) {
+        var analysis = getPublicationCandidateAnalysis(profileName, organisationUnitId,
+            assessmentDate);
+
+        var rows = reportContext("repositoryAnalytics.publicationCandidateAnalysis", profileName,
+            assessmentDate, language);
+
+        rows.add(List.of(label("repositoryAnalytics.header.publicationCandidates", language),
+            analysis.publicationCandidates()));
+        rows.add(List.of(label("repositoryAnalytics.header.notPublicationCandidates", language),
+            analysis.notPublicationCandidates()));
+        rows.add(List.of(label("repositoryAnalytics.header.candidateRate", language),
+            percentage(analysis.candidateRate())));
+        rows.add(List.of(label("repositoryAnalytics.header.blockingConstraints", language),
+            analysis.blockingConstraints()));
+        rows.add(List.of(label("repositoryAnalytics.header.blockingIssues", language),
+            analysis.blockingIssues()));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.candidateRateByEntityType", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.candidateRate", language)
+        ));
+
+        analysis.candidateRateByEntityType().forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+                percentage(row.publicationCandidatePercentage())
+            )));
+
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.mostCommonBlockingConstraints", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.constraint", language),
+            label("repositoryAnalytics.header.occurrences", language)
+        ));
+
+        analysis.mostCommonBlockingConstraints().forEach(issue ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + issue.entityType().name(), language),
+                issueTitle(issue, language),
+                Objects.isNull(issue.ruleKey()) ? EMPTY_VALUE : issue.occurrences()
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
     }
 
     @Override
@@ -535,6 +669,25 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
      * report - both the assessments it aggregates and the totals they are shown against, otherwise
      * a unit would be measured against the whole repository.
      */
+    /**
+     * @return the keys of the family's rules the profile marks as blocking, across every configured
+     * version of the profile
+     */
+    private Set<String> blockingRuleKeys(String profileName, String target) {
+        var keys = new HashSet<String>();
+
+        DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion().stream()
+            .filter(profileAndVersion -> profileAndVersion.a.equalsIgnoreCase(profileName))
+            .forEach(profileAndVersion ->
+                DataQualityAssessmentConfigurationLoader
+                    .getRulesForTarget(profileAndVersion.a, profileAndVersion.b, List.of(target))
+                    .stream()
+                    .filter(rule -> rule.getValue().blocking())
+                    .forEach(rule -> keys.add(rule.getKey())));
+
+        return keys;
+    }
+
     private List<Integer> organisationUnitScope(Integer organisationUnitId) {
         return Objects.isNull(organisationUnitId)
             ? List.of()
