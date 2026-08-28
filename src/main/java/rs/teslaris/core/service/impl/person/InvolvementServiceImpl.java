@@ -23,15 +23,19 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.EmploymentTitle;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
@@ -52,7 +56,11 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.restoration.RestorationContext;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Slf4j
 @Service
@@ -110,6 +118,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Transactional
     public Education addEducation(Integer personId, EducationDTO education) {
         var personInvolved = personService.findOne(personId);
+        var personBeforeChange = personSnapshot(personId);
 
         var newEducation = new Education();
         setCommonFields(newEducation, education);
@@ -118,13 +127,19 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         personInvolved.addInvolvement(newEducation);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
-        return involvementRepository.save(newEducation);
+        var savedEducation = involvementRepository.save(newEducation);
+
+        personService.indexPerson(personInvolved);
+        publishPersonRevision(personId, personBeforeChange);
+
+        return savedEducation;
     }
 
     @Override
     @Transactional
     public Membership addMembership(Integer personId, MembershipDTO membership) {
         var personInvolved = personService.findOne(personId);
+        var personBeforeChange = personSnapshot(personId);
 
         var newMembership = new Membership();
         setCommonFields(newMembership, membership);
@@ -133,7 +148,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         personInvolved.addInvolvement(newMembership);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
-        return involvementRepository.save(newMembership);
+        var savedMembership = involvementRepository.save(newMembership);
+
+        personService.indexPerson(personInvolved);
+        publishPersonRevision(personId, personBeforeChange);
+
+        return savedMembership;
     }
 
     @Override
@@ -195,6 +215,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Transactional
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findOne(personId);
+        var personBeforeChange = personSnapshot(personId);
 
         var newEmployment = new Employment();
         setCommonFields(newEmployment, employment);
@@ -207,6 +228,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         personService.savePersonEmploymentHierarchyIds(personInvolved, personIndex);
 
         var savedEmployment = involvementRepository.save(newEmployment);
+
+        publishPersonRevision(personId, personBeforeChange);
 
         applicationEventPublisher.publishEvent(
             new PersonEmploymentOUHierarchyStructureChangedEvent(personId));
@@ -327,7 +350,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     @Transactional
     public void updateEducation(Integer involvementId, EducationDTO education) {
-        var educationToUpdate = (Education) findOne(involvementId);
+        var educationToUpdate = castInvolvement(involvementId, Education.class);
+        var personId = educationToUpdate.getPersonInvolved().getId();
+        var personBeforeChange = personSnapshot(personId);
 
         clearCommonCollections(educationToUpdate);
         educationToUpdate.getTitle().clear();
@@ -345,14 +370,18 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         setEducationCommonFields(educationToUpdate, education);
 
         involvementRepository.save(educationToUpdate);
-        userService.updateResearcherCurrentOrganisationUnitIfBound(
-            educationToUpdate.getPersonInvolved().getId());
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        personService.indexPerson(educationToUpdate.getPersonInvolved());
+        publishPersonRevision(personId, personBeforeChange);
     }
 
     @Override
     @Transactional
     public void updateMembership(Integer involvementId, MembershipDTO membership) {
-        var membershipToUpdate = (Membership) findOne(involvementId);
+        var membershipToUpdate = castInvolvement(involvementId, Membership.class);
+        var personId = membershipToUpdate.getPersonInvolved().getId();
+        var personBeforeChange = personSnapshot(personId);
 
         clearCommonCollections(membershipToUpdate);
         membershipToUpdate.getContributionDescription().clear();
@@ -362,14 +391,18 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         setMembershipCommonFields(membershipToUpdate, membership);
 
         involvementRepository.save(membershipToUpdate);
-        userService.updateResearcherCurrentOrganisationUnitIfBound(
-            membershipToUpdate.getPersonInvolved().getId());
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        personService.indexPerson(membershipToUpdate.getPersonInvolved());
+        publishPersonRevision(personId, personBeforeChange);
     }
 
     @Override
     @Transactional
     public void updateEmployment(Integer involvementId, EmploymentDTO employment) {
-        var employmentToUpdate = (Employment) findOne(involvementId);
+        var employmentToUpdate = castInvolvement(involvementId, Employment.class);
+        var personId = employmentToUpdate.getPersonInvolved().getId();
+        var personBeforeChange = personSnapshot(personId);
 
         clearCommonCollections(employmentToUpdate);
         employmentToUpdate.getRole().clear();
@@ -378,15 +411,16 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         setEmploymentCommonFields(employmentToUpdate, employment);
 
         involvementRepository.save(employmentToUpdate);
-        userService.updateResearcherCurrentOrganisationUnitIfBound(
-            employmentToUpdate.getPersonInvolved().getId());
+        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        publishPersonRevision(personId, personBeforeChange);
 
         var personIndex = personService.indexPerson(employmentToUpdate.getPersonInvolved());
         personService.savePersonEmploymentHierarchyIds(employmentToUpdate.getPersonInvolved(),
             personIndex);
 
-        applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
-            employmentToUpdate.getPersonInvolved().getId()));
+        applicationEventPublisher.publishEvent(
+            new PersonEmploymentOUHierarchyStructureChangedEvent(personId));
     }
 
     @Override
@@ -394,6 +428,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
         var person = involvementToDelete.getPersonInvolved();
+        var personBeforeChange = personSnapshot(person.getId());
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
@@ -408,6 +443,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         }
 
         person.removeInvolvement(involvementToDelete);
+
+        publishPersonRevision(person.getId(), personBeforeChange);
 
         var personIndex = personService.indexPerson(person);
         personService.savePersonEmploymentHierarchyIds(person, personIndex);
@@ -424,8 +461,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 "Employment with that person and institution does not exist.");
         }
 
+        var personBeforeChange = personSnapshot(personId);
+
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
+
+        publishPersonRevision(personId, personBeforeChange);
 
         var personIndex = personService.indexPerson(employment.get().getPersonInvolved());
         personService.savePersonEmploymentHierarchyIds(employment.get().getPersonInvolved(),
@@ -466,12 +507,63 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         };
     }
 
+    /**
+     * Involvements are CRUDed on their own endpoints, but a person revision has to describe the
+     * person as a whole, so every involvement change records one. The snapshot is read through the
+     * person service rather than assembled from the in-memory collection: the converter looks the
+     * involvements up, which flushes pending writes, while the entity's own collection can be a
+     * statement behind the change that is being recorded.
+     */
+    private boolean thesisExists(Integer thesisId) {
+        return !RestorationContext.isActive() || thesisRepository.existsById(thesisId);
+    }
+
+    private PersonSnapshotDTO personSnapshot(Integer personId) {
+        return personService.readPersonSnapshot(personId);
+    }
+
+    private void publishPersonRevision(Integer personId, PersonSnapshotDTO personBeforeChange) {
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                personBeforeChange,
+                personSnapshot(personId),
+                RevisionType.UPDATE
+            )
+        );
+    }
+
+    /**
+     * Guards the cast the update methods used to make blindly. An ID whose involvement is of
+     * another kind is a caller error rather than a {@code ClassCastException} in the middle of a
+     * transaction.
+     */
+    private <T extends Involvement> T castInvolvement(Integer involvementId,
+                                                      Class<T> involvementClass) {
+        var involvement = findOne(involvementId);
+
+        if (!involvementClass.isInstance(involvement)) {
+            throw new NotFoundException(
+                String.format("Involvement with ID %d is not %s.", involvementId,
+                    involvementClass.getSimpleName()));
+        }
+
+        return involvementClass.cast(involvement);
+    }
+
     private void setCommonFields(Involvement involvement, InvolvementDTO commonFields) {
-        if (Objects.nonNull(commonFields.getOrganisationUnitId()) &&
-            commonFields.getOrganisationUnitId() > 0) {
-            var organisationUnit =
-                organisationUnitService.findOrganisationUnitById(
-                    commonFields.getOrganisationUnitId());
+        // An involvement already has a weaker way to name where it happened, so an institution
+        // deleted since the revision was captured degrades to the display name instead of failing.
+        var organisationUnit = Objects.nonNull(commonFields.getOrganisationUnitId()) &&
+            commonFields.getOrganisationUnitId() > 0
+            ? RestorationSupport.resolveDegradable(commonFields.getOrganisationUnitId(),
+            organisationUnitService, organisationUnitService::findOrganisationUnitById,
+            "organisationUnitId", "restoreInvolvementInstitutionExternalMessage",
+            List.of(String.valueOf(commonFields.getOrganisationUnitId())))
+            : null;
+
+        if (Objects.nonNull(organisationUnit)) {
             involvement.setOrganisationUnit(organisationUnit);
             involvement.getDisplayOrganisationUnit().clear();
         } else {
@@ -503,12 +595,23 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setDescription(description);
         involvement.setKeywords(keywords);
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            commonFields.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = commonFields.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         involvement.setResearchAreas(new HashSet<>(researchAreas));
 
-        var hostInstitutions = organisationUnitService.getOrganisationUnitsByIds(
-            commonFields.getHostInstitutionIds().stream().toList());
+        var requestedHostInstitutionIds = commonFields.getHostInstitutionIds().stream().toList();
+        var hostInstitutions =
+            organisationUnitService.getOrganisationUnitsByIds(requestedHostInstitutionIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedHostInstitutionIds,
+            hostInstitutions.stream().map(OrganisationUnit::getId).toList(), "hostInstitutionIds",
+            "restoreHostInstitutionMissingMessage");
+
         involvement.setHostInstitutions(new HashSet<>(hostInstitutions));
     }
 
@@ -599,20 +702,37 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         target.setDegreeClassification(degreeClassification);
 
         if (CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            var researchAreas = researchAreaService.getResearchAreasByIds(
-                dto.getResearchAreasId().stream().toList());
+            var requestedResearchAreaIds = dto.getResearchAreasId().stream().toList();
+            var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+            RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+                researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+                "restoreResearchAreaMissingMessage");
+
             target.setResearchAreas(new HashSet<>(researchAreas));
         }
 
-        if (Objects.nonNull(dto.getThesisId())) {
+        // getReferenceById hands back a proxy that only fails when it is touched, which during a
+        // restore would surface as an opaque error at flush time rather than a dropped reference.
+        if (Objects.nonNull(dto.getThesisId()) &&
+            thesisExists(dto.getThesisId())) {
             target.setThesis(thesisRepository.getReferenceById(dto.getThesisId()));
         } else {
             target.setThesis(null);
         }
 
         if (CollectionOperations.containsValues(dto.getSupervisorIds())) {
-            dto.getSupervisorIds().forEach(id ->
-                target.getSupervisors().add(personService.findOne(id)));
+            dto.getSupervisorIds().stream()
+                .map(id -> RestorationSupport.resolveOptional(id, personService,
+                    personService::findOne, "supervisorIds", "restoreSupervisorMissingMessage"))
+                .filter(Objects::nonNull)
+                .forEach(target.getSupervisors()::add);
+
+            if (target.getSupervisors().isEmpty()) {
+                target.setDisplayThesisSupervisors(
+                    multilingualContentService.getMultilingualContent(
+                        dto.getDisplaySupervisors()));
+            }
         } else {
             var displaySupervisors = multilingualContentService.getMultilingualContent(
                 dto.getDisplaySupervisors());
@@ -635,8 +755,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         if (Objects.nonNull(dto.getEmploymentPositionId())) {
             target.setEmploymentPositionHierarchy(
-                employmentPositionService.findOne(dto.getEmploymentPositionId())
-            );
+                RestorationSupport.resolveOptional(dto.getEmploymentPositionId(),
+                    employmentPositionService, employmentPositionService::findOne,
+                    "employmentPositionId", "restoreEmploymentPositionMissingMessage"));
         } else {
             target.setEmploymentPositionHierarchy(null);
         }

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -31,7 +32,6 @@ import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -58,9 +58,10 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
-import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
@@ -72,6 +73,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
@@ -93,17 +95,30 @@ public class DataQualityCalculator {
      * Targets whose issues are reported but never scored - their rules do not add to the total and
      * their failures do not deduct. Remove an entry to start scoring that target again.
      */
-    private static final Set<String> NON_SCORING_TARGETS = Set.of("Activity");
+    private static final Set<String> NON_SCORING_TARGETS = Set.of();
+
     private final Map<String, Pattern> compiledPatternCache = new ConcurrentHashMap<>();
+
     private final RevisionHydratorRegistry revisionHydratorRegistry;
+
     private final DocumentRepository documentRepository;
+
     private final PersonRepository personRepository;
+
     private final OrganisationUnitRepository organisationUnitRepository;
+
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
     private final CountryRepository countryRepository;
+
     private final LanguageRepository languageRepository;
+
     private final PublisherRepository publisherRepository;
+
     private final RestTemplateProvider restTemplateProvider;
+
     private final DataQualityAssessmentIndexer dataQualityAssessmentIndexer;
+
     private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
@@ -128,8 +143,8 @@ public class DataQualityCalculator {
                 (dto, assessment) -> assessEntity((IntangibleProductDTO) dto, assessment)),
             Map.entry(PerformanceRelatedOutputDTO.class,
                 (dto, assessment) -> assessEntity((PerformanceRelatedOutputDTO) dto, assessment)),
-            Map.entry(PersonResponseDTO.class,
-                (dto, assessment) -> assessEntity((PersonResponseDTO) dto, assessment)),
+            Map.entry(PersonSnapshotDTO.class,
+                (dto, assessment) -> assessEntity((PersonSnapshotDTO) dto, assessment)),
             Map.entry(EventDTO.class,
                 (dto, assessment) -> assessEntity((EventDTO) dto, assessment)),
             Map.entry(PublicationSeriesDTO.class,
@@ -587,7 +602,7 @@ public class DataQualityCalculator {
         // TODO: To be implemented
     }
 
-    private void assessEntity(PersonResponseDTO dto, DataQualityAssessment assessment) {
+    private void assessEntity(PersonSnapshotDTO dto, DataQualityAssessment assessment) {
         var personalInfoDTO = dto.getPersonalInfo();
 
         if (Objects.isNull(personalInfoDTO.getLocalBirthDate())) {
@@ -768,10 +783,26 @@ public class DataQualityCalculator {
         assessEntity(personalInfoDTO.getContact(), assessment);
         assessEntity(personalInfoDTO.getPrivateContact(), assessment);
 
+        // A person's involvements are activities in their own right, alongside the contributions
+        // recorded on outputs. Revisions captured before involvements were part of the snapshot
+        // carry null lists and simply contribute nothing.
+        assessInvolvements(dto.getEmployments(), assessment);
+        assessInvolvements(dto.getEducations(), assessment);
+        assessInvolvements(dto.getMemberships(), assessment);
+
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
         // TODO lastModificationDateMissing
+    }
+
+    private void assessInvolvements(List<? extends InvolvementDTO> involvements,
+                                    DataQualityAssessment assessment) {
+        if (Objects.isNull(involvements)) {
+            return;
+        }
+
+        involvements.forEach(involvement -> assessEntity(involvement, assessment));
     }
 
     private void assessEntity(OrganisationUnitDTO dto, DataQualityAssessment assessment) {
@@ -1250,12 +1281,25 @@ public class DataQualityCalculator {
     }
 
     private String activityName(InvolvementDTO dto) {
-        var organisationUnit = firstContent(
-            CollectionOperations.containsValues(dto.getOrganisationUnitName())
-                ? dto.getOrganisationUnitName()
-                : dto.getDisplayOrganisationUnit());
+        AtomicReference<String> organisationUnit = new AtomicReference<>("");
 
-        return organisationUnit.isBlank() ? "-" : organisationUnit;
+        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                dto.getOrganisationUnitId()).ifPresent(index -> {
+                    if (index.getNameSr().equals(index.getNameOther())) {
+                        organisationUnit.set(index.getNameSr());
+                    } else {
+                        organisationUnit.set(index.getNameSr() + " (" + index.getNameOther() + ")");
+                    }
+                }
+            );
+        } else {
+            organisationUnit.set(StringUtil.getStringContent(dto.getDisplayOrganisationUnit(),
+                LanguageAbbreviations.PORTUGUESE));
+        }
+
+
+        return organisationUnit.get().isBlank() ? "-" : organisationUnit.get();
     }
 
     private String contributionType(PersonContributionDTO dto) {
@@ -1289,19 +1333,13 @@ public class DataQualityCalculator {
             .trim();
     }
 
-    private String firstContent(List<MultilingualContentDTO> content) {
-        if (!CollectionOperations.containsValues(content)) {
-            return "";
-        }
-
-        return Objects.requireNonNullElse(content.getFirst().getContent(), "");
-    }
-
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
         if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
             (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
             return; // involvement is considered an activity if any of the following is set, otherwise don't check for any issues
         }
+
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
 
         var activityType = activityTypeToken(dto);
         var activityName = activityName(dto);

@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -550,12 +551,18 @@ public class DataQualityServiceTest {
         return revision;
     }
 
+    /**
+     * Related quality makes two assessment passes per profile: the outputs in scope first, then the
+     * persons in scope, whose involvements are activities too. Only the first one is stubbed with
+     * figures, so the assertions stay about the outputs pass unless a test says otherwise.
+     */
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, Double averageScore, long linkedRecords,
                                 long linkedActivities) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                affectedRecords, openIssues, activitiesCount, activityIssues, 0, averageScore)));
+                    affectedRecords, openIssues, activitiesCount, activityIssues, 0, averageScore)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
                 linkedRecords, linkedActivities)));
@@ -626,6 +633,37 @@ public class DataQualityServiceTest {
         assertNull(activities.averageScore());
     }
 
+    /**
+     * Involvements are activities recorded on the person, so they are counted from the person index
+     * and the person assessments, on top of whatever the outputs contribute.
+     */
+    @Test
+    public void shouldAddInvolvementActivitiesToTheActivitiesRow() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 92.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 88.0)));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
+        when(dataQualityAggregator.sumField(eq("person"), any(), eq("activities_count")))
+            .thenReturn(3L);
+
+        // when
+        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality().get(2);
+
+        // then
+        assertEquals(8, activities.linkedRecords());   // 5 on outputs + 3 on the person
+        assertEquals(10, activities.affectedRecords()); // 4 assessed + 6 assessed
+        assertEquals(3, activities.openIssues());       // 1 + 2
+    }
+
     @Test
     public void shouldQueryRelatedAssessmentsByOrganisationUnitField() {
         // given
@@ -651,9 +689,11 @@ public class DataQualityServiceTest {
         assertEquals(80.0, outputs.averageScore());
 
         var queryCaptor = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator).aggregateAssessments(queryCaptor.capture(), any());
+        verify(dataQualityAggregator, times(2))
+            .aggregateAssessments(queryCaptor.capture(), any());
 
-        assertTrue(queryCaptor.getValue().toString().contains("organisation_unit_ids"));
+        assertTrue(queryCaptor.getAllValues().getFirst().toString()
+            .contains("organisation_unit_ids"));
     }
 
     @Test
@@ -674,12 +714,14 @@ public class DataQualityServiceTest {
 
         // then
         var assessmentQuery = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator).aggregateAssessments(assessmentQuery.capture(), any());
+        verify(dataQualityAggregator, times(2))
+            .aggregateAssessments(assessmentQuery.capture(), any());
 
         var documentQuery = ArgumentCaptor.forClass(Query.class);
         verify(dataQualityAggregator).aggregateLinkedDocuments(documentQuery.capture());
 
-        List.of(assessmentQuery.getValue().toString(), documentQuery.getValue().toString())
+        List.of(assessmentQuery.getAllValues().getFirst().toString(),
+                documentQuery.getValue().toString())
             .forEach(query -> {
                 assertTrue(query.contains("organisation_unit_ids"));
                 assertTrue(query.contains("2"));

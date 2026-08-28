@@ -82,6 +82,10 @@ public class RepositoryAnalyticsServiceTest {
         return configurationLoader;
     }
 
+    /**
+     * The same aggregate answers every assessment pass - persons, organisation units and outputs -
+     * so a figure a row derives from more than one pass shows up multiplied in the assertions.
+     */
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, long publicationCandidates,
                                 Double averageScore, long linkedRecords, long linkedActivities) {
@@ -186,9 +190,13 @@ public class RepositoryAnalyticsServiceTest {
             // Only blocking failures can keep a record from being a candidate, so the aggregation
             // reads the blocking key field rather than every failed rule.
             var field = ArgumentCaptor.forClass(String.class);
-            verify(dataQualityAggregator, times(4))
+            verify(dataQualityAggregator, times(3))
                 .topFailedRule(any(), any(), field.capture());
             assertEquals("blocking_rule_keys", field.getValue());
+
+            // Activities are counted per activity, so that row sums the occurrence counters
+            // instead of aggregating a distinct-key list.
+            verify(dataQualityAggregator).topRuleByActivityOccurrences(any(), any());
         }
     }
 
@@ -319,8 +327,36 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals("orcidNotResolvable", issues.getFirst().ruleKey());
             assertEquals(4281, issues.getFirst().occurrences());
 
-            // The rules of each family are what the aggregation is restricted to.
-            verify(dataQualityAggregator, times(4)).topFailedRule(any(), any());
+            // The rules of each family are what the aggregation is restricted to. Activities are
+            // not among them - that row counts occurrences rather than records.
+            verify(dataQualityAggregator, times(3)).topFailedRule(any(), any());
+            verify(dataQualityAggregator).topRuleByActivityOccurrences(any(), any());
+        }
+    }
+
+    /**
+     * A document raises one activity issue per offending contribution, so the row has to report the
+     * activities a rule affected rather than the records it failed on.
+     */
+    @Test
+    public void shouldReportActivityIssuesByOccurrenceRatherThanByRecord() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        stubTopFailedRule("orcidNotResolvable", 4281);
+
+        when(dataQualityAggregator.topRuleByActivityOccurrences(any(), any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.TopFailedRule("activityEndDateMissing", 91204)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities = repositoryAnalyticsService.getOverview(PROFILE, null, null)
+                .issuesRequiringAttention().get(3);
+
+            // then
+            assertEquals(RepositoryEntityType.ACTIVITIES, activities.entityType());
+            assertEquals("activityEndDateMissing", activities.ruleKey());
+            assertEquals(91204, activities.occurrences());
         }
     }
 
@@ -430,11 +466,36 @@ public class RepositoryAnalyticsServiceTest {
             assertTrue(persons.supported());
             assertEquals(48620, persons.records());
             assertEquals(50, persons.affectedRecords());
-            assertEquals(120, persons.openIssues());
+
+            // Activity issues are reported on the Activities row, so they are left out here
+            // rather than counted twice in the same table: 120 - 8.
+            assertEquals(112, persons.openIssues());
             assertEquals(92.0, persons.averageScore());
 
             // 45 of the 50 assessed records are publication candidates.
             assertEquals(90.0, persons.publicationCandidatePercentage());
+        }
+    }
+
+    /**
+     * A person's involvements are activities held on the person record, so they are summed from the
+     * person index and added to the activities the outputs carry.
+     */
+    @Test
+    public void shouldAddInvolvementActivitiesToTheActivitiesRow() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        when(dataQualityAggregator.sumField(eq("person"), any(), eq("activities_count")))
+            .thenReturn(700L);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities =
+                repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
+
+            // then
+            assertEquals(1000, activities.records()); // 300 on outputs + 700 on persons
         }
     }
 
@@ -452,11 +513,12 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(1284310, outputs.records());
             assertEquals(50, outputs.affectedRecords());
 
-            // Activities live on outputs, so their totals are sums of the activity counters.
+            // Activities live on outputs and on persons, so their totals are sums of the activity
+            // counters of both passes.
             var activities = result.get(3);
             assertEquals(86204, activities.records());
-            assertEquals(30, activities.affectedRecords());
-            assertEquals(8, activities.openIssues());
+            assertEquals(60, activities.affectedRecords());
+            assertEquals(16, activities.openIssues());
 
             // The Activity target is reported but never scored.
             assertNull(activities.averageScore());
@@ -706,7 +768,7 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(0.92, (double) persons.get(2), 0.0001);
             assertEquals(0.90, (double) persons.get(3), 0.0001);
             assertEquals(50.0, persons.get(4));
-            assertEquals(120.0, persons.get(5));
+            assertEquals(112.0, persons.get(5));
 
             // Unsupported rows carry no figures at all.
             var projects = rowStartingWith(rows, "repositoryAnalytics.entityType.PROJECTS");

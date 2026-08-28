@@ -223,6 +223,24 @@ public class StringUtil {
         return fallback.getContent();
     }
 
+    public static String getStringContent(List<MultilingualContentDTO> multilingualContent,
+                                          String lang) {
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
+            return "";
+        }
+
+        MultilingualContentDTO fallback = null;
+        for (var content : multilingualContent) {
+            if (lang.equalsIgnoreCase(content.getLanguageTag())) {
+                return content.getContent();
+            }
+
+            fallback = content;
+        }
+
+        return fallback.getContent();
+    }
+
     public static boolean isInteger(String s, int radix) {
         if (s.isEmpty()) {
             return false;

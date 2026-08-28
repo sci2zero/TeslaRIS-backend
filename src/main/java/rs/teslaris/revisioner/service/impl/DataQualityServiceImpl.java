@@ -68,7 +68,13 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private static final String DOCUMENT_TARGET = "Document";
 
+    private static final String PERSON_TARGET = "Person";
+
     private static final String ACTIVITY_TARGET = "Activity";
+
+    private static final String PERSON_INDEX = "person";
+
+    private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
 
     private static final int ISSUE_SCAN_BATCH_SIZE = 500;
 
@@ -228,15 +234,28 @@ public class DataQualityServiceImpl implements DataQualityService {
         // makes the scope hold whatever the indexer stored.
         var scopeIds = organisationUnitScope(isOrganisationUnit, entityId);
 
+        var activityRuleKeys = expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null);
+
         var assessments = dataQualityAggregator
             .aggregateAssessments(
                 relatedAssessmentsQuery(isPerson, entityId, scopeIds, profileName),
-                expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null))
+                activityRuleKeys)
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        // Involvements are activities recorded on the person rather than on an output, so the
+        // person assessments in scope have to be counted alongside the output ones.
+        var personAssessments = dataQualityAggregator
+            .aggregateAssessments(
+                relatedPersonAssessmentsQuery(isPerson, entityId, scopeIds, profileName),
+                activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
         var documents = dataQualityAggregator
             .aggregateLinkedDocuments(linkedDocumentsQuery(isPerson, entityId, scopeIds))
             .orElseGet(DataQualityAggregator.LinkedDocumentAggregates::empty);
+
+        var personActivities = dataQualityAggregator.sumField(PERSON_INDEX,
+            linkedPersonsQuery(isPerson, entityId, scopeIds), ACTIVITIES_COUNT_FIELD);
 
         return List.of(
             new RelatedQualityDTO(
@@ -253,9 +272,9 @@ public class DataQualityServiceImpl implements DataQualityService {
             // there is no score because the Activity target is never scored.
             new RelatedQualityDTO(
                 RelatedEntityType.ACTIVITIES,
-                documents.linkedActivities(),
-                assessments.activitiesCount(),
-                assessments.activityIssues(),
+                documents.linkedActivities() + personActivities,
+                assessments.activitiesCount() + personAssessments.activitiesCount(),
+                assessments.activityIssues() + personAssessments.activityIssues(),
                 null,
                 true
             ),
@@ -274,6 +293,28 @@ public class DataQualityServiceImpl implements DataQualityService {
                 ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
                 : termsQuery("organisation_unit_ids", scopeIds))
         )._toQuery();
+    }
+
+    /**
+     * The person assessments whose involvements count towards this entity: the person itself, or
+     * every person employed anywhere in the organisation unit's sub-hierarchy.
+     */
+    private Query relatedPersonAssessmentsQuery(boolean isPerson, Integer entityId,
+                                                List<Integer> scopeIds, String profileName) {
+        return BoolQuery.of(b -> b
+            .must(m -> m.term(t -> t.field("entity_type").value(EntityType.PERSON.name())))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(isPerson
+                ? TermQuery.of(t -> t.field("entity_id").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds))
+        )._toQuery();
+    }
+
+    private Query linkedPersonsQuery(boolean isPerson, Integer entityId, List<Integer> scopeIds) {
+        return isPerson
+            ? TermQuery.of(t -> t.field("databaseId").value(entityId))._toQuery()
+            : termsQuery("employment_institutions_id", scopeIds);
     }
 
     private Query linkedDocumentsQuery(boolean isPerson, Integer entityId,
@@ -298,7 +339,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                          String constraintKey, Pageable pageable) {
         var query = buildIssueQuery(entityType, entityId,
             organisationUnitScope(EntityType.ORGANISATION_UNIT.name().equals(entityType), entityId),
-            profileName, ACTIVITY_TARGET.equals(target) ? DOCUMENT_TARGET : target);
+            profileName, issueTargets(target));
 
         var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
             (int) pageable.getOffset(), pageable.getPageSize());
@@ -307,6 +348,16 @@ public class DataQualityServiceImpl implements DataQualityService {
             constraintKey, window.scannedIssues());
 
         return new PageImpl<>(window.issues(), pageable, totalIssues);
+    }
+
+    private List<String> issueTargets(String target) {
+        if (Objects.isNull(target)) {
+            return List.of();
+        }
+
+        return ACTIVITY_TARGET.equals(target)
+            ? List.of(DOCUMENT_TARGET, PERSON_TARGET)
+            : List.of(target);
     }
 
     private IssueWindow collectIssueWindow(Query query, String target, QualityDimension dimension,
@@ -476,7 +527,7 @@ public class DataQualityServiceImpl implements DataQualityService {
     }
 
     private Query buildIssueQuery(String entityType, Integer entityId, List<Integer> scopeIds,
-                                  String profileName, String target) {
+                                  String profileName, List<String> targets) {
         var isPerson = EntityType.PERSON.name().equals(entityType);
 
         var relatedClause = isPerson
@@ -492,9 +543,12 @@ public class DataQualityServiceImpl implements DataQualityService {
                 .minimumShouldMatch("1")))
             .must(m -> m.term(tq -> tq.field("is_latest").value(true)))
             .must(m -> m.term(tq -> tq.field("profile_name").value(profileName)))
-            .must(m -> Objects.isNull(target)
+            .must(m -> Objects.isNull(targets) || targets.isEmpty()
                 ? m.matchAll(ma -> ma)
-                : m.term(tq -> tq.field("target").value(target)))
+                : m.terms(tq -> tq
+                .field("target")
+                .terms(values -> values.value(
+                    targets.stream().map(FieldValue::of).toList()))))
         )._toQuery();
     }
 

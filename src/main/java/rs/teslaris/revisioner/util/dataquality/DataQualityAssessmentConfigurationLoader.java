@@ -401,7 +401,7 @@ public class DataQualityAssessmentConfigurationLoader {
                 List.of("Event", "Activity", "Contact", "ResearchArea");
             case ORGANISATION_UNIT ->
                 List.of("OrganisationUnit", "Contact", "GeoLocation", "ResearchArea");
-            case PERSON -> List.of("Person", "Contact");
+            case PERSON -> List.of("Person", "Contact", "Activity");
             case PUBLISHER -> List.of("Publisher");
             case PRIZE -> List.of("Prize");
             case PROJECT -> List.of("Project");

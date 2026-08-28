@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -15,14 +16,21 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
+import rs.teslaris.core.dto.person.involvement.EducationDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Education;
+import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -34,6 +42,7 @@ import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.session.SessionUtil;
 
+@Slf4j
 @Component
 public class PersonConverter {
 
@@ -49,8 +58,14 @@ public class PersonConverter {
     }
 
     public static PersonResponseDTO toDTO(Person person) {
-        var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
+        var personResponse = toUnfilteredDTO(person);
 
+        filterSensitiveData(personResponse, person);
+
+        return personResponse;
+    }
+
+    private static PersonResponseDTO toUnfilteredDTO(Person person) {
         var employmentIds = new ArrayList<Integer>();
         var educationIds = new ArrayList<Integer>();
         var membershipIds = new ArrayList<Integer>();
@@ -64,13 +79,13 @@ public class PersonConverter {
             .sorted(Comparator.comparing(Prize::getId))
             .forEach(prize -> prizes.add(PrizeConverter.toDTO(prize)));
 
-        var personResponse = new PersonResponseDTO(
+        return new PersonResponseDTO(
             person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
                 person.getName().getDateTo(), person.getName().getNameType()),
-            otherNames,
+            getPersonOtherNamesDTO(person.getOtherNames()),
             toPersonalInfoDTO(person),
             MultilingualContentConverter.getMultilingualContentDTO(person.getBiography()),
             MultilingualContentConverter.getMultilingualContentDTO(person.getKeyword()),
@@ -81,10 +96,36 @@ public class PersonConverter {
                 person.getProfilePhoto().getImageServerName() : null,
             false
         );
+    }
 
-        filterSensitiveData(personResponse, person);
+    public static PersonSnapshotDTO toSnapshotDTO(Person person) {
+        var snapshot = new PersonSnapshotDTO(toUnfilteredDTO(person));
 
-        return personResponse;
+        var employments = new ArrayList<EmploymentDTO>();
+        var educations = new ArrayList<EducationDTO>();
+        var memberships = new ArrayList<MembershipDTO>();
+
+        involvementRepository.findByPersonInvolvedIdOrderById(person.getId())
+            .forEach(involvement -> {
+                switch (involvement) {
+                    case Employment employment ->
+                        employments.add(InvolvementConverter.toSnapshotDTO(employment));
+                    case Membership membership ->
+                        memberships.add(InvolvementConverter.toSnapshotDTO(membership));
+                    case Education education ->
+                        educations.add(InvolvementConverter.toSnapshotDTO(education));
+                    default -> log.warn("Unsupported involvement type '{}' (ID={}), " +
+                            "leaving it out of the snapshot of PERSON with ID {}.",
+                        involvement.getClass().getSimpleName(), involvement.getId(),
+                        person.getId());
+                }
+            });
+
+        snapshot.setEmployments(employments);
+        snapshot.setEducations(educations);
+        snapshot.setMemberships(memberships);
+
+        return snapshot;
     }
 
     public static PersonalInfoDTO toPersonalInfoDTO(Person person) {

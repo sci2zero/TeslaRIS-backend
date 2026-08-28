@@ -3,6 +3,7 @@ package rs.teslaris.revisioner.util.dataquality;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,8 @@ public class DataQualityAssessmentIndexer {
     private static final String TARGET_EVENT = "Event";
 
     private static final String TARGET_ORGANISATION_UNIT = "OrganisationUnit";
+
+    private static final String TARGET_ACTIVITY = "Activity";
 
     private final DataQualityAssessmentIndexRepository indexRepository;
 
@@ -265,6 +268,28 @@ public class DataQualityAssessmentIndexer {
         index.setFailedRuleKeys(new ArrayList<>(failedKeys));
         index.setBlockingRuleKeys(new ArrayList<>(blockingKeys));
         index.setPassedRuleKeys(passedKeys);
+
+        populateActivityIssueOccurrences(index, assessment);
+    }
+
+    private void populateActivityIssueOccurrences(DataQualityAssessmentIndex index,
+                                                  DataQualityAssessment assessment) {
+        var activityRuleKeys = DataQualityAssessmentConfigurationLoader.listRuleKeys(
+            assessment.getProfileName(), assessment.getProfileVersion(), TARGET_ACTIVITY,
+            null, null
+        );
+
+        if (activityRuleKeys.isEmpty()) {
+            return;
+        }
+
+        index.setActivityIssueOccurrences(assessment.getIssues().stream()
+            .map(ConstraintEvaluationResult::getKey)
+            .filter(activityRuleKeys::contains)
+            .collect(Collectors.groupingBy(
+                key -> key,
+                HashMap::new,
+                Collectors.summingInt(key -> 1))));
     }
 
     private void populateDimensionBreakdown(DataQualityAssessmentIndex index,

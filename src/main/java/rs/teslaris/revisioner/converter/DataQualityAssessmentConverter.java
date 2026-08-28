@@ -60,7 +60,7 @@ public class DataQualityAssessmentConverter {
                     message.getLanguageTag(),
                     new MultilingualContentDTO(message),
                     (existing, addition) -> {
-                        existing.setContent(existing.getContent() + " " + addition.getContent());
+                        existing.setContent(existing.getContent() + "\n\n" + addition.getContent());
                         return existing;
                     }))
         );

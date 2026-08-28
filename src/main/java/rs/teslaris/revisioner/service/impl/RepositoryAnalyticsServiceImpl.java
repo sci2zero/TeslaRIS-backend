@@ -62,9 +62,14 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final String PERSON_INDEX = "person";
 
+    private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
+
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
     private static final String EMPTY_VALUE = "-";
+
+    private static final List<String> ACTIVITY_PARENT_TARGETS =
+        List.of(DOCUMENT_TARGET, PERSON_TARGET);
 
     private static final DateTimeFormatter INSTANT_FORMAT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -131,7 +136,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     /**
      * The blocking rule that fails most often for each entity type. Only rules the profile marks as
      * blocking can keep a record from being a publication candidate, so the report is restricted to
-     * those - both the rule keys it considers and the index field it aggregates.
+     * those, both the rule keys it considers and the index field it aggregates.
      */
     private List<PrevalentIssueDTO> mostCommonBlockingConstraints(
         String profileName, List<Integer> scopeOrganisationUnitIds,
@@ -150,10 +155,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
                     termQuery("target", DOCUMENT_TARGET)),
                 DOCUMENT_TARGET),
-            prevalentBlockingIssue(RepositoryEntityType.ACTIVITIES, profileName,
+            prevalentActivityIssue(profileName,
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
-                    termQuery("target", DOCUMENT_TARGET)),
-                ACTIVITY_TARGET),
+                    stringTermsQuery("target", ACTIVITY_PARENT_TARGETS)),
+                blockingRuleKeys(profileName, ACTIVITY_TARGET)),
             // TODO: projects carry no quality assessments yet.
             PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
             // TODO: fundings carry no quality assessments yet.
@@ -191,15 +196,26 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
                     termQuery("target", DOCUMENT_TARGET)),
                 DOCUMENT_TARGET),
-            prevalentIssue(RepositoryEntityType.ACTIVITIES, profileName,
+            prevalentActivityIssue(profileName,
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
-                    termQuery("target", DOCUMENT_TARGET)),
-                ACTIVITY_TARGET),
+                    stringTermsQuery("target", ACTIVITY_PARENT_TARGETS)),
+                ruleKeys(profileName, ACTIVITY_TARGET)),
             // TODO: projects carry no quality assessments yet.
             PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
             // TODO: fundings carry no quality assessments yet.
             PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
         );
+    }
+
+    /**
+     * Activities are not records of their own - one document or person raises an issue per
+     * offending contribution or involvement - so this row reports how many activities a rule
+     * affected, not how many records it failed on, which is all a distinct-key aggregation can say.
+     */
+    private PrevalentIssueDTO prevalentActivityIssue(String profileName, Query query,
+                                                     Set<String> ruleKeys) {
+        return describeTopRule(RepositoryEntityType.ACTIVITIES, profileName,
+            dataQualityAggregator.topRuleByActivityOccurrences(query, ruleKeys));
     }
 
     private PrevalentIssueDTO prevalentIssue(RepositoryEntityType entityType, String profileName,
@@ -237,13 +253,15 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
         var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
 
+        // Person assessments now carry activity issues of their own, raised by the person's
+        // involvements, so this pass answers both the Persons row and part of the Activities one.
         var persons = dataQualityAggregator
             .aggregateAssessments(
                 assessmentQuery(
                     profileName, scopeOrganisationUnitIds, assessmentDate,
                     termQuery("entity_type", EntityType.PERSON.name())
                 ),
-                Set.of())
+                activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
         var organisationUnits = dataQualityAggregator
@@ -282,7 +300,9 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 organisationUnits),
             constructQualityByEntityTypeRowData(RepositoryEntityType.OUTPUTS,
                 documents.linkedRecords(), outputs),
-            constructQualityByEntityTypeActivitiesRow(documents.linkedActivities(), outputs),
+            constructQualityByEntityTypeActivitiesRow(
+                documents.linkedActivities() + personActivities(scopeOrganisationUnitIds),
+                outputs, persons),
             // TODO: projects carry no quality assessments yet.
             EntityTypeQualityDTO.unsupported(RepositoryEntityType.PROJECTS),
             // TODO: fundings carry no quality assessments yet.
@@ -553,7 +573,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             entityType,
             records,
             aggregates.affectedRecords(),
-            aggregates.openIssues(),
+            aggregates.openIssues() - aggregates.activityIssues(),
             aggregates.averageScore(),
             percentage(aggregates.publicationCandidates(), aggregates.affectedRecords()),
             true
@@ -564,17 +584,29 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
      * Activities are never scored and can never be publication candidates.
      * The Activity target is reported but excluded from scoring  so both figures stay empty.
      */
-    private EntityTypeQualityDTO constructQualityByEntityTypeActivitiesRow(long records,
-                                                                           DataQualityAggregator.AssessmentAggregates outputs) {
+    private EntityTypeQualityDTO constructQualityByEntityTypeActivitiesRow(
+        long records, DataQualityAggregator.AssessmentAggregates outputs,
+        DataQualityAggregator.AssessmentAggregates persons) {
         return new EntityTypeQualityDTO(
             RepositoryEntityType.ACTIVITIES,
             records,
-            outputs.activitiesCount(),
-            outputs.activityIssues(),
+            outputs.activitiesCount() + persons.activitiesCount(),
+            outputs.activityIssues() + persons.activityIssues(),
             null,
             null,
             true
         );
+    }
+
+    /**
+     * Activities recorded as a person's involvements. They are counted on the person record rather
+     * than on an output, so they are summed from the person index and added to the activities the
+     * outputs carry.
+     */
+    private long personActivities(List<Integer> scopeOrganisationUnitIds) {
+        return dataQualityAggregator.sumField(PERSON_INDEX,
+            scopedQuery("employment_institutions_id", scopeOrganisationUnitIds),
+            ACTIVITIES_COUNT_FIELD);
     }
 
     @Nullable
@@ -595,7 +627,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         clauses.add(termQuery("profile_name", profileName));
 
         if (!scopeOrganisationUnitIds.isEmpty()) {
-            clauses.add(termsQuery("organisation_unit_ids", scopeOrganisationUnitIds));
+            clauses.add(intTermsQuery("organisation_unit_ids", scopeOrganisationUnitIds));
         }
 
         if (Objects.isNull(assessmentDate)) {
@@ -630,10 +662,17 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     private Query scopedQuery(String field, List<Integer> scopeOrganisationUnitIds) {
         return scopeOrganisationUnitIds.isEmpty()
             ? MatchAllQuery.of(matchAll -> matchAll)._toQuery()
-            : termsQuery(field, scopeOrganisationUnitIds);
+            : intTermsQuery(field, scopeOrganisationUnitIds);
     }
 
-    private Query termsQuery(String field, List<Integer> values) {
+    private Query intTermsQuery(String field, List<Integer> values) {
+        return TermsQuery.of(terms -> terms
+            .field(field)
+            .terms(termValues -> termValues.value(values.stream().map(FieldValue::of).toList()))
+        )._toQuery();
+    }
+
+    private Query stringTermsQuery(String field, List<String> values) {
         return TermsQuery.of(terms -> terms
             .field(field)
             .terms(termValues -> termValues.value(values.stream().map(FieldValue::of).toList()))

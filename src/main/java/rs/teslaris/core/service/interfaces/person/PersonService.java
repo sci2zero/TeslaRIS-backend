@@ -13,6 +13,7 @@ import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
@@ -54,6 +55,8 @@ public interface PersonService extends JPAService<Person> {
     Person findPersonByOldId(Integer id);
 
     PersonResponseDTO readPersonWithBasicInfo(Integer id);
+
+    PersonSnapshotDTO readPersonSnapshot(Integer id);
 
     PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId);
 

@@ -19,8 +19,12 @@ import rs.teslaris.core.util.search.CollectionOperations;
 public class InvolvementConverter {
 
     public static EducationDTO toDTO(Education education) {
+        return toDTO(education, false);
+    }
+
+    private static EducationDTO toDTO(Education education, boolean forSnapshot) {
         var dto = new EducationDTO();
-        setCommonFields(education, dto);
+        setCommonFields(education, dto, forSnapshot);
 
         var title = MultilingualContentConverter.getMultilingualContentDTO(
             education.getTitle());
@@ -29,15 +33,22 @@ public class InvolvementConverter {
                 education.getAbbreviationTitle());
 
         if (Objects.nonNull(education.getThesis())) {
+            // Reading the ID of a lazy reference does not load it, reading its title does.
             dto.setThesisId(education.getThesis().getId());
-            dto.setThesisTitle(MultilingualContentConverter.getMultilingualContentDTO(
-                education.getThesis().getTitle()));
+
+            if (!forSnapshot) {
+                dto.setThesisTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                    education.getThesis().getTitle()));
+            }
         }
 
         if (CollectionOperations.containsValues(education.getSupervisors())) {
             education.getSupervisors().forEach(supervisor -> {
                 dto.getSupervisorIds().add(supervisor.getId());
-                dto.getSupervisorNames().add(supervisor.getName().toText());
+
+                if (!forSnapshot) {
+                    dto.getSupervisorNames().add(supervisor.getName().toText());
+                }
             });
         } else {
             dto.setDisplaySupervisors(MultilingualContentConverter.getMultilingualContentDTO(
@@ -55,15 +66,22 @@ public class InvolvementConverter {
 
         education.getResearchAreas().forEach(researchArea -> {
             dto.getResearchAreasId().add(researchArea.getId());
-            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+
+            if (!forSnapshot) {
+                dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+            }
         });
 
         return dto;
     }
 
     public static MembershipDTO toDTO(Membership membership) {
+        return toDTO(membership, false);
+    }
+
+    private static MembershipDTO toDTO(Membership membership, boolean forSnapshot) {
         var dto = new MembershipDTO();
-        setCommonFields(membership, dto);
+        setCommonFields(membership, dto, forSnapshot);
 
         var contributionDescription =
             MultilingualContentConverter.getMultilingualContentDTO(
@@ -79,8 +97,12 @@ public class InvolvementConverter {
     }
 
     public static EmploymentDTO toDTO(Employment employment) {
+        return toDTO(employment, false);
+    }
+
+    private static EmploymentDTO toDTO(Employment employment, boolean forSnapshot) {
         var dto = new EmploymentDTO();
-        setCommonFields(employment, dto);
+        setCommonFields(employment, dto, forSnapshot);
 
         var role = MultilingualContentConverter.getMultilingualContentDTO(
             employment.getRole());
@@ -90,15 +112,20 @@ public class InvolvementConverter {
 
         if (Objects.nonNull(employment.getEmploymentPositionHierarchy())) {
             dto.setEmploymentPositionId(employment.getEmploymentPositionHierarchy().getId());
-            dto.setEmploymentPositionName(MultilingualContentConverter.getMultilingualContentDTO(
-                employment.getEmploymentPositionHierarchy().getName()));
+
+            if (!forSnapshot) {
+                dto.setEmploymentPositionName(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        employment.getEmploymentPositionHierarchy().getName()));
+            }
         }
 
         return dto;
     }
 
 
-    private static void setCommonFields(Involvement involvement, InvolvementDTO dto) {
+    private static void setCommonFields(Involvement involvement, InvolvementDTO dto,
+                                        boolean forSnapshot) {
         var affiliationStatements =
             MultilingualContentConverter.getMultilingualContentDTO(
                 involvement.getDisplayOrganisationUnit());
@@ -106,9 +133,15 @@ public class InvolvementConverter {
         dto.setId(involvement.getId());
         dto.setDateFrom(involvement.getDateFrom());
         dto.setDateTo(involvement.getDateTo());
-        dto.setProofs(involvement.getProofs().stream()
-            .map(DocumentFileConverter::toDTO).collect(
-                Collectors.toList()));
+
+        // Proofs are excluded from person revisions, so a snapshot would load them only to have
+        // them stripped again during canonicalisation.
+        if (!forSnapshot) {
+            dto.setProofs(involvement.getProofs().stream()
+                .map(DocumentFileConverter::toDTO).collect(
+                    Collectors.toList()));
+        }
+
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setDisplayOrganisationUnit(affiliationStatements);
         dto.setFavorite(involvement.getFavorite());
@@ -122,13 +155,20 @@ public class InvolvementConverter {
 
         involvement.getResearchAreas().forEach(researchArea -> {
             dto.getResearchAreasId().add(researchArea.getId());
-            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+
+            if (!forSnapshot) {
+                dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+            }
         });
 
         involvement.getHostInstitutions().forEach(organisationUnit -> {
             dto.getHostInstitutionIds().add(organisationUnit.getId());
-            dto.getHostInstitutionNames().add(
-                MultilingualContentConverter.getMultilingualContentDTO(organisationUnit.getName()));
+
+            if (!forSnapshot) {
+                dto.getHostInstitutionNames().add(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        organisationUnit.getName()));
+            }
         });
 
         if (Objects.nonNull(involvement.getUris())) {
@@ -137,21 +177,44 @@ public class InvolvementConverter {
 
         if (Objects.nonNull(involvement.getOrganisationUnit())) {
             dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());
-            dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
-                involvement.getOrganisationUnit().getName()));
-        } else {
-            dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
-                involvement.getDisplayOrganisationUnit()));
         }
+
+        if (forSnapshot) {
+            return;
+        }
+
+        dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
+            Objects.nonNull(involvement.getOrganisationUnit())
+                ? involvement.getOrganisationUnit().getName()
+                : involvement.getDisplayOrganisationUnit()));
     }
 
     public static <R extends InvolvementDTO, T extends Involvement> R toDTO(T cast) {
-        if (cast instanceof Education) {
-            return (R) toDTO((Education) cast);
-        } else if (cast instanceof Membership) {
-            return (R) toDTO((Membership) cast);
-        } else if (cast instanceof Employment) {
-            return (R) toDTO((Employment) cast);
+        return dispatch(cast, false);
+    }
+
+    /**
+     * The involvement as a person revision captures it.
+     * <p>
+     * Everything a revision keeps is persisted state; the display fields the read endpoints need -
+     * proofs, institution and supervisor names, research area hierarchies, the thesis title - are
+     * stripped from the snapshot during canonicalisation anyway. Skipping them here is not only
+     * cheaper, it avoids loading whole lazy associations for data that is thrown away, which on a
+     * person with many involvements is the difference between one query and dozens.
+     */
+    public static <R extends InvolvementDTO, T extends Involvement> R toSnapshotDTO(T cast) {
+        return dispatch(cast, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <R extends InvolvementDTO, T extends Involvement> R dispatch(
+        T cast, boolean forSnapshot) {
+        if (cast instanceof Education education) {
+            return (R) toDTO(education, forSnapshot);
+        } else if (cast instanceof Membership membership) {
+            return (R) toDTO(membership, forSnapshot);
+        } else if (cast instanceof Employment employment) {
+            return (R) toDTO(employment, forSnapshot);
         } else {
             throw new IllegalArgumentException("Unsupported involvement type");
         }

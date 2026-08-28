@@ -55,6 +55,18 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
         "AND e.dateTo IS NULL")
     Integer countActiveEmploymentsForInstitutions(List<Integer> institutionIds);
 
+    @Query("SELECT i FROM Involvement i WHERE i.personInvolved.id = :personId ORDER BY i.id")
+    List<Involvement> findByPersonInvolvedIdOrderById(Integer personId);
+
+    /**
+     * An involvement counts as an activity on the same terms a contribution does: it has to carry
+     * at least one of a start date, an end date or a research area.
+     */
+    @Query("SELECT COUNT(DISTINCT i.id) FROM Involvement i LEFT JOIN i.researchAreas ra " +
+        "WHERE i.personInvolved.id = :personId " +
+        "AND (i.dateFrom IS NOT NULL OR i.dateTo IS NOT NULL OR ra.id IS NOT NULL)")
+    Integer countActivitiesForPerson(Integer personId);
+
     @Query("""
             SELECT i.id AS id,
                    i.involvementType AS involvementType,

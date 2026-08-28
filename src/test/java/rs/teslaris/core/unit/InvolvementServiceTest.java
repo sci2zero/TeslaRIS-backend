@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,11 +34,13 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -65,6 +68,8 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @SpringBootTest
 public class InvolvementServiceTest {
@@ -1119,6 +1124,99 @@ public class InvolvementServiceTest {
             .containsExactly("University B");
 
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
+    }
+
+    @Test
+    public void shouldRecordPersonRevisionWhenEmploymentIsAdded() {
+        // given
+        var person = new Person();
+        var employmentDTO = new EmploymentDTO();
+        var personBeforeChange = new PersonSnapshotDTO();
+        var personAfterChange = new PersonSnapshotDTO();
+
+        when(personService.findOne(1)).thenReturn(person);
+        when(personService.readPersonSnapshot(1))
+            .thenReturn(personBeforeChange, personAfterChange);
+        when(involvementRepository.save(any())).thenReturn(new Employment());
+
+        // when
+        involvementService.addEmployment(1, employmentDTO);
+
+        // then
+        // Adding an employment also fires the hierarchy-reindex event, so the published events
+        // are captured untyped and the revision one is picked out.
+        var event = ArgumentCaptor.forClass(Object.class);
+        verify(applicationEventPublisher, atLeastOnce()).publishEvent(event.capture());
+
+        var revisionEvent = event.getAllValues().stream()
+            .filter(RevisionCreateEvent.class::isInstance)
+            .map(RevisionCreateEvent.class::cast)
+            .findFirst()
+            .orElseThrow();
+
+        assertEquals(EntityType.PERSON.name(), revisionEvent.entityType());
+        assertEquals(1, revisionEvent.entityId().intValue());
+        assertEquals(RevisionType.UPDATE, revisionEvent.revisionType());
+        assertEquals(personBeforeChange, revisionEvent.oldObject());
+        assertEquals(personAfterChange, revisionEvent.newObject());
+    }
+
+    @Test
+    public void shouldRecordPersonRevisionWhenInvolvementIsDeleted() {
+        // given
+        var person = new Person();
+        person.setId(3);
+        var involvement = new Membership();
+        involvement.setPersonInvolved(person);
+        involvement.setProofs(new HashSet<>());
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(involvement));
+        when(personService.readPersonSnapshot(3)).thenReturn(new PersonSnapshotDTO());
+
+        // when
+        involvementService.deleteInvolvement(1);
+
+        // then
+        var event = ArgumentCaptor.forClass(RevisionCreateEvent.class);
+        verify(applicationEventPublisher).publishEvent(event.capture());
+
+        assertEquals(EntityType.PERSON.name(), event.getValue().entityType());
+        assertEquals(3, event.getValue().entityId().intValue());
+    }
+
+    /**
+     * The snapshot has to be read twice, once before the change and once after, or the revision
+     * would record the same state as both the old and the new one and be discarded as unchanged.
+     */
+    @Test
+    public void shouldReadThePersonSnapshotBeforeAndAfterAnInvolvementChange() {
+        // given
+        var person = new Person();
+        var membershipDTO = new MembershipDTO();
+
+        when(personService.findOne(2)).thenReturn(person);
+        when(personService.readPersonSnapshot(2)).thenReturn(new PersonSnapshotDTO());
+        when(involvementRepository.save(any())).thenReturn(new Membership());
+
+        // when
+        involvementService.addMembership(2, membershipDTO);
+
+        // then
+        verify(personService, times(2)).readPersonSnapshot(2);
+    }
+
+    @Test
+    public void shouldThrowNotFoundWhenUpdatingAnInvolvementOfAnotherKind() {
+        // given
+        var employment = new Employment();
+        employment.setPersonInvolved(new Person());
+
+        when(involvementRepository.findById(1)).thenReturn(Optional.of(employment));
+
+        // when
+        // then
+        assertThrows(NotFoundException.class,
+            () -> involvementService.updateEducation(1, new EducationDTO()));
     }
 
     private ExtraEmploymentMigrationDTO createMigrationDTO(Integer personAccountingId,

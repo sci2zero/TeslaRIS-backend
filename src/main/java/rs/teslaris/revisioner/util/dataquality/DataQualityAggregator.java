@@ -29,6 +29,8 @@ public class DataQualityAggregator {
 
     private static final String DOCUMENT_INDEX = "document_publication";
 
+    private static final String ACTIVITY_OCCURRENCES_FIELD = "activity_issue_occurrences";
+
     private final ElasticsearchClient elasticsearchClient;
 
 
@@ -171,6 +173,52 @@ public class DataQualityAggregator {
         return topFailedRule(query, ruleKeys, "failed_rule_keys");
     }
 
+    /**
+     * The Activity rule affecting the most activities, rather than the most records.
+     * <p>
+     * {@code topFailedRule} aggregates a distinct-key list, so its bucket counts are records. The
+     * per-rule occurrence counters have to be summed field by field instead, which is one
+     * aggregation per rule key - affordable because the Activity family is small and every sum
+     * reads doc_values of a field only this report touches.
+     * <p>
+     * Ties break on the alphabetically first key, matching {@code topFailedRule}.
+     */
+    public Optional<TopFailedRule> topRuleByActivityOccurrences(Query query,
+                                                                Collection<String> ruleKeys) {
+        if (ruleKeys.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query);
+
+        ruleKeys.forEach(ruleKey -> request.aggregations(ruleKey, a -> a
+            .sum(s -> s.field(ACTIVITY_OCCURRENCES_FIELD + "." + ruleKey))));
+
+        try {
+            var response = elasticsearchClient.search(request.build(), Void.class);
+
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
+
+            return ruleKeys.stream()
+                .map(ruleKey -> new TopFailedRule(ruleKey, sum(response, ruleKey)))
+                .filter(rule -> rule.occurrences() > 0)
+                .max(Comparator
+                    .comparingLong(TopFailedRule::occurrences)
+                    .thenComparing(TopFailedRule::ruleKey, Comparator.reverseOrder()));
+        } catch (Exception e) {
+            log.warn("Unable to aggregate the most frequent activity rule. Reason: {}",
+                e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
     public Optional<TopFailedRule> topFailedRule(Query query, Collection<String> ruleKeys,
                                                  String field) {
         if (ruleKeys.isEmpty()) {
@@ -265,6 +313,32 @@ public class DataQualityAggregator {
             return Objects.isNull(response) ? 0 : totalHits(response.hits().total());
         } catch (Exception e) {
             log.warn("Unable to count records of index {}. Reason: {}", indexName, e.getMessage());
+
+            return 0;
+        }
+    }
+
+    /**
+     * Sums a numeric field over the records of any index the given query matches. Used for activity
+     * counters, which live on the records that carry the activities rather than on records of their
+     * own.
+     */
+    public long sumField(String indexName, Query query, String field) {
+        var request = new SearchRequest.Builder()
+            .index(indexName)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .aggregations("fieldSum", a -> a.sum(s -> s.field(field)))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            return Objects.isNull(response) ? 0 : sum(response, "fieldSum");
+        } catch (Exception e) {
+            log.warn("Unable to sum field {} of index {}. Reason: {}", field, indexName,
+                e.getMessage());
 
             return 0;
         }

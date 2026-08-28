@@ -3,7 +3,9 @@ package rs.teslaris.revisioner.indexmodel;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -95,6 +97,9 @@ public class DataQualityAssessmentIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "activities_count")
     private Integer activitiesCount;
+
+    @Field(type = FieldType.Object, name = "activity_issue_occurrences")
+    private Map<String, Integer> activityIssueOccurrences = new HashMap<>();
 
     @Field(type = FieldType.Integer, store = true, name = "warning_failed_rules")
     private int warningFailedRules;

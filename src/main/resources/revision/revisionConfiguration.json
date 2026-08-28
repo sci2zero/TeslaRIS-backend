@@ -43,7 +43,15 @@
     "BOOK_SERIES": [
       "languageTagNames"
     ],
-    "PERSON": [],
+    "PERSON": [
+      "proofs",
+      "organisationUnitName",
+      "hostInstitutionNames",
+      "researchAreas",
+      "supervisorNames",
+      "thesisTitle",
+      "employmentPositionName"
+    ],
     "CONFERENCE": [],
     "COURSE": [],
     "EXHIBITION": [],
