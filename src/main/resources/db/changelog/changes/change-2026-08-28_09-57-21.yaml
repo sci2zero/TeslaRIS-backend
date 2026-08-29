@@ -112,6 +112,7 @@ databaseChangeLog:
             constraints:
               nullable: false
             name: blocking_failed_rules
+            defaultValueNumeric: 0
             type: INTEGER
         tableName: data_quality_assessment
 - changeSet:
