@@ -26,4 +26,6 @@ public class PrepopulatedOrganisationDTO {
     private MonetaryAmountDTO netContribution;
 
     private OrganisationUnitProjectContributionType contributionType;
+
+    private String vatNumber; // this field is called taxNumber in the OrganisationUnit model
 }

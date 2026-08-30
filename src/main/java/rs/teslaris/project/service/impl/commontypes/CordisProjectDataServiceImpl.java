@@ -152,7 +152,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         }
 
         var keywords = evaluateText(xpath, document, "//*[local-name()='keywords']");
-        if (Objects.nonNull(objective)) {
+        if (Objects.nonNull(keywords)) {
             metadata.getKeywords().add(new MultilingualContentDTO(
                     english.getId(), english.getLanguageTag(), keywords, 1));
         }
@@ -225,6 +225,8 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
 
         member.setCountry(evaluateText(xpath, orgElement,
                 "./*[local-name()='address']/*[local-name()='country']"));
+
+        member.setVatNumber(evaluateText(xpath, orgElement, "./*[local-name()='vatNumber']"));
 
         var netContributionAttr = orgElement.getAttribute("netEcContribution");
         if (!netContributionAttr.isBlank()) {

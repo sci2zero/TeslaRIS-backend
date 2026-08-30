@@ -94,4 +94,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "employee_count")
     private Integer employeeCount;
+
+    @Field(type = FieldType.Keyword, store = true, name = "tax_number")
+    private String taxNumber;
 }
