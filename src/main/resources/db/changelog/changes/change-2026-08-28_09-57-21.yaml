@@ -1,0 +1,166 @@
+databaseChangeLog:
+- changeSet:
+    id: 1787911052745-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: tutorial_walkthroughs_pkey
+            name: id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        - column:
+            name: step
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: INTEGER
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: status
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: tutorial_key
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: tutorial_walkthroughs
+- changeSet:
+    id: 1787911052745-8
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: user_id
+        indexName: idx_tutorial_walkthrough_user
+        tableName: tutorial_walkthroughs
+- changeSet:
+    id: 1787911052745-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id, tutorial_key
+        constraintName: uk_tutorial_walkthrough_user_key
+        tableName: tutorial_walkthroughs
+- changeSet:
+    id: 1787911052745-10
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: tutorial_walkthroughs_seq
+        startValue: 1
+- changeSet:
+    id: 1787911052745-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: activities_count
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: blocking_failed_rules
+            defaultValueNumeric: 0
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-1
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: float8
+        columnName: achieved_fair_points_normalised
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-2
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: jsonb
+        columnName: dimension_scores
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-3
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: info_failed_rules
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-4
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: boolean
+        columnName: publication_candidate
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-5
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: float8
+        columnName: quality_score_fair
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1787911052745-6
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: float8
+        columnName: total_points_fair
+        tableName: data_quality_assessment
+
