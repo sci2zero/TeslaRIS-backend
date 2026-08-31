@@ -4,19 +4,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.project.dto.project.PrepopulatedInvestigatorDTO;
+import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
+import rs.teslaris.project.dto.project.PrepopulatedPersonDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectMetadataPrepopulationService;
 
@@ -38,16 +45,61 @@ public class ProjectMetadataPrepopulationServiceImpl
 
     private final CordisProjectDataService cordisProjectDataService;
 
+    private final PersonService personService;
+
+    private final OrganisationUnitService organisationUnitService;
+
+    private final LanguageDetector languageDetector;
+
     @Override
     public PrepopulatedProjectMetadataDTO fetchProjectDataForDoi(String doi) {
-        if (isEuHorizonDoi(doi)) {
-            return fetchFromCordis(doi);
-        }
-        return fetchFromCrossref(doi);
+        var metadata = isEuHorizonDoi(doi) ? fetchFromCordis(doi) : fetchFromCrossref(doi);
+
+        resolveExistingEntities(metadata);
+
+        return metadata;
     }
 
     private boolean isEuHorizonDoi(String doi) {
         return doi.startsWith("10.3030/");
+    }
+
+    private void resolveExistingEntities(PrepopulatedProjectMetadataDTO metadata) {
+        metadata.getPersons().forEach(this::resolvePerson);
+        metadata.getOrganisations().forEach(this::resolveOrganisation);
+    }
+
+    private void resolvePerson(PrepopulatedPersonDTO person) {
+        if (!StringUtils.hasText(person.getOrcid())) {
+            return;
+        }
+
+        var orcid = StringUtil.normalizeIdentifier(person.getOrcid());
+
+        try {
+            var index = personService.findPersonByImportIdentifier(orcid);
+            if (Objects.nonNull(index)) {
+                person.setPersonId(index.getDatabaseId());
+            }
+        } catch (Exception e) {
+            // An unmatched contributor is a valid outcome, so a failing lookup must not sink the
+            // whole prepopulation request.
+            log.warn("Person lookup by ORCID {} failed: {}", orcid, e.getMessage());
+        }
+    }
+
+    private void resolveOrganisation(PrepopulatedOrganisationDTO organisation) {
+        try {
+            var index = organisationUnitService.findOrganisationUnitByTaxNumber(
+                    organisation.getVatNumber());
+            if (Objects.nonNull(index)) {
+                organisation.setOrganisationId(index.getDatabaseId());
+            }
+        } catch (Exception e) {
+            // An unmatched member is a valid outcome, same as for persons.
+            log.warn("Organisation lookup by VAT (tax) number {} failed: {}",
+                    organisation.getVatNumber(), e.getMessage());
+        }
     }
 
     private PrepopulatedProjectMetadataDTO fetchFromCordis(String doi) {
@@ -94,6 +146,17 @@ public class ProjectMetadataPrepopulationServiceImpl
 
         metadata.setDoi(message.path("DOI").asText(null));
 
+        var doiUrl = message.path("URL").asText(null);
+        if (StringUtils.hasText(doiUrl)) {
+            metadata.getUris().add(doiUrl);
+        }
+
+        // Often the same value as the DOI URL, hence the containment check.
+        var landingPageUrl = message.path("resource").path("primary").path("URL").asText(null);
+        if (StringUtils.hasText(landingPageUrl) && !metadata.getUris().contains(landingPageUrl)) {
+            metadata.getUris().add(landingPageUrl);
+        }
+
         var projectsNode = message.path("project");
         if (projectsNode.isArray() && !projectsNode.isEmpty()) {
             populateFromProject(metadata, projectsNode.get(0));
@@ -109,13 +172,14 @@ public class ProjectMetadataPrepopulationServiceImpl
 
     private void populateFromProject(PrepopulatedProjectMetadataDTO metadata,
                                      JsonNode projectNode) {
-        var english = languageTagService.findLanguageTagByValue("EN");
 
         projectNode.path("project-title").forEach(titleNode -> {
             var titleText = titleNode.path("title").asText(null);
             if (Objects.isNull(titleText)) {
                 return;
             }
+
+            var language = titleNode.path("language").asText(null);
 
             var alreadyPresent = metadata.getName().stream()
                     .anyMatch(c -> c.getContent().equalsIgnoreCase(titleText.trim()))
@@ -126,8 +190,7 @@ public class ProjectMetadataPrepopulationServiceImpl
                 return;
             }
 
-            var content = new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), titleText, 1);
+            var content = resolveMultilingualContent(titleText, language);
 
             if (StringUtil.looksLikeAbbreviation(titleText)) {
                 metadata.getNameAbbreviation().add(content);
@@ -139,8 +202,8 @@ public class ProjectMetadataPrepopulationServiceImpl
         projectNode.path("project-description").forEach(descNode -> {
             var descText = descNode.path("description").asText(null);
             if (Objects.nonNull(descText)) {
-                metadata.getDescription().add(new MultilingualContentDTO(
-                        english.getId(), english.getLanguageTag(), descText, 1));
+                var language = descNode.path("language").asText(null);
+                metadata.getDescription().add(resolveMultilingualContent(descText, language));
             }
         });
 
@@ -164,13 +227,19 @@ public class ProjectMetadataPrepopulationServiceImpl
             }
         }
 
-        var investigatorArray = projectNode.path("investigator");
-        investigatorArray.forEach(invNode ->
-                metadata.getInvestigators().add(mapInvestigator(invNode)));
+        projectNode.path("lead-investigator").forEach(invNode ->
+                metadata.getPersons().add(mapInvestigator(invNode,
+                        PersonProjectContributionType.PRINCIPLE_INVESTIGATOR)));
+
+        // Should we set the TEAM_MEMBER as the default contributionRole?
+        projectNode.path("investigator").forEach(invNode ->
+                metadata.getPersons().add(mapInvestigator(invNode,
+                        PersonProjectContributionType.TEAM_MEMBER)));
     }
 
-    private PrepopulatedInvestigatorDTO mapInvestigator(JsonNode invNode) {
-        var investigator = new PrepopulatedInvestigatorDTO();
+    private PrepopulatedPersonDTO mapInvestigator(JsonNode invNode, PersonProjectContributionType contributionType) {
+        var investigator = new PrepopulatedPersonDTO();
+        investigator.setContributionType(contributionType);
         investigator.setGivenName(invNode.path("given").asText(null));
         investigator.setFamilyName(invNode.path("family").asText(null));
         investigator.setOrcid(invNode.path("ORCID").asText(null));
@@ -178,7 +247,11 @@ public class ProjectMetadataPrepopulationServiceImpl
         var affiliationArray = invNode.path("affiliation");
         if (affiliationArray.isArray() && !affiliationArray.isEmpty()) {
             var affiliation = affiliationArray.get(0);
-            investigator.setAffiliationName(affiliation.path("name").asText(null));
+
+            var affiliationName = affiliation.path("name").asText(null);
+            if (Objects.nonNull(affiliationName)) {
+                investigator.getAffiliationName().add(resolveMultilingualContent(affiliationName, null));
+            }
 
             for (var idNode : affiliation.path("id")) {
                 if ("ROR".equals(idNode.path("id-type").asText())) {
@@ -191,4 +264,22 @@ public class ProjectMetadataPrepopulationServiceImpl
         return investigator;
     }
 
+    private MultilingualContentDTO resolveMultilingualContent(String text, String language) {
+        var code = StringUtils.hasText(language)
+                ? language.trim().toUpperCase()
+                : languageDetector.detect(text).getLanguage().toUpperCase();
+
+        if (LanguageAbbreviations.CROATIAN.equals(code)) {
+            code = LanguageAbbreviations.SERBIAN;
+        }
+
+        var languageTag = languageTagService.findLanguageTagByValue(code);
+
+        if (Objects.isNull(languageTag.getId())) {
+            log.warn("No language tag for code '{}', falling back to English.", code);
+            languageTag = languageTagService.findLanguageTagByValue(LanguageAbbreviations.ENGLISH);
+        }
+
+        return new MultilingualContentDTO(languageTag.getId(), languageTag.getLanguageTag(), text, 1);
+    }
 }

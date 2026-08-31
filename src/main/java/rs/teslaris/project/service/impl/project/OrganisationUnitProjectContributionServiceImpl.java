@@ -81,7 +81,6 @@ public class OrganisationUnitProjectContributionServiceImpl
         dto.getFundingParts().forEach(partDto ->
                 contribution.getFundingParts().add(buildContributionFundingPart(partDto, contribution)));
 
-
         contribution.setProject(project);
 
         // Adds saved contribution entity with id != null (if this part is omitted the Set will treat
