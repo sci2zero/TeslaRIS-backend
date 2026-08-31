@@ -315,6 +315,7 @@ public class TestingDataInitializer {
         dummyOU.setScopusAfid("60068801");
         dummyOU.setRor("00xa57a59");
         dummyOU.setOpenAlexId("I4401727005");
+        dummyOU.setTaxNumber("RS100724720");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666", null, null));
         dummyOU.getAllowedThesisTypes().addAll(

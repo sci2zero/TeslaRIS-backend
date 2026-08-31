@@ -901,6 +901,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @Nullable
+    public OrganisationUnitIndex findOrganisationUnitByTaxNumber(String taxNumber) {
+        if (Objects.isNull(taxNumber) || taxNumber.isBlank()) {
+            return null;
+        }
+
+        var normalized = taxNumber.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        var nationalPart = (normalized.length() > 2 && Character.isLetter(normalized.charAt(0)) &&
+                Character.isLetter(normalized.charAt(1))) ? normalized.substring(2) : normalized;
+
+        return organisationUnitIndexRepository.findOrganisationUnitIndexByTaxNumberIn(
+                List.of(normalized, nationalPart)).orElse(null);
+    }
+
+    @Override
+    @Transactional
     public String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
         throws IOException {
         if (ImageUtil.isMIMETypeInvalid(logoDTO.getFile(), true)) {
@@ -1044,6 +1060,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         index.setEmployeeCount(involvementRepository.countActiveEmploymentsForInstitutions(
             getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId())));
+
+        index.setTaxNumber(organisationUnit.getTaxNumber());
     }
 
     private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,

@@ -16,7 +16,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.project.dto.project.PrepopulatedConsortiumMemberDTO;
+import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
@@ -152,7 +152,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         }
 
         var keywords = evaluateText(xpath, document, "//*[local-name()='keywords']");
-        if (Objects.nonNull(objective)) {
+        if (Objects.nonNull(keywords)) {
             metadata.getKeywords().add(new MultilingualContentDTO(
                     english.getId(), english.getLanguageTag(), keywords, 1));
         }
@@ -193,7 +193,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
 
         for (var i = 0; i < organizationNodes.getLength(); i++) {
             var orgElement = (Element) organizationNodes.item(i);
-            metadata.getConsortiumMembers().add(mapConsortiumMember(orgElement, xpath));
+            metadata.getOrganisations().add(mapConsortiumMember(orgElement, xpath, english));
         }
 
         var eventNodes = (NodeList) xpath.evaluate(
@@ -208,18 +208,25 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         // data isn't publicly exposed, so "investigators" field stays empty here.
     }
 
-    // TODO: Add LanguageTag argument for MLCs inside ConsortiumMembers
-    private PrepopulatedConsortiumMemberDTO mapConsortiumMember(Element orgElement, XPath xpath)
+    // TODO: Replace hardcoded EN language tag with the right one
+    private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath,
+                                                            LanguageTag lang)
             throws Exception {
-        var member = new PrepopulatedConsortiumMemberDTO();
+        var member = new PrepopulatedOrganisationDTO();
 
         var type = orgElement.getAttribute("type");
         member.setContributionType(mapCordisTypeToContributionType(type));
 
-        member.setOrganisationName(
-                evaluateText(xpath, orgElement, "./*[local-name()='legalName']"));
+        var legalName = evaluateText(xpath, orgElement, "./*[local-name()='legalName']");
+        if (Objects.nonNull(legalName)) {
+            member.getOrganisationName().add(new MultilingualContentDTO(
+                    lang.getId(), lang.getLanguageTag(), legalName, 1));
+        }
+
         member.setCountry(evaluateText(xpath, orgElement,
                 "./*[local-name()='address']/*[local-name()='country']"));
+
+        member.setVatNumber(evaluateText(xpath, orgElement, "./*[local-name()='vatNumber']"));
 
         var netContributionAttr = orgElement.getAttribute("netEcContribution");
         if (!netContributionAttr.isBlank()) {

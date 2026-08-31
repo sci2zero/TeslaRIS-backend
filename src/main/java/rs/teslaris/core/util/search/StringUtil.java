@@ -63,7 +63,8 @@ public class StringUtil {
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
 
     private static final List<String> identifierUrlPrefixes = List.of(
-        "https://doi.org/", "https://orcid.org/", "https://www.scopus.com/pages/organization/",
+        "https://doi.org/", "https://orcid.org/", "http://orcid.org/",
+        "https://www.scopus.com/pages/organization/",
         "https://www.scopus.com/authid/detail.uri?authorId=",
         "https://www.scopus.com/pages/publications/",
         "https://openalex.org/", "https://ror.org/",
