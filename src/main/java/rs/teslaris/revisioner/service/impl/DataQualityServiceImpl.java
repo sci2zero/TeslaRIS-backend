@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -257,6 +258,9 @@ public class DataQualityServiceImpl implements DataQualityService {
         var personActivities = dataQualityAggregator.sumField(PERSON_INDEX,
             linkedPersonsQuery(isPerson, entityId, scopeIds), ACTIVITIES_COUNT_FIELD);
 
+        var assessedActivities =
+            assessments.activitiesCount() + personAssessments.activitiesCount();
+
         return List.of(
             new RelatedQualityDTO(
                 RelatedEntityType.OUTPUTS,
@@ -268,14 +272,16 @@ public class DataQualityServiceImpl implements DataQualityService {
             ),
             // TODO: projects have no quality assessments yet.
             RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
-            // Activities live on other records, so both figures are sums of activity counters, and
-            // there is no score because the Activity target is never scored.
+            // Activities live on other records, so every figure here is a sum of activity
+            // counters. The score is the sum of the per-activity scores over the number of
+            // activities assessed, which weights each activity equally no matter how many the
+            // record carrying it holds.
             new RelatedQualityDTO(
                 RelatedEntityType.ACTIVITIES,
                 documents.linkedActivities() + personActivities,
-                assessments.activitiesCount() + personAssessments.activitiesCount(),
+                assessedActivities,
                 assessments.activityIssues() + personAssessments.activityIssues(),
-                null,
+                averageActivityScore(assessments, personAssessments, assessedActivities),
                 true
             ),
             // TODO: fundings have no quality assessments yet.
@@ -293,6 +299,19 @@ public class DataQualityServiceImpl implements DataQualityService {
                 ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
                 : termsQuery("organisation_unit_ids", scopeIds))
         )._toQuery();
+    }
+
+    @Nullable
+    private Double averageActivityScore(
+        DataQualityAggregator.AssessmentAggregates assessments,
+        DataQualityAggregator.AssessmentAggregates personAssessments,
+        long assessedActivities) {
+        if (assessedActivities == 0) {
+            return null;
+        }
+
+        return (assessments.activityScoreSum() + personAssessments.activityScoreSum()) /
+            assessedActivities;
     }
 
     /**

@@ -88,6 +88,9 @@ public class DataQualityAssessmentIndexer {
             index.setWarningFailedRules(assessment.getWarningFailedRules());
             index.setErrorFailedRules(assessment.getErrorFailedRules());
             index.setActivitiesCount(assessment.getActivitiesCount());
+            index.setActivityPublicationCandidatesCount(
+                assessment.getActivityPublicationCandidatesCount());
+            index.setActivityScoreSum(assessment.getActivityScoreSum());
             index.setDatabaseId(assessment.getId());
             index.setPublicationCandidate(assessment.getPublicationCandidate());
 

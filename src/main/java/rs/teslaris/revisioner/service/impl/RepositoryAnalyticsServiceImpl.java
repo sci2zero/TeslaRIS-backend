@@ -581,19 +581,25 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     }
 
     /**
-     * Activities are never scored and can never be publication candidates.
-     * The Activity target is reported but excluded from scoring  so both figures stay empty.
+     * An activity is not a record, so its score and candidacy cannot be read off the assessment
+     * document that carries it.
      */
     private EntityTypeQualityDTO constructQualityByEntityTypeActivitiesRow(
         long records, DataQualityAggregator.AssessmentAggregates outputs,
         DataQualityAggregator.AssessmentAggregates persons) {
+
+        var assessedActivities = outputs.activitiesCount() + persons.activitiesCount();
+        var scoreSum = outputs.activityScoreSum() + persons.activityScoreSum();
+        var candidates =
+            outputs.activityPublicationCandidates() + persons.activityPublicationCandidates();
+
         return new EntityTypeQualityDTO(
             RepositoryEntityType.ACTIVITIES,
             records,
-            outputs.activitiesCount() + persons.activitiesCount(),
+            assessedActivities,
             outputs.activityIssues() + persons.activityIssues(),
-            null,
-            null,
+            assessedActivities > 0 ? scoreSum / assessedActivities : null,
+            percentage(candidates, assessedActivities),
             true
         );
     }

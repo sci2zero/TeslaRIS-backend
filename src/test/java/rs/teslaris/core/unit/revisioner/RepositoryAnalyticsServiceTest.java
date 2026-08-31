@@ -82,17 +82,22 @@ public class RepositoryAnalyticsServiceTest {
         return configurationLoader;
     }
 
-    /**
-     * The same aggregate answers every assessment pass - persons, organisation units and outputs -
-     * so a figure a row derives from more than one pass shows up multiplied in the assertions.
-     */
+
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, long publicationCandidates,
                                 Double averageScore, long linkedRecords, long linkedActivities) {
+        stubAggregates(affectedRecords, openIssues, activitiesCount, activityIssues,
+            publicationCandidates, averageScore, linkedRecords, linkedActivities, 0, 0.0);
+    }
+
+    private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
+                                long activityIssues, long publicationCandidates,
+                                Double averageScore, long linkedRecords, long linkedActivities,
+                                long activityCandidates, double activityScoreSum) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
                 affectedRecords, openIssues, activitiesCount, activityIssues,
-                publicationCandidates, averageScore)));
+                activityCandidates, activityScoreSum, publicationCandidates, averageScore)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
                 linkedRecords, linkedActivities)));
@@ -519,13 +524,49 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(86204, activities.records());
             assertEquals(60, activities.affectedRecords());
             assertEquals(16, activities.openIssues());
-
-            // The Activity target is reported but never scored.
-            assertNull(activities.averageScore());
-            assertNull(activities.publicationCandidatePercentage());
             assertTrue(activities.supported());
 
             verify(dataQualityAggregator).aggregateLinkedDocuments(any());
+        }
+    }
+
+    /**
+     * An activity's score and candidacy are accumulated as sums when its record is assessed, so the
+     * row divides them by the number of activities assessed - not by the number of records, which
+     * would let a document holding one activity weigh as much as one holding thirty.
+     */
+    @Test
+    public void shouldScoreActivitiesPerActivityRatherThanPerRecord() {
+        // given (30 activities per pass, so 60 assessed across outputs and persons)
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300, 12, 2400.0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities =
+                repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
+
+            // then
+            assertEquals(60, activities.affectedRecords());
+
+            // 4800 points over 60 activities, and 24 of them are candidates.
+            assertEquals(80.0, activities.averageScore());
+            assertEquals(40.0, activities.publicationCandidatePercentage());
+        }
+    }
+
+    @Test
+    public void shouldReportNoActivityScoreWhenNoActivityWasAssessed() {
+        // given
+        stubAggregates(50, 120, 0, 0, 45, 92.0, 1000, 0, 0, 0.0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities =
+                repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
+
+            // then
+            assertNull(activities.averageScore());
+            assertNull(activities.publicationCandidatePercentage());
         }
     }
 

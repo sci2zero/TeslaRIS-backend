@@ -45,6 +45,9 @@ public class DataQualityAggregator {
             .aggregations("warningFailures", a -> a.sum(s -> s.field("warning_failed_rules")))
             .aggregations("infoFailures", a -> a.sum(s -> s.field("info_failed_rules")))
             .aggregations("activities", a -> a.sum(s -> s.field("activities_count")))
+            .aggregations("activityCandidates", a -> a
+                .sum(s -> s.field("activity_publication_candidates_count")))
+            .aggregations("activityScore", a -> a.sum(s -> s.field("activity_score_sum")))
             .aggregations("averageScore", a -> a.avg(avg -> avg.field("quality_score")))
             .aggregations("publicationCandidates", a -> a
                 .filter(f -> f.term(term -> term.field("publication_candidate").value(true))));
@@ -73,6 +76,8 @@ public class DataQualityAggregator {
                     sum(response, "infoFailures"),
                 sum(response, "activities"),
                 bucketTotal(response, "activityIssues"),
+                sum(response, "activityCandidates"),
+                sumAsDouble(response, "activityScore"),
                 filterTotal(response, "publicationCandidates"),
                 affectedRecords > 0 ? average(response) : null
             ));
@@ -387,6 +392,19 @@ public class DataQualityAggregator {
         return Objects.isNull(totalHits) ? 0 : totalHits.value();
     }
 
+    private double sumAsDouble(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response,
+                               String aggregationName) {
+        var aggregate = response.aggregations().get(aggregationName);
+
+        if (Objects.isNull(aggregate)) {
+            return 0.0;
+        }
+
+        var value = aggregate.sum().value();
+
+        return Double.isNaN(value) ? 0.0 : value;
+    }
+
     private long sum(co.elastic.clients.elasticsearch.core.SearchResponse<Void> response,
                      String aggregationName) {
         var aggregate = response.aggregations().get(aggregationName);
@@ -438,7 +456,8 @@ public class DataQualityAggregator {
     }
 
     public record AssessmentAggregates(long affectedRecords, long openIssues, long activitiesCount,
-                                       long activityIssues, long publicationCandidates,
+                                       long activityIssues, long activityPublicationCandidates,
+                                       double activityScoreSum, long publicationCandidates,
                                        Double averageScore) {
         public static AssessmentAggregates empty() {
             return new AssessmentAggregates(
@@ -446,6 +465,8 @@ public class DataQualityAggregator {
                 0,
                 0,
                 0,
+                0,
+                0.0,
                 0,
                 null
             );

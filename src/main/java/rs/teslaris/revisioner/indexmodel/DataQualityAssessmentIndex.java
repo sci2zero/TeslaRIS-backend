@@ -98,6 +98,12 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Integer, store = true, name = "activities_count")
     private Integer activitiesCount;
 
+    @Field(type = FieldType.Integer, store = true, name = "activity_publication_candidates_count")
+    private Integer activityPublicationCandidatesCount;
+
+    @Field(type = FieldType.Double, store = true, name = "activity_score_sum")
+    private Double activityScoreSum;
+
     @Field(type = FieldType.Object, name = "activity_issue_occurrences")
     private Map<String, Integer> activityIssueOccurrences = new HashMap<>();
 

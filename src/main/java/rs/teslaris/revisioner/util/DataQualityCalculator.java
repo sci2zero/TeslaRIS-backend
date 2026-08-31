@@ -97,6 +97,8 @@ public class DataQualityCalculator {
      */
     private static final Set<String> NON_SCORING_TARGETS = Set.of();
 
+    private static final List<String> ACTIVITY_TARGETS = List.of("Activity");
+
     private final Map<String, Pattern> compiledPatternCache = new ConcurrentHashMap<>();
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
@@ -1340,6 +1342,7 @@ public class DataQualityCalculator {
         }
 
         assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
 
         var activityType = activityTypeToken(dto);
         var activityName = activityName(dto);
@@ -1393,6 +1396,8 @@ public class DataQualityCalculator {
             reportIssue(assessment, "activityResearchAreasMissing", "", activityType, activityName);
         }
 
+        scoreActivity(assessment, issuesBeforeActivity);
+
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
@@ -1421,6 +1426,7 @@ public class DataQualityCalculator {
                 .getLocalBirthDate();
 
         assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
 
         var activityType = activityTypeToken(dto);
         var activityName = activityName(dto);
@@ -1571,6 +1577,8 @@ public class DataQualityCalculator {
         }
 
         assessEntity(dto.getContact(), assessment);
+
+        scoreActivity(assessment, issuesBeforeActivity);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1770,14 +1778,9 @@ public class DataQualityCalculator {
             new EnumMap<>(QualityDimension.class);
 
         for (var issue : assessment.getIssues()) {
-            var remark =
-                DataQualityAssessmentConfigurationLoader.getIssue(
-                    assessment.getProfileName(),
-                    assessment.getProfileVersion(),
-                    issue.getKey()
-                );
+            var remark = scoringRemark(assessment, issue.getKey());
 
-            if (Objects.isNull(remark) || !isScoringTarget(remark.target())) {
+            if (Objects.isNull(remark)) {
                 continue;
             }
 
@@ -1836,6 +1839,44 @@ public class DataQualityCalculator {
         }
 
         return dimensionScores;
+    }
+
+    private void scoreActivity(DataQualityAssessment assessment, int issuesBeforeActivity) {
+        var activityIssues = new ArrayList<>(assessment.getIssues()
+            .subList(issuesBeforeActivity, assessment.getIssues().size()));
+
+        var totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
+            assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS);
+
+        var deductedPoints = activityIssues.stream()
+            .map(issue -> scoringRemark(assessment, issue.getKey()))
+            .filter(Objects::nonNull)
+            .mapToDouble(remark -> DataQualityAssessmentConfigurationLoader.getWeightedPoints(
+                assessment.getProfileName(), assessment.getProfileVersion(), remark))
+            .sum();
+
+        var score = percentage(totalPoints - deductedPoints, totalPoints);
+
+        assessment.setActivityScoreSum(assessment.getActivityScoreSum() + score);
+
+        // The same two conditions the record itself is judged by, applied to one activity.
+        var blocked = activityIssues.stream().anyMatch(ConstraintEvaluationResult::isBlocking);
+        var minimumRequiredScore = DataQualityAssessmentConfigurationLoader.getProfile(
+            assessment.getProfileName(), assessment.getProfileVersion()).minimumRequiredScore();
+
+        if (!blocked && score >= minimumRequiredScore) {
+            assessment.setActivityPublicationCandidatesCount(
+                assessment.getActivityPublicationCandidatesCount() + 1);
+        }
+    }
+
+    @Nullable
+    private DataQualityAssessmentConfigurationLoader.DataQualityRemark scoringRemark(
+        DataQualityAssessment assessment, String ruleKey) {
+        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
+            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
+
+        return Objects.isNull(remark) || !isScoringTarget(remark.target()) ? null : remark;
     }
 
     private double percentage(double achieved, double total) {

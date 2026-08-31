@@ -561,7 +561,8 @@ public class DataQualityServiceTest {
                                 long linkedActivities) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                    affectedRecords, openIssues, activitiesCount, activityIssues, 0, averageScore)),
+                    affectedRecords, openIssues, activitiesCount, activityIssues, 0, 0.0, 0,
+                    averageScore)),
                 Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
@@ -630,6 +631,55 @@ public class DataQualityServiceTest {
         assertEquals(5, activities.linkedRecords());
         assertEquals(4, activities.affectedRecords());
         assertEquals(1, activities.openIssues());
+
+        // The fixture accumulates no activity score, and four activities were assessed.
+        assertEquals(0.0, activities.averageScore());
+    }
+
+    /**
+     * The score is a sum over the activities assessed, not an average over the records carrying
+     * them, so a record holding one activity cannot weigh as much as one holding many.
+     */
+    @Test
+    public void shouldAverageActivityScoreOverActivitiesRatherThanRecords() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 320.0, 0,
+                    92.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 480.0, 0,
+                    88.0)));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
+
+        // when
+        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality().get(2);
+
+        // then (800 points over 10 assessed activities)
+        assertEquals(10, activities.affectedRecords());
+        assertEquals(80.0, activities.averageScore());
+    }
+
+    @Test
+    public void shouldReportNoActivityScoreWhenNoActivityWasAssessed() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        stubAggregates(2, 5, 0, 0, 92.0, 186, 0);
+
+        // when
+        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality().get(2);
+
+        // then
         assertNull(activities.averageScore());
     }
 
@@ -646,8 +696,10 @@ public class DataQualityServiceTest {
 
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 92.0)),
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 88.0)));
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 0.0, 0,
+                    92.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 0.0, 0,
+                    88.0)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(
                 new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));

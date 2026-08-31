@@ -124,4 +124,12 @@ public class DataQualityAssessment extends BaseEntity {
 
     @Field(type = FieldType.Integer, name = "activities_count", store = true)
     private Integer activitiesCount;
+
+    @Column(name = "activity_publication_candidates_count", nullable = false)
+    @Builder.Default
+    private Integer activityPublicationCandidatesCount = 0;
+
+    @Column(name = "activity_score_sum", nullable = false)
+    @Builder.Default
+    private Double activityScoreSum = 0.0;
 }
