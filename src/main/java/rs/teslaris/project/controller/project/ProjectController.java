@@ -41,7 +41,6 @@ public class ProjectController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public Page<ProjectIndex> searchProjects(@RequestParam List<String> tokens,
                                              @RequestParam(required = false)
                                              LocalDate dateFrom,
@@ -55,8 +54,12 @@ public class ProjectController {
         return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses, pageable);
     }
 
+    @GetMapping("/count")
+    public Long countAll() {
+        return projectService.getProjectCount();
+    }
+
     @GetMapping("/{projectId}")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public ProjectDTO readProject(@PathVariable Integer projectId) {
         return projectService.readProject(projectId);
     }

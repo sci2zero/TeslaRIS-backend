@@ -161,6 +161,8 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFundingPrograms() {
+        fundingProgramIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),

@@ -25,7 +25,6 @@ public class ProjectEventController {
     private final ProjectEventService projectEventService;
 
     @GetMapping("/{projectId}/events")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public List<ProjectEventDTO> readProjectEvents(@PathVariable Integer projectId) {
         return projectEventService.readProjectEvents(projectId);
     }

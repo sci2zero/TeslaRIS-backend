@@ -41,7 +41,6 @@ public class FundingController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('READ_FUNDING')")
     public Page<FundingIndex> searchFunding(@RequestParam List<String> tokens,
                                             @RequestParam(required = false)
                                             LocalDate dateFrom,
@@ -59,7 +58,6 @@ public class FundingController {
     }
 
     @GetMapping("/{fundingId}")
-    @PreAuthorize("hasAuthority('READ_FUNDING')")
     public FundingDTO readFunding(@PathVariable Integer fundingId) {
         return fundingService.readFunding(fundingId);
     }

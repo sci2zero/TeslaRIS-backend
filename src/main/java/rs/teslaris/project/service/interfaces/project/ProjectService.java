@@ -26,6 +26,8 @@ public interface ProjectService extends JPAService<Project> {
                                       List<ProjectStatus> allowedStatuses,
                                       Pageable pageable);
 
+    Long getProjectCount();
+
     ProjectDTO readProject(Integer projectId);
 
     Project createProject(ProjectDTO projectDTO);
