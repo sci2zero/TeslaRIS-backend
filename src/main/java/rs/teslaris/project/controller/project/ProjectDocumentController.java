@@ -25,7 +25,6 @@ public class ProjectDocumentController {
     private final ProjectDocumentService projectDocumentService;
 
     @GetMapping("/{projectId}/documents")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public List<ProjectDocumentDTO> readProjectDocuments(@PathVariable Integer projectId) {
         return projectDocumentService.readProjectDocuments(projectId);
     }

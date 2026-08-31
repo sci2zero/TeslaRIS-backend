@@ -90,6 +90,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
+    @Transactional
+    public Long getProjectCount() {
+        return projectIndexRepository.count();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ProjectDTO readProject(Integer projectId) {
         return ProjectConverter.toDTO(findOne(projectId));

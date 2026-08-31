@@ -100,7 +100,6 @@ public class FundingApplicationController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('READ_FUNDING_APPLICATIONS')")
     public Page<FundingApplicationIndex> searchFundingApplications(
         @RequestParam(required = false) List<String> tokens,
         @RequestParam(required = false) Integer projectId,
