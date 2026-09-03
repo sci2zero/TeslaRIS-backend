@@ -56,6 +56,30 @@ public class ProjectController {
         return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses, pageable);
     }
 
+    @GetMapping("/for-researcher/{personId}")
+    public Page<ProjectIndex> findProjectsForPerson(@PathVariable Integer personId,
+                                                    @RequestParam(required = false)
+                                                    List<String> tokens,
+                                                    @RequestParam(required = false)
+                                                    boolean onlyActive,
+                                                    @RequestParam(required = false)
+                                                    List<ProjectStatus> allowedStatuses,
+                                                    Pageable pageable) {
+        return projectService.findProjectsForPerson(personId, tokens, onlyActive, allowedStatuses,
+            pageable);
+    }
+
+    @GetMapping("/for-organisation-unit/{organisationUnitId}")
+    public Page<ProjectIndex> findProjectsForOrganisationUnit(
+        @PathVariable Integer organisationUnitId,
+        @RequestParam(required = false) List<String> tokens,
+        @RequestParam(required = false) boolean onlyActive,
+        @RequestParam(required = false) List<ProjectStatus> allowedStatuses,
+        Pageable pageable) {
+        return projectService.findProjectsForOrganisationUnit(organisationUnitId, tokens, onlyActive,
+            allowedStatuses, pageable);
+    }
+
     @GetMapping("/count")
     public Long countAll() {
         return projectService.getProjectCount();

@@ -3,6 +3,8 @@ package rs.teslaris.project.service.impl.project;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,8 +13,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.document.OrganisationUnitContribution;
+import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.*;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -73,6 +80,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private final ProjectsRelationService projectsRelationService;
 
+    private final OrganisationUnitService organisationUnitService;
+
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
         return projectRepository;
@@ -88,6 +97,59 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                              Pageable pageable) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses),
             pageable, ProjectIndex.class, "project");
+    }
+
+    @Override
+    public Page<ProjectIndex> findProjectsForPerson(Integer personId, List<String> tokens,
+                                                    boolean onlyActive,
+                                                    List<ProjectStatus> allowedStatuses,
+                                                    Pageable pageable) {
+        var contributionFilter = TermQuery.of(t -> t
+            .field("person_ids")
+            .value(personId)
+        )._toQuery();
+
+        return runContributorFilteredQuery(tokens, onlyActive, allowedStatuses, contributionFilter,
+            pageable);
+    }
+
+    @Override
+    public Page<ProjectIndex> findProjectsForOrganisationUnit(Integer organisationUnitId,
+                                                              List<String> tokens,
+                                                              boolean onlyActive,
+                                                              List<ProjectStatus> allowedStatuses,
+                                                              Pageable pageable) {
+
+        var organisationUnitIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var contributionFilter = TermsQuery.of(t -> t
+            .field("organisation_unit_ids")
+            .terms(v -> v.value(organisationUnitIds.stream()
+                .map(String::valueOf)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
+
+        return runContributorFilteredQuery(tokens, onlyActive, allowedStatuses, contributionFilter,
+            pageable);
+    }
+
+    private Page<ProjectIndex> runContributorFilteredQuery(List<String> tokens,
+                                                           boolean onlyActive,
+                                                           List<ProjectStatus> allowedStatuses,
+                                                           Query contributionFilter,
+                                                           Pageable pageable) {
+        var searchTokens =
+            (Objects.isNull(tokens) || tokens.isEmpty()) ? List.of("*") : tokens;
+
+        var combinedQuery = BoolQuery.of(bq -> bq
+            .must(buildSimpleSearchQuery(searchTokens, null, null, onlyActive, false,
+                allowedStatuses))
+            .must(contributionFilter)
+        )._toQuery();
+
+        return searchService.runQuery(combinedQuery, pageable, ProjectIndex.class, "project");
     }
 
     @Override
@@ -164,10 +226,17 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public void indexProject(Project project, ProjectIndex index) {
         indexCommonFields(project, index);
         projectIndexRepository.save(index);
+    }
+
+    private void refreshProjectIndex(Project project) {
+        var index = projectIndexRepository.findProjectIndexByDatabaseId(project.getId())
+            .orElseGet(ProjectIndex::new);
+
+        indexProject(project, index);
     }
 
     private void indexProjectDocuments(Integer projectId) {
@@ -282,6 +351,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         project.getPersons().add(person);
         save(project);
+        refreshProjectIndex(project);
 
         return PersonProjectContributionConverter.toDTO(person);
     }
@@ -294,6 +364,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         project.getPersons().remove(person);
         save(project);
+        refreshProjectIndex(project);
     }
 
     @Override
@@ -304,6 +375,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         project.getOrganisations().add(organisation);
         save(project);
+        refreshProjectIndex(project);
 
         return OrganisationUnitProjectContributionConverter.toDTO(organisation);
     }
@@ -316,6 +388,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         project.getOrganisations().remove(organisation);
         save(project);
+        refreshProjectIndex(project);
     }
 
     @Override
@@ -369,9 +442,24 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         index.setStatus(project.getStatus());
         index.setHasContributions(project.hasContributions());
 
+        indexContributorIds(project, index);
         indexCoordinatorFields(project, index);
 
         return index;
+    }
+
+    private void indexContributorIds(Project project, ProjectIndex index) {
+        index.setPersonIds(project.getPersons().stream()
+                .map(PersonContribution::getPerson)
+                .filter(Objects::nonNull)
+                .map(Person::getId)
+                .toList());
+
+        index.setOrganisationUnitIds(project.getOrganisations().stream()
+                .map(OrganisationUnitContribution::getOrganisationUnit)
+                .filter(Objects::nonNull)
+                .map(OrganisationUnit::getId)
+                .toList());
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {

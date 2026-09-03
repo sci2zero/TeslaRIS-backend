@@ -13,6 +13,8 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 import rs.teslaris.project.model.project.ProjectStatus;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -68,4 +70,10 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Boolean, name = "has_contributions")
     private boolean hasContributions;
+
+    @Field(type = FieldType.Integer, name = "person_ids")
+    private List<Integer> personIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids")
+    private List<Integer> organisationUnitIds = new ArrayList<>();
 }
