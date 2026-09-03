@@ -79,9 +79,15 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
         metadata.setGrantAgreementId(message.path("award").asText(null));
         metadata.setDateAwarded(StringUtil.parseDateParts(message.path("issued").path("date-parts")));
 
-        var resourceUrl = message.path("resource").path("primary").path("URL").asText(null);
-        metadata.getUris().add(
-                Objects.nonNull(resourceUrl) ? resourceUrl : message.path("URL").asText(null));
+        var resourceUrl = StringUtil.sanitizeUrl(
+                message.path("resource").path("primary").path("URL").asText(null));
+        var doiUrl = StringUtil.sanitizeUrl(message.path("URL").asText(null));
+
+        if (Objects.nonNull(resourceUrl)) {
+            metadata.getUris().add(resourceUrl);
+        } else if (Objects.nonNull(doiUrl)) {
+            metadata.getUris().add(doiUrl);
+        }
 
         var projectsNode = message.path("project");
         if (projectsNode.isArray() && !projectsNode.isEmpty()) {

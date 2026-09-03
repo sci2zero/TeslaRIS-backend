@@ -146,16 +146,8 @@ public class ProjectMetadataPrepopulationServiceImpl
 
         metadata.setDoi(message.path("DOI").asText(null));
 
-        var doiUrl = message.path("URL").asText(null);
-        if (StringUtils.hasText(doiUrl)) {
-            metadata.getUris().add(doiUrl);
-        }
-
-        // Often the same value as the DOI URL, hence the containment check.
-        var landingPageUrl = message.path("resource").path("primary").path("URL").asText(null);
-        if (StringUtils.hasText(landingPageUrl) && !metadata.getUris().contains(landingPageUrl)) {
-            metadata.getUris().add(landingPageUrl);
-        }
+        addUriIfValid(metadata, message.path("URL").asText(null));
+        addUriIfValid(metadata, message.path("resource").path("primary").path("URL").asText(null));
 
         var projectsNode = message.path("project");
         if (projectsNode.isArray() && !projectsNode.isEmpty()) {
@@ -168,6 +160,14 @@ public class ProjectMetadataPrepopulationServiceImpl
         }
 
         return metadata;
+    }
+
+    private void addUriIfValid(PrepopulatedProjectMetadataDTO metadata, @Nullable String rawUri) {
+        var sanitizedUri = StringUtil.sanitizeUrl(rawUri);
+
+        if (Objects.nonNull(sanitizedUri) && !metadata.getUris().contains(sanitizedUri)) {
+            metadata.getUris().add(sanitizedUri);
+        }
     }
 
     private void populateFromProject(PrepopulatedProjectMetadataDTO metadata,

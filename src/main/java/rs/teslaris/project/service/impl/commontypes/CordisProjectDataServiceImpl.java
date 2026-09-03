@@ -15,6 +15,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
@@ -182,9 +183,9 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
                 "//*[local-name()='webLink'][@represents='project'][@type='relatedWebsite']/*[local-name()='physUrl']", document, XPathConstants.NODESET);
         metadata.setUris(new ArrayList<>());
         for (var i = 0; i < uriNodes.getLength(); i++) {
-            var url = uriNodes.item(i).getTextContent();
-            if (Objects.nonNull(url) && !url.isBlank()) {
-                metadata.getUris().add(url.trim());
+            var url = StringUtil.sanitizeUrl(uriNodes.item(i).getTextContent());
+            if (Objects.nonNull(url)) {
+                metadata.getUris().add(url);
             }
         }
 
@@ -209,6 +210,9 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
     }
 
     // TODO: Replace hardcoded EN language tag with the right one
+    // CORDIS returns the whole XML document in a single language (default EN)
+    // but it also returns a list of supported languages which could be used
+    // to perform secondary fetch to get data in other languages
     private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath,
                                                             LanguageTag lang)
             throws Exception {
