@@ -23,6 +23,7 @@ public interface ProjectService extends JPAService<Project> {
                                       LocalDate dateFrom,
                                       LocalDate dateTo,
                                       boolean onlyActive,
+                                      boolean onlyWithoutContributions,
                                       List<ProjectStatus> allowedStatuses,
                                       Pageable pageable);
 

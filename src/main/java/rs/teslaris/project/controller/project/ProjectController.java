@@ -49,9 +49,11 @@ public class ProjectController {
                                              @RequestParam(required = false)
                                              boolean onlyActive,
                                              @RequestParam(required = false)
+                                             boolean onlyWithoutContributions,
+                                             @RequestParam(required = false)
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses, pageable);
+        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses, pageable);
     }
 
     @GetMapping("/count")

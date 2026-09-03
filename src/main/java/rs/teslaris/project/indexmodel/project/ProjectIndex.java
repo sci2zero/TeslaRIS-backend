@@ -65,4 +65,7 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Keyword, name = "status")
     private ProjectStatus status;
+
+    @Field(type = FieldType.Boolean, name = "has_contributions")
+    private boolean hasContributions;
 }

@@ -83,9 +83,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                              LocalDate dateFrom,
                                              LocalDate dateTo,
                                              boolean onlyActive,
+                                             boolean onlyWithoutContributions,
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedStatuses),
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses),
             pageable, ProjectIndex.class, "project");
     }
 
@@ -366,6 +367,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         index.setDateTo(project.getDateTo());
         index.setDatabaseId(project.getId());
         index.setStatus(project.getStatus());
+        index.setHasContributions(project.hasContributions());
 
         indexCoordinatorFields(project, index);
 
@@ -409,8 +411,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         index.setCoordinatorId(coordinator.getId());
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
-                                         LocalDate dateTo, boolean onlyActive, List<ProjectStatus> allowedStatuses) {
+    private Query buildSimpleSearchQuery(List<String> tokens,
+                                         LocalDate dateFrom,
+                                         LocalDate dateTo,
+                                         boolean onlyActive,
+                                         boolean onlyWithoutContributions,
+                                         List<ProjectStatus> allowedStatuses) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
             : (int) Math.ceil(tokens.size() * 0.8);
@@ -529,6 +535,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 b.must(sb -> sb.bool(activeBool -> activeBool
                     .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
                     .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
+            }
+
+            if (onlyWithoutContributions) {
+                b.filter(sb -> sb.term(t -> t
+                    .field("has_contributions")
+                    .value(false)
                 ));
             }
 

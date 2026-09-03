@@ -100,6 +100,7 @@ public class ProjectServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var onlyActive = false;
+        var onlyWithoutContributions = false;
         var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
@@ -108,7 +109,8 @@ public class ProjectServiceTest {
             .thenReturn(Page.empty());
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
+                onlyWithoutContributions, allowedStatuses ,pageable);
 
         // then
         assertNotNull(result);
@@ -124,6 +126,7 @@ public class ProjectServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var onlyActive = false;
+        var onlyWithoutContributions = false;
         var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
@@ -140,7 +143,8 @@ public class ProjectServiceTest {
             .thenReturn(expectedPage);
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
+                onlyWithoutContributions, allowedStatuses, pageable);
 
         // then
         assertNotNull(result);
