@@ -111,10 +111,6 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
             fundingPart.setOrganisationUnitContribution(
                 organisationUnitProjectContributionService.findOne(
                     dto.getOrganisationUnitProjectContributionId()));
-        } else {
-            throw new ReferenceConstraintException(
-                "Funding part must belong to one of the following: funding application, " +
-                    "project event, person project contribution or OU project contribution.");
         }
     }
 
