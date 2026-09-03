@@ -216,13 +216,15 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             fundingCall.setFundingProgram(fundingProgram);
             fundingCall.setFunder(fundingProgram.getFunder());
 
-            if (Objects.nonNull(fundingProgram.getDateFrom()) &&
+            // Added fundingCall dateFrom null check because there were no strict constraints in the model nor DTO
+            if (Objects.nonNull(fundingProgram.getDateFrom()) && Objects.nonNull(fundingCallDTO.getDateFrom()) &&
                 fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
                 throw new DateRangeException(
                     "Funding call opening must be equal or after program opening.");
             }
 
-            if (Objects.nonNull(fundingProgram.getDateTo()) &&
+            // Added fundingCall dateTo null check because there were no strict constraints in the model nor DTO
+            if (Objects.nonNull(fundingProgram.getDateTo()) && Objects.nonNull(fundingCallDTO.getDateTo()) &&
                 fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
                 throw new DateRangeException(
                     "Funding call closing must be equal or before program closing.");
