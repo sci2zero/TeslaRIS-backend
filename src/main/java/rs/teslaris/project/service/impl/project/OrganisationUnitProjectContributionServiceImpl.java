@@ -11,12 +11,13 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -26,6 +27,10 @@ import java.util.Objects;
 public class OrganisationUnitProjectContributionServiceImpl
     extends JPAServiceImpl<OrganisationUnitProjectContribution> implements
     OrganisationUnitProjectContributionService {
+
+    private final FundingPartFactory fundingPartFactory;
+
+    private final FundingPartRepository fundingPartRepository;
 
     private final OrganisationUnitProjectContributionRepository
         organisationUnitProjectContributionRepository;
@@ -79,7 +84,8 @@ public class OrganisationUnitProjectContributionServiceImpl
 
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
-                contribution.getFundingParts().add(buildContributionFundingPart(partDto, contribution)));
+                contribution.getFundingParts().add(fundingPartRepository.save(
+                        buildContributionFundingPart(partDto, contribution))));
 
         contribution.setProject(project);
 
@@ -90,15 +96,7 @@ public class OrganisationUnitProjectContributionServiceImpl
 
     private FundingPart buildContributionFundingPart(FundingPartDTO partDto,
                                                      OrganisationUnitProjectContribution contribution) {
-        var part = new FundingPart();
-
-        part.setDescription(
-                multilingualContentService.getMultilingualContent(partDto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(currencyService.findOne(partDto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDto.getAmount().getAmount());
-
+        var part = fundingPartFactory.buildFundingPart(partDto);
         part.setOrganisationUnitContribution(contribution);
 
         return part;

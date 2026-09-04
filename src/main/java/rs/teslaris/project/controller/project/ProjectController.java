@@ -25,6 +25,7 @@ import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.service.interfaces.project.ProjectCreationService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @RestController
@@ -33,6 +34,8 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+
+    private final ProjectCreationService projectCreationService;
 
     @GetMapping("/{projectId}/can-edit")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
@@ -96,7 +99,7 @@ public class ProjectController {
     @Idempotent
     public ProjectDTO createProject(
         @RequestBody @Valid ProjectDTO projectDTO) {
-        var savedProject = projectService.createProject(projectDTO);
+        var savedProject = projectCreationService.createProject(projectDTO);
         projectDTO.setId(savedProject.getId());
 
         return projectDTO;

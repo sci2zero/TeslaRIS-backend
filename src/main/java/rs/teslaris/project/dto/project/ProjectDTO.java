@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -76,6 +77,9 @@ public class ProjectDTO {
 
     @Valid
     private List<OrganisationUnitProjectContributionDTO> organisations = new ArrayList<>();
+
+    // only for DOI based creation
+    private FundingDTO funding;
 
     @Valid
     private List<ProjectsRelationDTO> relations = new ArrayList<>();
