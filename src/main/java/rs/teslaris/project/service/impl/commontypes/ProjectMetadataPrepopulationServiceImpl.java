@@ -5,12 +5,8 @@ import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.language.detect.LanguageDetector;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
@@ -19,13 +15,17 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedPersonDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.project.service.interfaces.commontypes.CordisFundingDataService;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
+import rs.teslaris.project.service.interfaces.commontypes.FundingMetadataPrepopulationService;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectMetadataPrepopulationService;
+import rs.teslaris.project.util.CordisDoiUtil;
+import rs.teslaris.project.util.CrossrefWorksClient;
+import rs.teslaris.project.util.CordisXmlClient;
 
 import java.util.Objects;
 
@@ -35,15 +35,19 @@ import java.util.Objects;
 public class ProjectMetadataPrepopulationServiceImpl
         implements ProjectMetadataPrepopulationService {
 
-    private static final String CROSSREF_WORKS_URL = "https://api.crossref.org/works/";
-
-    private final RestTemplateProvider restTemplateProvider;
+    private final CrossrefWorksClient crossrefWorksClient;
 
     private final LanguageTagService languageTagService;
 
     private final CurrencyService currencyService;
 
+    private final CordisXmlClient cordisXmlClient;
+
     private final CordisProjectDataService cordisProjectDataService;
+
+    private final CordisFundingDataService cordisFundingDataService;
+
+    private final FundingMetadataPrepopulationService fundingMetadataPrepopulationService;
 
     private final PersonService personService;
 
@@ -53,15 +57,13 @@ public class ProjectMetadataPrepopulationServiceImpl
 
     @Override
     public PrepopulatedProjectMetadataDTO fetchProjectDataForDoi(String doi) {
-        var metadata = isEuHorizonDoi(doi) ? fetchFromCordis(doi) : fetchFromCrossref(doi);
+        var metadata = CordisDoiUtil.isEuHorizonDoi(doi)
+                ? fetchFromCordis(doi)
+                : fetchFromCrossref(doi);
 
         resolveExistingEntities(metadata);
 
         return metadata;
-    }
-
-    private boolean isEuHorizonDoi(String doi) {
-        return doi.startsWith("10.3030/");
     }
 
     private void resolveExistingEntities(PrepopulatedProjectMetadataDTO metadata) {
@@ -103,36 +105,25 @@ public class ProjectMetadataPrepopulationServiceImpl
     }
 
     private PrepopulatedProjectMetadataDTO fetchFromCordis(String doi) {
-        var cordisProjectId = doi.substring("10.3030/".length());
-        return cordisProjectDataService.fetchFullMetadata(cordisProjectId, doi);
+        var document = cordisXmlClient.fetchDocument(
+                CordisDoiUtil.extractCordisProjectId(doi));
+
+        var metadata = cordisProjectDataService.mapProjectMetadata(document, doi);
+        metadata.setFunding(cordisFundingDataService.mapFundingMetadata(document, doi));
+
+        return metadata;
     }
 
     private PrepopulatedProjectMetadataDTO fetchFromCrossref(String doi) {
-        var json = fetchRawCrossrefWork(doi);
-        if (Objects.isNull(json)) {
-            return new PrepopulatedProjectMetadataDTO();
-        }
-        return mapToProjectDTO(json.path("message"));
-    }
+        var message = crossrefWorksClient.fetchWorkMessage(doi);
 
-    @Nullable
-    private JsonNode fetchRawCrossrefWork(String doi) {
-        var url = CROSSREF_WORKS_URL + doi;
+        var metadata = Objects.nonNull(message)
+                ? mapToProjectDTO(message)
+                : new PrepopulatedProjectMetadataDTO();
+        metadata.setFunding(
+                fundingMetadataPrepopulationService.mapCrossrefFundingData(message, doi));
 
-        var headers = new HttpHeaders();
-        headers.set("User-Agent", "TeslaRIS/1.0 (https://github.com/uns-cris/teslaris)");
-
-        var entity = new HttpEntity<>(headers);
-        var restTemplate = restTemplateProvider.provideRestTemplate();
-
-        try {
-            var response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
-            return response.getBody();
-        } catch (HttpClientErrorException e) {
-            log.warn("Unable to fetch project metadata for DOI: {}. Response code: {}", doi,
-                    e.getStatusCode().value());
-            return null;
-        }
+        return metadata;
     }
 
     private PrepopulatedProjectMetadataDTO mapToProjectDTO(JsonNode message) {

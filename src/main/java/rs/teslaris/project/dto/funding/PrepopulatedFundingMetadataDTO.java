@@ -26,6 +26,8 @@ public class PrepopulatedFundingMetadataDTO {
 
     private List<MultilingualContentDTO> description = new ArrayList<>();
 
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
+
     private List<String> uris = new ArrayList<>();
 
     private String dateAwarded;
@@ -35,6 +37,10 @@ public class PrepopulatedFundingMetadataDTO {
     private String dateTo;
 
     private MonetaryAmountDTO monetaryAmount;
+
+    private List<MultilingualContentDTO> displayCall = new ArrayList<>();
+
+    private List<MultilingualContentDTO> displayProgram = new ArrayList<>();
 
     private List<MultilingualContentDTO> displayFunder = new ArrayList<>();
 
