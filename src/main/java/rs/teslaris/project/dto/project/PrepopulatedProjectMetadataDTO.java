@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.project.dto.funding.PrepopulatedFundingMetadataDTO;
 import rs.teslaris.project.model.project.ProjectStatus;
 
 import java.util.ArrayList;
@@ -44,4 +45,8 @@ public class PrepopulatedProjectMetadataDTO {
     private List<PrepopulatedOrganisationDTO> organisations = new ArrayList<>();
 
     private List<PrepopulatedEventDTO> events = new ArrayList<>();
+
+    // Harvested alongside the project from the same source document and persisted silently on
+    // creation - the project submission form has no funding section of its own.
+    private PrepopulatedFundingMetadataDTO funding;
 }

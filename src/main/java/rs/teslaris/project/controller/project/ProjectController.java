@@ -25,6 +25,7 @@ import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.service.interfaces.project.ProjectCreationService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @RestController
@@ -33,6 +34,8 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+
+    private final ProjectCreationService projectCreationService;
 
     @GetMapping("/{projectId}/can-edit")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
@@ -49,9 +52,35 @@ public class ProjectController {
                                              @RequestParam(required = false)
                                              boolean onlyActive,
                                              @RequestParam(required = false)
+                                             boolean onlyWithoutContributions,
+                                             @RequestParam(required = false)
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses, pageable);
+        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses, pageable);
+    }
+
+    @GetMapping("/for-researcher/{personId}")
+    public Page<ProjectIndex> findProjectsForPerson(@PathVariable Integer personId,
+                                                    @RequestParam(required = false)
+                                                    List<String> tokens,
+                                                    @RequestParam(required = false)
+                                                    boolean onlyActive,
+                                                    @RequestParam(required = false)
+                                                    List<ProjectStatus> allowedStatuses,
+                                                    Pageable pageable) {
+        return projectService.findProjectsForPerson(personId, tokens, onlyActive, allowedStatuses,
+            pageable);
+    }
+
+    @GetMapping("/for-organisation-unit/{organisationUnitId}")
+    public Page<ProjectIndex> findProjectsForOrganisationUnit(
+        @PathVariable Integer organisationUnitId,
+        @RequestParam(required = false) List<String> tokens,
+        @RequestParam(required = false) boolean onlyActive,
+        @RequestParam(required = false) List<ProjectStatus> allowedStatuses,
+        Pageable pageable) {
+        return projectService.findProjectsForOrganisationUnit(organisationUnitId, tokens, onlyActive,
+            allowedStatuses, pageable);
     }
 
     @GetMapping("/count")
@@ -70,7 +99,7 @@ public class ProjectController {
     @Idempotent
     public ProjectDTO createProject(
         @RequestBody @Valid ProjectDTO projectDTO) {
-        var savedProject = projectService.createProject(projectDTO);
+        var savedProject = projectCreationService.createProject(projectDTO);
         projectDTO.setId(savedProject.getId());
 
         return projectDTO;

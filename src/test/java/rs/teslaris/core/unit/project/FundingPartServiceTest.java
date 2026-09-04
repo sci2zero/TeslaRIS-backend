@@ -251,21 +251,6 @@ public class FundingPartServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCreatingFundingPartWithNoReference() {
-        // given
-        fundingPartDTO.setFundingId(null);
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
-        when(currencyService.findOne(1)).thenReturn(currency);
-
-        // when & then
-        assertThatThrownBy(() -> fundingPartService.createFundingPart(fundingPartDTO))
-            .isInstanceOf(ReferenceConstraintException.class)
-            .hasMessageContaining("Funding part must belong to one of the following");
-
-        verify(fundingPartRepository, never()).save(any(FundingPart.class));
-    }
-
-    @Test
     public void shouldInitializeCostsWhenNullInUpdate() {
         // given
         var fundingPartId = 1;

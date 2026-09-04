@@ -10,10 +10,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
@@ -66,6 +69,9 @@ public class ProjectServiceTest {
     @Mock
     private ProjectsRelationService projectsRelationService;
 
+    @Mock
+    private OrganisationUnitService organisationUnitService;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
 
@@ -100,6 +106,7 @@ public class ProjectServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var onlyActive = false;
+        var onlyWithoutContributions = false;
         var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
@@ -108,7 +115,8 @@ public class ProjectServiceTest {
             .thenReturn(Page.empty());
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
+                onlyWithoutContributions, allowedStatuses ,pageable);
 
         // then
         assertNotNull(result);
@@ -124,6 +132,7 @@ public class ProjectServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var onlyActive = false;
+        var onlyWithoutContributions = false;
         var allowedStatuses = new ArrayList<ProjectStatus>();
         var pageable = PageRequest.of(0, 10);
 
@@ -140,7 +149,8 @@ public class ProjectServiceTest {
             .thenReturn(expectedPage);
 
         // when
-        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, allowedStatuses ,pageable);
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
+                onlyWithoutContributions, allowedStatuses, pageable);
 
         // then
         assertNotNull(result);
@@ -150,6 +160,87 @@ public class ProjectServiceTest {
         assertEquals("Test Project", result.getContent().getFirst().getNameSr());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
             eq(ProjectIndex.class), eq("project"));
+    }
+
+    @Test
+    public void shouldFindProjectsForPerson() {
+        // given
+        var personId = 7;
+        var pageable = PageRequest.of(0, 10);
+
+        var projectIndex = new ProjectIndex();
+        projectIndex.setDatabaseId(1);
+        projectIndex.setPersonIds(List.of(personId));
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+            eq(ProjectIndex.class), eq("project")))
+            .thenReturn(new PageImpl<>(List.of(projectIndex), pageable, 1));
+
+        // when
+        var result = projectService.findProjectsForPerson(personId, null, false, List.of(),
+            pageable);
+
+        // then
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().getFirst().getDatabaseId());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+            eq(ProjectIndex.class), eq("project"));
+    }
+
+    @Test
+    public void shouldFindProjectsForOrganisationUnitFromWholeSubHierarchy() {
+        // given
+        var organisationUnitId = 3;
+        var pageable = PageRequest.of(0, 10);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId))
+            .thenReturn(List.of(organisationUnitId, 4));
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+            eq(ProjectIndex.class), eq("project")))
+            .thenReturn(Page.empty());
+
+        // when
+        var result = projectService.findProjectsForOrganisationUnit(
+            organisationUnitId, List.of("test"), true, List.of(ProjectStatus.ONGOING), pageable);
+
+        // then
+        assertNotNull(result);
+        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+            eq(ProjectIndex.class), eq("project"));
+    }
+
+    @Test
+    public void shouldIndexOnlySystemContributorsWhenProjectIsIndexed() {
+        // given
+        var projectId = 1;
+        var project = new Project();
+        project.setId(projectId);
+        project.setStatus(ProjectStatus.ONGOING);
+
+        var person = new Person();
+        person.setId(11);
+        var linkedContribution = new PersonProjectContribution();
+        linkedContribution.setPerson(person);
+        var externalContribution = new PersonProjectContribution();
+        project.getPersons().addAll(List.of(linkedContribution, externalContribution));
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(22);
+        var linkedOrganisation = new OrganisationUnitProjectContribution();
+        linkedOrganisation.setOrganisationUnit(organisationUnit);
+        linkedOrganisation.setContributionType(OrganisationUnitProjectContributionType.PARTNER);
+        project.getOrganisations().add(linkedOrganisation);
+
+        var index = new ProjectIndex();
+
+        // when
+        projectService.indexProject(project, index);
+
+        // then
+        assertEquals(List.of(11), index.getPersonIds());
+        assertEquals(List.of(22), index.getOrganisationUnitIds());
+        verify(projectIndexRepository).save(index);
     }
 
     @Test
@@ -596,6 +687,7 @@ public class ProjectServiceTest {
         assertEquals(PersonProjectInvestigationRole.RESEARCHER, result.getInvestigationRole());
         assertTrue(project.getPersons().contains(contribution));
         verify(projectRepository).save(project);
+        verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
 
     @Test
@@ -620,6 +712,7 @@ public class ProjectServiceTest {
         // then
         assertTrue(project.getPersons().isEmpty());
         verify(projectRepository).save(project);
+        verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
 
     @Test
@@ -651,6 +744,7 @@ public class ProjectServiceTest {
         assertEquals(1, result.getOrderNumber());
         assertTrue(project.getOrganisations().contains(contribution));
         verify(projectRepository).save(project);
+        verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
 
     @Test
@@ -676,6 +770,7 @@ public class ProjectServiceTest {
         // then
         assertTrue(project.getOrganisations().isEmpty());
         verify(projectRepository).save(project);
+        verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
 
     @Test

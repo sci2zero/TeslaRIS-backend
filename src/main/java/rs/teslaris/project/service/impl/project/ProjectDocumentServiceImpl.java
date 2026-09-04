@@ -26,6 +26,8 @@ import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,10 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
     implements ProjectDocumentService {
 
     private final ProjectDocumentRepository projectDocumentRepository;
+
+    private final FundingPartRepository fundingPartRepository;
+
+    private final FundingPartFactory fundingPartFactory;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -159,24 +165,13 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
 
         dto.getFundingParts().forEach(partDTO -> {
             var part = buildFundingPart(partDTO, projectDocument);
-            projectDocument.getFundingParts().add(part);
+            projectDocument.getFundingParts().add(fundingPartRepository.save(part));
         });
     }
 
     private FundingPart buildFundingPart(FundingPartDTO dto, ProjectDocument parent) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(dto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(dto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(dto.getAmount().getAmount());
-
-        if (Objects.nonNull(dto.getFundingId())) {
-            part.setProjectDocument(parent);
-        }
+        var part = fundingPartFactory.buildFundingPart(dto);
+        part.setProjectDocument(parent);
 
         return part;
     }

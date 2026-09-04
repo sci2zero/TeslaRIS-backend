@@ -37,6 +37,8 @@ import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -49,6 +51,10 @@ import java.util.concurrent.CompletableFuture;
 public class FundingServiceImpl extends JPAServiceImpl<Funding> implements FundingService {
 
     private final FundingRepository fundingRepository;
+
+    private final FundingPartRepository fundingPartRepository;
+
+    private final FundingPartFactory fundingPartFactory;
 
     private final SearchService<FundingIndex> searchService;
 
@@ -252,21 +258,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         fundingDTO.getFundingParts().forEach(partDTO -> {
             var part = buildFundingPart(partDTO, funding);
-            funding.getFundingParts().add(part);
+            funding.getFundingParts().add(fundingPartRepository.save(part));
         });
     }
 
     private FundingPart buildFundingPart(FundingPartDTO partDTO, Funding parent) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(partDTO.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(partDTO.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDTO.getAmount().getAmount());
-
+        var part = fundingPartFactory.buildFundingPart(partDTO);
         part.setFunding(parent);
 
         return part;

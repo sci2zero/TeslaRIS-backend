@@ -383,6 +383,10 @@ public class SecurityConfiguration {
 
                 // PROJECTS
                 .requestMatchers(HttpMethod.GET, "/api/project/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/for-researcher/{personId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/project/for-organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/project/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/project/{projectId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/project/{projectId}/documents").permitAll()

@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
@@ -56,6 +57,8 @@ public class OrganisationUnitProjectContributionDTO {
 
     @Valid
     private List<FundingPartDTO> fundingParts = new ArrayList<>();
+
+    private MonetaryAmountDTO netContribution;
 
     @Valid
     private List<MultilingualContentDTO> displayProject = new ArrayList<>();

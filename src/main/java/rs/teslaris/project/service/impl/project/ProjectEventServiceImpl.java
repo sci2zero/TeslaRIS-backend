@@ -20,19 +20,24 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.project.converter.project.ProjectEventConverter;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.ProjectEvent;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
     implements ProjectEventService {
 
+    private final FundingPartFactory fundingPartFactory;
+
     private final ProjectEventRepository projectEventRepository;
+
+    private final FundingPartRepository fundingPartRepository;
 
     private final IndexBulkUpdateService indexBulkUpdateService;
     private final MultilingualContentService multilingualContentService;
@@ -155,24 +160,13 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
 
         dto.getFundingParts().forEach(partDTO -> {
             var part = buildFundingPart(partDTO, projectEvent);
-            projectEvent.getFundingParts().add(part);
+            projectEvent.getFundingParts().add(fundingPartRepository.save(part));
         });
     }
 
     private FundingPart buildFundingPart(FundingPartDTO dto, ProjectEvent parent) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(dto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(dto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(dto.getAmount().getAmount());
-
-        if (Objects.nonNull(dto.getFundingId())) {
-            part.setProjectEvent(parent);
-        }
+        var part = fundingPartFactory.buildFundingPart(dto);
+        part.setProjectEvent(parent);
 
         return part;
     }
