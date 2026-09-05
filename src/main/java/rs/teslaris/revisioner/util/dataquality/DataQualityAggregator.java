@@ -1,6 +1,8 @@
 package rs.teslaris.revisioner.util.dataquality;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.FiltersBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -10,6 +12,7 @@ import jakarta.annotation.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -176,6 +179,200 @@ public class DataQualityAggregator {
      */
     public Optional<TopFailedRule> topFailedRule(Query query, Collection<String> ruleKeys) {
         return topFailedRule(query, ruleKeys, "failed_rule_keys");
+    }
+
+    /**
+     * The issue counts of the records a query matches, split by severity, alongside the share of
+     * them their activities raised.
+     * <p>
+     * Both halves are read in one request and in the same unit, because the severity counters cover
+     * the whole record: an Activities row can only be told apart from the row of the record
+     * carrying it by subtracting the activity counters of the same severity.
+     */
+    public Optional<IssueBreakdown> aggregateIssueBreakdown(Query query) {
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .aggregations("errorFailures", a -> a.sum(s -> s.field("error_failed_rules")))
+            .aggregations("warningFailures", a -> a.sum(s -> s.field("warning_failed_rules")))
+            .aggregations("infoFailures", a -> a.sum(s -> s.field("info_failed_rules")))
+            .aggregations("activityErrors", a -> a.sum(s -> s.field("activity_error_issues")))
+            .aggregations("activityWarnings", a -> a.sum(s -> s.field("activity_warning_issues")))
+            .aggregations("activityInfos", a -> a.sum(s -> s.field("activity_info_issues")))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
+
+            return Optional.of(new IssueBreakdown(
+                sum(response, "errorFailures"),
+                sum(response, "warningFailures"),
+                sum(response, "infoFailures"),
+                sum(response, "activityErrors"),
+                sum(response, "activityWarnings"),
+                sum(response, "activityInfos")
+            ));
+        } catch (Exception e) {
+            log.warn("Unable to aggregate the issue breakdown. Reason: {}", e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * One metric evaluated at several instants in a single request.
+     * <p>
+     * Every named filter is a point in time - a `filters` aggregation runs them side by side, so a
+     * seven-point series costs one round trip rather than seven. The buckets are keyed, so the
+     * caller reads its own names back.
+     * <p>
+     * Each bucket carries every figure any caller might need from it: the record average, the count
+     * of records matching a boolean field, and the activity sums. Activities are measured through
+     * sums over `activities_count` rather than an average over records, so a bucket that has to
+     * answer for both an entity-type row and the Activities row needs both shapes at once.
+     */
+    public Optional<Map<String, PeriodMetric>> aggregateMetricByPeriod(
+        Query baseQuery, Map<String, Query> periodFilters, MetricAggregation metric) {
+
+        if (periodFilters.isEmpty()) {
+            return Optional.of(Map.of());
+        }
+
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(baseQuery)
+            .aggregations("periods", a -> a
+                .filters(f -> f.keyed(true).filters(buckets -> buckets.keyed(periodFilters)))
+                .aggregations(periodAggregations(metric)))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            if (Objects.isNull(response) ||
+                Objects.isNull(response.aggregations().get("periods"))) {
+                return Optional.empty();
+            }
+
+            var buckets = response.aggregations().get("periods").filters().buckets().keyed();
+            var values = new LinkedHashMap<String, PeriodMetric>();
+
+            periodFilters.keySet().forEach(name -> {
+                var bucket = buckets.get(name);
+
+                values.put(name, Objects.isNull(bucket)
+                    ? PeriodMetric.empty()
+                    : readPeriodMetric(bucket, metric));
+            });
+
+            return Optional.of(values);
+        } catch (Exception e) {
+            log.warn("Unable to aggregate the metric over periods. Reason: {}", e.getMessage());
+
+            return Optional.empty();
+        }
+    }
+
+    private Map<String, Aggregation> periodAggregations(MetricAggregation metric) {
+        var aggregations = new LinkedHashMap<String, Aggregation>();
+
+        if (Objects.nonNull(metric.averageField())) {
+            aggregations.put("average",
+                Aggregation.of(a -> a.avg(avg -> avg.field(metric.averageField()))));
+        }
+
+        if (Objects.nonNull(metric.matchingField())) {
+            aggregations.put("matching", Aggregation.of(a -> a
+                .filter(f -> f.term(term -> term.field(metric.matchingField()).value(true)))));
+        }
+
+        if (Objects.nonNull(metric.activitySumField())) {
+            aggregations.put("activitySum",
+                Aggregation.of(a -> a.sum(s -> s.field(metric.activitySumField()))));
+            aggregations.put("activityCount",
+                Aggregation.of(a -> a.sum(s -> s.field("activities_count"))));
+        }
+
+        return aggregations;
+    }
+
+    private PeriodMetric readPeriodMetric(FiltersBucket bucket, MetricAggregation metric) {
+        Double average = null;
+
+        if (Objects.nonNull(metric.averageField())) {
+            var value = bucket.aggregations().get("average").avg().value();
+            average = Double.isNaN(value) || Double.isInfinite(value) ? null : value;
+        }
+
+        var matching = Objects.nonNull(metric.matchingField())
+            ? bucket.aggregations().get("matching").filter().docCount()
+            : 0;
+
+        double activitySum = 0;
+        long activityCount = 0;
+
+        if (Objects.nonNull(metric.activitySumField())) {
+            var sum = bucket.aggregations().get("activitySum").sum().value();
+            activitySum = Double.isNaN(sum) ? 0 : sum;
+
+            var count = bucket.aggregations().get("activityCount").sum().value();
+            activityCount = Double.isNaN(count) ? 0 : (long) count;
+        }
+
+        return new PeriodMetric(bucket.docCount(), average, matching, activitySum, activityCount);
+    }
+
+    /**
+     * The rules that failed on the most records, most frequent first, capped at {@code limit}.
+     * Ties break on the alphabetically first key, as {@code topFailedRule} does.
+     */
+    public List<TopFailedRule> topFailedRules(Query query, Collection<String> ruleKeys, int limit) {
+        if (ruleKeys.isEmpty()) {
+            return List.of();
+        }
+
+        var request = new SearchRequest.Builder()
+            .index(ASSESSMENT_INDEX)
+            .size(0)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .aggregations("topRules", a -> a
+                .terms(terms -> terms
+                    .field("failed_rule_keys")
+                    .include(include -> include.terms(List.copyOf(ruleKeys)))
+                    .size(ruleKeys.size())
+                    .minDocCount(1)))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, Void.class);
+
+            if (Objects.isNull(response) ||
+                Objects.isNull(response.aggregations().get("topRules"))) {
+                return List.of();
+            }
+
+            return response.aggregations().get("topRules").sterms().buckets().array().stream()
+                .map(bucket -> new TopFailedRule(bucket.key().stringValue(), bucket.docCount()))
+                .sorted(Comparator
+                    .comparingLong(TopFailedRule::occurrences).reversed()
+                    .thenComparing(TopFailedRule::ruleKey))
+                .limit(limit)
+                .toList();
+        } catch (Exception e) {
+            log.warn("Unable to aggregate the most frequent failed rules. Reason: {}",
+                e.getMessage());
+
+            return List.of();
+        }
     }
 
     /**
@@ -474,6 +671,27 @@ public class DataQualityAggregator {
     }
 
     public record TopFailedRule(String ruleKey, long occurrences) {
+    }
+
+    public record MetricAggregation(@Nullable String averageField, @Nullable String matchingField,
+                                    @Nullable String activitySumField) {
+    }
+
+    public record PeriodMetric(long recordsAssessed, @Nullable Double average, long matchingRecords,
+                               double activitySum, long activityCount) {
+
+        public static PeriodMetric empty() {
+            return new PeriodMetric(0, null, 0, 0, 0);
+        }
+    }
+
+    public record IssueBreakdown(long errorIssues, long warningIssues, long infoIssues,
+                                 long activityErrorIssues, long activityWarningIssues,
+                                 long activityInfoIssues) {
+
+        public static IssueBreakdown empty() {
+            return new IssueBreakdown(0, 0, 0, 0, 0, 0);
+        }
     }
 
     public record BlockingAggregates(long distinctBlockingConstraints, long blockingIssues) {

@@ -97,7 +97,9 @@ public class DataQualityCalculator {
      */
     private static final Set<String> NON_SCORING_TARGETS = Set.of();
 
-    private static final List<String> ACTIVITY_TARGETS = List.of("Activity");
+    private static final String ACTIVITY_TARGET = "Activity";
+
+    private static final List<String> ACTIVITY_TARGETS = List.of(ACTIVITY_TARGET);
 
     private final Map<String, Pattern> compiledPatternCache = new ConcurrentHashMap<>();
 
@@ -1771,13 +1773,18 @@ public class DataQualityCalculator {
     }
 
     private Deductions computeDeductions(DataQualityAssessment assessment) {
+        return computeDeductions(assessment, assessment.getIssues());
+    }
+
+    private Deductions computeDeductions(DataQualityAssessment assessment,
+                                         List<ConstraintEvaluationResult> issues) {
         double deductedPoints = 0;
         double deductedFairPoints = 0;
 
         EnumMap<QualityDimension, Double> deductedPerDimension =
             new EnumMap<>(QualityDimension.class);
 
-        for (var issue : assessment.getIssues()) {
+        for (var issue : issues) {
             var remark = scoringRemark(assessment, issue.getKey());
 
             if (Objects.isNull(remark)) {
@@ -1842,22 +1849,21 @@ public class DataQualityCalculator {
     }
 
     private void scoreActivity(DataQualityAssessment assessment, int issuesBeforeActivity) {
-        var activityIssues = new ArrayList<>(assessment.getIssues()
-            .subList(issuesBeforeActivity, assessment.getIssues().size()));
+        var activityIssues = activityIssuesRaisedSince(assessment, issuesBeforeActivity);
+
+        var deductions = computeDeductions(assessment, activityIssues);
 
         var totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
             assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS);
 
-        var deductedPoints = activityIssues.stream()
-            .map(issue -> scoringRemark(assessment, issue.getKey()))
-            .filter(Objects::nonNull)
-            .mapToDouble(remark -> DataQualityAssessmentConfigurationLoader.getWeightedPoints(
-                assessment.getProfileName(), assessment.getProfileVersion(), remark))
-            .sum();
-
-        var score = percentage(totalPoints - deductedPoints, totalPoints);
+        var score = percentage(totalPoints - deductions.points(), totalPoints);
 
         assessment.setActivityScoreSum(assessment.getActivityScoreSum() + score);
+
+        accumulateActivityDimensionScores(assessment, deductions.perDimension());
+        accumulateActivityFairScore(assessment, deductions.fairPoints());
+
+        countActivityIssuesBySeverity(assessment, activityIssues);
 
         // The same two conditions the record itself is judged by, applied to one activity.
         var blocked = activityIssues.stream().anyMatch(ConstraintEvaluationResult::isBlocking);
@@ -1867,6 +1873,64 @@ public class DataQualityCalculator {
         if (!blocked && score >= minimumRequiredScore) {
             assessment.setActivityPublicationCandidatesCount(
                 assessment.getActivityPublicationCandidatesCount() + 1);
+        }
+    }
+
+    private List<ConstraintEvaluationResult> activityIssuesRaisedSince(
+        DataQualityAssessment assessment, int issuesBeforeActivity) {
+
+        return assessment.getIssues()
+            .subList(issuesBeforeActivity, assessment.getIssues().size())
+            .stream()
+            .filter(issue -> isActivityRule(assessment, issue.getKey()))
+            .toList();
+    }
+
+    private void accumulateActivityDimensionScores(
+        DataQualityAssessment assessment,
+        EnumMap<QualityDimension, Double> deductedPerDimension) {
+
+        for (var dimension : QualityDimension.values()) {
+            var dimensionTotal = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
+                assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS,
+                dimension);
+
+            var score = percentage(
+                dimensionTotal - deductedPerDimension.getOrDefault(dimension, 0.0),
+                dimensionTotal);
+
+            assessment.getActivityDimensionScoreSums().merge(dimension, score, Double::sum);
+        }
+    }
+
+    private void accumulateActivityFairScore(DataQualityAssessment assessment,
+                                             double deductedFairPoints) {
+        var totalFairPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighedFair(
+            assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS);
+
+        assessment.setActivityFairScoreSum(assessment.getActivityFairScoreSum() +
+            percentage(totalFairPoints - deductedFairPoints, totalFairPoints));
+    }
+
+    private boolean isActivityRule(DataQualityAssessment assessment, String ruleKey) {
+        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
+            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
+
+        return Objects.nonNull(remark) && Objects.nonNull(remark.target()) &&
+            remark.target().startsWith(ACTIVITY_TARGET);
+    }
+
+    private void countActivityIssuesBySeverity(DataQualityAssessment assessment,
+                                               List<ConstraintEvaluationResult> activityIssues) {
+        for (var issue : activityIssues) {
+            switch (issue.getSeverity()) {
+                case ERROR -> assessment.setActivityErrorIssues(
+                    assessment.getActivityErrorIssues() + 1);
+                case WARNING -> assessment.setActivityWarningIssues(
+                    assessment.getActivityWarningIssues() + 1);
+                case INFO -> assessment.setActivityInfoIssues(
+                    assessment.getActivityInfoIssues() + 1);
+            }
         }
     }
 

@@ -21,9 +21,13 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.IssueStatisticsDTO;
 import rs.teslaris.revisioner.dto.PublicationCandidateAnalysisDTO;
+import rs.teslaris.revisioner.dto.QualityTrendDTO;
 import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
+import rs.teslaris.revisioner.util.dataquality.TrendGranularity;
+import rs.teslaris.revisioner.util.dataquality.TrendMetric;
 
 @RestController
 @RequestMapping("/api/repository-analytics")
@@ -57,6 +61,58 @@ public class RepositoryAnalyticsController {
         @RequestHeader("Authorization") String bearerToken) {
         return repositoryAnalyticsService.getPublicationCandidateAnalysis(profileName,
             resolveOrganisationUnitId(bearerToken), assessmentDate);
+    }
+
+    @GetMapping(value = "/issue-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public IssueStatisticsDTO getIssueStatistics(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestHeader("Authorization") String bearerToken) {
+        return repositoryAnalyticsService.getIssueStatistics(profileName,
+            resolveOrganisationUnitId(bearerToken), assessmentDate);
+    }
+
+    @GetMapping(value = "/trends", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public QualityTrendDTO getQualityTrend(
+        @RequestParam String profileName,
+        @RequestParam(defaultValue = "OVERALL_SCORE") TrendMetric metric,
+        @RequestParam(defaultValue = "WEEKLY") TrendGranularity granularity,
+        @RequestParam(required = false) Integer points,
+        @RequestHeader("Authorization") String bearerToken) {
+        return repositoryAnalyticsService.getQualityTrend(profileName,
+            resolveOrganisationUnitId(bearerToken), metric, granularity, points);
+    }
+
+    @GetMapping("/trends/download")
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public ResponseEntity<InputStreamResource> downloadQualityTrend(
+        @RequestParam String profileName,
+        @RequestParam(defaultValue = "OVERALL_SCORE") TrendMetric metric,
+        @RequestParam(defaultValue = "WEEKLY") TrendGranularity granularity,
+        @RequestParam(required = false) Integer points,
+        @RequestParam(defaultValue = "en") String language,
+        @RequestHeader("Authorization") String bearerToken) {
+        return serveResponseFile(
+            repositoryAnalyticsService.exportQualityTrend(profileName,
+                resolveOrganisationUnitId(bearerToken), metric, granularity, points, language),
+            "quality-trends");
+    }
+
+    @GetMapping("/issue-statistics/download")
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public ResponseEntity<InputStreamResource> downloadIssueStatistics(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestParam(defaultValue = "en") String language,
+        @RequestHeader("Authorization") String bearerToken) {
+        return serveResponseFile(
+            repositoryAnalyticsService.exportIssueStatistics(profileName,
+                resolveOrganisationUnitId(bearerToken), assessmentDate, language),
+            "issue-statistics");
     }
 
     @GetMapping("/publication-candidates/download")

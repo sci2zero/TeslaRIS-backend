@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -42,6 +43,8 @@ import rs.teslaris.revisioner.service.impl.RepositoryAnalyticsServiceImpl;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.dataquality.RepositoryEntityType;
+import rs.teslaris.revisioner.util.dataquality.TrendGranularity;
+import rs.teslaris.revisioner.util.dataquality.TrendMetric;
 
 @SpringBootTest
 public class RepositoryAnalyticsServiceTest {
@@ -60,6 +63,9 @@ public class RepositoryAnalyticsServiceTest {
     @InjectMocks
     private RepositoryAnalyticsServiceImpl repositoryAnalyticsService;
 
+    private static DataQualityAggregator.PeriodMetric periodMetric(long records, Double average) {
+        return new DataQualityAggregator.PeriodMetric(records, average, 0, 0, 0);
+    }
 
     private MockedStatic<DataQualityAssessmentConfigurationLoader> mockConfigurationLoader() {
         var configurationLoader = mockStatic(DataQualityAssessmentConfigurationLoader.class);
@@ -81,7 +87,6 @@ public class RepositoryAnalyticsServiceTest {
 
         return configurationLoader;
     }
-
 
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, long publicationCandidates,
@@ -123,6 +128,19 @@ public class RepositoryAnalyticsServiceTest {
         when(dataQualityAggregator.topFailedRule(any(), any()))
             .thenReturn(Optional.of(
                 new DataQualityAggregator.TopFailedRule(ruleKey, occurrences)));
+    }
+
+    /**
+     * The same breakdown answers every scope pass - persons, organisation units and outputs - so a
+     * figure a row derives from more than one pass shows up multiplied in the assertions.
+     */
+    private void stubIssueBreakdown(long errorIssues, long warningIssues, long infoIssues,
+                                    long activityErrorIssues, long activityWarningIssues,
+                                    long activityInfoIssues) {
+        when(dataQualityAggregator.aggregateIssueBreakdown(any()))
+            .thenReturn(Optional.of(new DataQualityAggregator.IssueBreakdown(
+                errorIssues, warningIssues, infoIssues, activityErrorIssues,
+                activityWarningIssues, activityInfoIssues)));
     }
 
     private void stubBlocking(long distinctConstraints, long blockingIssues) {
@@ -571,6 +589,178 @@ public class RepositoryAnalyticsServiceTest {
     }
 
     @Test
+    public void shouldSumIssueSeveritiesOverEveryEntityType() {
+        // given (100/50/20 per scope, of which 10 per severity belong to activities)
+        stubIssueBreakdown(100, 50, 20, 10, 10, 10);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var statistics = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null);
+
+            // then (three record rows of 90/40/10 plus an activities row of 20/20/20)
+            assertEquals(290, statistics.errorIssues());
+            assertEquals(140, statistics.warningIssues());
+            assertEquals(50, statistics.infoIssues());
+            assertEquals(480, statistics.openIssues());
+        }
+    }
+
+    /**
+     * The severity counters cover the whole record, so an activity issue would otherwise be counted
+     * both on the row of the record raising it and on the Activities row.
+     */
+    @Test
+    public void shouldReportActivityIssuesOnTheActivitiesRowOnly() {
+        // given
+        stubIssueBreakdown(100, 50, 20, 10, 10, 10);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var rows = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null)
+                .issuesBySeverityAndEntityType();
+
+            // then
+            assertEquals(6, rows.size());
+
+            var persons = rows.getFirst();
+            assertEquals(RepositoryEntityType.PERSONS, persons.entityType());
+            assertEquals(90, persons.errorIssues());
+            assertEquals(40, persons.warningIssues());
+            assertEquals(10, persons.infoIssues());
+
+            // Documents and persons both raise activities, so that row gathers two passes.
+            var activities = rows.get(3);
+            assertEquals(RepositoryEntityType.ACTIVITIES, activities.entityType());
+            assertEquals(20, activities.errorIssues());
+            assertEquals(20, activities.warningIssues());
+            assertEquals(20, activities.infoIssues());
+        }
+    }
+
+    @Test
+    public void shouldMarkProjectsAndFundingsUnsupportedInTheIssueBreakdown() {
+        // given
+        stubIssueBreakdown(100, 50, 20, 0, 0, 0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var rows = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null)
+                .issuesBySeverityAndEntityType();
+
+            // then
+            List.of(rows.get(4), rows.get(5)).forEach(row -> {
+                assertFalse(row.supported());
+                assertEquals(0, row.errorIssues());
+                assertEquals(0, row.warningIssues());
+                assertEquals(0, row.infoIssues());
+            });
+        }
+    }
+
+    /**
+     * A recurring constraint stands for a rule across the whole repository rather than for one
+     * entity type, so the rows carry no entity type.
+     */
+    @Test
+    public void shouldListTheTopRecurringConstraintsMostFrequentFirst() {
+        // given
+        stubIssueBreakdown(100, 50, 20, 0, 0, 0);
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt()))
+            .thenReturn(List.of(
+                new DataQualityAggregator.TopFailedRule("doiNotResolvable", 4281),
+                new DataQualityAggregator.TopFailedRule("noProjectFunding", 2164)));
+
+        try (var configurationLoader = mockConfigurationLoader()) {
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Resolvable DOI")));
+
+            // when
+            var constraints = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null)
+                .topRecurringConstraints();
+
+            // then
+            assertEquals(2, constraints.size());
+            assertEquals("doiNotResolvable", constraints.getFirst().ruleKey());
+            assertEquals(4281, constraints.getFirst().occurrences());
+            assertNull(constraints.getFirst().entityType());
+        }
+    }
+
+    @Test
+    public void shouldAskForAtMostFiveRecurringConstraints() {
+        // given
+        stubIssueBreakdown(0, 0, 0, 0, 0, 0);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null);
+
+            // then
+            var limit = ArgumentCaptor.forClass(Integer.class);
+            verify(dataQualityAggregator).topFailedRules(any(), any(), limit.capture());
+
+            assertEquals(5, limit.getValue());
+        }
+    }
+
+    @Test
+    public void shouldFallBackToZeroesWhenTheIssueBreakdownIsUnavailable() {
+        // given (the report degrades rather than failing)
+        when(dataQualityAggregator.aggregateIssueBreakdown(any()))
+            .thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var statistics = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null);
+
+            // then
+            assertEquals(0, statistics.openIssues());
+            assertTrue(statistics.topRecurringConstraints().isEmpty());
+        }
+    }
+
+    @Test
+    public void shouldExportIssueStatisticsWithBothPanels() {
+        // given
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubIssueBreakdown(100, 50, 20, 10, 10, 10);
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt()))
+            .thenReturn(List.of(
+                new DataQualityAggregator.TopFailedRule("doiNotResolvable", 4281)));
+
+        try (var configurationLoader = mockConfigurationLoader()) {
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Resolvable DOI")));
+
+            // when
+            var rows = exportedRows(repositoryAnalyticsService.exportIssueStatistics(
+                PROFILE, null, null, "en"));
+
+            // then
+            assertEquals("repositoryAnalytics.issueStatistics", rows.getFirst().getFirst());
+
+            List.of("repositoryAnalytics.issuesBySeverityAndEntityType",
+                    "repositoryAnalytics.topRecurringConstraints")
+                .forEach(panel -> assertTrue(
+                    rows.stream().anyMatch(row -> row.contains(panel))));
+
+            assertTrue(rows.stream().anyMatch(row -> row.contains("Resolvable DOI")));
+
+            // Numeric cells stay numeric, so the error total is a number rather than text.
+            assertEquals(290.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.errorIssues").get(1));
+        }
+    }
+
+    @Test
     public void shouldReturnNoPercentageWhenNothingIsAssessed() {
         // given
         stubAggregates(0, 0, 0, 0, 0, null, 10, 0);
@@ -683,6 +873,302 @@ public class RepositoryAnalyticsServiceTest {
             verify(dataQualityAggregator).countRecords(eq("person"), countQuery.capture());
             assertTrue(countQuery.getValue().toString().contains("employment_institutions_id"));
         }
+    }
+
+    @Test
+    public void shouldReturnOnePointPerRequestedPeriod() {
+        // given
+        stubTrend(Map.of(
+            "p0", periodMetric(10, 70.0),
+            "p1", periodMetric(12, 75.0),
+            "p2", periodMetric(14, 80.0)));
+
+        // when
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3);
+
+        // then
+        assertEquals(3, trend.series().size());
+        assertEquals(70.0, trend.series().getFirst().value());
+        assertEquals(80.0, trend.series().getLast().value());
+        assertEquals(14, trend.series().getLast().recordsAssessed());
+    }
+
+    @Test
+    public void shouldDefaultThePointCountPerGranularity() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        var daily = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, null);
+        var weekly = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, null);
+        var monthly = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.MONTHLY, null);
+
+        // then
+        assertEquals(7, daily.series().size());
+        assertEquals(5, weekly.series().size());
+        assertEquals(6, monthly.series().size());
+    }
+
+    /**
+     * The series length drives how many filters one aggregation carries, so an unbounded request
+     * would be an unbounded aggregation.
+     */
+    @Test
+    public void shouldClampTheRequestedPointCountToTheHardCap() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        var tooMany = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 500);
+        var tooFew = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 0);
+
+        // then
+        assertEquals(10, tooMany.series().size());
+        assertEquals(2, tooFew.series().size());
+    }
+
+    @Test
+    public void shouldMeasureEveryPointInOneAggregation() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.OVERALL_SCORE,
+            TrendGranularity.DAILY, 4);
+
+        // then (one request for the series, one for the entity-type panel)
+        verify(dataQualityAggregator, times(2)).aggregateMetricByPeriod(any(), any(), any());
+        assertEquals(4, capturedPeriodFilters(0).size());
+    }
+
+    @Test
+    public void shouldSelectTheAssessmentCurrentAtEachPoint() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.OVERALL_SCORE,
+            TrendGranularity.DAILY, 2);
+
+        // then
+        capturedPeriodFilters(0).values().forEach(filter -> {
+            assertTrue(filter.toString().contains("assessment_date"));
+            assertTrue(filter.toString().contains("valid_to"));
+            assertTrue(filter.toString().contains("23:59:59.999"));
+        });
+    }
+
+    @Test
+    public void shouldDeriveIndicatorsFromTheSeries() {
+        // given
+        stubTrend(Map.of(
+            "p0", periodMetric(10, 72.0),
+            "p1", periodMetric(10, 90.0),
+            "p2", periodMetric(10, 84.7),
+            "p3", periodMetric(10, 82.1)));
+
+        // when
+        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 4).indicators();
+
+        // then
+        assertEquals(82.1, indicators.current());
+        assertEquals(84.7, indicators.previous());
+        assertEquals(-2.6, indicators.change(), 0.0001);
+        assertEquals(90.0, indicators.best());
+        assertEquals(72.0, indicators.lowest());
+    }
+
+    @Test
+    public void shouldReportEmptyIndicatorsWhenNothingWasAssessed() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3).indicators();
+
+        // then
+        assertNull(indicators.current());
+        assertNull(indicators.change());
+        assertNull(indicators.best());
+    }
+
+    @Test
+    public void shouldAggregateTheScoreFieldOfTheRequestedDimension() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.CONSISTENCY,
+            TrendGranularity.WEEKLY, 2);
+
+        // then
+        var aggregation = capturedMetricAggregation();
+        assertEquals("consistency_score", aggregation.averageField());
+        assertEquals("activity_dimension_score_sums.CONSISTENCY", aggregation.activitySumField());
+        assertNull(aggregation.matchingField());
+    }
+
+    /**
+     * A rate is a share of the records in the bucket, not an average of a stored field.
+     */
+    @Test
+    public void shouldCountMatchingRecordsForThePublicationCandidateRate() {
+        // given
+        stubTrend(Map.of("p0", new DataQualityAggregator.PeriodMetric(200, null, 50, 0, 0)));
+
+        // when
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.PUBLICATION_CANDIDATE_RATE, TrendGranularity.WEEKLY, 1);
+
+        // then
+        assertEquals("publication_candidate", capturedMetricAggregation().matchingField());
+        assertNull(capturedMetricAggregation().averageField());
+        assertEquals(25.0, trend.series().getFirst().value());
+    }
+
+    @Test
+    public void shouldReportEveryEntityTypeInTheTrendPanel() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        var rows = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3).trendByEntityType();
+
+        // then
+        assertEquals(6, rows.size());
+        assertEquals(RepositoryEntityType.PERSONS, rows.getFirst().entityType());
+        assertEquals(RepositoryEntityType.ACTIVITIES, rows.get(3).entityType());
+
+        List.of(rows.get(4), rows.get(5)).forEach(row -> {
+            assertFalse(row.supported());
+            assertNull(row.current());
+        });
+    }
+
+    /**
+     * The panel compares the two newest points, so it needs one filter per entity type per period.
+     */
+    @Test
+    public void shouldCompareTheTwoNewestPointsPerEntityType() {
+        // given
+        stubTrend(Map.of(
+            "p1#PERSONS", periodMetric(10, 92.0),
+            "p0#PERSONS", periodMetric(10, 90.6)));
+
+        // when
+        var persons = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().getFirst();
+
+        // then
+        assertEquals(8, capturedPeriodFilters(1).size());
+        assertEquals(92.0, persons.current());
+        assertEquals(90.6, persons.previous());
+        assertEquals(1.4, persons.change(), 0.0001);
+    }
+
+    /**
+     * Activities are not records, so their figure is a sum over the activities assessed rather than
+     * an average over the records carrying them.
+     */
+    @Test
+    public void shouldMeasureActivitiesAsSumsOverActivitiesAssessed() {
+        // given (2400 points over 30 activities)
+        stubTrend(Map.of(
+            "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, 99.0, 0, 2400.0, 30)));
+
+        // when
+        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().get(3);
+
+        // then (the record average of the same bucket is ignored)
+        assertEquals(80.0, activities.current());
+    }
+
+    @Test
+    public void shouldReportNoActivityValueWhenNoActivityWasAssessed() {
+        // given
+        stubTrend(Map.of(
+            "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, 99.0, 0, 0.0, 0)));
+
+        // when
+        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().get(3);
+
+        // then
+        assertNull(activities.current());
+    }
+
+    @Test
+    public void shouldFallBackToAnEmptySeriesWhenAggregationIsUnavailable() {
+        // given (the report degrades rather than failing)
+        when(dataQualityAggregator.aggregateMetricByPeriod(any(), any(), any()))
+            .thenReturn(Optional.empty());
+
+        // when
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3);
+
+        // then
+        assertEquals(3, trend.series().size());
+        trend.series().forEach(point -> assertNull(point.value()));
+        assertNull(trend.indicators().current());
+    }
+
+    @Test
+    public void shouldExportTheTrendWithItsThreePanels() {
+        // given
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        stubTrend(Map.of(
+            "p0", periodMetric(10, 72.0),
+            "p1", periodMetric(10, 84.7)));
+
+        // when
+        var rows = exportedRows(repositoryAnalyticsService.exportQualityTrend(
+            PROFILE, null, TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 2, "en"));
+
+        // then
+        assertEquals("repositoryAnalytics.qualityTrends", rows.getFirst().getFirst());
+
+        List.of("repositoryAnalytics.currentIndicators", "repositoryAnalytics.metricOverTime",
+                "repositoryAnalytics.trendByEntityType")
+            .forEach(panel -> assertTrue(rows.stream().anyMatch(row -> row.contains(panel))));
+
+        // Percentages are stored as fractions with a percent format, not as text.
+        assertEquals(0.847,
+            (double) rowStartingWith(rows, "repositoryAnalytics.header.currentValue").get(1),
+            0.0001);
+    }
+
+    private void stubTrend(Map<String, DataQualityAggregator.PeriodMetric> values) {
+        when(dataQualityAggregator.aggregateMetricByPeriod(any(), any(), any()))
+            .thenReturn(Optional.of(values));
+    }
+
+    private Map<?, ?> capturedPeriodFilters(int invocation) {
+        var captor = ArgumentCaptor.forClass(Map.class);
+        verify(dataQualityAggregator, atLeastOnce())
+            .aggregateMetricByPeriod(any(), captor.capture(), any());
+
+        return captor.getAllValues().get(invocation);
+    }
+
+    private DataQualityAggregator.MetricAggregation capturedMetricAggregation() {
+        var captor = ArgumentCaptor.forClass(DataQualityAggregator.MetricAggregation.class);
+        verify(dataQualityAggregator, atLeastOnce())
+            .aggregateMetricByPeriod(any(), any(), captor.capture());
+
+        return captor.getValue();
     }
 
     private List<List<Object>> exportedRows(InputStreamResource report) {

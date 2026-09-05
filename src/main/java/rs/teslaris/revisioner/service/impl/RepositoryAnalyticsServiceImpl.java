@@ -14,9 +14,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,14 +38,22 @@ import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.revisioner.dto.DimensionQualityDTO;
 import rs.teslaris.revisioner.dto.EntityTypeQualityDTO;
+import rs.teslaris.revisioner.dto.EntityTypeTrendDTO;
+import rs.teslaris.revisioner.dto.IssueStatisticsDTO;
 import rs.teslaris.revisioner.dto.PrevalentIssueDTO;
 import rs.teslaris.revisioner.dto.PublicationCandidateAnalysisDTO;
+import rs.teslaris.revisioner.dto.QualityTrendDTO;
 import rs.teslaris.revisioner.dto.RepositoryOverviewDTO;
+import rs.teslaris.revisioner.dto.SeverityBreakdownDTO;
+import rs.teslaris.revisioner.dto.TrendIndicatorsDTO;
+import rs.teslaris.revisioner.dto.TrendPointDTO;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.dataquality.RepositoryEntityType;
+import rs.teslaris.revisioner.util.dataquality.TrendGranularity;
+import rs.teslaris.revisioner.util.dataquality.TrendMetric;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +77,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
     private static final String EMPTY_VALUE = "-";
+
+    private static final int TOP_RECURRING_CONSTRAINT_COUNT = 5;
+
+    private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
     private static final List<String> ACTIVITY_PARENT_TARGETS =
         List.of(DOCUMENT_TARGET, PERSON_TARGET);
@@ -205,6 +219,367 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             // TODO: fundings carry no quality assessments yet.
             PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public IssueStatisticsDTO getIssueStatistics(String profileName, Integer organisationUnitId,
+                                                 @Nullable LocalDate assessmentDate) {
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
+
+        var persons = issueBreakdown(profileName, scopeOrganisationUnitIds, assessmentDate,
+            termQuery("entity_type", EntityType.PERSON.name()));
+        var organisationUnits = issueBreakdown(profileName, scopeOrganisationUnitIds,
+            assessmentDate, termQuery("entity_type", EntityType.ORGANISATION_UNIT.name()));
+        var outputs = issueBreakdown(profileName, scopeOrganisationUnitIds, assessmentDate,
+            termQuery("target", DOCUMENT_TARGET));
+
+        var rows = List.of(
+            severityRow(RepositoryEntityType.PERSONS, persons),
+            severityRow(RepositoryEntityType.ORGANISATION_UNITS, organisationUnits),
+            severityRow(RepositoryEntityType.OUTPUTS, outputs),
+            activityRow(List.of(persons, outputs)),
+            // TODO: projects carry no quality assessments yet.
+            SeverityBreakdownDTO.unsupported(RepositoryEntityType.PROJECTS),
+            // TODO: fundings carry no quality assessments yet.
+            SeverityBreakdownDTO.unsupported(RepositoryEntityType.FUNDINGS)
+        );
+
+        var errorIssues = rows.stream().mapToLong(SeverityBreakdownDTO::errorIssues).sum();
+        var warningIssues = rows.stream().mapToLong(SeverityBreakdownDTO::warningIssues).sum();
+        var infoIssues = rows.stream().mapToLong(SeverityBreakdownDTO::infoIssues).sum();
+
+        return new IssueStatisticsDTO(
+            errorIssues + warningIssues + infoIssues,
+            errorIssues,
+            warningIssues,
+            infoIssues,
+            rows,
+            topRecurringConstraints(profileName, scopeOrganisationUnitIds, assessmentDate)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QualityTrendDTO getQualityTrend(String profileName, Integer organisationUnitId,
+                                           TrendMetric metric, TrendGranularity granularity,
+                                           @Nullable Integer points) {
+        var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
+        var periodEnds = periodEnds(granularity, granularity.resolvePoints(points));
+        var aggregation = metricAggregation(metric);
+
+        var baseQuery = trendBaseQuery(profileName, scopeOrganisationUnitIds);
+
+        var series = seriesOf(metric, granularity, periodEnds,
+            dataQualityAggregator.aggregateMetricByPeriod(baseQuery,
+                    periodFilters(periodEnds), aggregation)
+                .orElseGet(Map::of));
+
+        return new QualityTrendDTO(
+            metric,
+            granularity,
+            series,
+            indicatorsOf(series),
+            trendByEntityType(metric, baseQuery, periodEnds, aggregation)
+        );
+    }
+
+    /**
+     * The instants the series is measured at, oldest first. Each is the last millisecond of its
+     * period, so the newest point matches what every other tab shows for "current state".
+     */
+    private List<LocalDate> periodEnds(TrendGranularity granularity, int points) {
+        var today = LocalDate.now(ZoneOffset.UTC);
+        var ends = new ArrayList<LocalDate>();
+
+        for (var period = points - 1; period >= 0; period--) {
+            ends.add(switch (granularity) {
+                case DAILY -> today.minusDays(period);
+                case WEEKLY -> today.minusWeeks(period);
+                case MONTHLY -> today.minusMonths(period);
+            });
+        }
+
+        return ends;
+    }
+
+    private Query trendBaseQuery(String profileName, List<Integer> scopeOrganisationUnitIds) {
+        var clauses = new ArrayList<Query>();
+        clauses.add(termQuery("profile_name", profileName));
+
+        if (!scopeOrganisationUnitIds.isEmpty()) {
+            clauses.add(intTermsQuery("organisation_unit_ids", scopeOrganisationUnitIds));
+        }
+
+        return BoolQuery.of(b -> b.must(clauses))._toQuery();
+    }
+
+    /**
+     * The two range clauses that select the assessment current at that instant, one named filter
+     * per point of the series.
+     */
+    private Map<String, Query> periodFilters(List<LocalDate> periodEnds) {
+        var filters = new LinkedHashMap<String, Query>();
+
+        for (var period = 0; period < periodEnds.size(); period++) {
+            filters.put(periodKey(period), pointInTimeQuery(periodEnds.get(period)));
+        }
+
+        return filters;
+    }
+
+    private Query pointInTimeQuery(LocalDate periodEnd) {
+        var instant = INSTANT_FORMAT.format(
+            LocalDateTime.ofInstant(periodEnd.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC),
+                ZoneOffset.UTC));
+
+        return BoolQuery.of(b -> b
+            .must(rangeQuery("assessment_date", instant, true))
+            .must(rangeQuery("valid_to", instant, false))
+        )._toQuery();
+    }
+
+    private String periodKey(int period) {
+        return "p" + period;
+    }
+
+    private DataQualityAggregator.MetricAggregation metricAggregation(TrendMetric metric) {
+        if (metric.isRate()) {
+            return new DataQualityAggregator.MetricAggregation(null, "publication_candidate",
+                "activity_publication_candidates_count");
+        }
+
+        if (metric.isDimension()) {
+            return new DataQualityAggregator.MetricAggregation(
+                metric.dimension().name().toLowerCase(Locale.ROOT) + "_score", null,
+                "activity_dimension_score_sums." + metric.dimension().name());
+        }
+
+        return switch (metric) {
+            case FAIR_COMPLIANCE -> new DataQualityAggregator.MetricAggregation(
+                "quality_score_fair", null, "activity_fair_score_sum");
+            default -> new DataQualityAggregator.MetricAggregation(
+                "quality_score", null, "activity_score_sum");
+        };
+    }
+
+    private List<TrendPointDTO> seriesOf(TrendMetric metric, TrendGranularity granularity,
+                                         List<LocalDate> periodEnds,
+                                         Map<String, DataQualityAggregator.PeriodMetric> values) {
+        var series = new ArrayList<TrendPointDTO>();
+
+        for (var period = 0; period < periodEnds.size(); period++) {
+            var periodEnd = periodEnds.get(period);
+            var value = values.getOrDefault(periodKey(period),
+                DataQualityAggregator.PeriodMetric.empty());
+
+            series.add(new TrendPointDTO(
+                periodLabel(granularity, periodEnd),
+                periodEnd,
+                recordMetricValue(metric, value),
+                value.recordsAssessed()
+            ));
+        }
+
+        return series;
+    }
+
+    private String periodLabel(TrendGranularity granularity, LocalDate periodEnd) {
+        return switch (granularity) {
+            case DAILY -> periodEnd.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            // Built from the ISO week fields rather than a pattern, because 'w' in a pattern
+            // resolves against the default locale's week rules.
+            case WEEKLY -> String.format("%d-W%02d",
+                periodEnd.get(IsoFields.WEEK_BASED_YEAR),
+                periodEnd.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
+            case MONTHLY -> periodEnd.format(MONTH_FORMAT);
+        };
+    }
+
+    /**
+     * Records answer a score with an average and a candidate rate with a share of the bucket.
+     */
+    @Nullable
+    private Double recordMetricValue(TrendMetric metric,
+                                     DataQualityAggregator.PeriodMetric value) {
+        if (!metric.isRate()) {
+            return value.average();
+        }
+
+        return percentage(value.matchingRecords(), value.recordsAssessed());
+    }
+
+    /**
+     * Activities are not records, so their figures are sums over the activities assessed rather
+     * than an average over the records carrying them.
+     */
+    @Nullable
+    private Double activityMetricValue(TrendMetric metric,
+                                       DataQualityAggregator.PeriodMetric value) {
+        if (value.activityCount() == 0) {
+            return null;
+        }
+
+        var perActivity = value.activitySum() / value.activityCount();
+
+        return metric.isRate() ? perActivity * 100.0 : perActivity;
+    }
+
+    private TrendIndicatorsDTO indicatorsOf(List<TrendPointDTO> series) {
+        var values = series.stream()
+            .map(TrendPointDTO::value)
+            .filter(Objects::nonNull)
+            .toList();
+
+        if (values.isEmpty()) {
+            return TrendIndicatorsDTO.empty();
+        }
+
+        var current = series.getLast().value();
+        var previous = series.size() > 1 ? series.get(series.size() - 2).value() : null;
+
+        return new TrendIndicatorsDTO(
+            current,
+            previous,
+            change(current, previous),
+            values.stream().mapToDouble(Double::doubleValue).max().orElseThrow(),
+            values.stream().mapToDouble(Double::doubleValue).min().orElseThrow()
+        );
+    }
+
+    @Nullable
+    private Double change(@Nullable Double current, @Nullable Double previous) {
+        return Objects.isNull(current) || Objects.isNull(previous) ? null : current - previous;
+    }
+
+    /**
+     * The newest two points of the series, per entity type. Both periods and all four supported
+     * scopes are named filters of one aggregation, so the whole panel costs a single request.
+     */
+    private List<EntityTypeTrendDTO> trendByEntityType(
+        TrendMetric metric, Query baseQuery, List<LocalDate> periodEnds,
+        DataQualityAggregator.MetricAggregation aggregation) {
+
+        var scopes = new LinkedHashMap<RepositoryEntityType, Query>();
+        scopes.put(RepositoryEntityType.PERSONS,
+            termQuery("entity_type", EntityType.PERSON.name()));
+        scopes.put(RepositoryEntityType.ORGANISATION_UNITS,
+            termQuery("entity_type", EntityType.ORGANISATION_UNIT.name()));
+        scopes.put(RepositoryEntityType.OUTPUTS, termQuery("target", DOCUMENT_TARGET));
+        scopes.put(RepositoryEntityType.ACTIVITIES,
+            stringTermsQuery("target", ACTIVITY_PARENT_TARGETS));
+
+        var latestPeriods = periodEnds.size() > 1
+            ? periodEnds.subList(periodEnds.size() - 2, periodEnds.size())
+            : periodEnds;
+
+        var filters = new LinkedHashMap<String, Query>();
+
+        for (var period = 0; period < latestPeriods.size(); period++) {
+            var pointInTime = pointInTimeQuery(latestPeriods.get(period));
+
+            for (var scope : scopes.entrySet()) {
+                filters.put(entityTypeKey(period, scope.getKey()),
+                    BoolQuery.of(b -> b.must(pointInTime).must(scope.getValue()))._toQuery());
+            }
+        }
+
+        var values = dataQualityAggregator
+            .aggregateMetricByPeriod(baseQuery, filters, aggregation)
+            .orElseGet(Map::of);
+
+        var previousPeriod = latestPeriods.size() > 1 ? 0 : -1;
+        var currentPeriod = latestPeriods.size() - 1;
+
+        var rows = new ArrayList<EntityTypeTrendDTO>();
+
+        scopes.keySet().forEach(entityType -> {
+            var current = entityTypeValue(metric, entityType, values, currentPeriod);
+            var previous = entityTypeValue(metric, entityType, values, previousPeriod);
+
+            rows.add(new EntityTypeTrendDTO(entityType, current, previous,
+                change(current, previous), true));
+        });
+
+        // TODO: projects and fundings carry no quality assessments yet.
+        rows.add(EntityTypeTrendDTO.unsupported(RepositoryEntityType.PROJECTS));
+        rows.add(EntityTypeTrendDTO.unsupported(RepositoryEntityType.FUNDINGS));
+
+        return rows;
+    }
+
+    @Nullable
+    private Double entityTypeValue(TrendMetric metric, RepositoryEntityType entityType,
+                                   Map<String, DataQualityAggregator.PeriodMetric> values,
+                                   int period) {
+        if (period < 0) {
+            return null;
+        }
+
+        var value = values.getOrDefault(entityTypeKey(period, entityType),
+            DataQualityAggregator.PeriodMetric.empty());
+
+        return RepositoryEntityType.ACTIVITIES.equals(entityType)
+            ? activityMetricValue(metric, value)
+            : recordMetricValue(metric, value);
+    }
+
+    private String entityTypeKey(int period, RepositoryEntityType entityType) {
+        return periodKey(period) + "#" + entityType.name();
+    }
+
+    private DataQualityAggregator.IssueBreakdown issueBreakdown(
+        String profileName, List<Integer> scopeOrganisationUnitIds,
+        @Nullable LocalDate assessmentDate, Query scope) {
+
+        return dataQualityAggregator
+            .aggregateIssueBreakdown(
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate, scope))
+            .orElseGet(DataQualityAggregator.IssueBreakdown::empty);
+    }
+
+    private SeverityBreakdownDTO severityRow(RepositoryEntityType entityType,
+                                             DataQualityAggregator.IssueBreakdown breakdown) {
+        return new SeverityBreakdownDTO(
+            entityType,
+            Math.max(0, breakdown.errorIssues() - breakdown.activityErrorIssues()),
+            Math.max(0, breakdown.warningIssues() - breakdown.activityWarningIssues()),
+            Math.max(0, breakdown.infoIssues() - breakdown.activityInfoIssues()),
+            true
+        );
+    }
+
+    private SeverityBreakdownDTO activityRow(
+        List<DataQualityAggregator.IssueBreakdown> breakdowns) {
+
+        return new SeverityBreakdownDTO(
+            RepositoryEntityType.ACTIVITIES,
+            breakdowns.stream().mapToLong(
+                DataQualityAggregator.IssueBreakdown::activityErrorIssues).sum(),
+            breakdowns.stream().mapToLong(
+                DataQualityAggregator.IssueBreakdown::activityWarningIssues).sum(),
+            breakdowns.stream().mapToLong(
+                DataQualityAggregator.IssueBreakdown::activityInfoIssues).sum(),
+            true
+        );
+    }
+
+    /**
+     * The rules failing on the most records across the whole repository, regardless of the family
+     * they belong to.
+     */
+    private List<PrevalentIssueDTO> topRecurringConstraints(
+        String profileName, List<Integer> scopeOrganisationUnitIds,
+        @Nullable LocalDate assessmentDate) {
+
+        return dataQualityAggregator.topFailedRules(
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    MatchAllQuery.of(matchAll -> matchAll)._toQuery()),
+                ruleKeys(profileName, null),
+                TOP_RECURRING_CONSTRAINT_COUNT)
+            .stream()
+            .map(rule -> describeTopRule(null, profileName, Optional.of(rule)))
+            .toList();
     }
 
     /**
@@ -395,6 +770,122 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     @Override
     @Transactional(readOnly = true)
+    public InputStreamResource exportQualityTrend(String profileName, Integer organisationUnitId,
+                                                  TrendMetric metric,
+                                                  TrendGranularity granularity,
+                                                  @Nullable Integer points, String language) {
+        var trend = getQualityTrend(profileName, organisationUnitId, metric, granularity, points);
+
+        var rows = reportContext("repositoryAnalytics.qualityTrends", profileName, null, language);
+
+        rows.add(List.of(label("repositoryAnalytics.header.metric", language),
+            label("repositoryAnalytics.metric." + metric.name(), language)));
+        rows.add(List.of(label("repositoryAnalytics.header.granularity", language),
+            label("repositoryAnalytics.granularity." + granularity.name(), language)));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.currentIndicators", language)));
+        rows.add(List.of(label("repositoryAnalytics.header.currentValue", language),
+            percentage(trend.indicators().current())));
+        rows.add(List.of(label("repositoryAnalytics.header.previousValue", language),
+            percentage(trend.indicators().previous())));
+        rows.add(List.of(label("repositoryAnalytics.header.change", language),
+            percentage(trend.indicators().change())));
+        rows.add(List.of(label("repositoryAnalytics.header.bestValue", language),
+            percentage(trend.indicators().best())));
+        rows.add(List.of(label("repositoryAnalytics.header.lowestValue", language),
+            percentage(trend.indicators().lowest())));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.metricOverTime", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.period", language),
+            label("repositoryAnalytics.header.value", language),
+            label("repositoryAnalytics.header.recordsAssessed", language)
+        ));
+
+        trend.series().forEach(point ->
+            rows.add(List.of(
+                point.label(),
+                percentage(point.value()),
+                point.recordsAssessed()
+            )));
+
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.trendByEntityType", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.currentValue", language),
+            label("repositoryAnalytics.header.previousValue", language),
+            label("repositoryAnalytics.header.change", language)
+        ));
+
+        trend.trendByEntityType().forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+                row.supported() ? percentage(row.current()) : EMPTY_VALUE,
+                row.supported() ? percentage(row.previous()) : EMPTY_VALUE,
+                row.supported() ? percentage(row.change()) : EMPTY_VALUE
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportIssueStatistics(String profileName, Integer organisationUnitId,
+                                                     @Nullable LocalDate assessmentDate,
+                                                     String language) {
+        var statistics = getIssueStatistics(profileName, organisationUnitId, assessmentDate);
+
+        var rows = reportContext("repositoryAnalytics.issueStatistics", profileName,
+            assessmentDate, language);
+
+        rows.add(List.of(label("repositoryAnalytics.header.openIssues", language),
+            statistics.openIssues()));
+        rows.add(List.of(label("repositoryAnalytics.header.errorIssues", language),
+            statistics.errorIssues()));
+        rows.add(List.of(label("repositoryAnalytics.header.warningIssues", language),
+            statistics.warningIssues()));
+        rows.add(List.of(label("repositoryAnalytics.header.infoIssues", language),
+            statistics.infoIssues()));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.issuesBySeverityAndEntityType", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.errorIssues", language),
+            label("repositoryAnalytics.header.warningIssues", language),
+            label("repositoryAnalytics.header.infoIssues", language)
+        ));
+
+        statistics.issuesBySeverityAndEntityType().forEach(row ->
+            rows.add(List.of(
+                label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+                count(row.supported(), row.errorIssues()),
+                count(row.supported(), row.warningIssues()),
+                count(row.supported(), row.infoIssues())
+            )));
+
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.topRecurringConstraints", language)));
+        rows.add(List.of(
+            label("repositoryAnalytics.header.constraint", language),
+            label("repositoryAnalytics.header.occurrences", language)
+        ));
+
+        statistics.topRecurringConstraints().forEach(constraint ->
+            rows.add(List.of(
+                issueTitle(constraint, language),
+                constraint.occurrences()
+            )));
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    @Override
     public InputStreamResource exportOverview(String profileName, Integer organisationUnitId,
                                               @Nullable LocalDate assessmentDate,
                                               String language) {

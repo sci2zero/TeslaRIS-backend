@@ -15,6 +15,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 
 @Getter
 @Setter
@@ -103,6 +104,21 @@ public class DataQualityAssessmentIndex {
 
     @Field(type = FieldType.Double, store = true, name = "activity_score_sum")
     private Double activityScoreSum;
+
+    @Field(type = FieldType.Integer, store = true, name = "activity_error_issues")
+    private Integer activityErrorIssues;
+
+    @Field(type = FieldType.Integer, store = true, name = "activity_warning_issues")
+    private Integer activityWarningIssues;
+
+    @Field(type = FieldType.Integer, store = true, name = "activity_info_issues")
+    private Integer activityInfoIssues;
+
+    @Field(type = FieldType.Object, name = "activity_dimension_score_sums")
+    private Map<QualityDimension, Double> activityDimensionScoreSums = new HashMap<>();
+
+    @Field(type = FieldType.Double, store = true, name = "activity_fair_score_sum")
+    private Double activityFairScoreSum;
 
     @Field(type = FieldType.Object, name = "activity_issue_occurrences")
     private Map<String, Integer> activityIssueOccurrences = new HashMap<>();

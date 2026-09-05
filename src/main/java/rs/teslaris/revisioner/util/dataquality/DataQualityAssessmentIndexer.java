@@ -91,6 +91,12 @@ public class DataQualityAssessmentIndexer {
             index.setActivityPublicationCandidatesCount(
                 assessment.getActivityPublicationCandidatesCount());
             index.setActivityScoreSum(assessment.getActivityScoreSum());
+            index.setActivityErrorIssues(assessment.getActivityErrorIssues());
+            index.setActivityWarningIssues(assessment.getActivityWarningIssues());
+            index.setActivityInfoIssues(assessment.getActivityInfoIssues());
+            index.setActivityDimensionScoreSums(
+                new HashMap<>(assessment.getActivityDimensionScoreSums()));
+            index.setActivityFairScoreSum(assessment.getActivityFairScoreSum());
             index.setDatabaseId(assessment.getId());
             index.setPublicationCandidate(assessment.getPublicationCandidate());
 

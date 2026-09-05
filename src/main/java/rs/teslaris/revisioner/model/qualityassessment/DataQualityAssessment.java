@@ -132,4 +132,33 @@ public class DataQualityAssessment extends BaseEntity {
     @Column(name = "activity_score_sum", nullable = false)
     @Builder.Default
     private Double activityScoreSum = 0.0;
+
+    /**
+     * The issues this record's activities raised, split by severity.
+     * <p>
+     * Precomputed rather than derived at query time from the per-rule occurrence map: a rule's
+     * severity belongs to the profile version that produced the assessment, and resolving it later
+     * against every configured version counts a rule whose severity changed under both.
+     */
+    @Column(name = "activity_error_issues", nullable = false)
+    @Builder.Default
+    private Integer activityErrorIssues = 0;
+
+    @Column(name = "activity_warning_issues", nullable = false)
+    @Builder.Default
+    private Integer activityWarningIssues = 0;
+
+    @Column(name = "activity_info_issues", nullable = false)
+    @Builder.Default
+    private Integer activityInfoIssues = 0;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "activity_dimension_score_sums", columnDefinition = "jsonb", nullable = false)
+    @Builder.Default
+    private Map<QualityDimension, Double> activityDimensionScoreSums =
+        new EnumMap<>(QualityDimension.class);
+
+    @Column(name = "activity_fair_score_sum", nullable = false)
+    @Builder.Default
+    private Double activityFairScoreSum = 0.0;
 }
