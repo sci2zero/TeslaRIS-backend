@@ -43,6 +43,7 @@ public class IdentifierUtil {
                 }
                 setter.accept(identifier);
             } else {
+                log.warn("Identifier '{}' failed format check ({}).", identifier, formatError);
                 throw new IdentifierException(formatError);
             }
         } else {
