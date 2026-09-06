@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -20,7 +19,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.project.converter.project.ProjectDocumentConverter;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
@@ -49,8 +47,6 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
     private final IndexBulkUpdateService indexBulkUpdateService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
-    private final CurrencyService currencyService;
 
     @Override
     protected JpaRepository<ProjectDocument, Integer> getEntityRepository() {
@@ -106,6 +102,8 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
 
         var savedProjectDocument = save(newProjectDocument);
 
+        buildFundingParts(savedProjectDocument, projectDocumentDTO);
+
         if (Objects.nonNull(savedProjectDocument.getDocument())) {
             indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
                 savedProjectDocument.getDocument().getId(), "project_id",
@@ -138,7 +136,6 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
                 "Either a document or a textual description has to be provided.");
         }
 
-        buildFundingParts(projectDocument, dto);
         projectDocument.setTextualDescription(
             multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
 
@@ -170,7 +167,7 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
     }
 
     private FundingPart buildFundingPart(FundingPartDTO dto, ProjectDocument parent) {
-        var part = fundingPartFactory.buildFundingPart(dto);
+        var part = fundingPartFactory.buildNestedFundingPart(dto);
         part.setProjectDocument(parent);
 
         return part;

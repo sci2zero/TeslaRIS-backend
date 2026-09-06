@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -41,7 +40,6 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
 
     private final IndexBulkUpdateService indexBulkUpdateService;
     private final MultilingualContentService multilingualContentService;
-    private final CurrencyService currencyService;
     private final ProjectService projectService;
     private final EventService eventService;
     private final EventIndexRepository eventIndexRepository;
@@ -102,6 +100,8 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
 
         var savedProjectEvent = save(newProjectEvent);
 
+        buildFundingParts(savedProjectEvent, projectEventDTO);
+
         if (Objects.nonNull(savedProjectEvent.getEvent())) {
             indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
                 savedProjectEvent.getEvent().getId(), "project_id",
@@ -133,7 +133,6 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
                 "Either an event or a textual description has to be provided.");
         }
 
-        buildFundingParts(projectEvent, dto);
         projectEvent.setTextualDescription(
             multilingualContentService.getMultilingualContent(dto.getTextualDescription()));
 
@@ -165,7 +164,7 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
     }
 
     private FundingPart buildFundingPart(FundingPartDTO dto, ProjectEvent parent) {
-        var part = fundingPartFactory.buildFundingPart(dto);
+        var part = fundingPartFactory.buildNestedFundingPart(dto);
         part.setProjectEvent(parent);
 
         return part;

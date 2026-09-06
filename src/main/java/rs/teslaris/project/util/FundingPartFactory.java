@@ -45,7 +45,21 @@ public class FundingPartFactory {
         return fundingPart;
     }
 
+    public FundingPart buildNestedFundingPart(FundingPartDTO dto) {
+        var fundingPart = new FundingPart();
+        setBaseFields(fundingPart, dto);
+        clearTargets(fundingPart);
+
+        return fundingPart;
+    }
+
     public void setCommonFields(FundingPart fundingPart, FundingPartDTO dto) {
+        setBaseFields(fundingPart, dto);
+        clearTargets(fundingPart);
+        setTarget(fundingPart, dto);
+    }
+
+    private void setBaseFields(FundingPart fundingPart, FundingPartDTO dto) {
         fundingPart.setDescription(
                 multilingualContentService.getMultilingualContent(dto.getDescription()));
 
@@ -59,9 +73,9 @@ public class FundingPartFactory {
 
         fundingPart.setFunding(
                 resolve(dto.getFundingId(), fundingRepository::findById, "Funding"));
+    }
 
-        clearTargets(fundingPart);
-
+    private void setTarget(FundingPart fundingPart, FundingPartDTO dto) {
         // A part belongs to exactly one target, so the first id present wins - same precedence the
         // standalone endpoint has always used.
         if (Objects.nonNull(dto.getProjectEventId())) {
