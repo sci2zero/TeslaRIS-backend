@@ -41,4 +41,6 @@ public class UserResponseDTO {
     private UserNotificationPeriod notificationPeriod;
 
     private Boolean sendOnlyNewNotifications;
+
+    private List<String> completedTutorials;
 }
