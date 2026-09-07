@@ -78,18 +78,22 @@ public class RepositoryAnalyticsController {
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public QualityTrendDTO getQualityTrend(
         @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
         @RequestParam(defaultValue = "OVERALL_SCORE") TrendMetric metric,
         @RequestParam(defaultValue = "WEEKLY") TrendGranularity granularity,
         @RequestParam(required = false) Integer points,
         @RequestHeader("Authorization") String bearerToken) {
         return repositoryAnalyticsService.getQualityTrend(profileName,
-            resolveOrganisationUnitId(bearerToken), metric, granularity, points);
+            resolveOrganisationUnitId(bearerToken), assessmentDate, metric, granularity, points);
     }
 
     @GetMapping("/trends/download")
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public ResponseEntity<InputStreamResource> downloadQualityTrend(
         @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
         @RequestParam(defaultValue = "OVERALL_SCORE") TrendMetric metric,
         @RequestParam(defaultValue = "WEEKLY") TrendGranularity granularity,
         @RequestParam(required = false) Integer points,
@@ -97,7 +101,8 @@ public class RepositoryAnalyticsController {
         @RequestHeader("Authorization") String bearerToken) {
         return serveResponseFile(
             repositoryAnalyticsService.exportQualityTrend(profileName,
-                resolveOrganisationUnitId(bearerToken), metric, granularity, points, language),
+                resolveOrganisationUnitId(bearerToken), assessmentDate, metric, granularity, points,
+                language),
             "quality-trends");
     }
 

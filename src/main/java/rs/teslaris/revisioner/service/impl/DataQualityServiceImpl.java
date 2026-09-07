@@ -11,8 +11,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -85,11 +87,11 @@ public class DataQualityServiceImpl implements DataQualityService {
         "associated_editor_ids", "invited_editor_ids"
     );
 
-    private static final Comparator<DataQualityIssueDTO> ISSUE_ORDER =
+    private static final Comparator<PendingIssue> ISSUE_ORDER =
         Comparator
-            .comparingInt((DataQualityIssueDTO issue) -> issue.severity().ordinal())
-            .thenComparing(DataQualityIssueDTO::ruleKey)
-            .thenComparing(DataQualityIssueDTO::entityType);
+            .comparingInt((PendingIssue issue) -> issue.severity().ordinal())
+            .thenComparing(PendingIssue::ruleKey)
+            .thenComparing(PendingIssue::entityType);
 
     private static final String ISSUE_INDEX_NAME = "data_quality_assessment";
 
@@ -383,7 +385,12 @@ public class DataQualityServiceImpl implements DataQualityService {
                                            IssueSeverity severity, String constraintKey,
                                            int offset, int pageSize) {
         var window = new ArrayList<DataQualityIssueDTO>();
-        var block = new ArrayList<DataQualityIssueDTO>();
+        var block = new ArrayList<PendingIssue>();
+
+        // The applicable rule keys depend only on the profile version and the filters, which are
+        // fixed for the whole scan - recomputing them per assessment filtered every rule of the
+        // profile hundreds of thousands of times on a deep page.
+        var applicableKeys = new HashMap<String, Set<String>>();
 
         var emittedAtWatermark = new HashSet<String>();
         Integer watermark = null;
@@ -391,7 +398,7 @@ public class DataQualityServiceImpl implements DataQualityService {
         var scanned = 0;
 
         while (true) {
-            var batch = searchService.runQuery(
+            var batch = searchService.runQueryWithoutTotal(
                 withWatermark(query, watermark),
                 PageRequest.of(0, ISSUE_SCAN_BATCH_SIZE, Sort.by(Sort.Direction.ASC, "entity_id")),
                 DataQualityAssessmentIndex.class,
@@ -425,7 +432,8 @@ public class DataQualityServiceImpl implements DataQualityService {
                     emittedAtWatermark.add(assessment.getId());
                 }
 
-                expandIssues(assessment, target, dimension, severity, constraintKey, block);
+                expandIssues(assessment, target, dimension, severity, constraintKey,
+                    applicableKeys, block);
             }
 
             if (window.size() >= pageSize) {
@@ -454,7 +462,13 @@ public class DataQualityServiceImpl implements DataQualityService {
         return new IssueWindow(window, scanned);
     }
 
-    private int flushBlock(List<DataQualityIssueDTO> block, List<DataQualityIssueDTO> window,
+    /**
+     * Rows are only turned into DTOs once they are known to land in the window. Building one costs
+     * two multilingual renders, and each of those resolves a language tag per language through the
+     * repository - so a page deep enough to discard a hundred thousand rows was issuing hundreds of
+     * thousands of queries for rows nobody would see.
+     */
+    private int flushBlock(List<PendingIssue> block, List<DataQualityIssueDTO> window,
                            int offset, int pageSize, int scanned) {
         if (block.isEmpty()) {
             return 0;
@@ -464,7 +478,7 @@ public class DataQualityServiceImpl implements DataQualityService {
 
         for (var issue : block) {
             if (scanned >= offset && window.size() < pageSize) {
-                window.add(issue);
+                window.add(IssueConverter.toDTO(issue.assessment(), issue.ruleKey()));
             }
 
             scanned++;
@@ -478,15 +492,30 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private void expandIssues(DataQualityAssessmentIndex assessment, String target,
                               QualityDimension dimension, IssueSeverity severity,
-                              String constraintKey, List<DataQualityIssueDTO> collector) {
-        var applicableKeys = DataQualityAssessmentConfigurationLoader.listRuleKeys(
-            assessment.getProfileName(), assessment.getProfileVersion(), target, dimension,
-            severity);
+                              String constraintKey, Map<String, Set<String>> applicableKeys,
+                              List<PendingIssue> collector) {
+        var keys = applicableKeys.computeIfAbsent(
+            assessment.getProfileName() + "#" + assessment.getProfileVersion(),
+            ignored -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                assessment.getProfileName(), assessment.getProfileVersion(), target, dimension,
+                severity));
 
         Objects.requireNonNullElse(assessment.getFailedRuleKeys(), List.<String>of()).stream()
-            .filter(applicableKeys::contains)
+            .filter(keys::contains)
             .filter(ruleKey -> Objects.isNull(constraintKey) || constraintKey.equals(ruleKey))
-            .forEach(ruleKey -> collector.add(IssueConverter.toDTO(assessment, ruleKey)));
+            .forEach(ruleKey -> collector.add(pendingIssue(assessment, ruleKey)));
+    }
+
+    /**
+     * Everything the row order depends on, and nothing else - the severity comes from the profile
+     * by a map lookup rather than from a rendered DTO.
+     */
+    private PendingIssue pendingIssue(DataQualityAssessmentIndex assessment, String ruleKey) {
+        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
+            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
+
+        return new PendingIssue(assessment, ruleKey, remark.severity(),
+            assessment.getEntityType());
     }
 
     private Query withWatermark(Query query, Integer watermark) {
@@ -680,6 +709,10 @@ public class DataQualityServiceImpl implements DataQualityService {
             entityId);
 
         return true;
+    }
+
+    private record PendingIssue(DataQualityAssessmentIndex assessment, String ruleKey,
+                                IssueSeverity severity, String entityType) {
     }
 
     private record IssueWindow(List<DataQualityIssueDTO> issues, int scannedIssues) {

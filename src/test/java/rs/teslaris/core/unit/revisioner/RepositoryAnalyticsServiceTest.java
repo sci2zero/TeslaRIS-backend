@@ -884,7 +884,7 @@ public class RepositoryAnalyticsServiceTest {
             "p2", periodMetric(14, 80.0)));
 
         // when
-        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3);
 
         // then
@@ -900,11 +900,11 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        var daily = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var daily = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, null);
-        var weekly = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var weekly = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, null);
-        var monthly = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var monthly = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.MONTHLY, null);
 
         // then
@@ -923,9 +923,9 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        var tooMany = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var tooMany = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 500);
-        var tooFew = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var tooFew = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 0);
 
         // then
@@ -939,8 +939,8 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.OVERALL_SCORE,
-            TrendGranularity.DAILY, 4);
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 4);
 
         // then (one request for the series, one for the entity-type panel)
         verify(dataQualityAggregator, times(2)).aggregateMetricByPeriod(any(), any(), any());
@@ -953,8 +953,8 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.OVERALL_SCORE,
-            TrendGranularity.DAILY, 2);
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 2);
 
         // then
         capturedPeriodFilters(0).values().forEach(filter -> {
@@ -974,7 +974,7 @@ public class RepositoryAnalyticsServiceTest {
             "p3", periodMetric(10, 82.1)));
 
         // when
-        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 4).indicators();
 
         // then
@@ -991,7 +991,7 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var indicators = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3).indicators();
 
         // then
@@ -1006,7 +1006,7 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        repositoryAnalyticsService.getQualityTrend(PROFILE, null, TrendMetric.CONSISTENCY,
+        repositoryAnalyticsService.getQualityTrend(PROFILE, null, null, TrendMetric.CONSISTENCY,
             TrendGranularity.WEEKLY, 2);
 
         // then
@@ -1025,7 +1025,7 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of("p0", new DataQualityAggregator.PeriodMetric(200, null, 50, 0, 0)));
 
         // when
-        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.PUBLICATION_CANDIDATE_RATE, TrendGranularity.WEEKLY, 1);
 
         // then
@@ -1040,7 +1040,7 @@ public class RepositoryAnalyticsServiceTest {
         stubTrend(Map.of());
 
         // when
-        var rows = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var rows = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3).trendByEntityType();
 
         // then
@@ -1065,7 +1065,7 @@ public class RepositoryAnalyticsServiceTest {
             "p0#PERSONS", periodMetric(10, 90.6)));
 
         // when
-        var persons = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var persons = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().getFirst();
 
         // then
@@ -1086,7 +1086,7 @@ public class RepositoryAnalyticsServiceTest {
             "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, 99.0, 0, 2400.0, 30)));
 
         // when
-        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().get(3);
 
         // then (the record average of the same bucket is ignored)
@@ -1100,7 +1100,7 @@ public class RepositoryAnalyticsServiceTest {
             "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, 99.0, 0, 0.0, 0)));
 
         // when
-        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().get(3);
 
         // then
@@ -1114,13 +1114,65 @@ public class RepositoryAnalyticsServiceTest {
             .thenReturn(Optional.empty());
 
         // when
-        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 3);
 
         // then
         assertEquals(3, trend.series().size());
         trend.series().forEach(point -> assertNull(point.value()));
         assertNull(trend.indicators().current());
+    }
+
+    /**
+     * A period nothing was assessed in has no value, whatever the entity type. Record rows read an
+     * average and activity rows read a sum over the activities assessed, so without a shared notion
+     * of "empty" one of them would report a genuine 0% where the other reports nothing.
+     */
+    @Test
+    public void shouldReportNoValueForAPeriodWithNoAssessments() {
+        // given (only the newest period holds anything)
+        stubTrend(Map.of(
+            "p1#PERSONS", periodMetric(10, 92.0),
+            "p0#PERSONS", DataQualityAggregator.PeriodMetric.empty(),
+            "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, null, 0, 2400.0, 30),
+            "p0#ACTIVITIES", DataQualityAggregator.PeriodMetric.empty()));
+
+        // when
+        var rows = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
+            TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType();
+
+        // then
+        var persons = rows.getFirst();
+        assertEquals(92.0, persons.current());
+        assertNull(persons.previous());
+        assertNull(persons.change());
+
+        var activities = rows.get(3);
+        assertEquals(80.0, activities.current());
+        assertNull(activities.previous());
+        assertNull(activities.change());
+    }
+
+    /**
+     * The requested day anchors the series, so the newest point is that day rather than today and
+     * the chart reads the repository as it stood then.
+     */
+    @Test
+    public void shouldAnchorTheSeriesToTheRequestedDay() {
+        // given
+        stubTrend(Map.of());
+
+        // when
+        var trend = repositoryAnalyticsService.getQualityTrend(PROFILE, null,
+            LocalDate.of(2026, 7, 18), TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 3);
+
+        // then
+        assertEquals(LocalDate.of(2026, 7, 16), trend.series().getFirst().periodEnd());
+        assertEquals(LocalDate.of(2026, 7, 18), trend.series().getLast().periodEnd());
+        assertEquals("2026-07-18", trend.series().getLast().label());
+
+        capturedPeriodFilters(0).values().forEach(filter ->
+            assertTrue(filter.toString().contains("2026-07-1")));
     }
 
     @Test
@@ -1135,7 +1187,7 @@ public class RepositoryAnalyticsServiceTest {
 
         // when
         var rows = exportedRows(repositoryAnalyticsService.exportQualityTrend(
-            PROFILE, null, TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 2, "en"));
+            PROFILE, null, null, TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 2, "en"));
 
         // then
         assertEquals("repositoryAnalytics.qualityTrends", rows.getFirst().getFirst());

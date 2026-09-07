@@ -312,6 +312,26 @@ public class DataQualityServiceTest {
                 ENTITY_TYPE, 1, 9, 9);
     }
 
+    private void stubIssueConfiguration(
+        MockedStatic<DataQualityAssessmentConfigurationLoader> configurationLoader) {
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                anyString(), anyString(), any(), any(), any()))
+            .thenReturn(new LinkedHashSet<>(List.of("titleMissing")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                anyString(), anyString(), anyString()))
+            .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.COMPLETENESS));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                anyString(), anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("Title")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                anyString(), anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("Message")));
+    }
+
     private DataQualityAssessmentIndex assessmentIndex(Integer entityId, String target,
                                                        List<String> failedRuleKeys) {
         var index = new DataQualityAssessmentIndex();
@@ -341,7 +361,7 @@ public class DataQualityServiceTest {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
-        when(searchService.runQuery(any(), any(), eq(DataQualityAssessmentIndex.class),
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
 
         try (var configurationLoader = mockStatic(
@@ -382,7 +402,7 @@ public class DataQualityServiceTest {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
-        when(searchService.runQuery(any(), any(), eq(DataQualityAssessmentIndex.class),
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
 
         try (var configurationLoader = mockStatic(
@@ -420,7 +440,7 @@ public class DataQualityServiceTest {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
-        when(searchService.runQuery(any(), any(), eq(DataQualityAssessmentIndex.class),
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
 
         try (var configurationLoader = mockStatic(
@@ -456,7 +476,7 @@ public class DataQualityServiceTest {
     @Test
     public void shouldPageIssuesGroupedByRecord() {
         // given (two records, each contributing one issue)
-        when(searchService.runQuery(any(), any(), eq(DataQualityAssessmentIndex.class),
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")))));
@@ -491,12 +511,81 @@ public class DataQualityServiceTest {
         }
     }
 
+    /**
+     * Rendering an issue row resolves a language tag per language through the repository, twice
+     * over. A deep page discards far more rows than it returns, so the rows before the offset are
+     * counted rather than rendered - otherwise the scan issues hundreds of thousands of queries
+     * for rows nobody sees.
+     */
+    @Test
+    public void shouldRenderOnlyTheIssuesThatLandInTheWindow() {
+        // given (three records, each contributing one issue)
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")),
+            assessmentIndex(2, "Document", List.of("titleMissing")),
+            assessmentIndex(3, "Document", List.of("titleMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when (the last of three rows)
+            var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, PageRequest.of(2, 1));
+
+            // then
+            assertEquals(1, result.getContent().size());
+            assertEquals(3, result.getContent().getFirst().entityId());
+
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()),
+                times(1));
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                    anyString(), anyString(), anyString(), any()),
+                times(1));
+        }
+    }
+
+    /**
+     * The applicable rule keys depend on the profile version and the filters, not on the record,
+     * so they are resolved once for the whole scan.
+     */
+    @Test
+    public void shouldResolveApplicableRuleKeysOncePerProfileVersion() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")),
+            assessmentIndex(2, "Document", List.of("titleMissing")),
+            assessmentIndex(3, "Document", List.of("titleMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                null, PageRequest.of(0, 10));
+
+            // then
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any()),
+                times(1));
+        }
+    }
+
     @Test
     public void shouldReturnEmptyPageWhenOffsetIsBeyondIssueCount() {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing"));
 
-        when(searchService.runQuery(any(), any(), eq(DataQualityAssessmentIndex.class),
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
 
         try (var configurationLoader = mockStatic(

@@ -13,6 +13,14 @@ public interface SearchService<T> {
     Page<T> runQuery(Query query, Pageable pageable, Class<T> clazz,
                      String indexName);
 
+    /**
+     * Runs the query without asking Elasticsearch for the exact total. A scan that pages through a
+     * large match set only ever reads the hits, and an exact count is a full pass over every
+     * matching document on every batch.
+     */
+    Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz,
+                                 String indexName);
+
     List<Pair<String, Long>> runWordCloudSearch(Query query, String indexName,
                                                 boolean foreignLanguage);
 

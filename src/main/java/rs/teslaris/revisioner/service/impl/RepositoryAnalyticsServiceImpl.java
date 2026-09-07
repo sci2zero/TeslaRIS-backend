@@ -262,10 +262,12 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     @Override
     @Transactional(readOnly = true)
     public QualityTrendDTO getQualityTrend(String profileName, Integer organisationUnitId,
-                                           TrendMetric metric, TrendGranularity granularity,
+                                           @Nullable LocalDate assessmentDate, TrendMetric metric,
+                                           TrendGranularity granularity,
                                            @Nullable Integer points) {
         var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
-        var periodEnds = periodEnds(granularity, granularity.resolvePoints(points));
+        var periodEnds =
+            periodEnds(granularity, granularity.resolvePoints(points), assessmentDate);
         var aggregation = metricAggregation(metric);
 
         var baseQuery = trendBaseQuery(profileName, scopeOrganisationUnitIds);
@@ -286,17 +288,22 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     /**
      * The instants the series is measured at, oldest first. Each is the last millisecond of its
-     * period, so the newest point matches what every other tab shows for "current state".
+     * period, and the newest is the requested day, so with no date the series ends at today and
+     * matches what every other tab shows for "current state", and with one it reads the repository
+     * as it stood then.
      */
-    private List<LocalDate> periodEnds(TrendGranularity granularity, int points) {
-        var today = LocalDate.now(ZoneOffset.UTC);
+    private List<LocalDate> periodEnds(TrendGranularity granularity, int points,
+                                       @Nullable LocalDate assessmentDate) {
+        var anchor = Objects.requireNonNullElseGet(assessmentDate,
+            () -> LocalDate.now(ZoneOffset.UTC));
+
         var ends = new ArrayList<LocalDate>();
 
         for (var period = points - 1; period >= 0; period--) {
             ends.add(switch (granularity) {
-                case DAILY -> today.minusDays(period);
-                case WEEKLY -> today.minusWeeks(period);
-                case MONTHLY -> today.minusMonths(period);
+                case DAILY -> anchor.minusDays(period);
+                case WEEKLY -> anchor.minusWeeks(period);
+                case MONTHLY -> anchor.minusMonths(period);
             });
         }
 
@@ -771,12 +778,15 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     @Override
     @Transactional(readOnly = true)
     public InputStreamResource exportQualityTrend(String profileName, Integer organisationUnitId,
+                                                  @Nullable LocalDate assessmentDate,
                                                   TrendMetric metric,
                                                   TrendGranularity granularity,
                                                   @Nullable Integer points, String language) {
-        var trend = getQualityTrend(profileName, organisationUnitId, metric, granularity, points);
+        var trend = getQualityTrend(profileName, organisationUnitId, assessmentDate, metric,
+            granularity, points);
 
-        var rows = reportContext("repositoryAnalytics.qualityTrends", profileName, null, language);
+        var rows = reportContext("repositoryAnalytics.qualityTrends", profileName, assessmentDate,
+            language);
 
         rows.add(List.of(label("repositoryAnalytics.header.metric", language),
             label("repositoryAnalytics.metric." + metric.name(), language)));

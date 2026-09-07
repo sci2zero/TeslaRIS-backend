@@ -307,7 +307,11 @@ public class DataQualityAggregator {
     private PeriodMetric readPeriodMetric(FiltersBucket bucket, MetricAggregation metric) {
         Double average = null;
 
-        if (Objects.nonNull(metric.averageField())) {
+        // An avg over a bucket holding no documents does not reliably arrive as NaN - the client
+        // leaves the primitive at 0 when Elasticsearch sends a null value - so emptiness is decided
+        // by the document count, as aggregateAssessments already does. Without this a period
+        // nothing was assessed in reads as a genuine 0%.
+        if (Objects.nonNull(metric.averageField()) && bucket.docCount() > 0) {
             var value = bucket.aggregations().get("average").avg().value();
             average = Double.isNaN(value) || Double.isInfinite(value) ? null : value;
         }

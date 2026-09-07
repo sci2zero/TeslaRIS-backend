@@ -31,8 +31,8 @@ public interface RepositoryAnalyticsService {
                                           @Nullable LocalDate assessmentDate);
 
     QualityTrendDTO getQualityTrend(String profileName, Integer organisationUnitId,
-                                    TrendMetric metric, TrendGranularity granularity,
-                                    @Nullable Integer points);
+                                    @Nullable LocalDate assessmentDate, TrendMetric metric,
+                                    TrendGranularity granularity, @Nullable Integer points);
 
     List<DimensionQualityDTO> getQualityByDimension(String profileName,
                                                     Integer organisationUnitId,
@@ -58,6 +58,7 @@ public interface RepositoryAnalyticsService {
                                               @Nullable LocalDate assessmentDate, String language);
 
     InputStreamResource exportQualityTrend(String profileName, Integer organisationUnitId,
-                                           TrendMetric metric, TrendGranularity granularity,
-                                           @Nullable Integer points, String language);
+                                           @Nullable LocalDate assessmentDate, TrendMetric metric,
+                                           TrendGranularity granularity, @Nullable Integer points,
+                                           String language);
 }
