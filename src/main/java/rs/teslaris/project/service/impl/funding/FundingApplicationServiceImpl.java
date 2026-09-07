@@ -43,6 +43,8 @@ import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +52,10 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     implements FundingApplicationService {
 
     private final FundingApplicationRepository fundingApplicationRepository;
+
+    private final FundingPartFactory fundingPartFactory;
+
+    private final FundingPartRepository fundingPartRepository;
 
     private final FundingApplicationIndexRepository fundingApplicationIndexRepository;
 
@@ -280,25 +286,13 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         dto.getOtherFundingSources().forEach(partDto -> {
             var part = buildFundingPart(partDto, application);
-            application.getOtherFundingSources().add(part);
+
+            application.getOtherFundingSources().add(fundingPartRepository.save(part));
         });
     }
 
     private FundingPart buildFundingPart(FundingPartDTO partDto, FundingApplication parent) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(partDto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(partDto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDto.getAmount().getAmount());
-
-        if (Objects.nonNull(partDto.getFundingId())) {
-            part.setFunding(fundingService.findOne(partDto.getFundingId()));
-        }
-
+        var part = fundingPartFactory.buildFundingPart(partDto);
         part.setFundingApplication(parent);
 
         return part;

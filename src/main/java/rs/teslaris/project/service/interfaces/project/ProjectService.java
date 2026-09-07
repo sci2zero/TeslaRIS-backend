@@ -23,8 +23,19 @@ public interface ProjectService extends JPAService<Project> {
                                       LocalDate dateFrom,
                                       LocalDate dateTo,
                                       boolean onlyActive,
+                                      boolean onlyWithoutContributions,
                                       List<ProjectStatus> allowedStatuses,
                                       Pageable pageable);
+
+    Page<ProjectIndex> findProjectsForPerson(Integer personId, List<String> tokens,
+                                             boolean onlyActive,
+                                             List<ProjectStatus> allowedStatuses,
+                                             Pageable pageable);
+
+    Page<ProjectIndex> findProjectsForOrganisationUnit(Integer organisationUnitId,
+                                                       List<String> tokens, boolean onlyActive,
+                                                       List<ProjectStatus> allowedStatuses,
+                                                       Pageable pageable);
 
     Long getProjectCount();
 

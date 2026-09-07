@@ -33,12 +33,16 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
+import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.service.impl.project.PersonProjectContributionServiceImpl;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @SpringBootTest
 public class PersonProjectContributionServiceTest {
@@ -48,6 +52,12 @@ public class PersonProjectContributionServiceTest {
 
     @Mock
     private PersonService personService;
+
+    @Mock
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @Mock
     private OrganisationUnitService organisationUnitService;
@@ -224,7 +234,14 @@ public class PersonProjectContributionServiceTest {
 
         when(multilingualContentService.getMultilingualContent(anyList()))
             .thenReturn(Set.of(new MultiLingualContent()));
-        when(currencyService.findOne(1)).thenReturn(null);
+        when(fundingPartFactory.buildFundingPart(fundingPart)).thenAnswer(i -> {
+            var builtPart = new FundingPart();
+            builtPart.setAmount(
+                new MonetaryAmount(fundingPart.getAmount().getAmount(), null));
+            return builtPart;
+        });
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(personProjectContributionRepository.save(any(PersonProjectContribution.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
@@ -235,7 +252,7 @@ public class PersonProjectContributionServiceTest {
         // then
         assertEquals(1, result.getFundingParts().size());
         assertEquals(50000.0, result.getFundingParts().iterator().next().getAmount().getAmount());
-        verify(currencyService).findOne(1);
+        verify(fundingPartFactory).buildFundingPart(fundingPart);
         verify(researchAreaService).getResearchAreasByIds(anyList());
     }
 

@@ -32,12 +32,15 @@ import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -54,6 +57,12 @@ public class FundingServiceTest extends BaseTest {
 
     @Mock
     private FundingRepository fundingRepository;
+
+    @Mock
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @Mock
     private MultilingualContentService multilingualContentService;
@@ -231,6 +240,9 @@ public class FundingServiceTest extends BaseTest {
         when(fundingCallService.findOne(1)).thenReturn(new FundingCall());
         when(currencyService.findOne(1)).thenReturn(null);
         when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
+        when(fundingPartFactory.buildFundingPart(fundingPartDTO)).thenReturn(new FundingPart());
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
 
         // when
         var result = fundingService.createFunding(fundingDTO);
@@ -238,8 +250,11 @@ public class FundingServiceTest extends BaseTest {
         // then
         assertNotNull(result);
         assertEquals(1, result.getId());
-        verify(multilingualContentService, times(8)).getMultilingualContent(anyList());
-        verify(currencyService, times(2)).findOne(1);
+        verify(multilingualContentService, times(7)).getMultilingualContent(anyList());
+        verify(currencyService).findOne(1);
+        verify(fundingPartFactory).buildFundingPart(fundingPartDTO);
+        verify(fundingPartRepository).save(
+            argThat(part -> part.getFunding().equals(savedFunding)));
         verify(researchAreaService).getResearchAreasByIds(anyList());
         verify(projectService).findOne(1);
         verify(fundingCallService).findOne(1);

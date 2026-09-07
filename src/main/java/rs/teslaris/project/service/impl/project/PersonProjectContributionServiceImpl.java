@@ -22,18 +22,23 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 @Service
 @RequiredArgsConstructor
 public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonProjectContribution>
     implements
     PersonProjectContributionService {
+
+    private final FundingPartFactory fundingPartFactory;
+
+    private final FundingPartRepository fundingPartRepository;
 
     private final PersonProjectContributionRepository personProjectContributionRepository;
 
@@ -84,7 +89,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
             contribution.getFundingParts()
-                .add(buildContributionFundingPart(partDto, contribution)));
+                .add(fundingPartRepository.save(
+                    buildContributionFundingPart(partDto, contribution))));
 
         contribution.setProject(parent);
         contribution.setFavorite(dto.getFavorite());
@@ -159,16 +165,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
 
     private FundingPart buildContributionFundingPart(FundingPartDTO partDto,
                                                      PersonProjectContribution contribution) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(partDto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(partDto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDto.getAmount().getAmount());
-
+        var part = fundingPartFactory.buildFundingPart(partDto);
         part.setPersonContribution(contribution);
 
         return part;

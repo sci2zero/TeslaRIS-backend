@@ -8,6 +8,8 @@ import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +63,11 @@ public class StringUtil {
     private static final Pattern BAD_CHARS = Pattern.compile("[^\\p{L}\\p{Nd} ]+");
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
+
+    private static final Map<Character, String> UNSAFE_URL_CHARACTER_ENCODINGS = Map.of(
+        ' ', "%20", '"', "%22", '<', "%3C", '>', "%3E", '{', "%7B",
+        '}', "%7D", '|', "%7C", '\\', "%5C", '^', "%5E", '`', "%60"
+    );
 
     private static final List<String> identifierUrlPrefixes = List.of(
         "https://doi.org/", "https://orcid.org/", "http://orcid.org/",
@@ -570,5 +577,37 @@ public class StringUtil {
         var trimmed = title.trim();
         var wordCount = trimmed.split("\\s+").length;
         return trimmed.length() <= 25 && wordCount <= 3;
+    }
+
+    @Nullable
+    public static String sanitizeUrl(@Nullable String url) {
+        if (Objects.isNull(url) || url.isBlank()) {
+            return null;
+        }
+
+        var sanitized = new StringBuilder();
+        url.trim().chars().forEach(codePoint -> {
+            var character = (char) codePoint;
+            sanitized.append(UNSAFE_URL_CHARACTER_ENCODINGS.getOrDefault(character,
+                String.valueOf(character)));
+        });
+
+        var candidate = sanitized.toString();
+
+        try {
+            var uri = new URI(candidate);
+            if (!uri.isAbsolute() || Objects.isNull(uri.getHost()) ||
+                (!"http".equalsIgnoreCase(uri.getScheme()) &&
+                    !"https".equalsIgnoreCase(uri.getScheme()))) {
+                log.warn("Discarding harvested URL that is not an absolute http(s) address: {}",
+                    url);
+                return null;
+            }
+        } catch (URISyntaxException e) {
+            log.warn("Discarding malformed harvested URL: {}", url);
+            return null;
+        }
+
+        return candidate;
     }
 }

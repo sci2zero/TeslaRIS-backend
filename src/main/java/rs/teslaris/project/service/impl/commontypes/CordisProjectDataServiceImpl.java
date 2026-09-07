@@ -4,128 +4,67 @@ import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
-import rs.teslaris.core.util.session.RestTemplateProvider;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
+import rs.teslaris.project.util.CordisXmlClient;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CordisProjectDataServiceImpl implements CordisProjectDataService {
 
-    private static final String CORDIS_PROJECT_URL =
-            "https://cordis.europa.eu/project/id/%s?format=xml";
-
-    private static final Pattern MODEL_VERSION_PATTERN =
-            Pattern.compile("Model Version:(\\d+)");
-
-    private static final String EXPECTED_MODEL_VERSION = "132";
-
     private static final String EU_FUNDER_DISPLAY_NAME = "European Commission";
 
     private static final String CURRENCY_CODE = "EUR";
 
-    private final RestTemplateProvider restTemplateProvider;
+    private final CordisXmlClient cordisXmlClient;
 
     private final LanguageTagService languageTagService;
 
     private final CurrencyService currencyService;
 
     @Override
-    public PrepopulatedProjectMetadataDTO fetchFullMetadata(String cordisProjectId, String doi) {
+    public PrepopulatedProjectMetadataDTO fetchMetadata(String cordisProjectId, String doi) {
+        return mapProjectMetadata(cordisXmlClient.fetchDocument(cordisProjectId), doi);
+    }
+
+    @Override
+    public PrepopulatedProjectMetadataDTO mapProjectMetadata(@Nullable Document document,
+                                                             String doi) {
         var metadata = new PrepopulatedProjectMetadataDTO();
         metadata.setDoi(doi);
 
-        var xml = fetchRawXml(cordisProjectId);
-        if (Objects.isNull(xml)) {
+        if (Objects.isNull(document)) {
             return metadata;
         }
 
-        checkModelVersion(xml, cordisProjectId);
-
         try {
-            var document = parseXmlSecurely(xml);
             populateFromDocument(metadata, document);
         } catch (Exception e) {
-            log.error("Failed to parse CORDIS XML for project {}: {}", cordisProjectId,
-                    e.getMessage());
+            log.error("Failed to map CORDIS metadata for DOI {}: {}", doi, e.getMessage());
         }
 
         return metadata;
-    }
-
-    @Nullable
-    private String extractModelVersion(String xml) {
-        var matcher = MODEL_VERSION_PATTERN.matcher(xml);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
-    }
-
-    private void checkModelVersion(String xml, String cordisProjectId) {
-        var modelVersion = extractModelVersion(xml);
-        if (Objects.nonNull(modelVersion) && !EXPECTED_MODEL_VERSION.equals(modelVersion)) {
-            log.warn("CORDIS Model Version changed from expected {} to {} for project {}. " +
-                            "XML structure may have changed - parser might need review.",
-                    EXPECTED_MODEL_VERSION, modelVersion, cordisProjectId);
-        } else if (Objects.isNull(modelVersion)) {
-            log.warn("Could not find Model Version comment in CORDIS XML for project {}. " +
-                    "Response format may have changed.", cordisProjectId);
-        }
-    }
-
-    private String fetchRawXml(String cordisProjectId) {
-        var url = String.format(CORDIS_PROJECT_URL, cordisProjectId);
-        var restTemplate = restTemplateProvider.provideRestTemplate();
-
-        try {
-            return restTemplate.getForObject(url, String.class);
-        } catch (HttpClientErrorException e) {
-            log.warn("Unable to fetch CORDIS data for project {}. Response code: {}",
-                    cordisProjectId, e.getStatusCode().value());
-            return null;
-        }
-    }
-
-    private Document parseXmlSecurely(String xml) throws Exception {
-        var factory = DocumentBuilderFactory.newInstance();
-
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-        factory.setNamespaceAware(true);
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-
-        var builder = factory.newDocumentBuilder();
-        return builder.parse(new InputSource(new StringReader(xml)));
     }
 
     private void populateFromDocument(PrepopulatedProjectMetadataDTO metadata, Document document)
@@ -182,9 +121,9 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
                 "//*[local-name()='webLink'][@represents='project'][@type='relatedWebsite']/*[local-name()='physUrl']", document, XPathConstants.NODESET);
         metadata.setUris(new ArrayList<>());
         for (var i = 0; i < uriNodes.getLength(); i++) {
-            var url = uriNodes.item(i).getTextContent();
-            if (Objects.nonNull(url) && !url.isBlank()) {
-                metadata.getUris().add(url.trim());
+            var url = StringUtil.sanitizeUrl(uriNodes.item(i).getTextContent());
+            if (Objects.nonNull(url)) {
+                metadata.getUris().add(url);
             }
         }
 
@@ -209,6 +148,9 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
     }
 
     // TODO: Replace hardcoded EN language tag with the right one
+    // CORDIS returns the whole XML document in a single language (default EN)
+    // but it also returns a list of supported languages which could be used
+    // to perform secondary fetch to get data in other languages
     private PrepopulatedOrganisationDTO mapConsortiumMember(Element orgElement, XPath xpath,
                                                             LanguageTag lang)
             throws Exception {
