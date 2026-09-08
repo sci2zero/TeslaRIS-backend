@@ -318,7 +318,10 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         if (Objects.nonNull(fundingCall.getFundingProgram())) {
             indexFundingProgramFields(fundingCall, index);
         } else {
+            index.setProgramId(null);
+            index.setProgramNameSr("");
             index.setProgramNameSrSortable("");
+            index.setProgramNameOther("");
             index.setProgramNameOtherSortable("");
         }
 
