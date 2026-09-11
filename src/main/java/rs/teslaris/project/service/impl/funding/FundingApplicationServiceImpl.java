@@ -200,6 +200,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                                                    Integer projectId,
                                                                    Integer fundingCallId,
                                                                    Integer funderId,
+                                                                   Integer fundingId,
                                                                    String result,
                                                                    LocalDate submissionDateFrom,
                                                                    LocalDate submissionDateTo,
@@ -207,7 +208,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                                                    LocalDate decisionDateTo,
                                                                    Pageable pageable) {
         return searchService.runQuery(
-            buildFilterQuery(tokens, projectId, fundingCallId, funderId, result,
+            buildFilterQuery(tokens, projectId, fundingCallId, funderId, fundingId, result,
                 submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
             pageable, FundingApplicationIndex.class, "funding_application");
     }
@@ -373,6 +374,14 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
             index.setFunderNameOther("");
         }
 
+        if (Objects.nonNull(application.getFunding())) {
+            index.setFundingId(application.getFunding().getId());
+        } else {
+            index.setFundingId(null);
+        }
+
+        indexDescriptionFields(application, index);
+
         index.setSubmissionDate(application.getSubmissionDate());
         index.setDecisionDate(application.getDecisionDate());
 
@@ -383,6 +392,27 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         }
 
         return index;
+    }
+
+    private void indexDescriptionFields(FundingApplication application,
+                                        FundingApplicationIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            application.getDescription(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setDescriptionSr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setDescriptionOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
     private void indexProjectNameFields(FundingApplication application,
@@ -460,6 +490,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                    Integer projectId,
                                    Integer fundingCallId,
                                    Integer funderId,
+                                   Integer fundingId,
                                    String result,
                                    LocalDate submissionDateFrom,
                                    LocalDate submissionDateTo,
@@ -488,6 +519,10 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                     mq -> mq.field("funder_name_sr").query(phrase)))
                                 .should(sb -> sb.matchPhrase(
                                     mq -> mq.field("funder_name_other").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("description_sr").query(phrase)))
+                                .should(sb -> sb.matchPhrase(
+                                    mq -> mq.field("description_other").query(phrase)))
                             ));
                         } else {
                             var raw = token.replace("*", "").replace(".", "");
@@ -514,6 +549,12 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                 .should(sb -> sb.wildcard(
                                     mq -> mq.field("funder_name_other").value(otherWildcard)
                                         .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("description_sr").value(srWildcard)
+                                        .caseInsensitive(true)))
+                                .should(sb -> sb.wildcard(
+                                    mq -> mq.field("description_other").value(otherWildcard)
+                                        .caseInsensitive(true)))
                             ));
                         }
                     });
@@ -535,6 +576,11 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
             if (Objects.nonNull(funderId)) {
                 b.must(m -> m.term(
                     t -> t.field("funder_id").value(funderId)));
+            }
+
+            if (Objects.nonNull(fundingId)) {
+                b.must(m -> m.term(
+                    t -> t.field("funding_id").value(fundingId)));
             }
 
             if (Objects.nonNull(result)) {

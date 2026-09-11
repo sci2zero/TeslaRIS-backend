@@ -105,6 +105,7 @@ public class FundingApplicationController {
         @RequestParam(required = false) Integer projectId,
         @RequestParam(required = false) Integer fundingCallId,
         @RequestParam(required = false) Integer funderId,
+        @RequestParam(required = false) Integer fundingId,
         @RequestParam(required = false) String result,
         @RequestParam(required = false) LocalDate submissionDateFrom,
         @RequestParam(required = false) LocalDate submissionDateTo,
@@ -112,7 +113,7 @@ public class FundingApplicationController {
         @RequestParam(required = false) LocalDate decisionDateTo,
         Pageable pageable) {
         return fundingApplicationService.searchFundingApplications(
-            tokens, projectId, fundingCallId, funderId, result,
+            tokens, projectId, fundingCallId, funderId, fundingId, result,
             submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo,
             pageable);
     }

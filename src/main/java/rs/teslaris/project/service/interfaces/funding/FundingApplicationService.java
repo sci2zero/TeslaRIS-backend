@@ -41,6 +41,7 @@ public interface FundingApplicationService extends JPAService<FundingApplication
                                                             Integer projectId,
                                                             Integer fundingCallId,
                                                             Integer funderId,
+                                                            Integer fundingId,
                                                             String result,
                                                             LocalDate submissionDateFrom,
                                                             LocalDate submissionDateTo,
