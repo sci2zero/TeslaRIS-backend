@@ -22,7 +22,7 @@ import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "data_quality_assessment")
-@Setting(settingPath = "/configuration/index-config.json")
+@Setting(settingPath = "/configuration/data-quality-assessment-index-config.json")
 public class DataQualityAssessmentIndex {
 
     public static final LocalDateTime OPEN_INTERVAL_END =
@@ -61,10 +61,6 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis,
         store = true, name = "valid_to")
     private LocalDateTime validTo;
-
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis,
-        store = true, name = "superseded_at")
-    private LocalDateTime supersededAt;
 
     @Field(type = FieldType.Integer, store = true, name = "record_major_version")
     private Integer recordMajorVersion;

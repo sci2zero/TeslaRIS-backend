@@ -20,10 +20,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -44,6 +41,7 @@ import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
@@ -62,6 +60,7 @@ import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.dataquality.IssueCursor;
 import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 
 @Service
@@ -88,10 +87,11 @@ public class DataQualityServiceImpl implements DataQualityService {
     );
 
     private static final Comparator<PendingIssue> ISSUE_ORDER =
-        Comparator
-            .comparingInt((PendingIssue issue) -> issue.severity().ordinal())
-            .thenComparing(PendingIssue::ruleKey)
-            .thenComparing(PendingIssue::entityType);
+        Comparator.comparing(PendingIssue::cursor, IssueCursor.WITHIN_RECORD);
+
+    private static final int DEFAULT_ISSUE_PAGE_SIZE = 50;
+
+    private static final int MAX_ISSUE_PAGE_SIZE = 100;
 
     private static final String ISSUE_INDEX_NAME = "data_quality_assessment";
 
@@ -353,22 +353,29 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DataQualityIssueDTO> findIssuesForEntity(String entityType, Integer entityId,
-                                                         String profileName, String target,
-                                                         QualityDimension dimension,
-                                                         IssueSeverity severity,
-                                                         String constraintKey, Pageable pageable) {
+    public DataQualityIssuePageDTO findIssuesForEntity(String entityType, Integer entityId,
+                                                       String profileName, String target,
+                                                       QualityDimension dimension,
+                                                       IssueSeverity severity,
+                                                       String constraintKey,
+                                                       @Nullable String cursor,
+                                                       @Nullable Integer size) {
         var query = buildIssueQuery(entityType, entityId,
             organisationUnitScope(EntityType.ORGANISATION_UNIT.name().equals(entityType), entityId),
             profileName, issueTargets(target));
 
         var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
-            (int) pageable.getOffset(), pageable.getPageSize());
+            Objects.isNull(cursor) ? null : IssueCursor.decode(cursor), pageSize(size));
 
         var totalIssues = countIssues(query, profileName, target, dimension, severity,
-            constraintKey, window.scannedIssues());
+            constraintKey, window.issues().size());
 
-        return new PageImpl<>(window.issues(), pageable, totalIssues);
+        return new DataQualityIssuePageDTO(window.issues(), totalIssues, window.nextCursor());
+    }
+
+    private int pageSize(@Nullable Integer size) {
+        return Math.max(1, Math.min(MAX_ISSUE_PAGE_SIZE,
+            Objects.requireNonNullElse(size, DEFAULT_ISSUE_PAGE_SIZE)));
     }
 
     private List<String> issueTargets(String target) {
@@ -383,19 +390,17 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private IssueWindow collectIssueWindow(Query query, String target, QualityDimension dimension,
                                            IssueSeverity severity, String constraintKey,
-                                           int offset, int pageSize) {
-        var window = new ArrayList<DataQualityIssueDTO>();
+                                           @Nullable IssueCursor cursor, int pageSize) {
+        var window = new ArrayList<PendingIssue>();
         var block = new ArrayList<PendingIssue>();
-
-        // The applicable rule keys depend only on the profile version and the filters, which are
-        // fixed for the whole scan - recomputing them per assessment filtered every rule of the
-        // profile hundreds of thousands of times on a deep page.
         var applicableKeys = new HashMap<String, Set<String>>();
 
+        // One row beyond the page tells whether there is a next page without a second scan.
+        var wanted = pageSize + 1;
+
         var emittedAtWatermark = new HashSet<String>();
-        Integer watermark = null;
+        Integer watermark = Objects.isNull(cursor) ? null : cursor.entityId();
         Integer blockEntityId = null;
-        var scanned = 0;
 
         while (true) {
             var batch = searchService.runQueryWithoutTotal(
@@ -422,7 +427,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                 progressed = true;
 
                 if (!Objects.equals(blockEntityId, assessment.getEntityId())) {
-                    scanned += flushBlock(block, window, offset, pageSize, scanned);
+                    flushBlock(block, window, cursor, wanted);
                     blockEntityId = assessment.getEntityId();
                 }
 
@@ -436,10 +441,8 @@ public class DataQualityServiceImpl implements DataQualityService {
                     applicableKeys, block);
             }
 
-            if (window.size() >= pageSize) {
-                // The window is complete; everything still unscanned sorts after it. The scanned
-                // count is only a fallback for the exact aggregated total, so a lower bound is fine.
-                return new IssueWindow(window, scanned);
+            if (window.size() >= wanted) {
+                return finishWindow(window, pageSize);
             }
 
             if (batch.size() < ISSUE_SCAN_BATCH_SIZE) {
@@ -457,37 +460,49 @@ public class DataQualityServiceImpl implements DataQualityService {
             }
         }
 
-        scanned += flushBlock(block, window, offset, pageSize, scanned);
+        flushBlock(block, window, cursor, wanted);
 
-        return new IssueWindow(window, scanned);
+        return finishWindow(window, pageSize);
     }
 
-    /**
-     * Rows are only turned into DTOs once they are known to land in the window. Building one costs
-     * two multilingual renders, and each of those resolves a language tag per language through the
-     * repository - so a page deep enough to discard a hundred thousand rows was issuing hundreds of
-     * thousands of queries for rows nobody would see.
-     */
-    private int flushBlock(List<PendingIssue> block, List<DataQualityIssueDTO> window,
-                           int offset, int pageSize, int scanned) {
+    private void flushBlock(List<PendingIssue> block, List<PendingIssue> window,
+                            @Nullable IssueCursor cursor, int wanted) {
         if (block.isEmpty()) {
-            return 0;
+            return;
         }
 
         block.sort(ISSUE_ORDER);
 
         for (var issue : block) {
-            if (scanned >= offset && window.size() < pageSize) {
-                window.add(IssueConverter.toDTO(issue.assessment(), issue.ruleKey()));
+            if (window.size() >= wanted) {
+                break;
             }
 
-            scanned++;
+            if (!isAtOrBeforeCursor(issue, cursor)) {
+                window.add(issue);
+            }
         }
 
-        var contributed = block.size();
         block.clear();
+    }
 
-        return contributed;
+    // Only the record the cursor points into can hold rows already served.
+    private boolean isAtOrBeforeCursor(PendingIssue issue, @Nullable IssueCursor cursor) {
+        return Objects.nonNull(cursor) &&
+            Objects.equals(issue.assessment().getEntityId(), cursor.entityId()) &&
+            IssueCursor.WITHIN_RECORD.compare(issue.cursor(), cursor) <= 0;
+    }
+
+    // Rows are rendered only here, since each render resolves language tags through the repository.
+    private IssueWindow finishWindow(List<PendingIssue> window, int pageSize) {
+        var hasMore = window.size() > pageSize;
+        var page = window.subList(0, Math.min(pageSize, window.size()));
+
+        var issues = page.stream()
+            .map(issue -> IssueConverter.toDTO(issue.assessment(), issue.ruleKey()))
+            .toList();
+
+        return new IssueWindow(issues, hasMore ? page.getLast().cursor().encode() : null);
     }
 
     private void expandIssues(DataQualityAssessmentIndex assessment, String target,
@@ -713,8 +728,13 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private record PendingIssue(DataQualityAssessmentIndex assessment, String ruleKey,
                                 IssueSeverity severity, String entityType) {
+
+        IssueCursor cursor() {
+            return new IssueCursor(assessment.getEntityId(), severity, ruleKey, entityType,
+                Integer.valueOf(assessment.getId()));
+        }
     }
 
-    private record IssueWindow(List<DataQualityIssueDTO> issues, int scannedIssues) {
+    private record IssueWindow(List<DataQualityIssueDTO> issues, @Nullable String nextCursor) {
     }
 }

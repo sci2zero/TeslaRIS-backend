@@ -19,12 +19,14 @@ import static org.mockito.Mockito.when;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -34,7 +36,6 @@ import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -59,6 +60,7 @@ import rs.teslaris.revisioner.service.impl.DataQualityServiceImpl;
 import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.dataquality.IssueCursor;
 import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 
 @SpringBootTest
@@ -312,6 +314,10 @@ public class DataQualityServiceTest {
                 ENTITY_TYPE, 1, 9, 9);
     }
 
+    private void stubIssueTotal(long total) {
+        when(dataQualityAggregator.countIssues(any(), any())).thenReturn(OptionalLong.of(total));
+    }
+
     private void stubIssueConfiguration(
         MockedStatic<DataQualityAssessmentConfigurationLoader> configurationLoader) {
         configurationLoader
@@ -364,6 +370,8 @@ public class DataQualityServiceTest {
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
 
+        stubIssueTotal(2);
+
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
 
@@ -386,14 +394,14 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, PageRequest.of(0, 10));
+                null, null, null, null, 10);
 
             // then
-            assertEquals(2, result.getTotalElements());
-            assertEquals(2, result.getContent().size());
-            assertEquals("doiNotResolvable", result.getContent().getFirst().ruleKey());
-            assertEquals(4, result.getContent().getFirst().recordMajorVersion());
-            assertEquals(IssueSeverity.ERROR, result.getContent().getFirst().severity());
+            assertEquals(2, result.totalIssues());
+            assertEquals(2, result.content().size());
+            assertEquals("doiNotResolvable", result.content().getFirst().ruleKey());
+            assertEquals(4, result.content().getFirst().recordMajorVersion());
+            assertEquals(IssueSeverity.ERROR, result.content().getFirst().severity());
         }
     }
 
@@ -404,6 +412,8 @@ public class DataQualityServiceTest {
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
+
+        stubIssueTotal(1);
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -427,11 +437,11 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, "titleMissing", PageRequest.of(0, 10));
+                null, null, "titleMissing", null, 10);
 
             // then
-            assertEquals(1, result.getTotalElements());
-            assertEquals("titleMissing", result.getContent().getFirst().ruleKey());
+            assertEquals(1, result.totalIssues());
+            assertEquals("titleMissing", result.content().getFirst().ruleKey());
         }
     }
 
@@ -442,6 +452,8 @@ public class DataQualityServiceTest {
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
+
+        stubIssueTotal(1);
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -465,16 +477,16 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, PageRequest.of(0, 10));
+                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, null, 10);
 
             // then
-            assertEquals(1, result.getTotalElements());
-            assertEquals("doiNotResolvable", result.getContent().getFirst().ruleKey());
+            assertEquals(1, result.totalIssues());
+            assertEquals("doiNotResolvable", result.content().getFirst().ruleKey());
         }
     }
 
     @Test
-    public void shouldPageIssuesGroupedByRecord() {
+    public void shouldResumeAfterTheCursorRow() {
         // given (two records, each contributing one issue)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(
@@ -484,31 +496,113 @@ public class DataQualityServiceTest {
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
 
+            stubIssueConfiguration(configurationLoader);
+
+            var firstPage = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS",
+                null, null, null, null, null, 1);
+
+            // when
+            var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, firstPage.nextCursor(), 1);
+
+            // then (the window starts after the row the cursor names, not after a document count)
+            assertEquals(1, firstPage.content().size());
+            assertEquals(1, firstPage.content().getFirst().entityId());
+            assertEquals(1, result.content().size());
+            assertEquals(2, result.content().getFirst().entityId());
+            assertNull(result.nextCursor());
+        }
+    }
+
+    @Test
+    public void shouldResumeInsideARecordWithSeveralIssues() {
+        // given (one record with three issues, served one per page)
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document",
+                List.of("titleMissing", "doiNotResolvable", "abstractMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
                     anyString(), anyString(), any(), any(), any()))
-                .thenReturn(new LinkedHashSet<>(List.of("titleMissing")));
-            configurationLoader
-                .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
-                    anyString(), anyString(), anyString()))
-                .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.COMPLETENESS));
-            configurationLoader
-                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
-                    anyString(), anyString(), anyString()))
-                .thenReturn(Set.of(multilingualContent("Title")));
-            configurationLoader
-                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
-                    anyString(), anyString(), anyString(), any()))
-                .thenReturn(Set.of(multilingualContent("Message")));
+                .thenReturn(new LinkedHashSet<>(
+                    List.of("titleMissing", "doiNotResolvable", "abstractMissing")));
 
-            // when (second page of size one)
-            var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, PageRequest.of(1, 1));
+            var seen = new ArrayList<String>();
+            String cursor = null;
 
-            // then (the window starts at the second record, not at the second document fetched)
-            assertEquals(1, result.getContent().size());
-            assertEquals(2, result.getContent().getFirst().entityId());
+            // when (walk the record one row at a time)
+            do {
+                var page = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                    null, null, null, cursor, 1);
+
+                page.content().forEach(issue -> seen.add(issue.ruleKey()));
+                cursor = page.nextCursor();
+            } while (cursor != null);
+
+            // then (every issue exactly once, in rule-key order)
+            assertEquals(List.of("abstractMissing", "doiNotResolvable", "titleMissing"), seen);
         }
+    }
+
+    @Test
+    public void shouldNotOfferACursorWhenThePageIsExactlyTheLastRows() {
+        // given (two issues, page size two)
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")),
+            assessmentIndex(2, "Document", List.of("titleMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, null, 2);
+
+            // then
+            assertEquals(2, result.content().size());
+            assertNull(result.nextCursor());
+        }
+    }
+
+    @Test
+    public void shouldClampThePageSize() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when (a size no caller may ask for, and no size at all)
+            var oversized = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, null, 10000);
+            var defaulted = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, null, null);
+
+            // then (both serve the one row there is, neither fails)
+            assertEquals(1, oversized.content().size());
+            assertEquals(1, defaulted.content().size());
+        }
+    }
+
+    @Test
+    public void shouldRejectAMalformedCursor() {
+        // when
+        // then
+        assertThrows(IllegalArgumentException.class,
+            () -> dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null,
+                null, null, "not-a-cursor", 10));
     }
 
     /**
@@ -531,13 +625,13 @@ public class DataQualityServiceTest {
 
             stubIssueConfiguration(configurationLoader);
 
-            // when (the last of three rows)
+            // when (one row of three)
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, PageRequest.of(2, 1));
+                null, null, null, null, 1);
 
-            // then
-            assertEquals(1, result.getContent().size());
-            assertEquals(3, result.getContent().getFirst().entityId());
+            // then (the lookahead row is scanned but never rendered)
+            assertEquals(1, result.content().size());
+            assertNotNull(result.nextCursor());
 
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
@@ -570,7 +664,7 @@ public class DataQualityServiceTest {
 
             // when
             dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
-                null, PageRequest.of(0, 10));
+                null, null, 10);
 
             // then
             configurationLoader.verify(
@@ -581,12 +675,14 @@ public class DataQualityServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyPageWhenOffsetIsBeyondIssueCount() {
+    public void shouldReturnEmptyPageWhenTheCursorNamesTheLastRow() {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
             anyString())).thenReturn(new PageImpl<>(List.of(index)));
+
+        stubIssueTotal(1);
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -608,13 +704,16 @@ public class DataQualityServiceTest {
                     anyString(), anyString(), anyString(), any()))
                 .thenReturn(Set.of(multilingualContent("Message")));
 
+            var lastRow = new IssueCursor(1, IssueSeverity.INFO, "titleMissing", ENTITY_TYPE, 1);
+
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, PageRequest.of(5, 10));
+                null, null, null, lastRow.encode(), 10);
 
             // then
-            assertEquals(1, result.getTotalElements());
-            assertTrue(result.getContent().isEmpty());
+            assertEquals(1, result.totalIssues());
+            assertTrue(result.content().isEmpty());
+            assertNull(result.nextCursor());
         }
     }
 

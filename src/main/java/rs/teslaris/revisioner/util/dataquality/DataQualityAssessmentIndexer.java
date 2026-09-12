@@ -73,7 +73,6 @@ public class DataQualityAssessmentIndexer {
             index.setOrganisationUnitIds(resolveOrganisationUnitIds(target, entityId, dto));
             index.setAssessmentDate(assessmentDate);
             index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
-            index.setSupersededAt(null);
             index.setLatest(true);
             index.setRecordMajorVersion(revision.getMajorVersion());
             index.setRecordMinorVersion(revision.getMinorVersion());
@@ -123,7 +122,6 @@ public class DataQualityAssessmentIndexer {
             .findByEntityTypeAndEntityIdAndProfileNameAndIsLatestTrue(entityType, entityId,
                 profileName)
             .ifPresent(previous -> {
-                previous.setSupersededAt(newAssessmentDate);
                 previous.setValidTo(newAssessmentDate);
                 previous.setLatest(false);
                 indexRepository.save(previous);

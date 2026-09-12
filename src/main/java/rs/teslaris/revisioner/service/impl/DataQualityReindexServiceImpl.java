@@ -41,7 +41,7 @@ public class DataQualityReindexServiceImpl implements DataQualityReindexService 
         var objectMapper = ObjectMapperProvider.provideObjectmapper();
 
         // Ascending finishedAt order is load-bearing: DataQualityAssessmentIndexer chains
-        // is_latest/superseded_at by looking up whichever doc is currently latest for the
+        // is_latest/valid_to by looking up whichever doc is currently latest for the
         // same (entityType, entityId, profileName), so replaying assessments out of order
         // would rebuild a corrupted chain.
         FunctionalUtil.processAllPages(

@@ -2,8 +2,6 @@ package rs.teslaris.revisioner.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.revisioner.annotation.DataQualityEditCheck;
 import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
-import rs.teslaris.revisioner.dto.DataQualityIssueDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
+import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
@@ -81,19 +79,20 @@ public class DataQualityController {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     @DataQualityEditCheck
-    public Page<DataQualityIssueDTO> findIssues(@PathVariable String entityType,
-                                                @PathVariable Integer entityId,
-                                                @RequestParam String profileName,
-                                                @RequestParam(required = false) String target,
-                                                @RequestParam(required = false)
-                                                QualityDimension dimension,
-                                                @RequestParam(required = false)
-                                                IssueSeverity severity,
-                                                @RequestParam(required = false)
-                                                String constraintKey,
-                                                Pageable pageable) {
+    public DataQualityIssuePageDTO findIssues(@PathVariable String entityType,
+                                              @PathVariable Integer entityId,
+                                              @RequestParam String profileName,
+                                              @RequestParam(required = false) String target,
+                                              @RequestParam(required = false)
+                                              QualityDimension dimension,
+                                              @RequestParam(required = false)
+                                              IssueSeverity severity,
+                                              @RequestParam(required = false)
+                                              String constraintKey,
+                                              @RequestParam(required = false) String cursor,
+                                              @RequestParam(required = false) Integer size) {
         return dataQualityService.findIssuesForEntity(entityType, entityId, profileName, target,
-            dimension, severity, constraintKey, pageable);
+            dimension, severity, constraintKey, cursor, size);
     }
 
     @GetMapping(value = "/issue/{assessmentId}/{ruleKey}",
