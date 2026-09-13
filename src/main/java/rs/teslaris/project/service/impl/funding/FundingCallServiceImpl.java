@@ -30,10 +30,8 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingCallConverter;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
-import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingCallIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
-import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
@@ -206,7 +204,7 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             Objects.nonNull(fundingCallDTO.getDateTo()) &&
             fundingCallDTO.getDateTo().isBefore(fundingCallDTO.getDateFrom())) {
             throw new DateRangeException(
-                "Funding call must opened before closing.");
+                "fundingCallDateRangeMessage");
         }
 
         if (Objects.nonNull(fundingCallDTO.getFundingProgramId())) {
@@ -220,21 +218,21 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             if (Objects.nonNull(fundingProgram.getDateFrom()) && Objects.nonNull(fundingCallDTO.getDateFrom()) &&
                 fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
                 throw new DateRangeException(
-                    "Funding call opening must be equal or after program opening.");
+                    "fundingCallOpeningBeforeProgramOpeningMessage");
             }
 
             // Added fundingCall dateTo null check because there were no strict constraints in the model nor DTO
             if (Objects.nonNull(fundingProgram.getDateTo()) && Objects.nonNull(fundingCallDTO.getDateTo()) &&
                 fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
                 throw new DateRangeException(
-                    "Funding call closing must be equal or before program closing.");
+                    "fundingCallClosingAfterProgramClosingMessage");
             }
         } else if (Objects.nonNull(fundingCallDTO.getFunderId())) {
             fundingCall.setFunder(organisationUnitService.findOne(fundingCallDTO.getFunderId()));
             fundingCall.setFundingProgram(null);
         } else {
             throw new ReferenceConstraintException(
-                "Funding Call must be bound to either a funding program or a funder.");
+                "fundingCallMissingProgramOrFunderMessage");
         }
 
         fundingCall.setDateFrom(fundingCallDTO.getDateFrom());
@@ -318,7 +316,10 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         if (Objects.nonNull(fundingCall.getFundingProgram())) {
             indexFundingProgramFields(fundingCall, index);
         } else {
+            index.setProgramId(null);
+            index.setProgramNameSr("");
             index.setProgramNameSrSortable("");
+            index.setProgramNameOther("");
             index.setProgramNameOtherSortable("");
         }
 

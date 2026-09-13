@@ -34,6 +34,9 @@ public class FundingApplicationIndex {
     @Field(type = FieldType.Integer, name = "funder_id", store = true)
     private Integer funderId;
 
+    @Field(type = FieldType.Integer, name = "funding_id", store = true)
+    private Integer fundingId;
+
     @Field(type = FieldType.Text, name = "project_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String projectNameSr;
 
@@ -63,6 +66,12 @@ public class FundingApplicationIndex {
 
     @Field(type = FieldType.Text, name = "funder_name_other", analyzer = "english", searchAnalyzer = "english")
     private String funderNameOther;
+
+    @Field(type = FieldType.Text, name = "description_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String descriptionSr;
+
+    @Field(type = FieldType.Text, name = "description_other", analyzer = "english", searchAnalyzer = "english")
+    private String descriptionOther;
 
     @Field(type = FieldType.Date, name = "submission_date")
     private LocalDate submissionDate;
