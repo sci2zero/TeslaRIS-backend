@@ -51,10 +51,15 @@ public class DataQualityAggregator {
             .aggregations("activityCandidates", a -> a
                 .sum(s -> s.field("activity_publication_candidates_count")))
             .aggregations("activityScore", a -> a.sum(s -> s.field("activity_score_sum")))
+            // Occurrences, in the unit of the severity counters they are subtracted from.
+            .aggregations("activityErrors", a -> a.sum(s -> s.field("activity_error_issues")))
+            .aggregations("activityWarnings", a -> a.sum(s -> s.field("activity_warning_issues")))
+            .aggregations("activityInfos", a -> a.sum(s -> s.field("activity_info_issues")))
             .aggregations("averageScore", a -> a.avg(avg -> avg.field("quality_score")))
             .aggregations("publicationCandidates", a -> a
                 .filter(f -> f.term(term -> term.field("publication_candidate").value(true))));
 
+        // Distinct rule per record, which is how the issues list shows them.
         if (!activityRuleKeys.isEmpty()) {
             request.aggregations("activityIssues", a -> a
                 .terms(terms -> terms
@@ -79,6 +84,8 @@ public class DataQualityAggregator {
                     sum(response, "infoFailures"),
                 sum(response, "activities"),
                 bucketTotal(response, "activityIssues"),
+                sum(response, "activityErrors") + sum(response, "activityWarnings") +
+                    sum(response, "activityInfos"),
                 sum(response, "activityCandidates"),
                 sumAsDouble(response, "activityScore"),
                 filterTotal(response, "publicationCandidates"),
@@ -656,21 +663,15 @@ public class DataQualityAggregator {
         return Double.isNaN(value) || Double.isInfinite(value) ? null : value;
     }
 
+    // activityIssues counts distinct rules per record (what the issues list shows);
+    // activityIssueOccurrences counts evaluations (what the severity counters count).
     public record AssessmentAggregates(long affectedRecords, long openIssues, long activitiesCount,
-                                       long activityIssues, long activityPublicationCandidates,
+                                       long activityIssues, long activityIssueOccurrences,
+                                       long activityPublicationCandidates,
                                        double activityScoreSum, long publicationCandidates,
                                        Double averageScore) {
         public static AssessmentAggregates empty() {
-            return new AssessmentAggregates(
-                0,
-                0,
-                0,
-                0,
-                0,
-                0.0,
-                0,
-                null
-            );
+            return new AssessmentAggregates(0, 0, 0, 0, 0, 0, 0.0, 0, null);
         }
     }
 

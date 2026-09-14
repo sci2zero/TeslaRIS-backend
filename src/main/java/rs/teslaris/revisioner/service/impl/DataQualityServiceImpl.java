@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -61,6 +64,7 @@ import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.dataquality.IssueCursor;
+import rs.teslaris.revisioner.util.dataquality.PointInTimeQueries;
 import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 
 @Service
@@ -75,6 +79,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private static final String ACTIVITY_TARGET = "Activity";
 
     private static final String PERSON_INDEX = "person";
+
+    private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
     private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
 
@@ -110,6 +116,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private final DataQualityAggregator dataQualityAggregator;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
@@ -223,12 +231,9 @@ public class DataQualityServiceImpl implements DataQualityService {
         var isOrganisationUnit = EntityType.ORGANISATION_UNIT.name().equals(entityType);
 
         if (!isPerson && !isOrganisationUnit) {
-            return List.of(
-                RelatedQualityDTO.unsupported(RelatedEntityType.OUTPUTS),
-                RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
-                RelatedQualityDTO.unsupported(RelatedEntityType.ACTIVITIES),
-                RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
-            );
+            return Arrays.stream(RelatedEntityType.values())
+                .map(RelatedQualityDTO::unsupported)
+                .toList();
         }
 
         // An organisation unit answers for everything below it, and not every record carries its
@@ -264,16 +269,16 @@ public class DataQualityServiceImpl implements DataQualityService {
             assessments.activitiesCount() + personAssessments.activitiesCount();
 
         return List.of(
+            relatedPersons(isPerson, scopeIds, personAssessments),
+            relatedOrganisationUnits(isPerson, entityId, scopeIds, profileName),
             new RelatedQualityDTO(
                 RelatedEntityType.OUTPUTS,
                 documents.linkedRecords(),
                 assessments.affectedRecords(),
-                assessments.openIssues() - assessments.activityIssues(),
+                assessments.openIssues() - assessments.activityIssueOccurrences(),
                 assessments.averageScore(),
                 true
             ),
-            // TODO: projects have no quality assessments yet.
-            RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
             // Activities live on other records, so every figure here is a sum of activity
             // counters. The score is the sum of the per-activity scores over the number of
             // activities assessed, which weights each activity equally no matter how many the
@@ -286,9 +291,73 @@ public class DataQualityServiceImpl implements DataQualityService {
                 averageActivityScore(assessments, personAssessments, assessedActivities),
                 true
             ),
+            // TODO: projects have no quality assessments yet.
+            RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
             // TODO: fundings have no quality assessments yet.
             RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
         );
+    }
+
+    // A person has no related persons in the index; a unit has everyone employed below it.
+    private RelatedQualityDTO relatedPersons(
+        boolean isPerson, List<Integer> scopeIds,
+        DataQualityAggregator.AssessmentAggregates personAssessments) {
+
+        if (isPerson) {
+            return RelatedQualityDTO.unsupported(RelatedEntityType.PERSONS);
+        }
+
+        return new RelatedQualityDTO(
+            RelatedEntityType.PERSONS,
+            dataQualityAggregator.countRecords(PERSON_INDEX,
+                termsQuery("employment_institutions_id", scopeIds)),
+            personAssessments.affectedRecords(),
+            personAssessments.openIssues() - personAssessments.activityIssueOccurrences(),
+            personAssessments.averageScore(),
+            true
+        );
+    }
+
+    // A person's units are where they are employed; a unit's are itself and everything below it.
+    private RelatedQualityDTO relatedOrganisationUnits(boolean isPerson, Integer entityId,
+                                                       List<Integer> scopeIds,
+                                                       String profileName) {
+        var unitIds = isPerson
+            ? personIndexRepository.findByDatabaseId(entityId)
+            .map(PersonIndex::getEmploymentInstitutionsId)
+            .orElseGet(List::of)
+            : scopeIds;
+
+        if (unitIds.isEmpty()) {
+            return new RelatedQualityDTO(RelatedEntityType.ORGANISATION_UNITS, 0, 0, 0, null,
+                true);
+        }
+
+        var unitAssessments = dataQualityAggregator
+            .aggregateAssessments(
+                entityAssessmentsQuery(EntityType.ORGANISATION_UNIT.name(), unitIds, profileName),
+                Set.of())
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        return new RelatedQualityDTO(
+            RelatedEntityType.ORGANISATION_UNITS,
+            dataQualityAggregator.countRecords(ORGANISATION_UNIT_INDEX,
+                termsQuery("databaseId", unitIds)),
+            unitAssessments.affectedRecords(),
+            unitAssessments.openIssues(),
+            unitAssessments.averageScore(),
+            true
+        );
+    }
+
+    private Query entityAssessmentsQuery(String entityType, List<Integer> unitIds,
+                                         String profileName) {
+        return BoolQuery.of(b -> b
+            .must(m -> m.term(t -> t.field("entity_type").value(entityType)))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(termsQuery("organisation_unit_ids", unitIds))
+        )._toQuery();
     }
 
     private Query relatedAssessmentsQuery(boolean isPerson, Integer entityId,
@@ -358,12 +427,47 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                        QualityDimension dimension,
                                                        IssueSeverity severity,
                                                        String constraintKey,
+                                                       @Nullable LocalDate assessmentDate,
                                                        @Nullable String cursor,
                                                        @Nullable Integer size) {
-        var query = buildIssueQuery(entityType, entityId,
-            organisationUnitScope(EntityType.ORGANISATION_UNIT.name().equals(entityType), entityId),
-            profileName, issueTargets(target));
+        var isOrganisationUnit = EntityType.ORGANISATION_UNIT.name().equals(entityType);
 
+        var query = buildIssueQuery(
+            entityScopeClause(entityType, entityId,
+                organisationUnitScope(isOrganisationUnit, entityId)),
+            profileName, issueTargets(target), assessmentDate);
+
+        return issuePage(query, profileName, target, dimension, severity, constraintKey, cursor,
+            size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DataQualityIssuePageDTO findRepositoryIssues(@Nullable Integer organisationUnitId,
+                                                        String profileName, String target,
+                                                        QualityDimension dimension,
+                                                        IssueSeverity severity,
+                                                        String constraintKey,
+                                                        @Nullable LocalDate assessmentDate,
+                                                        @Nullable String cursor,
+                                                        @Nullable Integer size) {
+        // No unit means the whole repository; a unit means everything in its sub-hierarchy.
+        var scopeIds = Objects.isNull(organisationUnitId)
+            ? List.<Integer>of()
+            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var query = buildIssueQuery(
+            scopeIds.isEmpty() ? null : termsQuery("organisation_unit_ids", scopeIds),
+            profileName, issueTargets(target), assessmentDate);
+
+        return issuePage(query, profileName, target, dimension, severity, constraintKey, cursor,
+            size);
+    }
+
+    private DataQualityIssuePageDTO issuePage(Query query, String profileName, String target,
+                                              QualityDimension dimension, IssueSeverity severity,
+                                              String constraintKey, @Nullable String cursor,
+                                              @Nullable Integer size) {
         var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
             Objects.isNull(cursor) ? null : IssueCursor.decode(cursor), pageSize(size));
 
@@ -589,30 +693,40 @@ public class DataQualityServiceImpl implements DataQualityService {
         return keys;
     }
 
-    private Query buildIssueQuery(String entityType, Integer entityId, List<Integer> scopeIds,
-                                  String profileName, List<String> targets) {
-        var isPerson = EntityType.PERSON.name().equals(entityType);
-
-        var relatedClause = isPerson
+    // The entity's own assessments plus those of the records related to it.
+    private Query entityScopeClause(String entityType, Integer entityId, List<Integer> scopeIds) {
+        var relatedClause = EntityType.PERSON.name().equals(entityType)
             ? TermQuery.of(tq -> tq.field("related_person_ids").value(entityId))._toQuery()
             : termsQuery("organisation_unit_ids", scopeIds);
 
-        return BoolQuery.of(topLevel -> topLevel
-            .must(scope -> scope.bool(b -> b
-                .should(own -> own.bool(ownEntity -> ownEntity
-                    .must(m -> m.term(tq -> tq.field("entity_type").value(entityType)))
-                    .must(m -> m.term(tq -> tq.field("entity_id").value(entityId)))))
-                .should(relatedClause)
-                .minimumShouldMatch("1")))
-            .must(m -> m.term(tq -> tq.field("is_latest").value(true)))
-            .must(m -> m.term(tq -> tq.field("profile_name").value(profileName)))
-            .must(m -> Objects.isNull(targets) || targets.isEmpty()
-                ? m.matchAll(ma -> ma)
-                : m.terms(tq -> tq
-                .field("target")
-                .terms(values -> values.value(
-                    targets.stream().map(FieldValue::of).toList()))))
+        return BoolQuery.of(b -> b
+            .should(own -> own.bool(ownEntity -> ownEntity
+                .must(m -> m.term(tq -> tq.field("entity_type").value(entityType)))
+                .must(m -> m.term(tq -> tq.field("entity_id").value(entityId)))))
+            .should(relatedClause)
+            .minimumShouldMatch("1")
         )._toQuery();
+    }
+
+    private Query buildIssueQuery(@Nullable Query scope, String profileName,
+                                  List<String> targets, @Nullable LocalDate assessmentDate) {
+        var clauses = new ArrayList<Query>();
+
+        if (Objects.nonNull(scope)) {
+            clauses.add(scope);
+        }
+
+        clauses.add(PointInTimeQueries.assessmentsValidOn(assessmentDate));
+        clauses.add(TermQuery.of(tq -> tq.field("profile_name").value(profileName))._toQuery());
+
+        if (Objects.nonNull(targets) && !targets.isEmpty()) {
+            clauses.add(TermsQuery.of(tq -> tq
+                .field("target")
+                .terms(values -> values.value(targets.stream().map(FieldValue::of).toList()))
+            )._toQuery());
+        }
+
+        return BoolQuery.of(b -> b.must(clauses))._toQuery();
     }
 
     @Override

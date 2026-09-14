@@ -1,14 +1,20 @@
 package rs.teslaris.revisioner.controller;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.revisioner.annotation.DataQualityEditCheck;
 import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
@@ -28,6 +34,10 @@ import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 public class DataQualityController {
 
     private final DataQualityService dataQualityService;
+
+    private final JwtUtil tokenUtil;
+
+    private final UserService userService;
 
 
     @GetMapping("/{entityType}/{entityId}/can-assess")
@@ -75,6 +85,24 @@ public class DataQualityController {
         return dataQualityService.getRelatedQualityForEntity(entityType, entityId);
     }
 
+    @GetMapping(value = "/issues", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public DataQualityIssuePageDTO findRepositoryIssues(
+        @RequestParam String profileName,
+        @RequestParam(required = false) String target,
+        @RequestParam(required = false) QualityDimension dimension,
+        @RequestParam(required = false) IssueSeverity severity,
+        @RequestParam(required = false) String constraintKey,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) Integer size,
+        @RequestHeader("Authorization") String bearerToken) {
+        return dataQualityService.findRepositoryIssues(resolveOrganisationUnitId(bearerToken),
+            profileName, target, dimension, severity, constraintKey, assessmentDate, cursor,
+            size);
+    }
+
     @GetMapping(value = "/issues/{entityType}/{entityId}",
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
@@ -89,10 +117,13 @@ public class DataQualityController {
                                               IssueSeverity severity,
                                               @RequestParam(required = false)
                                               String constraintKey,
+                                              @RequestParam(required = false)
+                                              @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                              LocalDate assessmentDate,
                                               @RequestParam(required = false) String cursor,
                                               @RequestParam(required = false) Integer size) {
         return dataQualityService.findIssuesForEntity(entityType, entityId, profileName, target,
-            dimension, severity, constraintKey, cursor, size);
+            dimension, severity, constraintKey, assessmentDate, cursor, size);
     }
 
     @GetMapping(value = "/issue/{assessmentId}/{ruleKey}",
@@ -123,5 +154,14 @@ public class DataQualityController {
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public List<DataQualityProfileDTO> listAllPolicies() {
         return dataQualityService.listAllDataQualityProfiles();
+    }
+
+    // An admin has no unit and sees the repository; everyone else sees their own sub-hierarchy.
+    private Integer resolveOrganisationUnitId(String bearerToken) {
+        var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
+
+        return Objects.nonNull(user.getOrganisationUnit())
+            ? user.getOrganisationUnit().getId()
+            : null;
     }
 }

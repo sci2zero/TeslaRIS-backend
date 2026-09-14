@@ -4,14 +4,10 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
-import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.IsoFields;
@@ -51,6 +47,7 @@ import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 import rs.teslaris.revisioner.service.interfaces.RepositoryAnalyticsService;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
+import rs.teslaris.revisioner.util.dataquality.PointInTimeQueries;
 import rs.teslaris.revisioner.util.dataquality.RepositoryEntityType;
 import rs.teslaris.revisioner.util.dataquality.TrendGranularity;
 import rs.teslaris.revisioner.util.dataquality.TrendMetric;
@@ -84,9 +81,6 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final List<String> ACTIVITY_PARENT_TARGETS =
         List.of(DOCUMENT_TARGET, PERSON_TARGET);
-
-    private static final DateTimeFormatter INSTANT_FORMAT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     private final DataQualityAggregator dataQualityAggregator;
 
@@ -336,14 +330,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     }
 
     private Query pointInTimeQuery(LocalDate periodEnd) {
-        var instant = INSTANT_FORMAT.format(
-            LocalDateTime.ofInstant(periodEnd.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC));
-
-        return BoolQuery.of(b -> b
-            .must(rangeQuery("assessment_date", instant, true))
-            .must(rangeQuery("valid_to", instant, false))
-        )._toQuery();
+        return PointInTimeQueries.assessmentsValidAtEndOf(periodEnd);
     }
 
     private String periodKey(int period) {
@@ -631,9 +618,8 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     public List<EntityTypeQualityDTO> getQualityByEntityType(String profileName,
                                                              Integer organisationUnitId,
                                                              @Nullable LocalDate assessmentDate) {
-        var activityRuleKeys = activityRuleKeys(profileName);
-
         var scopeOrganisationUnitIds = organisationUnitScope(organisationUnitId);
+        var activityRuleKeys = ruleKeys(profileName, ACTIVITY_TARGET);
 
         // Person assessments now carry activity issues of their own, raised by the person's
         // involvements, so this pass answers both the Persons row and part of the Activities one.
@@ -1074,7 +1060,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             entityType,
             records,
             aggregates.affectedRecords(),
-            aggregates.openIssues() - aggregates.activityIssues(),
+            aggregates.openIssues() - aggregates.activityIssueOccurrences(),
             aggregates.averageScore(),
             percentage(aggregates.publicationCandidates(), aggregates.affectedRecords()),
             true
@@ -1137,29 +1123,9 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             clauses.add(intTermsQuery("organisation_unit_ids", scopeOrganisationUnitIds));
         }
 
-        if (Objects.isNull(assessmentDate)) {
-            clauses.add(TermQuery.of(t -> t.field("is_latest").value(true))._toQuery());
-        } else {
-            var instant = INSTANT_FORMAT.format(
-                LocalDateTime.ofInstant(
-                    assessmentDate.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC),
-                    ZoneOffset.UTC));
-
-            clauses.add(rangeQuery("assessment_date", instant, true));
-            clauses.add(rangeQuery("valid_to", instant, false));
-        }
+        clauses.add(PointInTimeQueries.assessmentsValidOn(assessmentDate));
 
         return BoolQuery.of(b -> b.must(clauses))._toQuery();
-    }
-
-    private Query rangeQuery(String field, String instant, boolean lowerBound) {
-        return RangeQuery.of(range -> {
-            range.field(field);
-
-            return lowerBound
-                ? range.lte(JsonData.of(instant))
-                : range.gt(JsonData.of(instant));
-        })._toQuery();
     }
 
     /**
@@ -1188,10 +1154,6 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private Query termQuery(String field, String value) {
         return TermQuery.of(t -> t.field(field).value(value))._toQuery();
-    }
-
-    private Set<String> activityRuleKeys(String profileName) {
-        return ruleKeys(profileName, ACTIVITY_TARGET);
     }
 
     /**

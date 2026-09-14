@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -38,6 +40,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -96,6 +100,9 @@ public class DataQualityServiceTest {
 
     @Mock
     private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @InjectMocks
     private DataQualityServiceImpl dataQualityService;
@@ -314,6 +321,21 @@ public class DataQualityServiceTest {
                 ENTITY_TYPE, 1, 9, 9);
     }
 
+    private String capturedScanQuery() {
+        var captor = ArgumentCaptor.forClass(Query.class);
+        verify(searchService, atLeastOnce()).runQueryWithoutTotal(captor.capture(), any(),
+            eq(DataQualityAssessmentIndex.class), anyString());
+
+        return captor.getValue().toString();
+    }
+
+    private RelatedQualityDTO row(List<RelatedQualityDTO> rows, RelatedEntityType entityType) {
+        return rows.stream()
+            .filter(row -> row.entityType() == entityType)
+            .findFirst()
+            .orElseThrow();
+    }
+
     private void stubIssueTotal(long total) {
         when(dataQualityAggregator.countIssues(any(), any())).thenReturn(OptionalLong.of(total));
     }
@@ -394,7 +416,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, 10);
+                null, null, null, null, null, 10);
 
             // then
             assertEquals(2, result.totalIssues());
@@ -437,7 +459,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, "titleMissing", null, 10);
+                null, null, "titleMissing", null, null, 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -477,7 +499,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, null, 10);
+                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, null, null, 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -499,11 +521,11 @@ public class DataQualityServiceTest {
             stubIssueConfiguration(configurationLoader);
 
             var firstPage = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS",
-                null, null, null, null, null, 1);
+                null, null, null, null, null, null, 1);
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, firstPage.nextCursor(), 1);
+                null, null, null, null, firstPage.nextCursor(), 1);
 
             // then (the window starts after the row the cursor names, not after a document count)
             assertEquals(1, firstPage.content().size());
@@ -538,7 +560,7 @@ public class DataQualityServiceTest {
             // when (walk the record one row at a time)
             do {
                 var page = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                    null, null, null, cursor, 1);
+                    null, null, null, null, cursor, 1);
 
                 page.content().forEach(issue -> seen.add(issue.ruleKey()));
                 cursor = page.nextCursor();
@@ -564,7 +586,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, 2);
+                null, null, null, null, null, 2);
 
             // then
             assertEquals(2, result.content().size());
@@ -586,13 +608,113 @@ public class DataQualityServiceTest {
 
             // when (a size no caller may ask for, and no size at all)
             var oversized = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, 10000);
+                null, null, null, null, null, 10000);
             var defaulted = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
             // then (both serve the one row there is, neither fails)
             assertEquals(1, oversized.content().size());
             assertEquals(1, defaulted.content().size());
+        }
+    }
+
+    @Test
+    public void shouldListTheIssuesCurrentOnTheRequestedDay() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of()));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                null, LocalDate.of(2026, 7, 18), null, 10);
+
+            // then (the two validity ranges at the end of that day, and no is_latest clause)
+            var query = capturedScanQuery();
+            assertTrue(query.contains("assessment_date"));
+            assertTrue(query.contains("valid_to"));
+            assertTrue(query.contains("2026-07-18T23:59:59.999"));
+            assertFalse(query.contains("is_latest"));
+        }
+    }
+
+    @Test
+    public void shouldListTheLatestIssuesWhenNoDayIsRequested() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of()));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                null, null, null, 10);
+
+            // then
+            var query = capturedScanQuery();
+            assertTrue(query.contains("is_latest"));
+            assertFalse(query.contains("valid_to"));
+        }
+    }
+
+    @Test
+    public void shouldListRepositoryIssuesWithoutAnEntityScope() {
+        // given (an admin: no unit, so no scope clause at all)
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            var result = dataQualityService.findRepositoryIssues(null, "PTCRIS", null, null,
+                null, null, null, null, 10);
+
+            // then
+            assertEquals(1, result.content().size());
+
+            var query = capturedScanQuery();
+            assertFalse(query.contains("organisation_unit_ids"));
+            assertFalse(query.contains("related_person_ids"));
+            assertFalse(query.contains("entity_id"));
+            assertTrue(query.contains("is_latest"));
+        }
+    }
+
+    @Test
+    public void shouldScopeRepositoryIssuesToTheUnitSubHierarchy() {
+        // given (an institutional editor sees their unit and everything below it)
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
+            .thenReturn(List.of(7, 8, 9));
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of()));
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findRepositoryIssues(7, "PTCRIS", null, null, null, null,
+                LocalDate.of(2026, 7, 18), null, 10);
+
+            // then
+            var query = capturedScanQuery();
+            assertTrue(query.contains("organisation_unit_ids"));
+            assertTrue(query.contains("2026-07-18T23:59:59.999"));
+            assertFalse(query.contains("entity_id"));
+
+            verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(7);
         }
     }
 
@@ -602,7 +724,7 @@ public class DataQualityServiceTest {
         // then
         assertThrows(IllegalArgumentException.class,
             () -> dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null,
-                null, null, "not-a-cursor", 10));
+                null, null, null, "not-a-cursor", 10));
     }
 
     /**
@@ -627,7 +749,7 @@ public class DataQualityServiceTest {
 
             // when (one row of three)
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, 1);
+                null, null, null, null, null, 1);
 
             // then (the lookahead row is scanned but never rendered)
             assertEquals(1, result.content().size());
@@ -664,7 +786,7 @@ public class DataQualityServiceTest {
 
             // when
             dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
-                null, null, 10);
+                null, null, null, 10);
 
             // then
             configurationLoader.verify(
@@ -708,7 +830,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, lastRow.encode(), 10);
+                null, null, null, null, lastRow.encode(), 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -740,17 +862,17 @@ public class DataQualityServiceTest {
     }
 
     /**
-     * Related quality makes two assessment passes per profile: the outputs in scope first, then the
-     * persons in scope, whose involvements are activities too. Only the first one is stubbed with
-     * figures, so the assertions stay about the outputs pass unless a test says otherwise.
+     * Related quality makes up to three assessment passes per profile: outputs, then persons, then
+     * organisation units. Only the first is stubbed with figures and the rest are empty, so the
+     * assertions stay about the outputs pass unless a test says otherwise.
      */
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, Double averageScore, long linkedRecords,
                                 long linkedActivities) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                    affectedRecords, openIssues, activitiesCount, activityIssues, 0, 0.0, 0,
-                    averageScore)),
+                    affectedRecords, openIssues, activitiesCount, activityIssues, activityIssues,
+                    0, 0.0, 0, averageScore)),
                 Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
@@ -789,9 +911,9 @@ public class DataQualityServiceTest {
         var profile = result.getFirst();
         assertEquals("PTCRIS", profile.profileName());
         assertEquals("1.3", profile.profileVersion());
-        assertEquals(4, profile.relatedQuality().size());
+        assertEquals(6, profile.relatedQuality().size());
 
-        var outputs = profile.relatedQuality().getFirst();
+        var outputs = row(profile.relatedQuality(), RelatedEntityType.OUTPUTS);
         assertEquals(RelatedEntityType.OUTPUTS, outputs.entityType());
         assertTrue(outputs.supported());
         assertEquals(186, outputs.linkedRecords());
@@ -810,8 +932,8 @@ public class DataQualityServiceTest {
         stubAggregates(2, 5, 4, 1, 92.0, 186, 5);
 
         // when
-        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().get(2);
+        var activities = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ACTIVITIES);
 
         // then
         assertEquals(RelatedEntityType.ACTIVITIES, activities.entityType());
@@ -837,17 +959,17 @@ public class DataQualityServiceTest {
 
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 320.0, 0,
-                    92.0)),
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 480.0, 0,
-                    88.0)));
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(
+                    2, 5, 4, 1, 1, 0, 320.0, 0, 92.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(
+                    1, 3, 6, 2, 2, 0, 480.0, 0, 88.0)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(
                 new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
 
         // when
-        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().get(2);
+        var activities = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ACTIVITIES);
 
         // then (800 points over 10 assessed activities)
         assertEquals(10, activities.affectedRecords());
@@ -864,8 +986,8 @@ public class DataQualityServiceTest {
         stubAggregates(2, 5, 0, 0, 92.0, 186, 0);
 
         // when
-        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().get(2);
+        var activities = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ACTIVITIES);
 
         // then
         assertNull(activities.averageScore());
@@ -884,9 +1006,9 @@ public class DataQualityServiceTest {
 
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 0, 0.0, 0,
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 1, 0, 0.0, 0,
                     92.0)),
-                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 0, 0.0, 0,
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 2, 0, 0.0, 0,
                     88.0)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(
@@ -895,8 +1017,8 @@ public class DataQualityServiceTest {
             .thenReturn(3L);
 
         // when
-        var activities = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().get(2);
+        var activities = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ACTIVITIES);
 
         // then
         assertEquals(8, activities.linkedRecords());   // 5 on outputs + 3 on the person
@@ -919,8 +1041,8 @@ public class DataQualityServiceTest {
 
         // when
         var outputs =
-            dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1)
-                .getFirst().relatedQuality().getFirst();
+            row(dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1)
+                .getFirst().relatedQuality(), RelatedEntityType.OUTPUTS);
 
         // then
         assertEquals(42, outputs.linkedRecords());
@@ -929,7 +1051,7 @@ public class DataQualityServiceTest {
         assertEquals(80.0, outputs.averageScore());
 
         var queryCaptor = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(2))
+        verify(dataQualityAggregator, times(3))
             .aggregateAssessments(queryCaptor.capture(), any());
 
         assertTrue(queryCaptor.getAllValues().getFirst().toString()
@@ -954,7 +1076,7 @@ public class DataQualityServiceTest {
 
         // then
         var assessmentQuery = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(2))
+        verify(dataQualityAggregator, times(3))
             .aggregateAssessments(assessmentQuery.capture(), any());
 
         var documentQuery = ArgumentCaptor.forClass(Query.class);
@@ -1013,8 +1135,8 @@ public class DataQualityServiceTest {
         stubAggregates(0, 0, 0, 0, null, 5, 0);
 
         // when
-        var outputs = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().getFirst();
+        var outputs = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.OUTPUTS);
 
         // then
         assertEquals(5, outputs.linkedRecords());
@@ -1034,8 +1156,8 @@ public class DataQualityServiceTest {
         when(dataQualityAggregator.aggregateLinkedDocuments(any())).thenReturn(Optional.empty());
 
         // when
-        var outputs = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
-            .getFirst().relatedQuality().getFirst();
+        var outputs = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.OUTPUTS);
 
         // then
         assertTrue(outputs.supported());
@@ -1056,10 +1178,137 @@ public class DataQualityServiceTest {
             .getFirst().relatedQuality();
 
         // then
-        assertEquals(4, relatedQuality.size());
+        assertEquals(6, relatedQuality.size());
         assertTrue(relatedQuality.stream().noneMatch(RelatedQualityDTO::supported));
 
         verifyNoInteractions(dataQualityAggregator);
+    }
+
+    /**
+     * A unit's related persons are everyone employed below it; their involvement issues belong to
+     * the Activities row, so they are left out of the Persons count.
+     */
+    @Test
+    public void shouldComputeRelatedPersonsForAnOrganisationUnit() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ORGANISATION_UNIT_ENTITY_TYPE, 1))
+            .thenReturn(
+                Optional.of(revisionWithProfiles(ORGANISATION_UNIT_ENTITY_TYPE, "PTCRIS")));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2));
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 1, 0, 0.0, 0,
+                    92.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(30, 50, 6, 8, 8, 0, 0.0,
+                    0, 88.0)),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 3, 0, 0, 0, 0, 0.0, 0,
+                    75.0)));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(10, 0)));
+        when(dataQualityAggregator.countRecords(eq("person"), any())).thenReturn(48L);
+        when(dataQualityAggregator.countRecords(eq("organisation_unit"), any())).thenReturn(2L);
+
+        // when
+        var rows = dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality();
+
+        // then
+        var persons = row(rows, RelatedEntityType.PERSONS);
+        assertTrue(persons.supported());
+        assertEquals(48, persons.linkedRecords());
+        assertEquals(30, persons.affectedRecords());
+        assertEquals(42, persons.openIssues()); // 50 - 8 activity issues
+        assertEquals(88.0, persons.averageScore());
+
+        var units = row(rows, RelatedEntityType.ORGANISATION_UNITS);
+        assertTrue(units.supported());
+        assertEquals(2, units.linkedRecords());
+        assertEquals(2, units.affectedRecords());
+        assertEquals(3, units.openIssues());
+        assertEquals(75.0, units.averageScore());
+    }
+
+    /**
+     * A person whose only failures are seven occurrences of two involvement rules has no
+     * person-level issues, and the issues list shows those seven as two rows.
+     */
+    @Test
+    public void shouldSubtractActivityOccurrencesButDisplayDistinctActivityRules() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ORGANISATION_UNIT_ENTITY_TYPE, 1))
+            .thenReturn(
+                Optional.of(revisionWithProfiles(ORGANISATION_UNIT_ENTITY_TYPE, "PTCRIS")));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1));
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(
+                    1, 7, 4, 2, 7, 4, 389.9, 1, 96.7)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(0, 0)));
+
+        // when
+        var rows = dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality();
+
+        // then
+        assertEquals(0, row(rows, RelatedEntityType.PERSONS).openIssues());
+        assertEquals(2, row(rows, RelatedEntityType.ACTIVITIES).openIssues());
+    }
+
+    @Test
+    public void shouldRelateAPersonToItsEmploymentInstitutionsButNotToOtherPersons() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        var personIndex = new PersonIndex();
+        personIndex.setEmploymentInstitutionsId(List.of(5, 6));
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(personIndex));
+
+        stubAggregates(2, 5, 4, 1, 92.0, 186, 5);
+        when(dataQualityAggregator.countRecords(eq("organisation_unit"), any())).thenReturn(2L);
+
+        // when
+        var rows = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality();
+
+        // then
+        assertFalse(row(rows, RelatedEntityType.PERSONS).supported());
+
+        var units = row(rows, RelatedEntityType.ORGANISATION_UNITS);
+        assertTrue(units.supported());
+        assertEquals(2, units.linkedRecords());
+
+        var unitQuery = ArgumentCaptor.forClass(Query.class);
+        verify(dataQualityAggregator).countRecords(eq("organisation_unit"), unitQuery.capture());
+        assertTrue(unitQuery.getValue().toString().contains("databaseId"));
+    }
+
+    @Test
+    public void shouldReportEmptyUnitsForAPersonWithoutEmployments() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.empty());
+
+        stubAggregates(2, 5, 4, 1, 92.0, 186, 5);
+
+        // when
+        var units = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ORGANISATION_UNITS);
+
+        // then
+        assertEquals(0, units.linkedRecords());
+        assertNull(units.averageScore());
+        verify(dataQualityAggregator, never()).countRecords(eq("organisation_unit"), any());
     }
 
     @Test
@@ -1075,14 +1324,16 @@ public class DataQualityServiceTest {
         var relatedQuality = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
             .getFirst().relatedQuality();
 
-        // then
-        assertEquals(RelatedEntityType.PROJECTS, relatedQuality.get(1).entityType());
-        assertEquals(RelatedEntityType.ACTIVITIES, relatedQuality.get(2).entityType());
-        assertEquals(RelatedEntityType.FUNDINGS, relatedQuality.get(3).entityType());
+        // then (the rows come in the order the analytics table uses)
+        assertEquals(List.of(RelatedEntityType.PERSONS, RelatedEntityType.ORGANISATION_UNITS,
+                RelatedEntityType.OUTPUTS, RelatedEntityType.ACTIVITIES,
+                RelatedEntityType.PROJECTS, RelatedEntityType.FUNDINGS),
+            relatedQuality.stream().map(RelatedQualityDTO::entityType).toList());
 
-        assertTrue(relatedQuality.get(2).supported());
+        assertTrue(row(relatedQuality, RelatedEntityType.ACTIVITIES).supported());
 
-        List.of(relatedQuality.get(1), relatedQuality.get(3)).forEach(row -> {
+        List.of(row(relatedQuality, RelatedEntityType.PROJECTS),
+            row(relatedQuality, RelatedEntityType.FUNDINGS)).forEach(row -> {
             assertFalse(row.supported());
             assertEquals(0, row.linkedRecords());
             assertEquals(0, row.affectedRecords());

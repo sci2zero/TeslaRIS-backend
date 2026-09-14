@@ -23,6 +23,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 import rs.teslaris.revisioner.indexrepository.DataQualityAssessmentIndexRepository;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
@@ -42,6 +43,8 @@ public class DataQualityAssessmentIndexer {
 
     private static final String TARGET_ORGANISATION_UNIT = "OrganisationUnit";
 
+    private static final String TARGET_PUBLICATION_SERIES = "PublicationSeries";
+
     private static final String TARGET_ACTIVITY = "Activity";
 
     private final DataQualityAssessmentIndexRepository indexRepository;
@@ -53,6 +56,8 @@ public class DataQualityAssessmentIndexer {
     private final EventIndexRepository eventIndexRepository;
 
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
+    private final PublicationSeriesLookupService publicationSeriesLookupService;
 
 
     public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
@@ -182,6 +187,16 @@ public class DataQualityAssessmentIndexer {
                     index.setEntityNameSr(organisationUnitIndex.getNameSr());
                     index.setEntityNameOther(organisationUnitIndex.getNameOther());
                 });
+        }
+
+        if (TARGET_PUBLICATION_SERIES.equals(index.getTarget())) {
+            var publicationSeriesIndex =
+                publicationSeriesLookupService.getPublicationSeriesIndex(index.getEntityId());
+
+            if (Objects.nonNull(publicationSeriesIndex)) {
+                index.setEntityNameSr(publicationSeriesIndex.getTitleSr());
+                index.setEntityNameOther(publicationSeriesIndex.getTitleOther());
+            }
         }
     }
 

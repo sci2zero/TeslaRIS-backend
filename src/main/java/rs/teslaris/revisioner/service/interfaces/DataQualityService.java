@@ -1,6 +1,7 @@
 package rs.teslaris.revisioner.service.interfaces;
 
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
@@ -35,8 +36,17 @@ public interface DataQualityService {
                                                 QualityDimension dimension,
                                                 IssueSeverity severity,
                                                 String constraintKey,
+                                                @Nullable LocalDate assessmentDate,
                                                 @Nullable String cursor,
                                                 @Nullable Integer size);
+
+    DataQualityIssuePageDTO findRepositoryIssues(@Nullable Integer organisationUnitId,
+                                                 String profileName, String target,
+                                                 QualityDimension dimension,
+                                                 IssueSeverity severity, String constraintKey,
+                                                 @Nullable LocalDate assessmentDate,
+                                                 @Nullable String cursor,
+                                                 @Nullable Integer size);
 
     DataQualityIssueDetailsDTO findIssueDetails(Integer assessmentId, String ruleKey);
 

@@ -101,7 +101,7 @@ public class RepositoryAnalyticsServiceTest {
                                 long activityCandidates, double activityScoreSum) {
         when(dataQualityAggregator.aggregateAssessments(any(), any()))
             .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                affectedRecords, openIssues, activitiesCount, activityIssues,
+                affectedRecords, openIssues, activitiesCount, activityIssues, activityIssues,
                 activityCandidates, activityScoreSum, publicationCandidates, averageScore)));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(
