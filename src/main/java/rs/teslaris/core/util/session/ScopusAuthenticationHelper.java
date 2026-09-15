@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -39,8 +40,10 @@ public class ScopusAuthenticationHelper {
 
 
     @Autowired
-    public ScopusAuthenticationHelper() {
-        restTemplate = constructRestTemplate();
+    public ScopusAuthenticationHelper(@Value("${scopus.proxy.enabled:false}") boolean proxyEnabled,
+                                      @Value("${scopus.proxy.host:}") String proxyHost,
+                                      @Value("${scopus.proxy.port:0}") int proxyPort) {
+        restTemplate = constructRestTemplate(proxyEnabled, proxyHost, proxyPort);
     }
 
     public boolean authenticate() {
@@ -95,7 +98,6 @@ public class ScopusAuthenticationHelper {
 
     private boolean getAuthtoken(int choice, Map<String, String> headers) {
         var url = "https://api.elsevier.com/authenticate?platform=SCOPUS&choice=" + choice;
-        var restTemplate = constructRestTemplate();
 
         var requestHeaders = new HttpHeaders();
         headers.forEach(requestHeaders::add);
@@ -136,18 +138,22 @@ public class ScopusAuthenticationHelper {
         return false;
     }
 
-    private RestTemplate constructRestTemplate() {
+    private RestTemplate constructRestTemplate(boolean proxyEnabled, String proxyHost,
+                                               int proxyPort) {
         var config = RequestConfig.custom()
             .setConnectionRequestTimeout(Timeout.ofSeconds(10))
+            .setConnectTimeout(Timeout.ofSeconds(10))
+            .setResponseTimeout(Timeout.ofSeconds(30))
             .build();
 
-        var httpClient = HttpClients.custom()
-            .setDefaultRequestConfig(config)
-            .setProxy(
-                new HttpHost("http", "proxy.uns.ac.rs", 8080))
-            .build();
+        var httpClientBuilder = HttpClients.custom().setDefaultRequestConfig(config);
 
-        var requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        if (proxyEnabled && Objects.nonNull(proxyHost) && !proxyHost.isBlank() && proxyPort > 0) {
+            httpClientBuilder.setProxy(new HttpHost("http", proxyHost, proxyPort));
+        }
+
+        var requestFactory =
+            new HttpComponentsClientHttpRequestFactory(httpClientBuilder.build());
 
         return new RestTemplate(requestFactory);
     }

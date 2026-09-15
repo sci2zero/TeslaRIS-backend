@@ -9,14 +9,13 @@ public enum TrendMetric {
     OVERALL_SCORE(null),
     FAIR_COMPLIANCE(null),
     PUBLICATION_CANDIDATE_RATE(null),
-    COMPLETENESS(QualityDimension.COMPLETENESS),
-    VALIDITY(QualityDimension.VALIDITY),
-    UNIQUENESS(QualityDimension.UNIQUENESS),
-    CONSISTENCY(QualityDimension.CONSISTENCY),
-    TIMELINESS(QualityDimension.TIMELINESS),
     ACCURACY(QualityDimension.ACCURACY),
-    CONFORMITY(QualityDimension.CONFORMITY),
-    INTEGRITY(QualityDimension.INTEGRITY);
+    CONSISTENCY(QualityDimension.CONSISTENCY),
+    LINEAGE(QualityDimension.LINEAGE),
+    STRUCTURAL_CONSISTENCY(QualityDimension.STRUCTURAL_CONSISTENCY),
+    QUALITATIVE(QualityDimension.QUALITATIVE),
+    SEMANTIC(QualityDimension.SEMANTIC),
+    CURRENCY(QualityDimension.CURRENCY);
 
     @Nullable
     private final QualityDimension dimension;

@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import rs.teslaris.importer.utility.webofscience.WebOfScienceImportUtility;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
 
     private final WebOfScienceImportUtility webOfScienceImportUtility;
@@ -198,12 +200,17 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                             // perform metadata enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);
                             mongoTemplate.save(existingImport, "documentImports");
+                            log.info("Enriched existing import {} with WoS record {}",
+                                existingImport.getIdentifier(),
+                                CommonHarvestUtility.describe(documentImport));
                             return;
                         }
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
                     if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
+                        log.info("Skipping duplicate WoS record {}",
+                            CommonHarvestUtility.describe(documentImport));
                         return;
                     }
 
@@ -226,6 +233,8 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                         personService);
 
                     mongoTemplate.save(documentImport, "documentImports");
+                    log.info("Imported new WoS record {}",
+                        CommonHarvestUtility.describe(documentImport));
                 }));
     }
 }

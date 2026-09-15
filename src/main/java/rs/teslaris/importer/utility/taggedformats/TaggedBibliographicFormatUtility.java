@@ -117,15 +117,22 @@ public class TaggedBibliographicFormatUtility {
             .toString());
         var existingImport = CommonImportUtility.findExistingImport(doc.getIdentifier());
 
-        existingImport = CommonImportUtility.findImportByDOIOrMetadata(doc);
+        if (Objects.isNull(existingImport)) {
+            existingImport = CommonImportUtility.findImportByDOIOrMetadata(doc);
+        }
+
         if (Objects.nonNull(existingImport)) {
             DeepObjectMerger.deepMerge(existingImport, doc);
             mongoTemplate.save(existingImport, "documentImports");
+            log.info("Enriched existing import {} with tagged-format record {}",
+                existingImport.getIdentifier(), CommonHarvestUtility.describe(doc));
             return;
         }
 
         var embedding = CommonImportUtility.generateEmbedding(doc);
         if (DeduplicationUtil.isDuplicate(existingImport, embedding, doc)) {
+            log.info("Skipping duplicate tagged-format record {}",
+                CommonHarvestUtility.describe(doc));
             return;
         }
 
@@ -135,6 +142,7 @@ public class TaggedBibliographicFormatUtility {
 
         count.merge(userId, 1, Integer::sum);
         mongoTemplate.save(doc, "documentImports");
+        log.info("Imported new tagged-format record {}", CommonHarvestUtility.describe(doc));
     }
 
     public static void handleSettingProceedingsAndEvent(String content, DocumentImport document) {

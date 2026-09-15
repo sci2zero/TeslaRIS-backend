@@ -38,6 +38,12 @@ public class CommonHarvestUtility {
         return languageDetector.detect(text).getLanguage().toUpperCase();
     }
 
+    public static String describe(DocumentImport documentImport) {
+        var title = documentImport.getTitle().isEmpty() ? "" :
+            " (" + documentImport.getTitle().getFirst().getContent() + ")";
+        return documentImport.getIdentifier() + title;
+    }
+
     public static MultilingualContent createMultilingualContent(String text) {
         var language = detectLanguage(text);
         if (LanguageAbbreviations.CROATIAN.equals(language)) {

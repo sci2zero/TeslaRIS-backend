@@ -163,7 +163,7 @@ public class DataQualityServiceTest {
             .key("missingAbstract")
             .parameters(List.of("abstract"))
             .severity(IssueSeverity.ERROR)
-            .dimension(QualityDimension.COMPLETENESS)
+            .dimension(QualityDimension.CONSISTENCY)
             .build();
 
         var assessment = assessmentWithIssue(issue);
@@ -349,7 +349,7 @@ public class DataQualityServiceTest {
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
                 anyString(), anyString(), anyString()))
-            .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.COMPLETENESS));
+            .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                 anyString(), anyString(), anyString()))
@@ -404,7 +404,7 @@ public class DataQualityServiceTest {
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
                     anyString(), anyString(), anyString()))
-                .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.COMPLETENESS));
+                .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                     anyString(), anyString(), anyString()))
@@ -816,7 +816,7 @@ public class DataQualityServiceTest {
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
                     anyString(), anyString(), anyString()))
-                .thenReturn(remark(IssueSeverity.INFO, QualityDimension.COMPLETENESS));
+                .thenReturn(remark(IssueSeverity.INFO, QualityDimension.CONSISTENCY));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                     anyString(), anyString(), anyString()))
@@ -1607,7 +1607,7 @@ public class DataQualityServiceTest {
             DataQualityAssessmentConfigurationLoader.class)) {
 
             stubIssueConfiguration(configurationLoader,
-                remarkForTarget("Contact", IssueSeverity.WARNING, QualityDimension.COMPLETENESS,
+                remarkForTarget("Contact", IssueSeverity.WARNING, QualityDimension.CONSISTENCY,
                     false, false));
 
             // when

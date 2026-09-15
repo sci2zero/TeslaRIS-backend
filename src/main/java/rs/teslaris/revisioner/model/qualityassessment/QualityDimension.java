@@ -1,12 +1,14 @@
 package rs.teslaris.revisioner.model.qualityassessment;
 
+/**
+ * The seven PTCRIS data governance dimensions, in their published order.
+ */
 public enum QualityDimension {
-    COMPLETENESS,
-    VALIDITY,
-    UNIQUENESS,
-    CONSISTENCY,
-    TIMELINESS,
     ACCURACY,
-    CONFORMITY,
-    INTEGRITY
+    CONSISTENCY,
+    LINEAGE,
+    STRUCTURAL_CONSISTENCY,
+    QUALITATIVE,
+    SEMANTIC,
+    CURRENCY
 }

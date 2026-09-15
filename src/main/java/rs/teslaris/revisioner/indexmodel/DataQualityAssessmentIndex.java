@@ -147,32 +147,14 @@ public class DataQualityAssessmentIndex {
 
     // --- one {score, issue_count, passed_count, fair_score} quadruple per QualityDimension value ---
 
-    @Field(type = FieldType.Double, store = true, name = "completeness_score")
-    private double completenessScore;
-    @Field(type = FieldType.Integer, store = true, name = "completeness_issue_count")
-    private int completenessIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "completeness_passed_count")
-    private int completenessPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "completeness_fair_score")
-    private double completenessFairScore;
-
-    @Field(type = FieldType.Double, store = true, name = "validity_score")
-    private double validityScore;
-    @Field(type = FieldType.Integer, store = true, name = "validity_issue_count")
-    private int validityIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "validity_passed_count")
-    private int validityPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "validity_fair_score")
-    private double validityFairScore;
-
-    @Field(type = FieldType.Double, store = true, name = "uniqueness_score")
-    private double uniquenessScore;
-    @Field(type = FieldType.Integer, store = true, name = "uniqueness_issue_count")
-    private int uniquenessIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "uniqueness_passed_count")
-    private int uniquenessPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "uniqueness_fair_score")
-    private double uniquenessFairScore;
+    @Field(type = FieldType.Double, store = true, name = "accuracy_score")
+    private double accuracyScore;
+    @Field(type = FieldType.Integer, store = true, name = "accuracy_issue_count")
+    private int accuracyIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "accuracy_passed_count")
+    private int accuracyPassedCount;
+    @Field(type = FieldType.Double, store = true, name = "accuracy_fair_score")
+    private double accuracyFairScore;
 
     @Field(type = FieldType.Double, store = true, name = "consistency_score")
     private double consistencyScore;
@@ -183,39 +165,48 @@ public class DataQualityAssessmentIndex {
     @Field(type = FieldType.Double, store = true, name = "consistency_fair_score")
     private double consistencyFairScore;
 
-    @Field(type = FieldType.Double, store = true, name = "timeliness_score")
-    private double timelinessScore;
-    @Field(type = FieldType.Integer, store = true, name = "timeliness_issue_count")
-    private int timelinessIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "timeliness_passed_count")
-    private int timelinessPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "timeliness_fair_score")
-    private double timelinessFairScore;
+    @Field(type = FieldType.Double, store = true, name = "lineage_score")
+    private double lineageScore;
+    @Field(type = FieldType.Integer, store = true, name = "lineage_issue_count")
+    private int lineageIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "lineage_passed_count")
+    private int lineagePassedCount;
+    @Field(type = FieldType.Double, store = true, name = "lineage_fair_score")
+    private double lineageFairScore;
 
-    @Field(type = FieldType.Double, store = true, name = "accuracy_score")
-    private double accuracyScore;
-    @Field(type = FieldType.Integer, store = true, name = "accuracy_issue_count")
-    private int accuracyIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "accuracy_passed_count")
-    private int accuracyPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "accuracy_fair_score")
-    private double accuracyFairScore;
+    @Field(type = FieldType.Double, store = true, name = "structural_consistency_score")
+    private double structuralConsistencyScore;
+    @Field(type = FieldType.Integer, store = true, name = "structural_consistency_issue_count")
+    private int structuralConsistencyIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "structural_consistency_passed_count")
+    private int structuralConsistencyPassedCount;
+    @Field(type = FieldType.Double, store = true, name = "structural_consistency_fair_score")
+    private double structuralConsistencyFairScore;
 
-    @Field(type = FieldType.Double, store = true, name = "conformity_score")
-    private double conformityScore;
-    @Field(type = FieldType.Integer, store = true, name = "conformity_issue_count")
-    private int conformityIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "conformity_passed_count")
-    private int conformityPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "conformity_fair_score")
-    private double conformityFairScore;
+    @Field(type = FieldType.Double, store = true, name = "qualitative_score")
+    private double qualitativeScore;
+    @Field(type = FieldType.Integer, store = true, name = "qualitative_issue_count")
+    private int qualitativeIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "qualitative_passed_count")
+    private int qualitativePassedCount;
+    @Field(type = FieldType.Double, store = true, name = "qualitative_fair_score")
+    private double qualitativeFairScore;
 
-    @Field(type = FieldType.Double, store = true, name = "integrity_score")
-    private double integrityScore;
-    @Field(type = FieldType.Integer, store = true, name = "integrity_issue_count")
-    private int integrityIssueCount;
-    @Field(type = FieldType.Integer, store = true, name = "integrity_passed_count")
-    private int integrityPassedCount;
-    @Field(type = FieldType.Double, store = true, name = "integrity_fair_score")
-    private double integrityFairScore;
+    @Field(type = FieldType.Double, store = true, name = "semantic_score")
+    private double semanticScore;
+    @Field(type = FieldType.Integer, store = true, name = "semantic_issue_count")
+    private int semanticIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "semantic_passed_count")
+    private int semanticPassedCount;
+    @Field(type = FieldType.Double, store = true, name = "semantic_fair_score")
+    private double semanticFairScore;
+
+    @Field(type = FieldType.Double, store = true, name = "currency_score")
+    private double currencyScore;
+    @Field(type = FieldType.Integer, store = true, name = "currency_issue_count")
+    private int currencyIssueCount;
+    @Field(type = FieldType.Integer, store = true, name = "currency_passed_count")
+    private int currencyPassedCount;
+    @Field(type = FieldType.Double, store = true, name = "currency_fair_score")
+    private double currencyFairScore;
 }
