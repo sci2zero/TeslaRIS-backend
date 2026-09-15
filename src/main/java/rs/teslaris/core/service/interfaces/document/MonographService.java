@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.service.interfaces.ExistenceCheckable;
 
 @Service
-public interface MonographService {
+public interface MonographService extends ExistenceCheckable {
 
     Monograph findMonographById(Integer monographId);
 

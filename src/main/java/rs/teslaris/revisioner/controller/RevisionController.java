@@ -26,12 +26,14 @@ public class RevisionController {
 
 
     @GetMapping(value = "/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public ResponseEntity<List<RevisionDTO>> getRevisionHistory(@PathVariable String entityType,
                                                                 @PathVariable Integer entityId) {
         return ResponseEntity.ok(revisionService.getRevisions(entityType, entityId));
     }
 
     @GetMapping(value = "/{entityType}/{entityId}/at", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public ResponseEntity<String> getRevisionAtDate(@PathVariable String entityType,
                                                     @PathVariable Integer entityId,
                                                     @RequestParam Instant timestamp) {

@@ -16,11 +16,11 @@ public class ProjectsRelationConverter {
         dto.setDateTo(relation.getDateTo());
 
         dto.setSourceProjectDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(
-                        relation.getSourceProjectDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(
+                relation.getSourceProjectDescription()));
         dto.setTargetProjectDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(
-                        relation.getTargetProjectDescription()));
+            MultilingualContentConverter.getMultilingualContentDTO(
+                relation.getTargetProjectDescription()));
 
         if (Objects.nonNull(relation.getSourceProject())) {
             dto.setSourceProjectId(relation.getSourceProject().getId());

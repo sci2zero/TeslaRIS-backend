@@ -17,6 +17,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -39,6 +40,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -240,13 +242,20 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         if (Objects.nonNull(materialProductDTO.getAuthorReprint()) &&
             materialProductDTO.getAuthorReprint()) {
             materialProduct.setAuthorReprint(true);
-        } else if (Objects.nonNull(materialProductDTO.getPublisherId())) {
-            materialProduct.setPublisher(
-                publisherService.findOne(materialProductDTO.getPublisherId()));
+        } else {
+            materialProduct.setPublisher(RestorationSupport.resolveOptional(
+                materialProductDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
+                "restorePublisherMissingMessage"));
         }
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            materialProductDTO.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = materialProductDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         materialProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 

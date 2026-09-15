@@ -42,6 +42,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -225,9 +226,11 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         if (Objects.nonNull(intellectualPropertyDTO.getAuthorReprint()) &&
             intellectualPropertyDTO.getAuthorReprint()) {
             intellectualProperty.setAuthorReprint(true);
-        } else if (Objects.nonNull(intellectualPropertyDTO.getPublisherId())) {
-            intellectualProperty.setPublisher(
-                publisherService.findOne(intellectualPropertyDTO.getPublisherId()));
+        } else {
+            intellectualProperty.setPublisher(RestorationSupport.resolveOptional(
+                intellectualPropertyDTO.getPublisherId(), publisherService,
+                publisherService::findOne, "publisherId",
+                "restorePublisherMissingMessage"));
         }
     }
 

@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Objects;
@@ -69,6 +70,7 @@ public class PublicationSeriesLookupServiceImpl implements PublicationSeriesLook
     }
 
     @Override
+    @Nullable
     public PublicationSeriesIndex getPublicationSeriesIndex(Integer publicationSeriesId) {
         return indexFinders.values().stream()
             .map(finder -> finder.apply(publicationSeriesId))

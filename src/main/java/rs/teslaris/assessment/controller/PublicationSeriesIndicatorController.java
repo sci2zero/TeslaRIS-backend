@@ -83,7 +83,7 @@ public class PublicationSeriesIndicatorController {
     }
 
     @GetMapping("/if-table/{publicationSeriesId}")
-    public IFTableResponseDTO scheduleIF5RankCompute(
+    public IFTableResponseDTO getIFTableContent(
         @PathVariable Integer publicationSeriesId, @RequestParam("fromYear") Integer fromYear,
         @RequestParam("toYear") Integer toYear) {
         return publicationSeriesIndicatorService.getIFTableContent(publicationSeriesId, fromYear,

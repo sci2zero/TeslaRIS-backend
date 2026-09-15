@@ -1,0 +1,100 @@
+{
+  "max_result_window": 100000,
+  "sort.field": [
+    "entity_id",
+    "databaseId"
+  ],
+  "sort.order": [
+    "asc",
+    "asc"
+  ],
+  "analysis": {
+    "char_filter": {
+      "serbian_char_filter": {
+        "type": "mapping",
+        "mappings": [
+          "\u0110 => Dj",
+          "\u0111 => dj",
+          "\u0402 => Dj",
+          "\u0452 => dj",
+          "\u040a => Nj",
+          "\u045a => nj",
+          "\u0409 => Lj",
+          "\u0459 => lj",
+          "\u045f => dz",
+          "\u040f => Dz"
+        ]
+      }
+    },
+    "analyzer": {
+      "serbian": {
+        "type": "custom",
+        "char_filter": [
+          "serbian_char_filter"
+        ],
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "serbian_stop",
+          "serbian_stemmer",
+          "icu_folding"
+        ]
+      },
+      "serbian_simple": {
+        "type": "custom",
+        "char_filter": [
+          "serbian_char_filter"
+        ],
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "icu_folding"
+        ]
+      }
+    },
+    "filter": {
+      "serbian_stop": {
+        "type": "stop",
+        "stopwords": "_serbian_"
+      },
+      "serbian_stemmer": {
+        "type": "stemmer",
+        "language": "serbian"
+      },
+      "serbian_cyrillic_to_latinic": {
+        "type": "icu_transform",
+        "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
+      }
+    },
+    "normalizer": {
+      "serbian_normalizer": {
+        "type": "custom",
+        "char_filter": [
+          "serbian_char_filter"
+        ],
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "icu_folding"
+        ]
+      },
+      "english_normalizer": {
+        "type": "custom",
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "asciifolding"
+        ]
+      },
+      "doi_normalizer": {
+        "type": "custom",
+        "filter": [
+          "lowercase",
+          "trim"
+        ]
+      }
+    }
+  }
+}

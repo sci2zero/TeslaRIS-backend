@@ -1,6 +1,7 @@
 package rs.teslaris.core.converter.person;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.user.UserResponseDTO;
@@ -32,6 +33,7 @@ public class UserConverter {
             commissionId,
             personId,
             MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName),
-            user.getUserNotificationPeriod(), user.getReceiveOnlyNewNotifications());
+            user.getUserNotificationPeriod(), user.getReceiveOnlyNewNotifications(),
+            List.of());
     }
 }

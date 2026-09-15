@@ -101,6 +101,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -753,6 +754,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case BOARD_MEMBER ->
                 handleBoardMember(contribution, index, contributorName, personExists);
         }
+
+        if (Objects.nonNull(contribution.getDateFrom()) ||
+            Objects.nonNull(contribution.getDateTo()) ||
+            (Objects.nonNull(contribution.getResearchAreas()) &&
+                !contribution.getResearchAreas().isEmpty())) {
+            index.setActivitiesCount(index.getActivitiesCount() + 1);
+        }
     }
 
     private void handleAuthorContribution(PersonDocumentContribution contribution,
@@ -1084,11 +1092,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setEdition(
             multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
-        if (Objects.nonNull(documentDTO.getCountryId())) {
-            document.setCountry(countryService.findOne(documentDTO.getCountryId()));
-        } else {
-            document.setCountry(null);
-        }
+        document.setCountry(RestorationSupport.resolveOptional(
+            documentDTO.getCountryId(), countryService, countryService::findOne, "countryId",
+            "restoreCountryMissingMessage"));
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
@@ -1120,9 +1126,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
 
-        if (Objects.nonNull(documentDTO.getEventId())) {
-            var event = eventService.findOne(documentDTO.getEventId());
+        var event = RestorationSupport.resolveOptional(
+            documentDTO.getEventId(), eventService, eventService::findOne, "eventId",
+            "restoreEventMissingMessage");
 
+        if (Objects.nonNull(event)) {
             if (event.getSerialEvent()) {
                 throw new ProceedingsReferenceConstraintViolationException(
                     "Proceedings cannot be bound to serial event.");
@@ -1370,6 +1378,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
         index.getBoardMemberIds().clear();
+
+        index.setActivitiesCount(0);
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {

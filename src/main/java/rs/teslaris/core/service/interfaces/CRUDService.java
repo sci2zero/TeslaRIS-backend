@@ -3,7 +3,7 @@ package rs.teslaris.core.service.interfaces;
 import java.util.Collection;
 import java.util.List;
 
-public interface CRUDService<T> {
+public interface CRUDService<T> extends ExistenceCheckable {
     List<T> findAll();
 
     T findOne(Integer id);

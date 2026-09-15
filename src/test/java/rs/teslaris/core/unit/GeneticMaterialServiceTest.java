@@ -47,6 +47,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.GeneticMaterialServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.GeneticMaterialJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -118,8 +119,12 @@ public class GeneticMaterialServiceTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private CountryService countryService;
+
     @InjectMocks
     private GeneticMaterialServiceImpl geneticMaterialService;
+
 
     private static Stream<Arguments> provideGeneticMaterialTypes() {
         return Stream.of(

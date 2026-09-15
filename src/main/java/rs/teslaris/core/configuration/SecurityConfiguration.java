@@ -177,6 +177,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/thesis/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/metadata/{documentId}/{format}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/thesis/old-id/{oldId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/material-product/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/genetic-material/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/performance-related-output/{documentId}").permitAll()
 
                 // INVOLVEMENT
                 .requestMatchers(HttpMethod.GET, "/api/involvement/employment/{employmentId}")

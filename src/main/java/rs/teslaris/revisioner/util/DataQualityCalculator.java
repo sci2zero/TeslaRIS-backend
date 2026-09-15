@@ -8,15 +8,20 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +32,7 @@ import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -41,16 +47,21 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
+import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.identifier.IdentifierResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
@@ -62,6 +73,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
@@ -79,6 +91,16 @@ import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentIndexer;
 @Slf4j
 public class DataQualityCalculator {
 
+    /**
+     * Targets whose issues are reported but never scored - their rules do not add to the total and
+     * their failures do not deduct. Remove an entry to start scoring that target again.
+     */
+    private static final Set<String> NON_SCORING_TARGETS = Set.of();
+
+    private static final String ACTIVITY_TARGET = "Activity";
+
+    private static final List<String> ACTIVITY_TARGETS = List.of(ACTIVITY_TARGET);
+
     private final Map<String, Pattern> compiledPatternCache = new ConcurrentHashMap<>();
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
@@ -88,6 +110,8 @@ public class DataQualityCalculator {
     private final PersonRepository personRepository;
 
     private final OrganisationUnitRepository organisationUnitRepository;
+
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     private final CountryRepository countryRepository;
 
@@ -123,10 +147,12 @@ public class DataQualityCalculator {
                 (dto, assessment) -> assessEntity((IntangibleProductDTO) dto, assessment)),
             Map.entry(PerformanceRelatedOutputDTO.class,
                 (dto, assessment) -> assessEntity((PerformanceRelatedOutputDTO) dto, assessment)),
-            Map.entry(PersonResponseDTO.class,
-                (dto, assessment) -> assessEntity((PersonResponseDTO) dto, assessment)),
+            Map.entry(PersonSnapshotDTO.class,
+                (dto, assessment) -> assessEntity((PersonSnapshotDTO) dto, assessment)),
             Map.entry(EventDTO.class,
                 (dto, assessment) -> assessEntity((EventDTO) dto, assessment)),
+            Map.entry(PublicationSeriesDTO.class,
+                (dto, assessment) -> assessEntity((PublicationSeriesDTO) dto, assessment)),
             Map.entry(OrganisationUnitDTO.class,
                 (dto, assessment) -> assessEntity((OrganisationUnitDTO) dto, assessment)),
             Map.entry(CountryDTO.class,
@@ -140,7 +166,9 @@ public class DataQualityCalculator {
             Map.entry(IdentifierResponseDTO.class,
                 (dto, assessment) -> assessEntity((IdentifierResponseDTO) dto, assessment)),
             Map.entry(InvolvementDTO.class,
-                (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment))
+                (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment)),
+            Map.entry(PublisherDTO.class,
+                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment))
         );
 
 
@@ -148,18 +176,18 @@ public class DataQualityCalculator {
     public void assessDataQuality(DataQualityAssessment assessment, String json,
                                   ObjectMapper objectMapper,
                                   DataQualityAssessmentRepository repository,
-                                  String targetType) {
+                                  List<String> targetTypes) {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment, targetType);
+            assessEntity(dto, assessment, targetTypes);
 
             repository.save(assessment);
 
-            dataQualityAssessmentIndexer.index(assessment, targetType, dto);
+            dataQualityAssessmentIndexer.index(assessment, targetTypes, dto);
 
             log.info(
                 "Successfully completed data quality assessment that lasted {}s. revisionId={}, entityType={}, score={}, remarks={}",
@@ -189,8 +217,9 @@ public class DataQualityCalculator {
         }
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment, String targetType) {
-        BiConsumer<Object, DataQualityAssessment> assessor = assessors.get(dto.getClass());
+    private void assessEntity(Object dto, DataQualityAssessment assessment,
+                              List<String> targetTypes) {
+        BiConsumer<Object, DataQualityAssessment> assessor = resolveAssessor(dto.getClass());
 
         if (Objects.isNull(assessor)) {
             log.warn(
@@ -203,7 +232,27 @@ public class DataQualityCalculator {
         }
 
         assessor.accept(dto, assessment);
-        finishUpAssessment(assessment, targetType);
+        finishUpAssessment(assessment, targetTypes);
+    }
+
+    @Nullable
+    private BiConsumer<Object, DataQualityAssessment> resolveAssessor(Class<?> dtoClass) {
+        for (var type = dtoClass; Objects.nonNull(type) && !Object.class.equals(type);
+             type = type.getSuperclass()) {
+            var assessor = assessors.get(type);
+
+            if (Objects.nonNull(assessor)) {
+                if (!type.equals(dtoClass)) {
+                    log.debug("Assessing {} with the assessor registered for {}.",
+                        dtoClass.getSimpleName(), type.getSimpleName()
+                    );
+                }
+
+                return assessor;
+            }
+        }
+
+        return null;
     }
 
     private void assessEntity(DocumentDTO dto, DataQualityAssessment assessment) {
@@ -367,6 +416,12 @@ public class DataQualityCalculator {
             reportIssue(assessment, "researchAreasMissing");
         }
 
+        if (dto instanceof IntangibleProductDTO intangibleProduct) {
+            assessResearchAreas(intangibleProduct.getResearchAreas(), assessment);
+        } else if (dto instanceof MaterialProductDTO materialProduct) {
+            assessResearchAreas(materialProduct.getResearchAreas(), assessment);
+        }
+
         if (dto instanceof ThesisResponseDTO thesis) {
             validateRange(thesis.getNumberOfPages(), "numberOfPages", assessment);
 
@@ -413,8 +468,8 @@ public class DataQualityCalculator {
                     reportIssue(
                         assessment,
                         "defenceBeforeAcceptance",
-                        thesis.getTopicAcceptanceDate(),
-                        thesis.getThesisDefenceDate());
+                        thesis.getThesisDefenceDate(),
+                        thesis.getTopicAcceptanceDate());
                 }
 
                 var defenceMaxFutureYears =
@@ -532,9 +587,26 @@ public class DataQualityCalculator {
                         ((OtherEventDTO) dto).getType() : null,
                     null)
         );
+
+        assessResearchAreas(dto.getResearchAreas(), assessment);
     }
 
-    private void assessEntity(PersonResponseDTO dto, DataQualityAssessment assessment) {
+    private void assessEntity(PublicationSeriesDTO dto, DataQualityAssessment assessment) {
+        dto.getContributions().forEach(
+            contribution ->
+                assessEntity(
+                    contribution, assessment,
+                    null, null,
+                    null
+                )
+        );
+    }
+
+    private void assessEntity(PublisherDTO dto, DataQualityAssessment assessment) {
+        // TODO: To be implemented
+    }
+
+    private void assessEntity(PersonSnapshotDTO dto, DataQualityAssessment assessment) {
         var personalInfoDTO = dto.getPersonalInfo();
 
         if (Objects.isNull(personalInfoDTO.getLocalBirthDate())) {
@@ -715,10 +787,26 @@ public class DataQualityCalculator {
         assessEntity(personalInfoDTO.getContact(), assessment);
         assessEntity(personalInfoDTO.getPrivateContact(), assessment);
 
+        // A person's involvements are activities in their own right, alongside the contributions
+        // recorded on outputs. Revisions captured before involvements were part of the snapshot
+        // carry null lists and simply contribute nothing.
+        assessInvolvements(dto.getEmployments(), assessment);
+        assessInvolvements(dto.getEducations(), assessment);
+        assessInvolvements(dto.getMemberships(), assessment);
+
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
         // TODO lastModificationDateMissing
+    }
+
+    private void assessInvolvements(List<? extends InvolvementDTO> involvements,
+                                    DataQualityAssessment assessment) {
+        if (Objects.isNull(involvements)) {
+            return;
+        }
+
+        involvements.forEach(involvement -> assessEntity(involvement, assessment));
     }
 
     private void assessEntity(OrganisationUnitDTO dto, DataQualityAssessment assessment) {
@@ -828,13 +916,14 @@ public class DataQualityCalculator {
             reportIssue(
                 assessment,
                 "dateDissolvedBeforeEstablished",
-                dto.getDateEstablished(),
-                dto.getDateDissolved()
+                dto.getDateDissolved(),
+                dto.getDateEstablished()
             );
         }
 
         assessEntity(dto.getContact(), assessment);
         assessEntity(dto.getLocation(), assessment);
+        assessResearchAreas(dto.getResearchAreas(), assessment);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1017,6 +1106,28 @@ public class DataQualityCalculator {
         // TODO lastModificationDateMissing
     }
 
+    private void assessEntity(ResearchAreaHierarchyDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto)) {
+            return;
+        }
+
+        var researchArea = new ResearchAreaDTO();
+        researchArea.setId(dto.getId());
+        researchArea.setName(dto.getName());
+        researchArea.setDescription(dto.getDescription());
+
+        assessEntity(researchArea, assessment);
+    }
+
+    private void assessResearchAreas(Collection<ResearchAreaHierarchyDTO> researchAreas,
+                                     DataQualityAssessment assessment) {
+        if (Objects.isNull(researchAreas)) {
+            return;
+        }
+
+        researchAreas.forEach(researchArea -> assessEntity(researchArea, assessment));
+    }
+
     private void assessEntity(ResearchAreaDTO dto, DataQualityAssessment assessment) {
         if (!CollectionOperations.containsValues(dto.getName())) {
             reportIssue(assessment, "researchAreaNameMissing");
@@ -1065,7 +1176,7 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(GeoLocationDTO dto, DataQualityAssessment assessment) {
-        if (Objects.isNull(dto.getLatitude())) {
+        if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
             reportIssue(assessment, "latitudeMissing");
         } else {
             var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
@@ -1076,7 +1187,7 @@ public class DataQualityCalculator {
             }
         }
 
-        if (Objects.isNull(dto.getLongitude())) {
+        if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
             reportIssue(assessment, "longitudeMissing");
         } else {
             var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
@@ -1147,9 +1258,99 @@ public class DataQualityCalculator {
         // TODO lastModificationDateMissing
     }
 
+    /**
+     * Activity remarks describe a contribution or an involvement rather than the record itself, so
+     * every one of them carries the identity of the activity it failed on - without it a record with
+     * a dozen contributors reports a dozen indistinguishable remarks.
+     * <p>
+     * The type stays in its enum form: message parameters are stored once and reused for every
+     * language, so there is nowhere to keep a translated form of it.
+     */
+    private String activityTypeToken(PersonContributionDTO dto) {
+        var type = contributionType(dto);
+
+        return type.isBlank() ? "-" : "contributionType." + type;
+    }
+
+    private String activityTypeToken(InvolvementDTO dto) {
+        return Objects.isNull(dto.getInvolvementType())
+            ? "-"
+            : "involvementType." + dto.getInvolvementType().name();
+    }
+
+    private String activityName(PersonContributionDTO dto) {
+        var name = personDisplayName(dto.getPersonName());
+
+        return name.isBlank() ? "-" : name;
+    }
+
+    private String activityName(InvolvementDTO dto) {
+        AtomicReference<String> organisationUnit = new AtomicReference<>("");
+
+        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                dto.getOrganisationUnitId()).ifPresent(index -> {
+                    if (index.getNameSr().equals(index.getNameOther())) {
+                        organisationUnit.set(index.getNameSr());
+                    } else {
+                        organisationUnit.set(index.getNameSr() + " (" + index.getNameOther() + ")");
+                    }
+                }
+            );
+        } else {
+            organisationUnit.set(StringUtil.getStringContent(dto.getDisplayOrganisationUnit(),
+                LanguageAbbreviations.PORTUGUESE));
+        }
+
+
+        return organisationUnit.get().isBlank() ? "-" : organisationUnit.get();
+    }
+
+    private String contributionType(PersonContributionDTO dto) {
+        if (dto instanceof PersonDocumentContributionDTO documentContribution &&
+            Objects.nonNull(documentContribution.getContributionType())) {
+            return documentContribution.getContributionType().name();
+        }
+
+        if (dto instanceof PersonEventContributionDTO eventContribution &&
+            Objects.nonNull(eventContribution.getEventContributionType())) {
+            return eventContribution.getEventContributionType().name();
+        }
+
+        if (dto instanceof PersonPublicationSeriesContributionDTO seriesContribution &&
+            Objects.nonNull(seriesContribution.getContributionType())) {
+            return seriesContribution.getContributionType().name();
+        }
+
+        return "";
+    }
+
+    private String personDisplayName(PersonNameDTO personName) {
+        if (Objects.isNull(personName)) {
+            return "";
+        }
+
+        return Stream.of(personName.getFirstname(), personName.getOtherName(),
+                personName.getLastname())
+            .filter(StringUtil::valueExists)
+            .collect(Collectors.joining(" "))
+            .trim();
+    }
+
     private void assessEntity(InvolvementDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
+            (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
+            return; // involvement is considered an activity if any of the following is set, otherwise don't check for any issues
+        }
+
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
+
+        var activityType = activityTypeToken(dto);
+        var activityName = activityName(dto);
+
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
         } else {
             var startDateMinYear =
                 getIntConstraint(assessment, "activityStartDateBefore", "minYear");
@@ -1157,10 +1358,8 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore",
-                    dto.getDateFrom(),
-                    startDateMinYear
-                );
+                    "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
             }
 
             var minAgeYears = getIntConstraint(
@@ -1169,11 +1368,9 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(dto.getPersonBirthDate().plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforeMinAge",
-                    dto.getDateFrom(),
+                    "activityStartDateBeforeMinAge", dto.getDateFrom(),
                     dto.getPersonBirthDate(),
-                    minAgeYears
-                );
+                    minAgeYears, activityType, activityName);
             }
 
             var startDateMaxFutureYears =
@@ -1182,28 +1379,26 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateTooFarInFuture",
-                    dto.getDateFrom(),
-                    startDateMaxFutureYears
-                );
+                    "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
             }
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
                 assessment,
-                "activityEndDateBeforeStartDate",
-                dto.getDateTo(),
-                dto.getDateFrom()
-            );
+                "activityEndDateBeforeStartDate", dto.getDateTo(),
+                dto.getDateFrom(), activityType, activityName);
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing", "", activityType, activityName);
         }
+
+        scoreActivity(assessment, issuesBeforeActivity);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1214,6 +1409,15 @@ public class DataQualityCalculator {
     private void assessEntity(PersonContributionDTO dto, DataQualityAssessment assessment,
                               EventType eventType, OtherEventType otherEventType,
                               LocalDate documentDate) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo()) &&
+            (Objects.isNull(dto.getResearchAreasId()) || dto.getResearchAreasId().isEmpty())) {
+            return; // contribution is considered an activity if any of the following is set, otherwise don't check for any issues
+        }
+
+        if (Objects.isNull(dto.getPersonId())) {
+            return;
+        }
+
         var person = personRepository.findById(dto.getPersonId());
         if (person.isEmpty()) {
             return;
@@ -1223,8 +1427,14 @@ public class DataQualityCalculator {
             Objects.requireNonNullElse(person.get().getPersonalInfo(), new PersonalInfo())
                 .getLocalBirthDate();
 
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
+
+        var activityType = activityTypeToken(dto);
+        var activityName = activityName(dto);
+
         if (Objects.isNull(dto.getDateFrom())) {
-            reportIssue(assessment, "activityStartDateMissing");
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
         } else {
             var startDateMinYear =
                 getIntConstraint(assessment, "activityStartDateBefore", "minYear");
@@ -1232,10 +1442,8 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBefore",
-                    dto.getDateFrom(),
-                    startDateMinYear
-                );
+                    "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
             }
 
             var minAgeYears = getIntConstraint(
@@ -1244,11 +1452,9 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isBefore(birthDate.plusYears(minAgeYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateBeforeMinAge",
-                    dto.getDateFrom(),
+                    "activityStartDateBeforeMinAge", dto.getDateFrom(),
                     birthDate,
-                    minAgeYears
-                );
+                    minAgeYears, activityType, activityName);
             }
 
             var startDateMaxFutureYears =
@@ -1257,26 +1463,23 @@ public class DataQualityCalculator {
                 dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
                 reportIssue(
                     assessment,
-                    "activityStartDateTooFarInFuture",
-                    dto.getDateFrom(),
-                    startDateMaxFutureYears
-                );
+                    "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
             }
         }
 
         if (Objects.isNull(dto.getDateTo())) {
-            reportIssue(assessment, "activityEndDateMissing");
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
         } else if (Objects.nonNull(dto.getDateFrom()) &&
             dto.getDateTo().isBefore(dto.getDateFrom())) {
             reportIssue(
                 assessment,
-                "activityEndDateBeforeStartDate",
-                dto.getDateTo(), dto.getDateFrom()
-            );
+                "activityEndDateBeforeStartDate", dto.getDateTo(), dto.getDateFrom(), activityType,
+                activityName);
         }
 
         if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
-            reportIssue(assessment, "activityResearchAreasMissing");
+            reportIssue(assessment, "activityResearchAreasMissing", "", activityType, activityName);
         }
 
         if (dto instanceof PersonEventContributionDTO eventContribution) {
@@ -1285,22 +1488,22 @@ public class DataQualityCalculator {
             if (!linkedWithCourse) {
                 if (Objects.nonNull(eventContribution.getLectureHoursPerWeek())) {
                     reportIssue(assessment,
-                        "lectureHoursOnlyForCourse");
+                        "lectureHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getTutorialHoursPerWeek())) {
                     reportIssue(assessment,
-                        "tutorialHoursOnlyForCourse");
+                        "tutorialHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getLabHoursPerWeek())) {
                     reportIssue(assessment,
-                        "labHoursOnlyForCourse");
+                        "labHoursOnlyForCourse", "", activityType, activityName);
                 }
 
                 if (Objects.nonNull(eventContribution.getOtherContactHoursPerWeek())) {
                     reportIssue(assessment,
-                        "otherContactHoursOnlyForCourse");
+                        "otherContactHoursOnlyForCourse", "", activityType, activityName);
                 }
             }
 
@@ -1317,12 +1520,12 @@ public class DataQualityCalculator {
                         assessment,
                         "numberOfReviewsTooHigh",
                         eventContribution.getNumberOfReviewsOrAssessment(),
-                        maxReviews
-                    );
+                        maxReviews, activityType, activityName);
                 }
 
                 if (!(linkedWithConference && reviewerContribution)) {
-                    reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer");
+                    reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer", "",
+                        activityType, activityName);
                 }
             }
 
@@ -1330,19 +1533,21 @@ public class DataQualityCalculator {
                 otherEventType.equals(OtherEventType.TRIAL);
 
             if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
-                reportIssue(assessment, "caseOnlyForTrial");
+                reportIssue(assessment, "caseOnlyForTrial", "", activityType, activityName);
             }
 
             if (CollectionOperations.containsValues(eventContribution.getLocationJurisdiction()) &&
                 !trial) {
-                reportIssue(assessment, "locationJurisdictionOnlyForTrial");
+                reportIssue(assessment, "locationJurisdictionOnlyForTrial", "", activityType,
+                    activityName);
             }
         }
 
         if (dto instanceof PersonDocumentContributionDTO documentContribution) {
             if (Objects.nonNull(documentDate) && Objects.nonNull(birthDate) &&
                 documentDate.isBefore(birthDate)) {
-                reportIssue(assessment, "documentBeforePersonBirth");
+                reportIssue(assessment, "documentBeforePersonBirth", "", activityType,
+                    activityName);
             }
 
             if (Boolean.TRUE.equals(documentContribution.getIsMainContributor()) &&
@@ -1356,9 +1561,8 @@ public class DataQualityCalculator {
                     .contains(documentContribution.getContributionType())) {
                 reportIssue(
                     assessment,
-                    "invalidMainContributorFlag",
-                    documentContribution.getContributionType().name()
-                );
+                    "invalidMainContributorFlag", documentContribution.getContributionType().name(),
+                    activityType, activityName);
             }
 
             if (Boolean.TRUE.equals(documentContribution.getIsCorrespondingContributor()) &&
@@ -1370,12 +1574,13 @@ public class DataQualityCalculator {
                 reportIssue(
                     assessment,
                     "invalidCorrespondingContributorFlag",
-                    documentContribution.getContributionType().name()
-                );
+                    documentContribution.getContributionType().name(), activityType, activityName);
             }
         }
 
         assessEntity(dto.getContact(), assessment);
+
+        scoreActivity(assessment, issuesBeforeActivity);
 
         // TODO metadataLicenseMissing
         // TODO metadataAccessLevelMissing
@@ -1480,22 +1685,24 @@ public class DataQualityCalculator {
         );
     }
 
-    private void finishUpAssessment(DataQualityAssessment assessment, String target) {
+    private void finishUpAssessment(DataQualityAssessment assessment, List<String> targets) {
         assessment.setFinishedAt(Instant.now());
 
-        computeRuleCounts(assessment, target);
+        computeRuleCounts(assessment, targets);
+
+        var scoringTargets = scoringTargets(targets);
 
         double totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
             assessment.getProfileName(),
             assessment.getProfileVersion(),
-            target
+            scoringTargets
         );
 
         double totalPointsFair =
             DataQualityAssessmentConfigurationLoader.getTotalPointsWeighedFair(
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
-                target
+                scoringTargets
             );
 
         assessment.setTotalPoints(totalPoints);
@@ -1510,7 +1717,7 @@ public class DataQualityCalculator {
         assessment.setAchievedFairPointsNormalised(achievedFairPoints);
 
         assessment.setDimensionScores(
-            computeDimensionScores(assessment, target, deductions.perDimension()));
+            computeDimensionScores(assessment, scoringTargets, deductions.perDimension()));
 
         assessment.setQualityScore(percentage(achievedPoints, totalPoints));
         assessment.setQualityScoreFair(percentage(achievedFairPoints, totalPointsFair));
@@ -1525,7 +1732,7 @@ public class DataQualityCalculator {
 
     }
 
-    private void computeRuleCounts(DataQualityAssessment assessment, String target) {
+    private void computeRuleCounts(DataQualityAssessment assessment, List<String> targets) {
         assessment.setErrorFailedRules(
             (int) assessment.getIssues().stream()
                 .filter(i -> i.getSeverity() == IssueSeverity.ERROR)
@@ -1541,30 +1748,44 @@ public class DataQualityCalculator {
                 .filter(i -> i.getSeverity() == IssueSeverity.INFO)
                 .count());
 
+        assessment.setBlockingFailedRules(
+            (int) assessment.getIssues().stream()
+                .filter(ConstraintEvaluationResult::isBlocking)
+                .count());
+
         assessment.setPassedRules(
             DataQualityAssessmentConfigurationLoader.getTotalRuleCount(
                 assessment.getProfileName(),
                 assessment.getProfileVersion(),
-                target)
+                targets)
                 - assessment.getErrorFailedRules()
                 - assessment.getWarningFailedRules()
         );
     }
 
+    private List<String> scoringTargets(List<String> targets) {
+        return targets.stream().filter(this::isScoringTarget).toList();
+    }
+
+    private boolean isScoringTarget(String target) {
+        return Objects.isNull(target) ||
+            NON_SCORING_TARGETS.stream().noneMatch(target::startsWith);
+    }
+
     private Deductions computeDeductions(DataQualityAssessment assessment) {
+        return computeDeductions(assessment, assessment.getIssues());
+    }
+
+    private Deductions computeDeductions(DataQualityAssessment assessment,
+                                         List<ConstraintEvaluationResult> issues) {
         double deductedPoints = 0;
         double deductedFairPoints = 0;
 
         EnumMap<QualityDimension, Double> deductedPerDimension =
             new EnumMap<>(QualityDimension.class);
 
-        for (var issue : assessment.getIssues()) {
-            var remark =
-                DataQualityAssessmentConfigurationLoader.getIssue(
-                    assessment.getProfileName(),
-                    assessment.getProfileVersion(),
-                    issue.getKey()
-                );
+        for (var issue : issues) {
+            var remark = scoringRemark(assessment, issue.getKey());
 
             if (Objects.isNull(remark)) {
                 continue;
@@ -1593,7 +1814,7 @@ public class DataQualityCalculator {
     }
 
     private EnumMap<QualityDimension, DimensionScore> computeDimensionScores(
-        DataQualityAssessment assessment, String target,
+        DataQualityAssessment assessment, List<String> targets,
         EnumMap<QualityDimension, Double> deductedPerDimension) {
 
         EnumMap<QualityDimension, DimensionScore> dimensionScores =
@@ -1605,12 +1826,12 @@ public class DataQualityCalculator {
                     .getTotalPointsWeighed(
                         assessment.getProfileName(),
                         assessment.getProfileVersion(),
-                        target,
+                        targets,
                         dimension
                     );
 
             if (dimensionTotal == 0) {
-                continue;
+                dimensionTotal = 100.00;
             }
 
             double achieved =
@@ -1625,6 +1846,101 @@ public class DataQualityCalculator {
         }
 
         return dimensionScores;
+    }
+
+    private void scoreActivity(DataQualityAssessment assessment, int issuesBeforeActivity) {
+        var activityIssues = activityIssuesRaisedSince(assessment, issuesBeforeActivity);
+
+        var deductions = computeDeductions(assessment, activityIssues);
+
+        var totalPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
+            assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS);
+
+        var score = percentage(totalPoints - deductions.points(), totalPoints);
+
+        assessment.setActivityScoreSum(assessment.getActivityScoreSum() + score);
+
+        accumulateActivityDimensionScores(assessment, deductions.perDimension());
+        accumulateActivityFairScore(assessment, deductions.fairPoints());
+
+        countActivityIssuesBySeverity(assessment, activityIssues);
+
+        // The same two conditions the record itself is judged by, applied to one activity.
+        var blocked = activityIssues.stream().anyMatch(ConstraintEvaluationResult::isBlocking);
+        var minimumRequiredScore = DataQualityAssessmentConfigurationLoader.getProfile(
+            assessment.getProfileName(), assessment.getProfileVersion()).minimumRequiredScore();
+
+        if (!blocked && score >= minimumRequiredScore) {
+            assessment.setActivityPublicationCandidatesCount(
+                assessment.getActivityPublicationCandidatesCount() + 1);
+        }
+    }
+
+    private List<ConstraintEvaluationResult> activityIssuesRaisedSince(
+        DataQualityAssessment assessment, int issuesBeforeActivity) {
+
+        return assessment.getIssues()
+            .subList(issuesBeforeActivity, assessment.getIssues().size())
+            .stream()
+            .filter(issue -> isActivityRule(assessment, issue.getKey()))
+            .toList();
+    }
+
+    private void accumulateActivityDimensionScores(
+        DataQualityAssessment assessment,
+        EnumMap<QualityDimension, Double> deductedPerDimension) {
+
+        for (var dimension : QualityDimension.values()) {
+            var dimensionTotal = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighed(
+                assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS,
+                dimension);
+
+            var score = percentage(
+                dimensionTotal - deductedPerDimension.getOrDefault(dimension, 0.0),
+                dimensionTotal);
+
+            assessment.getActivityDimensionScoreSums().merge(dimension, score, Double::sum);
+        }
+    }
+
+    private void accumulateActivityFairScore(DataQualityAssessment assessment,
+                                             double deductedFairPoints) {
+        var totalFairPoints = DataQualityAssessmentConfigurationLoader.getTotalPointsWeighedFair(
+            assessment.getProfileName(), assessment.getProfileVersion(), ACTIVITY_TARGETS);
+
+        assessment.setActivityFairScoreSum(assessment.getActivityFairScoreSum() +
+            percentage(totalFairPoints - deductedFairPoints, totalFairPoints));
+    }
+
+    private boolean isActivityRule(DataQualityAssessment assessment, String ruleKey) {
+        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
+            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
+
+        return Objects.nonNull(remark) && Objects.nonNull(remark.target()) &&
+            remark.target().startsWith(ACTIVITY_TARGET);
+    }
+
+    private void countActivityIssuesBySeverity(DataQualityAssessment assessment,
+                                               List<ConstraintEvaluationResult> activityIssues) {
+        for (var issue : activityIssues) {
+            switch (issue.getSeverity()) {
+                case ERROR -> assessment.setActivityErrorIssues(
+                    assessment.getActivityErrorIssues() + 1);
+                case WARNING -> assessment.setActivityWarningIssues(
+                    assessment.getActivityWarningIssues() + 1);
+                case INFO -> assessment.setActivityInfoIssues(
+                    assessment.getActivityInfoIssues() + 1);
+            }
+        }
+    }
+
+    @Nullable
+    private DataQualityAssessmentConfigurationLoader.DataQualityRemark scoringRemark(
+        DataQualityAssessment assessment, String ruleKey) {
+        var remark = DataQualityAssessmentConfigurationLoader.getIssue(
+            assessment.getProfileName(), assessment.getProfileVersion(), ruleKey);
+
+        return Objects.isNull(remark) || !isScoringTarget(remark.target()) ? null : remark;
     }
 
     private double percentage(double achieved, double total) {

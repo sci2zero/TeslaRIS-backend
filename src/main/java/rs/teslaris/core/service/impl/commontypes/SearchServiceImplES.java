@@ -60,12 +60,23 @@ public class SearchServiceImplES<T> implements SearchService<T> {
         return runSearchAfterSequential(query, pageable, clazz, indexName);
     }
 
+    @Override
+    public Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz,
+                                        String indexName) {
+        return runRegularQuery(query, pageable, clazz, indexName, false);
+    }
+
     private Page<T> runRegularQuery(Query query, Pageable pageable, Class<T> clazz,
                                     String indexName) {
+        return runRegularQuery(query, pageable, clazz, indexName, true);
+    }
+
+    private Page<T> runRegularQuery(Query query, Pageable pageable, Class<T> clazz,
+                                    String indexName, boolean trackTotalHits) {
         var searchQueryBuilder = new NativeQueryBuilder()
             .withQuery(query)
             .withPageable(pageable)
-            .withTrackTotalHits(true)
+            .withTrackTotalHits(trackTotalHits)
             .withSourceFilter(new FetchSourceFilterBuilder()
                 .withExcludes(!indexesExcludedFromFieldOmission.contains(indexName) ?
                     fieldsToOmit.toArray(new String[0]) : new String[] {})

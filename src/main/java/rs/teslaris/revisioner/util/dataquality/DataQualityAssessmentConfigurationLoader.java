@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -141,6 +143,7 @@ public class DataQualityAssessmentConfigurationLoader {
         return new DataQualityProfile(
             version,
             config.minimumRequiredScore(),
+            Objects.requireNonNullElse(config.dimensionDefinitions(), Map.of()),
             config.targetWeights(),
             config.dataQualityRemarks(),
             totalPointsByTarget,
@@ -243,43 +246,49 @@ public class DataQualityAssessmentConfigurationLoader {
         return new Triple<>(remark.severity(), remark.dimension(), remark.blocking());
     }
 
-    public static int getTotalRuleCount(String profile, String version, String targetPrefix) {
+    public static int getTotalRuleCount(String profile, String version,
+                                        List<String> targetPrefixes) {
         return Math.toIntExact(
             getRemarksForProfile(profile, version)
                 .values().stream()
                 .filter(remark -> Objects.nonNull(remark.target()))
-                .filter(remark -> remark.target().startsWith(targetPrefix))
+                .filter(remark -> matchesAnyPrefix(remark.target(), targetPrefixes))
                 .count()
         );
     }
 
+    private static boolean matchesAnyPrefix(String target, List<String> targetPrefixes) {
+        return targetPrefixes.stream().anyMatch(target::startsWith);
+    }
+
     public static double getTotalPointsWeighed(String profile, String version,
-                                               String targetPrefix) {
+                                               List<String> targetPrefixes) {
         return dataQualityProfiles
             .get(profile.toLowerCase())
             .get(version)
             .totalPointsByTarget()
             .entrySet()
             .stream()
-            .filter(e -> e.getKey().startsWith(targetPrefix))
+            .filter(e -> matchesAnyPrefix(e.getKey(), targetPrefixes))
             .mapToDouble(Map.Entry::getValue)
             .sum();
     }
 
     public static double getTotalPointsWeighedFair(String profile, String version,
-                                                   String targetPrefix) {
+                                                   List<String> targetPrefixes) {
         return dataQualityProfiles
             .get(profile.toLowerCase())
             .get(version)
             .totalPointsByTargetFair()
             .entrySet()
             .stream()
-            .filter(e -> e.getKey().startsWith(targetPrefix))
+            .filter(e -> matchesAnyPrefix(e.getKey(), targetPrefixes))
             .mapToDouble(Map.Entry::getValue)
             .sum();
     }
 
-    public static double getTotalPointsWeighed(String profile, String version, String targetPrefix,
+    public static double getTotalPointsWeighed(String profile, String version,
+                                               List<String> targetPrefixes,
                                                QualityDimension dimension) {
         return dataQualityProfiles
             .get(profile.toLowerCase())
@@ -287,7 +296,7 @@ public class DataQualityAssessmentConfigurationLoader {
             .totalPointsByTargetAndDimension()
             .entrySet()
             .stream()
-            .filter(e -> e.getKey().startsWith(targetPrefix))
+            .filter(e -> matchesAnyPrefix(e.getKey(), targetPrefixes))
             .map(Map.Entry::getValue)
             .mapToDouble(map -> map.getOrDefault(dimension, 0.0))
             .sum();
@@ -300,6 +309,7 @@ public class DataQualityAssessmentConfigurationLoader {
                 new DataQualityProfile(
                     "1.0.0",
                     100.0,
+                    Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
@@ -323,16 +333,48 @@ public class DataQualityAssessmentConfigurationLoader {
     public static List<Map.Entry<String, DataQualityRemark>> getRulesForTarget(
         String profile,
         String version,
-        String targetPrefix) {
+        List<String> targetPrefixes) {
 
         return getProfile(profile.toLowerCase(), version)
             .dataQualityRemarks()
             .entrySet()
             .stream()
             .filter(entry -> Objects.nonNull(entry.getValue().target()))
-            .filter(entry -> entry.getValue().target().startsWith(targetPrefix))
+            .filter(entry -> matchesAnyPrefix(entry.getValue().target(), targetPrefixes))
             .sorted(Map.Entry.comparingByKey())
             .toList();
+    }
+
+    public static Set<String> listRuleKeys(String profile, String version,
+                                           @Nullable String targetPrefix,
+                                           @Nullable QualityDimension dimension,
+                                           @Nullable IssueSeverity severity) {
+        return getProfile(profile.toLowerCase(), version)
+            .dataQualityRemarks()
+            .entrySet()
+            .stream()
+            .filter(entry -> Objects.isNull(targetPrefix) ||
+                (Objects.nonNull(entry.getValue().target()) &&
+                    entry.getValue().target().startsWith(targetPrefix)))
+            .filter(entry -> Objects.isNull(dimension) ||
+                dimension.equals(entry.getValue().dimension()))
+            .filter(entry -> Objects.isNull(severity) ||
+                severity.equals(entry.getValue().severity()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public static Set<MultiLingualContent> getDimensionDefinition(String profile, String version,
+                                                                  QualityDimension dimension) {
+        var definition = getProfile(profile.toLowerCase(), version)
+            .dimensionDefinitions()
+            .get(dimension);
+
+        if (Objects.isNull(definition)) {
+            return Collections.emptySet();
+        }
+
+        return StringUtil.buildMultilingualContent(languageTagService, definition);
     }
 
     public static DataQualityRemark getIssue(String profile, String version, String issueKey) {
@@ -351,19 +393,33 @@ public class DataQualityAssessmentConfigurationLoader {
     }
 
     @Nullable
-    public static String getTargetTypeFromEntityType(EntityType entityType) {
+    public static List<String> getTargetTypesFromEntityType(EntityType entityType) {
         return switch (entityType) {
-            case BOOK_SERIES -> "PubSeries";
-            case PUBLICATION, MONOGRAPH, PROCEEDINGS -> "Document";
-            case EVENT, CONFERENCE, EXHIBITION, COURSE, OTHER_EVENT -> "Event";
-            case JOURNAL -> "PublicationSeries";
-            case ORGANISATION_UNIT -> "OrganisationUnit";
-            case PERSON -> "Person";
-            case PUBLISHER -> "Publisher";
-            case PRIZE -> "Prize";
-            case PROJECT -> "Project";
-            default -> null;
+            case BOOK_SERIES, JOURNAL -> List.of("PublicationSeries", "Activity", "Contact");
+            case PUBLICATION, MONOGRAPH, PROCEEDINGS -> List.of("Document", "Activity", "Contact");
+            case EVENT, CONFERENCE, EXHIBITION, COURSE, OTHER_EVENT ->
+                List.of("Event", "Activity", "Contact", "ResearchArea");
+            case ORGANISATION_UNIT ->
+                List.of("OrganisationUnit", "Contact", "GeoLocation", "ResearchArea");
+            case PERSON -> List.of("Person", "Contact", "Activity");
+            case PUBLISHER -> List.of("Publisher");
+            case PRIZE -> List.of("Prize");
+            case PROJECT -> List.of("Project");
+            default -> List.of();
         };
+    }
+
+    public static List<String> getTargetTypesFromDocumentType(
+        DocumentPublicationType documentType) {
+        var targets = new ArrayList<>(
+            Objects.requireNonNull(getTargetTypesFromEntityType(EntityType.PUBLICATION)));
+
+        if (DocumentPublicationType.INTANGIBLE_PRODUCT.equals(documentType) ||
+            DocumentPublicationType.MATERIAL_PRODUCT.equals(documentType)) {
+            targets.add("ResearchArea");
+        }
+
+        return targets;
     }
 
     public record DataQualityProfile(
@@ -372,6 +428,9 @@ public class DataQualityAssessmentConfigurationLoader {
 
         @JsonProperty(value = "minimumRequiredScore")
         Double minimumRequiredScore,
+
+        @JsonProperty(value = "dimensionDefinitions")
+        Map<QualityDimension, Map<String, String>> dimensionDefinitions,
 
         @JsonProperty(value = "targetWeights", required = true)
         Map<String, Double> targetWeights,

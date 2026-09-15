@@ -38,6 +38,7 @@ import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
@@ -62,6 +63,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -119,9 +121,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setDisplayOrganizer(
             multilingualContentService.getMultilingualContent(eventDTO.getDisplayOrganizer()));
 
-        if (Objects.nonNull(eventDTO.getCountryId())) {
-            event.setCountry(countryService.findOne(eventDTO.getCountryId()));
-        }
+        event.setCountry(RestorationSupport.resolveOptional(eventDTO.getCountryId(),
+            countryService, countryService::findOne, "countryId", "restoreCountryMissingMessage"));
 
         event.setSerialEvent(
             Objects.nonNull(eventDTO.getSerialEvent()) ? eventDTO.getSerialEvent() : false);
@@ -157,8 +158,13 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {
-            var researchAreas = researchAreaService.getResearchAreasByIds(
-                eventDTO.getResearchAreasId().stream().toList());
+            var requestedResearchAreaIds = eventDTO.getResearchAreasId().stream().toList();
+            var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+            RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+                researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+                "restoreResearchAreaMissingMessage");
+
             event.setResearchAreas(new HashSet<>(researchAreas));
         }
     }

@@ -37,6 +37,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
@@ -123,7 +124,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
 
         if (Objects.nonNull(publisherDTO.getCountryId())) {
-            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+            publisher.setCountry(RestorationSupport.resolveOptional(
+                publisherDTO.getCountryId(), countryService, countryService::findOne, "countryId",
+                "restoreCountryMissingMessage"));
         }
 
         var savedPublisher = this.save(publisher);
@@ -231,7 +234,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getState()));
 
         if (Objects.nonNull(publisherDTO.getCountryId())) {
-            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+            publisher.setCountry(RestorationSupport.resolveOptional(
+                publisherDTO.getCountryId(), countryService, countryService::findOne, "countryId",
+                "restoreCountryMissingMessage"));
         }
     }
 

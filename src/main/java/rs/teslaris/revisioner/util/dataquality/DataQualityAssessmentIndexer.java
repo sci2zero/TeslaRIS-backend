@@ -3,6 +3,7 @@ package rs.teslaris.revisioner.util.dataquality;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -18,7 +20,10 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 import rs.teslaris.revisioner.indexrepository.DataQualityAssessmentIndexRepository;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
@@ -38,14 +43,25 @@ public class DataQualityAssessmentIndexer {
 
     private static final String TARGET_ORGANISATION_UNIT = "OrganisationUnit";
 
+    private static final String TARGET_PUBLICATION_SERIES = "PublicationSeries";
+
+    private static final String TARGET_ACTIVITY = "Activity";
+
     private final DataQualityAssessmentIndexRepository indexRepository;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final PersonIndexRepository personIndexRepository;
 
+    private final EventIndexRepository eventIndexRepository;
 
-    public void index(DataQualityAssessment assessment, String target, Object dto) {
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
+    private final PublicationSeriesLookupService publicationSeriesLookupService;
+
+
+    public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
+        var target = targets.getFirst();
         try {
             var revision = assessment.getRevision();
             var entityType = revision.getEntityType();
@@ -61,22 +77,40 @@ public class DataQualityAssessmentIndexer {
             index.setRelatedPersonIds(resolveRelatedPersonIds(target, entityId, dto));
             index.setOrganisationUnitIds(resolveOrganisationUnitIds(target, entityId, dto));
             index.setAssessmentDate(assessmentDate);
-            index.setSupersededAt(null);
+            index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
             index.setLatest(true);
+            index.setRecordMajorVersion(revision.getMajorVersion());
+            index.setRecordMinorVersion(revision.getMinorVersion());
             index.setProfileName(assessment.getProfileName());
             index.setProfileVersion(assessment.getProfileVersion());
             index.setValid(assessment.getValid());
             index.setQualityScore(assessment.getQualityScore());
             index.setQualityScoreFair(assessment.getQualityScoreFair());
             index.setPassedRules(assessment.getPassedRules());
+            index.setInfoFailedRules(assessment.getInfoFailedRules());
+            index.setBlockingFailedRules(assessment.getBlockingFailedRules());
             index.setWarningFailedRules(assessment.getWarningFailedRules());
             index.setErrorFailedRules(assessment.getErrorFailedRules());
+            index.setActivitiesCount(assessment.getActivitiesCount());
+            index.setActivityPublicationCandidatesCount(
+                assessment.getActivityPublicationCandidatesCount());
+            index.setActivityScoreSum(assessment.getActivityScoreSum());
+            index.setActivityErrorIssues(assessment.getActivityErrorIssues());
+            index.setActivityWarningIssues(assessment.getActivityWarningIssues());
+            index.setActivityInfoIssues(assessment.getActivityInfoIssues());
+            index.setActivityDimensionScoreSums(
+                new HashMap<>(assessment.getActivityDimensionScoreSums()));
+            index.setActivityFairScoreSum(assessment.getActivityFairScoreSum());
+            index.setDatabaseId(assessment.getId());
+            index.setPublicationCandidate(assessment.getPublicationCandidate());
 
-            populateRuleKeys(index, assessment, target);
-            populateDimensionBreakdown(index, assessment, target);
+            populateRuleKeys(index, assessment, targets);
+            populateDimensionBreakdown(index, assessment, targets);
 
             supersedePreviousLatest(entityType, entityId, assessment.getProfileName(),
                 assessmentDate);
+
+            setEntityName(index);
 
             indexRepository.save(index);
         } catch (Exception e) {
@@ -93,7 +127,7 @@ public class DataQualityAssessmentIndexer {
             .findByEntityTypeAndEntityIdAndProfileNameAndIsLatestTrue(entityType, entityId,
                 profileName)
             .ifPresent(previous -> {
-                previous.setSupersededAt(newAssessmentDate);
+                previous.setValidTo(newAssessmentDate);
                 previous.setLatest(false);
                 indexRepository.save(previous);
             });
@@ -118,6 +152,52 @@ public class DataQualityAssessmentIndexer {
         }
 
         return List.of();
+    }
+
+    private void setEntityName(DataQualityAssessmentIndex index) {
+        if (TARGET_PERSON.equals(index.getTarget())) {
+            personIndexRepository.findByDatabaseId(index.getEntityId())
+                .ifPresent(personIndex -> {
+                    index.setEntityNameSr(personIndex.getName());
+                    index.setEntityNameOther(personIndex.getName());
+                });
+        }
+
+        if (TARGET_DOCUMENT.equals(index.getTarget())) {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    index.getEntityId())
+                .ifPresent(documentIndex -> {
+                    index.setEntityNameSr(documentIndex.getTitleSr());
+                    index.setEntityNameOther(documentIndex.getTitleOther());
+                });
+        }
+
+        if (TARGET_EVENT.equals(index.getTarget())) {
+            eventIndexRepository.findByDatabaseId(index.getEntityId())
+                .ifPresent(eventIndex -> {
+                    index.setEntityNameSr(eventIndex.getNameSr());
+                    index.setEntityNameOther(eventIndex.getNameOther());
+                });
+        }
+
+        if (TARGET_ORGANISATION_UNIT.equals(index.getTarget())) {
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                    index.getEntityId())
+                .ifPresent(organisationUnitIndex -> {
+                    index.setEntityNameSr(organisationUnitIndex.getNameSr());
+                    index.setEntityNameOther(organisationUnitIndex.getNameOther());
+                });
+        }
+
+        if (TARGET_PUBLICATION_SERIES.equals(index.getTarget())) {
+            var publicationSeriesIndex =
+                publicationSeriesLookupService.getPublicationSeriesIndex(index.getEntityId());
+
+            if (Objects.nonNull(publicationSeriesIndex)) {
+                index.setEntityNameSr(publicationSeriesIndex.getTitleSr());
+                index.setEntityNameOther(publicationSeriesIndex.getTitleOther());
+            }
+        }
     }
 
     private List<Integer> contributionPersonIds(Object dto) {
@@ -177,7 +257,9 @@ public class DataQualityAssessmentIndexer {
         }
 
         var institutionIds = new HashSet<Integer>();
-        personIndexRepository.findAllByDatabaseId(contributorPersonIds)
+        personIndexRepository
+            .findByDatabaseIdIn(contributorPersonIds,
+                PageRequest.of(0, contributorPersonIds.size()))
             .forEach(
                 personIndex -> institutionIds.addAll(personIndex.getEmploymentInstitutionsId()));
 
@@ -185,11 +267,18 @@ public class DataQualityAssessmentIndexer {
     }
 
     private void populateRuleKeys(DataQualityAssessmentIndex index,
-                                  DataQualityAssessment assessment, String target) {
+                                  DataQualityAssessment assessment, List<String> targets) {
         var rulesForTarget = DataQualityAssessmentConfigurationLoader.getRulesForTarget(
-            assessment.getProfileName(), assessment.getProfileVersion(), target);
+            assessment.getProfileName(), assessment.getProfileVersion(), targets);
 
         var failedKeys = assessment.getIssues().stream()
+            .map(ConstraintEvaluationResult::getKey)
+            .collect(Collectors.toSet());
+
+        // A rule that blocks publication is the one a candidate report cares about, so those keys
+        // are kept apart rather than filtered out of the full set at query time.
+        var blockingKeys = assessment.getIssues().stream()
+            .filter(ConstraintEvaluationResult::isBlocking)
             .map(ConstraintEvaluationResult::getKey)
             .collect(Collectors.toSet());
 
@@ -199,11 +288,35 @@ public class DataQualityAssessmentIndexer {
             .toList();
 
         index.setFailedRuleKeys(new ArrayList<>(failedKeys));
+        index.setBlockingRuleKeys(new ArrayList<>(blockingKeys));
         index.setPassedRuleKeys(passedKeys);
+
+        populateActivityIssueOccurrences(index, assessment);
+    }
+
+    private void populateActivityIssueOccurrences(DataQualityAssessmentIndex index,
+                                                  DataQualityAssessment assessment) {
+        var activityRuleKeys = DataQualityAssessmentConfigurationLoader.listRuleKeys(
+            assessment.getProfileName(), assessment.getProfileVersion(), TARGET_ACTIVITY,
+            null, null
+        );
+
+        if (activityRuleKeys.isEmpty()) {
+            return;
+        }
+
+        index.setActivityIssueOccurrences(assessment.getIssues().stream()
+            .map(ConstraintEvaluationResult::getKey)
+            .filter(activityRuleKeys::contains)
+            .collect(Collectors.groupingBy(
+                key -> key,
+                HashMap::new,
+                Collectors.summingInt(key -> 1))));
     }
 
     private void populateDimensionBreakdown(DataQualityAssessmentIndex index,
-                                            DataQualityAssessment assessment, String target) {
+                                            DataQualityAssessment assessment,
+                                            List<String> targets) {
         var profile = assessment.getProfileName();
         var version = assessment.getProfileVersion();
 
@@ -211,7 +324,7 @@ public class DataQualityAssessmentIndexer {
             .collect(Collectors.groupingBy(ConstraintEvaluationResult::getDimension));
 
         var rulesForTarget =
-            DataQualityAssessmentConfigurationLoader.getRulesForTarget(profile, version, target);
+            DataQualityAssessmentConfigurationLoader.getRulesForTarget(profile, version, targets);
 
         for (var dimension : QualityDimension.values()) {
             var dimensionScore = assessment.getDimensionScores().get(dimension);

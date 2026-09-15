@@ -103,15 +103,15 @@ public class DataQualityReindexServiceTest {
         doReturn(DummyDTO.class).when(revisionHydratorRegistry).getDtoClass(ENTITY_TYPE);
 
         try (var listener = mockStatic(DataQualityAssessmentListener.class)) {
-            listener.when(() -> DataQualityAssessmentListener.resolveTargetType(ENTITY_TYPE))
-                .thenReturn("DOCUMENT");
+            listener.when(() -> DataQualityAssessmentListener.resolveTargetTypes(ENTITY_TYPE))
+                .thenReturn(List.of("DOCUMENT"));
 
             // when
             dataQualityReindexService.reindexDataQualityAssessments();
 
             // then
             verify(dataQualityAssessmentIndexer)
-                .index(eq(assessment), eq("DOCUMENT"), any(DummyDTO.class));
+                .index(eq(assessment), eq(List.of("DOCUMENT")), any(DummyDTO.class));
         }
     }
 
@@ -122,7 +122,7 @@ public class DataQualityReindexServiceTest {
         stubSinglePage(assessment);
 
         try (var listener = mockStatic(DataQualityAssessmentListener.class)) {
-            listener.when(() -> DataQualityAssessmentListener.resolveTargetType(ENTITY_TYPE))
+            listener.when(() -> DataQualityAssessmentListener.resolveTargetTypes(ENTITY_TYPE))
                 .thenReturn(null);
 
             // when
@@ -143,8 +143,8 @@ public class DataQualityReindexServiceTest {
         doReturn(DummyDTO.class).when(revisionHydratorRegistry).getDtoClass(ENTITY_TYPE);
 
         try (var listener = mockStatic(DataQualityAssessmentListener.class)) {
-            listener.when(() -> DataQualityAssessmentListener.resolveTargetType(ENTITY_TYPE))
-                .thenReturn("DOCUMENT");
+            listener.when(() -> DataQualityAssessmentListener.resolveTargetTypes(ENTITY_TYPE))
+                .thenReturn(List.of("DOCUMENT"));
 
             // when
             dataQualityReindexService.reindexDataQualityAssessments();

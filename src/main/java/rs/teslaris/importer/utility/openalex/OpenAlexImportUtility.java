@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 
@@ -23,55 +25,88 @@ public class OpenAlexImportUtility {
 
     private final RestTemplateProvider restTemplateProvider;
 
+    @Value("${openalex.api.key:}")
+    private String apiKey;
+
+    @Value("${openalex.max.retries:1}")
+    private int maxRetries;
+
 
     public List<OpenAlexPublication> getPublicationsForAuthors(List<String> openAlexIds,
                                                                String dateFrom,
                                                                String dateTo,
                                                                Boolean institutionLevelHarvest) {
         List<OpenAlexPublication> allResults = new ArrayList<>();
+
+        if (Objects.isNull(openAlexIds) || openAlexIds.isEmpty()) {
+            return allResults;
+        }
+
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        for (String openAlexId : openAlexIds) {
-            var baseUrl = "https://api.openalex.org/works?per-page=100" +
-                "&filter=" +
-                (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
-                openAlexId +
-                ",from_publication_date:" + dateFrom +
-                ",to_publication_date:" + dateTo;
+        var joinedIds = String.join("|", openAlexIds);
+        var baseUrl = "https://api.openalex.org/works?per-page=100" +
+            "&filter=" +
+            (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
+            joinedIds +
+            ",from_publication_date:" + dateFrom +
+            ",to_publication_date:" + dateTo +
+            apiKeyParameter();
 
-            var cursor = "*";
+        var cursor = "*";
+        var retries = 0;
+
+        while (Objects.nonNull(cursor)) {
+            String paginatedUrl = baseUrl + "&cursor=" + cursor;
+            ResponseEntity<String> responseEntity;
 
             try {
-                while (Objects.nonNull(cursor)) {
-                    String paginatedUrl = baseUrl + "&cursor=" + cursor;
-                    ResponseEntity<String> responseEntity =
-                        restTemplateProvider.provideRestTemplate()
-                            .getForEntity(paginatedUrl, String.class);
-
-                    if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                        break;
-                    }
-
-                    OpenAlexResults results =
-                        objectMapper.readValue(responseEntity.getBody(), OpenAlexResults.class);
-
-                    if (Objects.nonNull(results.results())) {
-                        allResults.addAll(results.results());
-                    }
-
-                    cursor = (Objects.nonNull(results.meta())) ? results.meta().nextCursor() : null;
+                responseEntity = restTemplateProvider.provideRestTemplate()
+                    .getForEntity(paginatedUrl, String.class);
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                if (retries++ >= maxRetries) {
+                    log.warn("OpenAlex rate limit reached for IDs {}, keeping the {} record(s) " +
+                        "harvested so far.", joinedIds, allResults.size());
+                    break;
                 }
-            } catch (HttpClientErrorException e) {
-                log.error("HTTP error for OpenAlex ID {}: {}", openAlexId, e.getMessage());
-            } catch (JsonProcessingException e) {
-                log.error("JSON parsing error for OpenAlex ID {}: {}", openAlexId, e.getMessage());
+
+                RestTemplateProvider.sleepBeforeRetry(
+                    Objects.nonNull(e.getResponseHeaders()) ?
+                        e.getResponseHeaders().getFirst("Retry-After") : null);
+                continue;
+            } catch (HttpClientErrorException | HttpServerErrorException e) {
+                log.error("HTTP error for OpenAlex IDs {}: {}", joinedIds, e.getMessage());
+                break;
             } catch (ResourceAccessException e) {
-                log.error("OpenAlex is unreachable for ID {}: {}", openAlexId, e.getMessage());
+                log.error("OpenAlex is unreachable for IDs {}: {}", joinedIds, e.getMessage());
+                break;
             }
+
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                break;
+            }
+
+            OpenAlexResults results;
+            try {
+                results = objectMapper.readValue(responseEntity.getBody(), OpenAlexResults.class);
+            } catch (JsonProcessingException e) {
+                log.error("JSON parsing error for OpenAlex IDs {}: {}", joinedIds, e.getMessage());
+                break;
+            }
+
+            if (Objects.nonNull(results.results())) {
+                allResults.addAll(results.results());
+            }
+
+            cursor = (Objects.nonNull(results.meta())) ? results.meta().nextCursor() : null;
         }
 
         return allResults;
+    }
+
+    private String apiKeyParameter() {
+        return (Objects.isNull(apiKey) || apiKey.isBlank()) ? "" : "&api_key=" + apiKey;
     }
 
     public OpenAlexPublication getPublicationByDoi(String doi) {

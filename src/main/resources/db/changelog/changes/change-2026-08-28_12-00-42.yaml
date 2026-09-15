@@ -1,0 +1,430 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 1787911243-1
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.tutorial_walkthroughs
+              ADD CONSTRAINT tutorial_walkthroughs_status_check
+              CHECK (status::text = ANY (ARRAY['NOT_FINISHED'::character varying, 'FINISHED'::character varying, 'SKIPPED'::character varying]::text[]));
+
+  - changeSet:
+      id: 1787911243-23
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.theses
+              DROP CONSTRAINT theses_document_type_check;
+
+  - changeSet:
+      id: 1787911243-24
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.scheduled_tasks
+              DROP CONSTRAINT scheduled_tasks_task_type_check;
+
+  - changeSet:
+      id: 1787911243-25
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings
+              DROP CONSTRAINT proceedings_document_type_check;
+
+  - changeSet:
+      id: 1787911243-26
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings_publications
+              DROP CONSTRAINT proceedings_publications_document_type_check;
+
+  - changeSet:
+      id: 1787911243-27
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.performance_related_outputs
+              DROP CONSTRAINT performance_related_outputs_document_type_check;
+
+  - changeSet:
+      id: 1787911243-28
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monographs
+              DROP CONSTRAINT monographs_document_type_check;
+
+  - changeSet:
+      id: 1787911243-29
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monograph_publications
+              DROP CONSTRAINT monograph_publications_document_type_check;
+
+  - changeSet:
+      id: 1787911243-30
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.material_products
+              DROP CONSTRAINT material_products_document_type_check;
+
+  - changeSet:
+      id: 1787911243-31
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.journal_publications
+              DROP CONSTRAINT journal_publications_document_type_check;
+
+  - changeSet:
+      id: 1787911243-32
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intangible_products
+              DROP CONSTRAINT intangible_products_type_check;
+
+  - changeSet:
+      id: 1787911243-33
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intangible_products
+              DROP CONSTRAINT intangible_products_document_type_check;
+
+  - changeSet:
+      id: 1787911243-34
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.informative_attachments
+              DROP CONSTRAINT informative_attachments_document_type_check;
+
+  - changeSet:
+      id: 1787911243-35
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.genetic_materials
+              DROP CONSTRAINT genetic_materials_document_type_check;
+
+  - changeSet:
+      id: 1787911243-36
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.entity_assessment_classifications
+              DROP CONSTRAINT entity_assessment_classifications_document_type_check;
+
+  - changeSet:
+      id: 1787911243-37
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.encyclopedic_contributions
+              DROP CONSTRAINT encyclopedic_contributions_document_type_check;
+
+  - changeSet:
+      id: 1787911243-2
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.theses
+              ADD CONSTRAINT theses_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-3
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.scheduled_tasks
+              ADD CONSTRAINT scheduled_tasks_task_type_check
+              CHECK (task_type >= 0 AND task_type <= 18);
+
+  - changeSet:
+      id: 1787911243-4
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings
+              ADD CONSTRAINT proceedings_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-5
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings_publications
+              ADD CONSTRAINT proceedings_publications_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-6
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.performance_related_outputs
+              ADD CONSTRAINT performance_related_outputs_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-7
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_unit_contributions
+              ADD CONSTRAINT organisation_unit_contributions_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1787911243-8
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monographs
+              ADD CONSTRAINT monographs_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-9
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monograph_publications
+              ADD CONSTRAINT monograph_publications_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-10
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.material_products
+              ADD CONSTRAINT material_products_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-11
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.journal_publications
+              ADD CONSTRAINT journal_publications_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-12
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intellectual_property
+              ADD CONSTRAINT intellectual_property_type_check
+              CHECK (type >= 0 AND type <= 4);
+
+  - changeSet:
+      id: 1787911243-13
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intellectual_property
+              ADD CONSTRAINT intellectual_property_publication_status_check
+              CHECK (publication_status >= 0 AND publication_status <= 4);
+
+  - changeSet:
+      id: 1787911243-14
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intellectual_property
+              ADD CONSTRAINT intellectual_property_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-15
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intellectual_property
+              ADD CONSTRAINT intellectual_property_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1787911243-16
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intellectual_property
+              ADD CONSTRAINT intellectual_property_application_status_check
+              CHECK (application_status >= 0 AND application_status <= 10);
+
+  - changeSet:
+      id: 1787911243-17
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intangible_products
+              ADD CONSTRAINT intangible_products_type_check
+              CHECK (type >= 0 AND type <= 22);
+
+  - changeSet:
+      id: 1787911243-18
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.intangible_products
+              ADD CONSTRAINT intangible_products_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-19
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.informative_attachments
+              ADD CONSTRAINT informative_attachments_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-20
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.genetic_materials
+              ADD CONSTRAINT genetic_materials_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-21
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.entity_assessment_classifications
+              ADD CONSTRAINT entity_assessment_classifications_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);
+
+  - changeSet:
+      id: 1787911243-22
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.encyclopedic_contributions
+              ADD CONSTRAINT encyclopedic_contributions_document_type_check
+              CHECK (document_type >= 0 AND document_type <= 10);

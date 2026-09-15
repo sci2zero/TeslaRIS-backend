@@ -84,6 +84,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         this.bookSeriesRepository = bookSeriesRepository;
     }
 
+
+    @Override
+    public boolean exists(Integer id) {
+        return bookSeriesJPAService.exists(id);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Page<BookSeriesResponseDTO> readAllBookSeries(Pageable pageable) {

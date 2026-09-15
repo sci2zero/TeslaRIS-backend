@@ -12,7 +12,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 @Repository
 public interface PersonIndexRepository extends ElasticsearchRepository<PersonIndex, String> {
 
-    Iterable<PersonIndex> findAllByDatabaseId(Iterable<Integer> databaseIds);
+    List<PersonIndex> findAllByDatabaseIdIn(List<Integer> databaseIds);
 
     Optional<PersonIndex> findByDatabaseId(Integer databaseId);
 

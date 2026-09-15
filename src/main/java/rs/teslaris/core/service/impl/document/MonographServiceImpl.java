@@ -57,6 +57,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -137,6 +138,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.publisherService = publisherService;
         this.indexBulkUpdateService = indexBulkUpdateService;
         this.monographPublicationRepository = monographPublicationRepository;
+    }
+
+
+    @Override
+    public boolean exists(Integer id) {
+        return monographJPAService.exists(id);
     }
 
     @Override
@@ -357,9 +364,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         if (Objects.nonNull(monographDTO.getLanguageIds())) {
             monographDTO.getLanguageIds()
-                .forEach(id ->
-                    monograph.getLanguages().add(languageService.findLanguageById(id))
-                );
+                .forEach(id -> {
+                    var language = RestorationSupport.resolveOptional(id, languageService,
+                        languageService::findLanguageById, "languageIds",
+                        "restoreLanguageMissingMessage");
+
+                    if (Objects.nonNull(language)) {
+                        monograph.getLanguages().add(language);
+                    }
+                });
         }
 
         if (Objects.nonNull(monographDTO.getPublicationSeriesId())) {
@@ -369,24 +382,31 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             if (optionalJournal.isPresent()) {
                 monograph.setPublicationSeries(optionalJournal.get());
             } else {
-                var bookSeries = bookSeriesService.findBookSeriesById(
-                    monographDTO.getPublicationSeriesId());
+                var bookSeries = RestorationSupport.resolveOptional(
+                    monographDTO.getPublicationSeriesId(), bookSeriesService,
+                    bookSeriesService::findBookSeriesById, "publicationSeriesId",
+                    "restorePublicationSeriesMissingMessage");
                 monograph.setPublicationSeries(bookSeries);
             }
         }
 
-        if (Objects.nonNull(monographDTO.getResearchAreaId())) {
-            monograph.setResearchArea(
-                researchAreaService.findOne(monographDTO.getResearchAreaId()));
-        }
+        // Single reference, so the bulk "skip what is missing" lookup other types use does not
+        // apply here.
+        monograph.setResearchArea(RestorationSupport.resolveOptional(
+            monographDTO.getResearchAreaId(), researchAreaService, researchAreaService::findOne,
+            "researchAreaId",
+            "restoreResearchAreaMissingMessage"));
 
         monograph.setAuthorReprint(false);
         monograph.setPublisher(null);
 
         if (Objects.nonNull(monographDTO.getAuthorReprint()) && monographDTO.getAuthorReprint()) {
             monograph.setAuthorReprint(true);
-        } else if (Objects.nonNull(monographDTO.getPublisherId())) {
-            monograph.setPublisher(publisherService.findOne(monographDTO.getPublisherId()));
+        } else {
+            monograph.setPublisher(RestorationSupport.resolveOptional(
+                monographDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
+                "restorePublisherMissingMessage"));
         }
     }
 

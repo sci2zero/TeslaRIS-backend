@@ -10,6 +10,7 @@ import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfiguratio
 public class DataQualityProfileConverter {
 
     public static DataQualityProfileDTO toDTO(
+        String profileName,
         DataQualityAssessmentConfigurationLoader.DataQualityProfile dataQualityProfile,
         LanguageTagService languageTagService) {
 
@@ -36,6 +37,7 @@ public class DataQualityProfileConverter {
             );
         });
 
-        return new DataQualityProfileDTO(dataQualityProfile.version(), dataQualityRemarks);
+        return new DataQualityProfileDTO(profileName, dataQualityProfile.version(),
+            dataQualityRemarks);
     }
 }

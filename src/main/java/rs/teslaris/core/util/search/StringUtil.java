@@ -49,6 +49,7 @@ import org.springframework.web.bind.WebDataBinder;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.language.LocalizedTokenResolver;
 
 @Component
 @Slf4j
@@ -224,6 +225,24 @@ public class StringUtil {
         MultiLingualContent fallback = null;
         for (var content : multilingualContent) {
             if (lang.equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
+                return content.getContent();
+            }
+
+            fallback = content;
+        }
+
+        return fallback.getContent();
+    }
+
+    public static String getStringContent(List<MultilingualContentDTO> multilingualContent,
+                                          String lang) {
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
+            return "";
+        }
+
+        MultilingualContentDTO fallback = null;
+        for (var content : multilingualContent) {
+            if (lang.equalsIgnoreCase(content.getLanguageTag())) {
                 return content.getContent();
             }
 
@@ -527,6 +546,10 @@ public class StringUtil {
 
         return Arrays.stream(params)
             .map(param -> {
+                if (LocalizedTokenResolver.isToken(param)) {
+                    return LocalizedTokenResolver.resolve((String) param, languageCode);
+                }
+
                 if (param instanceof List<?> list) {
                     return list.stream()
                         .filter(MultilingualContentDTO.class::isInstance)
