@@ -384,6 +384,20 @@ public class SecurityConfiguration {
                 // SSE
                 .requestMatchers(HttpMethod.GET, "/api/sse/progress/{exportId}").permitAll()
 
+                // PROJECTS
+                .requestMatchers(HttpMethod.GET, "/api/project/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/for-researcher/{personId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/project/for-organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}/documents").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}/events").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding/{fundingId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding-application/search").permitAll()
+                
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

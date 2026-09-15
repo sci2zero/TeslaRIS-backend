@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,19 +19,21 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.document.OtherEvent;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectEvent;
 import rs.teslaris.project.model.project.ProjectEventType;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.service.impl.project.ProjectEventServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @SpringBootTest
 public class ProjectEventServiceTest {
@@ -53,7 +54,10 @@ public class ProjectEventServiceTest {
     private IndexBulkUpdateService indexBulkUpdateService;
 
     @Mock
-    private CurrencyService currencyService;
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @InjectMocks
     private ProjectEventServiceImpl projectEventService;
@@ -132,17 +136,23 @@ public class ProjectEventServiceTest {
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of());
         when(projectService.findOne(1)).thenReturn(project);
         when(eventService.findOne(2)).thenReturn(event);
-        when(currencyService.findOne(1)).thenReturn(null);
         when(projectEventRepository.save(any(ProjectEvent.class))).thenReturn(savedEvent);
+        when(fundingPartFactory.buildNestedFundingPart(fundingPartDTO)).thenReturn(
+            new FundingPart());
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
 
         // when
         var result = projectEventService.createProjectEvent(dto);
 
         // then
         assertNotNull(result);
-        verify(currencyService).findOne(1);
-        verify(multilingualContentService, times(2)).getMultilingualContent(anyList());
+        verify(fundingPartFactory).buildNestedFundingPart(fundingPartDTO);
+        verify(multilingualContentService).getMultilingualContent(anyList());
         verify(projectEventRepository).save(any(ProjectEvent.class));
+        verify(fundingPartRepository).save(
+            argThat(part -> part.getProjectEvent().equals(savedEvent)));
+        assertEquals(1, savedEvent.getFundingParts().size());
     }
 
     @Test

@@ -113,6 +113,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit findOrganisationUnitByAccountingId(String accountingId);
 
+    OrganisationUnitIndex findOrganisationUnitByTaxNumber(String taxNumber);
+
     String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
         throws IOException;
 

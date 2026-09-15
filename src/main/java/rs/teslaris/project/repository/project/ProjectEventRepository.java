@@ -12,4 +12,7 @@ public interface ProjectEventRepository extends JpaRepository<ProjectEvent, Inte
     @Query("SELECT pe.event.id FROM ProjectEvent pe WHERE pe.project.id = :projectId")
     List<Integer> findEventIdsByProjectId(Integer projectId);
 
+    @Query("SELECT pe FROM ProjectEvent pe WHERE pe.project.id = :projectId")
+    List<ProjectEvent> findAllByProjectId(Integer projectId);
+
 }
