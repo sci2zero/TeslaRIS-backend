@@ -276,6 +276,9 @@ public class SecurityConfiguration {
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
 
+                // FEATURE MODULE TOGGLES
+                .requestMatchers(HttpMethod.GET, "/api/feature-module-toggles").permitAll()
+
                 // PUBLIC ASSESSMENT SERVICE
                 // through WEB UI
                 .requestMatchers(HttpMethod.POST,
