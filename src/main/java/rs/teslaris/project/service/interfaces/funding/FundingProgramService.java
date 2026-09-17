@@ -17,7 +17,7 @@ import rs.teslaris.project.model.funding.FundingProgram;
 public interface FundingProgramService extends JPAService<FundingProgram> {
 
     Page<FundingProgramIndex> searchFundingPrograms(List<String> tokens, LocalDate dateFrom,
-                                                    LocalDate dateTo, Integer funderId,
+                                                    LocalDate dateTo, boolean onlyActive, Integer funderId,
                                                     Pageable pageable);
 
     FundingProgramDTO readFundingProgram(Integer fundingProgramId);

@@ -1,5 +1,6 @@
 package rs.teslaris.core.util.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
@@ -7,6 +8,8 @@ import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +32,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
@@ -60,8 +65,14 @@ public class StringUtil {
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
 
+    private static final Map<Character, String> UNSAFE_URL_CHARACTER_ENCODINGS = Map.of(
+        ' ', "%20", '"', "%22", '<', "%3C", '>', "%3E", '{', "%7B",
+        '}', "%7D", '|', "%7C", '\\', "%5C", '^', "%5E", '`', "%60"
+    );
+
     private static final List<String> identifierUrlPrefixes = List.of(
-        "https://doi.org/", "https://orcid.org/", "https://www.scopus.com/pages/organization/",
+        "https://doi.org/", "https://orcid.org/", "http://orcid.org/",
+        "https://www.scopus.com/pages/organization/",
         "https://www.scopus.com/authid/detail.uri?authorId=",
         "https://www.scopus.com/pages/publications/",
         "https://openalex.org/", "https://ror.org/",
@@ -565,5 +576,61 @@ public class StringUtil {
         return index == -1
             ? filename
             : filename.substring(0, index);
+    }
+
+    @Nullable
+    public static String parseDateParts(JsonNode dateParts) {
+        if (!dateParts.isArray() || dateParts.isEmpty()) {
+            return null;
+        }
+
+        var firstDate = dateParts.get(0);
+        if (!firstDate.isArray() || firstDate.isEmpty()) {
+            return null;
+        }
+
+        var year = firstDate.get(0).asInt();
+        var month = firstDate.size() > 1 ? firstDate.get(1).asInt() : 1;
+        var day = firstDate.size() > 2 ? firstDate.get(2).asInt() : 1;
+
+        return String.format("%04d-%02d-%02d", year, month, day);
+    }
+
+    public static boolean looksLikeAbbreviation(String title) {
+        var trimmed = title.trim();
+        var wordCount = trimmed.split("\\s+").length;
+        return trimmed.length() <= 25 && wordCount <= 3;
+    }
+
+    @Nullable
+    public static String sanitizeUrl(@Nullable String url) {
+        if (Objects.isNull(url) || url.isBlank()) {
+            return null;
+        }
+
+        var sanitized = new StringBuilder();
+        url.trim().chars().forEach(codePoint -> {
+            var character = (char) codePoint;
+            sanitized.append(UNSAFE_URL_CHARACTER_ENCODINGS.getOrDefault(character,
+                String.valueOf(character)));
+        });
+
+        var candidate = sanitized.toString();
+
+        try {
+            var uri = new URI(candidate);
+            if (!uri.isAbsolute() || Objects.isNull(uri.getHost()) ||
+                (!"http".equalsIgnoreCase(uri.getScheme()) &&
+                    !"https".equalsIgnoreCase(uri.getScheme()))) {
+                log.warn("Discarding harvested URL that is not an absolute http(s) address: {}",
+                    url);
+                return null;
+            }
+        } catch (URISyntaxException e) {
+            log.warn("Discarding malformed harvested URL: {}", url);
+            return null;
+        }
+
+        return candidate;
     }
 }

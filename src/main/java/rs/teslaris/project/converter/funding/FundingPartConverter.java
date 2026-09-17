@@ -40,6 +40,8 @@ public class FundingPartConverter {
         if (Objects.nonNull(fundingPart.getAmount())) {
             dto.getAmount().setAmount(fundingPart.getAmount().getAmount());
             dto.getAmount().setCurrencyId(fundingPart.getAmount().getCurrency().getId());
+            dto.getAmount().setCurrencyCode(fundingPart.getAmount().getCurrency().getCode());
+            dto.getAmount().setCurrencySymbol(fundingPart.getAmount().getCurrency().getSymbol());
         }
 
         return dto;

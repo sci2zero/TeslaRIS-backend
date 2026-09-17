@@ -19,8 +19,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
+import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.service.interfaces.project.ProjectCreationService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @RestController
@@ -30,19 +35,60 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    private final ProjectCreationService projectCreationService;
+
+    @GetMapping("/{projectId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    public boolean canEditProject() {
+        return true;
+    }
+
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public Page<ProjectIndex> searchProjects(@RequestParam List<String> tokens,
                                              @RequestParam(required = false)
                                              LocalDate dateFrom,
                                              @RequestParam(required = false)
                                              LocalDate dateTo,
+                                             @RequestParam(required = false)
+                                             boolean onlyActive,
+                                             @RequestParam(required = false)
+                                             boolean onlyWithoutContributions,
+                                             @RequestParam(required = false)
+                                             List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses, pageable);
+    }
+
+    @GetMapping("/for-researcher/{personId}")
+    public Page<ProjectIndex> findProjectsForPerson(@PathVariable Integer personId,
+                                                    @RequestParam(required = false)
+                                                    List<String> tokens,
+                                                    @RequestParam(required = false)
+                                                    boolean onlyActive,
+                                                    @RequestParam(required = false)
+                                                    List<ProjectStatus> allowedStatuses,
+                                                    Pageable pageable) {
+        return projectService.findProjectsForPerson(personId, tokens, onlyActive, allowedStatuses,
+            pageable);
+    }
+
+    @GetMapping("/for-organisation-unit/{organisationUnitId}")
+    public Page<ProjectIndex> findProjectsForOrganisationUnit(
+        @PathVariable Integer organisationUnitId,
+        @RequestParam(required = false) List<String> tokens,
+        @RequestParam(required = false) boolean onlyActive,
+        @RequestParam(required = false) List<ProjectStatus> allowedStatuses,
+        Pageable pageable) {
+        return projectService.findProjectsForOrganisationUnit(organisationUnitId, tokens, onlyActive,
+            allowedStatuses, pageable);
+    }
+
+    @GetMapping("/count")
+    public Long countAll() {
+        return projectService.getProjectCount();
     }
 
     @GetMapping("/{projectId}")
-    @PreAuthorize("hasAuthority('READ_PROJECTS')")
     public ProjectDTO readProject(@PathVariable Integer projectId) {
         return projectService.readProject(projectId);
     }
@@ -53,7 +99,7 @@ public class ProjectController {
     @Idempotent
     public ProjectDTO createProject(
         @RequestBody @Valid ProjectDTO projectDTO) {
-        var savedProject = projectService.createProject(projectDTO);
+        var savedProject = projectCreationService.createProject(projectDTO);
         projectDTO.setId(savedProject.getId());
 
         return projectDTO;
@@ -74,4 +120,59 @@ public class ProjectController {
         projectService.deleteProject(projectId);
     }
 
+
+    @PostMapping("/{projectId}/add-person")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public PersonProjectContributionDTO addProjectPerson(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid PersonProjectContributionDTO personContribution) {
+        return projectService.addPerson(projectId, personContribution);
+    }
+
+    @DeleteMapping("/{projectId}/remove-person/{personContributionId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectPerson(@PathVariable Integer projectId,
+                                    @PathVariable Integer personContributionId) {
+        projectService.removePerson(projectId, personContributionId);
+    }
+
+    @PostMapping("/{projectId}/add-organisation")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public OrganisationUnitProjectContributionDTO addProjectOrganisation(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid OrganisationUnitProjectContributionDTO organisationContribution) {
+        return projectService.addOrganisation(projectId, organisationContribution);
+    }
+
+    @DeleteMapping("/{projectId}/remove-organisation/{organisationContributionId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectOrganisation(
+            @PathVariable Integer projectId,
+            @PathVariable Integer organisationContributionId) {
+        projectService.removeOrganisation(projectId, organisationContributionId);
+    }
+
+    @PostMapping("/{projectId}/add-relation")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public ProjectsRelationDTO addProjectRelation(
+            @PathVariable Integer projectId,
+            @RequestBody @Valid ProjectsRelationDTO relation) {
+        return projectService.addProjectRelation(projectId, relation);
+    }
+
+    @DeleteMapping("/{projectId}/remove-relation/{relationId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectRelation(@PathVariable Integer projectId,
+                                      @PathVariable Integer relationId) {
+        projectService.removeProjectRelation(projectId, relationId);
+    }
 }

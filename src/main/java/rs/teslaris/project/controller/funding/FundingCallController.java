@@ -25,6 +25,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
+import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 
 @RestController
@@ -35,6 +36,12 @@ public class FundingCallController {
     private final FundingCallService fundingCallService;
 
 
+    @GetMapping("/{fundingCallId}/can-edit")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_CALLS')")
+    public boolean canEditFundingCall() {
+        return true;
+    }
+
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('READ_FUNDING_CALLS')")
     public Page<FundingCallIndex> searchFundingCalls(@RequestParam List<String> tokens,
@@ -43,9 +50,13 @@ public class FundingCallController {
                                                      @RequestParam(required = false)
                                                      LocalDate dateTo,
                                                      @RequestParam(required = false)
+                                                     boolean onlyActive,
+                                                     @RequestParam(required = false)
+                                                     List<FundingType> allowedTypes,
+                                                     @RequestParam(required = false)
                                                      Integer programId,
                                                      Pageable pageable) {
-        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, programId,
+        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, onlyActive, allowedTypes, programId,
             pageable);
     }
 

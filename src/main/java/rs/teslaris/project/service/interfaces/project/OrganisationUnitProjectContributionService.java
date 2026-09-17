@@ -1,13 +1,15 @@
 package rs.teslaris.project.service.interfaces.project;
 
-import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.Project;
 
 @Service
 public interface OrganisationUnitProjectContributionService
     extends JPAService<OrganisationUnitProjectContribution> {
 
-    List<OrganisationUnitProjectContribution> getOrganisationUnitsByIds(List<Integer> id);
+    OrganisationUnitProjectContribution createContribution(OrganisationUnitProjectContributionDTO dto, Project project);
+
 }

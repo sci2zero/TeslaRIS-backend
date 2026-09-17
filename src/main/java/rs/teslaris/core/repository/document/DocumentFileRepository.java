@@ -12,7 +12,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 public interface DocumentFileRepository extends JpaRepository<DocumentFile, Integer> {
 
     @Query("SELECT df FROM DocumentFile df " +
-        "JOIN FETCH df.document " +
+        "LEFT JOIN FETCH df.document " +
         "WHERE df.serverFilename = :serverFilename")
     Optional<DocumentFile> getReferenceByServerFilename(String serverFilename);
 

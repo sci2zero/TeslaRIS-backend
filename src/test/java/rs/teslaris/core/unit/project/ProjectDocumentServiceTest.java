@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,19 +19,21 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.document.Proceedings;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectDocumentType;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.service.impl.project.ProjectDocumentServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @SpringBootTest
 public class ProjectDocumentServiceTest {
@@ -53,7 +54,10 @@ public class ProjectDocumentServiceTest {
     private IndexBulkUpdateService indexBulkUpdateService;
 
     @Mock
-    private CurrencyService currencyService;
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @InjectMocks
     private ProjectDocumentServiceImpl projectDocumentService;
@@ -132,17 +136,23 @@ public class ProjectDocumentServiceTest {
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of());
         when(projectService.findOne(1)).thenReturn(project);
         when(documentPublicationService.findOne(2)).thenReturn(document);
-        when(currencyService.findOne(1)).thenReturn(null);
         when(projectDocumentRepository.save(any(ProjectDocument.class))).thenReturn(savedDocument);
+        when(fundingPartFactory.buildNestedFundingPart(fundingPartDTO)).thenReturn(
+            new FundingPart());
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
 
         // when
         var result = projectDocumentService.createProjectDocument(dto);
 
         // then
         assertNotNull(result);
-        verify(currencyService).findOne(1);
-        verify(multilingualContentService, times(2)).getMultilingualContent(anyList());
+        verify(fundingPartFactory).buildNestedFundingPart(fundingPartDTO);
+        verify(multilingualContentService).getMultilingualContent(anyList());
         verify(projectDocumentRepository).save(any(ProjectDocument.class));
+        verify(fundingPartRepository).save(
+            argThat(part -> part.getProjectDocument().equals(savedDocument)));
+        assertEquals(1, savedDocument.getFundingParts().size());
     }
 
     @Test
