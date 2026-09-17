@@ -82,7 +82,7 @@ services:
     restart: always
 
   minio:
-    image: quay.io/minio/minio
+    image: docker.io/pgsty/silo:RELEASE.2026-09-03T13-18-01Z
     ports:
       - 9000:9000
       - 9090:9090

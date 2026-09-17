@@ -54,7 +54,7 @@ jobs:
         ports:
           - 9200:9200
       minio:
-        image: minio/minio
+        image: pgsty/silo:RELEASE.2026-09-03T13-18-01Z
         env:
           MINIO_ACCESS_KEY: minio-access-key
           MINIO_SECRET_KEY: minio-secret-key
