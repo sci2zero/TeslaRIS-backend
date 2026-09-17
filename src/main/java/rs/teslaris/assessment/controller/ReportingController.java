@@ -108,9 +108,10 @@ public class ReportingController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
-            .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
-            .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
+                StringUtil.contentDisposition(file.response().contentDisposition()))
+            .header(HttpHeaders.CONTENT_TYPE, file.response().contentType())
+            .header(HttpHeaders.CONTENT_LENGTH,
+                String.valueOf(Objects.requireNonNullElse(file.response().contentLength(), 0L)))
             .body(StreamingUtil.createStreamingBody(file));
     }
 }

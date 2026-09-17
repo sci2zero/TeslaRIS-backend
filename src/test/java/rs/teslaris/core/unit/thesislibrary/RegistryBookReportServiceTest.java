@@ -11,7 +11,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +32,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
 import rs.teslaris.thesislibrary.repository.RegistryBookReportRepository;
 import rs.teslaris.thesislibrary.service.impl.RegistryBookReportServiceImpl;
+import software.amazon.awssdk.core.ResponseInputStream;
 
 @SpringBootTest
 public class RegistryBookReportServiceTest {
@@ -119,7 +119,7 @@ public class RegistryBookReportServiceTest {
         when(registryBookReportRepository.findByReportFileName(fileName))
             .thenReturn(Optional.of(report));
 
-        var response = mock(GetObjectResponse.class);
+        var response = mock(ResponseInputStream.class);
         when(fileService.loadAsResource(fileName)).thenReturn(response);
 
         // When

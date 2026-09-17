@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +36,7 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import software.amazon.awssdk.core.ResponseInputStream;
 
 @SpringBootTest
 class DocumentBackupServiceTest {
@@ -158,7 +158,7 @@ class DocumentBackupServiceTest {
         when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
             .thenReturn(List.of(institutionId));
-        var resource = mock(GetObjectResponse.class);
+        var resource = mock(ResponseInputStream.class);
         when(fileService.loadAsResource(backupFileName)).thenReturn(resource);
 
         // When

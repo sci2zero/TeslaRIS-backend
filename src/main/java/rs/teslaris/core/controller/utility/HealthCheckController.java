@@ -42,7 +42,7 @@ public class HealthCheckController {
 
         status.put("Postgres", healthCheckService.checkPostgres());
         status.put("Elasticsearch", healthCheckService.checkElasticsearch());
-        status.put("MinIO", healthCheckService.checkMinio());
+        status.put("S3", healthCheckService.checkS3());
         status.put("Mail Server", healthCheckService.checkMail());
         status.put("MongoDB", healthCheckService.checkMongo());
 

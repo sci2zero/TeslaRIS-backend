@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.document;
 
-import io.minio.GetObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,11 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import okhttp3.Headers;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +22,9 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.functional.Pair;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -122,7 +122,7 @@ public class FileServiceFileSystemImpl implements FileService {
     }
 
     @Override
-    public GetObjectResponse loadAsResource(String filename) {
+    public ResponseInputStream<GetObjectResponse> loadAsResource(String filename) {
         var rootPath = Paths.get(rootLocation).toAbsolutePath().normalize();
         var filepath = rootPath.resolve(filename).normalize();
 
@@ -140,28 +140,15 @@ public class FileServiceFileSystemImpl implements FileService {
             var contentType = Files.probeContentType(filePath);
             var etag = calculateFileETag(filePath);
 
-            var headersMap = new HashMap<String, String>();
-            headersMap.put("Content-Type",
-                Objects.requireNonNullElse(contentType, "application/octet-stream"));
-            headersMap.put("Content-Length", String.valueOf(fileSize));
-            headersMap.put("ETag", etag);
-            headersMap.put("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+            var response = GetObjectResponse.builder()
+                .contentType(Objects.requireNonNullElse(contentType, "application/octet-stream"))
+                .contentLength(fileSize)
+                .eTag(etag)
+                .contentDisposition("attachment; filename=\"" + filename + "\"")
+                .build();
 
-            var headers = Headers.of(headersMap);
-            var inputStream = Files.newInputStream(filePath);
-
-            return new GetObjectResponse(headers, null, null, null, inputStream) {
-                @Override
-                public void close() {
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        // Log warning but don't throw
-                        System.err.println(
-                            "Warning: Failed to close input stream: " + e.getMessage());
-                    }
-                }
-            };
+            return new ResponseInputStream<>(response,
+                AbortableInputStream.create(Files.newInputStream(filePath)));
 
         } catch (IOException e) {
             throw new StorageException("Could not read file: " + filename + " - " + e.getMessage());

@@ -14,7 +14,6 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPageEventHelper;
 import com.itextpdf.text.pdf.PdfWriter;
-import io.minio.GetObjectResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -57,6 +56,8 @@ import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.repository.RegistryBookReportRepository;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -181,7 +182,8 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
     @Override
     @Transactional(readOnly = true)
-    public GetObjectResponse serveReportFile(String reportFileName, Integer userId)
+    public ResponseInputStream<GetObjectResponse> serveReportFile(String reportFileName,
+                                                                  Integer userId)
         throws IOException {
         var report = registryBookReportRepository.findByReportFileName(reportFileName)
             .orElseThrow(() -> new StorageException("No report with given filename."));

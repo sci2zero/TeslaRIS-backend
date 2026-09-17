@@ -1,6 +1,5 @@
 package rs.teslaris.assessment.service.impl;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +35,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.scheduling.DateUtil;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -180,8 +181,9 @@ public class ReportingServiceImpl implements ReportingService {
     }
 
     @Override
-    public GetObjectResponse serveReportFile(String reportName, Integer userId,
-                                             Integer commissionId) throws IOException {
+    public ResponseInputStream<GetObjectResponse> serveReportFile(String reportName, Integer userId,
+                                                                  Integer commissionId)
+        throws IOException {
         checkCommissionAccessRights(List.of(commissionId), userId);
         if (!commissionReportRepository.reportExists(commissionId, reportName)) {
             throw new NotFoundException("Report " + reportName + " does not exist.");
