@@ -9,7 +9,7 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-      minio:
+      silo:
         condition: service_started
       db:
         condition: service_started
@@ -25,10 +25,10 @@ services:
       - DB_PORT=5432
       - ES_HOST=elasticsearch
       - ES_PORT=9200
-      - MINIO_HOST=minio
-      - MINIO_BUCKET=teslaris-file-items
-      - MINIO_ACCESS_KEY=ROOTUSER
-      - MINIO_SECRET_KEY=CHANGEME123
+      - S3_URL=http://silo:9000
+      - S3_BUCKET=teslaris-file-items
+      - S3_ACCESS_KEY=ROOTUSER
+      - S3_SECRET_KEY=CHANGEME123
       - MONGO_HOST=mongodb://mongo:27017/
       - MONGO_DB=teslaris-db
     ports:
@@ -81,8 +81,8 @@ services:
       - teslaris-network
     restart: always
 
-  minio:
-    image: quay.io/minio/minio
+  silo:
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     ports:
       - 9000:9000
       - 9090:9090

@@ -53,13 +53,6 @@ jobs:
           xpack.security.enabled: false
         ports:
           - 9200:9200
-      minio:
-        image: minio/minio
-        env:
-          MINIO_ACCESS_KEY: minio-access-key
-          MINIO_SECRET_KEY: minio-secret-key
-        ports:
-          - 9000:9000
       mongo:
         image: mongo:7.0.2
         ports:
@@ -76,6 +69,19 @@ jobs:
           java-version: "${{matrix.java}}"
           distribution: "temurin"
           cache: maven
+
+      - name: Start S3 storage (silo)
+        # GitHub service containers cannot receive a command, and the silo image needs
+        # "server /data" to serve, so it is started explicitly here instead.
+        run: |
+          docker run -d --name silo -p 9000:9000 \
+            -e MINIO_ROOT_USER=ROOTUSER -e MINIO_ROOT_PASSWORD=CHANGEME123 \
+            pgsty/silo:RELEASE.2026-09-16T00-00-00Z server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && exit 0
+            sleep 1
+          done
+          echo "silo did not become healthy" && docker logs silo && exit 1
 
       - name: Install Elasticsearch plugin
         run: |
