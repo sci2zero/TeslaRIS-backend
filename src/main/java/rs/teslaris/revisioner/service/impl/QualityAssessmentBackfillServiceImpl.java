@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -25,6 +26,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
@@ -47,6 +49,8 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
     private final RevisionService revisionService;
 
     private final DataQualityService dataQualityService;
+
+    private final OrganisationUnitService organisationUnitService;
 
     private final SearchService<PersonIndex> personSearchService;
 
@@ -136,11 +140,12 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
                           Function<T, Pair<String, Integer>> entityResolver, String profileName,
                           boolean rewriteExistingAssessments) {
         var pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.ASC, "databaseId"));
+        var organisationUnitScopeIds = resolveOrganisationUnitScope(organisationUnitIds);
         Integer lastSeenId = null;
 
         while (true) {
             var query = buildQuery(personFields, organisationUnitFields, personIds,
-                organisationUnitIds, lastSeenId);
+                organisationUnitScopeIds, lastSeenId);
 
             var content = searchService.runQuery(query, pageable, indexClass, indexName)
                 .getContent();
@@ -169,6 +174,18 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
         }
     }
 
+    private List<Integer> resolveOrganisationUnitScope(List<Integer> organisationUnitIds) {
+        if (Objects.isNull(organisationUnitIds) || organisationUnitIds.isEmpty()) {
+            return List.of();
+        }
+
+        var scopeIds = new HashSet<Integer>();
+        organisationUnitIds.forEach(organisationUnitId -> scopeIds.addAll(
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId)));
+
+        return scopeIds.stream().toList();
+    }
+
     private Query buildQuery(List<String> personFields, List<String> organisationUnitFields,
                              List<Integer> personIds, List<Integer> organisationUnitIds,
                              Integer lastSeenId) {
@@ -178,7 +195,7 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
             personFields.forEach(field -> idFilters.add(termsQuery(field, personIds)));
         }
 
-        if (Objects.nonNull(organisationUnitIds) && !organisationUnitIds.isEmpty()) {
+        if (!organisationUnitIds.isEmpty()) {
             organisationUnitFields.forEach(
                 field -> idFilters.add(termsQuery(field, organisationUnitIds)));
         }
