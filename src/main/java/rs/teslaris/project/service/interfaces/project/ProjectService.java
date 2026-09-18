@@ -41,6 +41,10 @@ public interface ProjectService extends JPAService<Project> {
 
     ProjectDTO readProject(Integer projectId);
 
+    List<Integer> getContributorIds(Integer projectId);
+
+    List<Integer> getContributingOrganisationUnitIds(Integer projectId);
+
     Project createProject(ProjectDTO projectDTO);
 
     void updateProject(Integer projectId, ProjectDTO projectDTO);

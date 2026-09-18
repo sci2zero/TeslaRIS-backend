@@ -37,6 +37,8 @@ import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
+import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
@@ -56,6 +58,11 @@ import java.util.concurrent.CompletableFuture;
 public class ProjectServiceImpl extends JPAServiceImpl<Project> implements ProjectService {
 
     private final ProjectRepository projectRepository;
+
+    private final PersonProjectContributionRepository personProjectContributionRepository;
+
+    private final OrganisationUnitProjectContributionRepository
+        organisationUnitProjectContributionRepository;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -162,6 +169,19 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Transactional(readOnly = true)
     public ProjectDTO readProject(Integer projectId) {
         return ProjectConverter.toDTO(findOne(projectId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Integer> getContributorIds(Integer projectId) {
+        return personProjectContributionRepository.findPersonIdsByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Integer> getContributingOrganisationUnitIds(Integer projectId) {
+        return organisationUnitProjectContributionRepository
+            .findOrganisationUnitIdsByProjectId(projectId);
     }
 
     @Override
