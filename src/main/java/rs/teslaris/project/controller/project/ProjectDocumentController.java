@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.project.annotation.ProjectEditCheck;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 
@@ -31,6 +32,7 @@ public class ProjectDocumentController {
 
     @PostMapping("/add-document")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProjectDocumentDTO addProjectDocument(@RequestBody @Valid
@@ -43,6 +45,7 @@ public class ProjectDocumentController {
 
     @DeleteMapping("/remove-document/{projectDocumentId}")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectDocument(@PathVariable Integer projectDocumentId) {
         projectDocumentService.deleteProjectDocument(projectDocumentId);

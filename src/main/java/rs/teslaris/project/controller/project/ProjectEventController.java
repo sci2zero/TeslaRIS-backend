@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.project.annotation.ProjectEditCheck;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 
@@ -31,6 +32,7 @@ public class ProjectEventController {
 
     @PostMapping("/add-event")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProjectEventDTO addProjectEvent(@RequestBody @Valid
@@ -43,6 +45,7 @@ public class ProjectEventController {
 
     @DeleteMapping("/remove-event/{projectEventId}")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectEvent(@PathVariable Integer projectEventId) {
         projectEventService.deleteProjectEvent(projectEventId);
