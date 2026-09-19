@@ -174,7 +174,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/remove-person/{personContributionId}")
-    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
     @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectPerson(@PathVariable Integer projectId,
@@ -194,7 +194,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/remove-organisation/{organisationContributionId}")
-    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
     @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectOrganisation(
