@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.document.OrganisationUnitContribution;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.*;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -35,8 +37,11 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
+import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
@@ -46,6 +51,7 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -56,6 +62,11 @@ import java.util.concurrent.CompletableFuture;
 public class ProjectServiceImpl extends JPAServiceImpl<Project> implements ProjectService {
 
     private final ProjectRepository projectRepository;
+
+    private final PersonProjectContributionRepository personProjectContributionRepository;
+
+    private final OrganisationUnitProjectContributionRepository
+        organisationUnitProjectContributionRepository;
 
     private final MultilingualContentService multilingualContentService;
 
@@ -81,6 +92,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final ProjectsRelationService projectsRelationService;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final InvolvementRepository involvementRepository;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -165,6 +178,19 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Integer> getContributorIds(Integer projectId) {
+        return personProjectContributionRepository.findPersonIdsByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Integer> getContributingOrganisationUnitIds(Integer projectId) {
+        return organisationUnitProjectContributionRepository
+            .findOrganisationUnitIdsByProjectId(projectId);
+    }
+
+    @Override
     @Transactional
     public Project createProject(ProjectDTO projectDTO) {
         var newProject = new Project();
@@ -204,6 +230,55 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         var index = projectIndexRepository.findProjectIndexByDatabaseId(projectId);
         index.ifPresent(projectIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void unbindResearcherFromProject(Integer personId, Integer projectId) {
+        var project = findOne(projectId);
+
+        project.getPersons().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()) &&
+                contribution.getPerson().getId().equals(personId))
+            .forEach(this::migratePersonContributionToUnmanaged);
+
+        save(project);
+        refreshProjectIndex(project);
+    }
+
+    @Override
+    @Transactional
+    public void unbindInstitutionResearchersFromProject(Integer institutionId,
+                                                        Integer projectId) {
+        var project = findOne(projectId);
+        var allPossibleInstitutions =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+        project.getPersons().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+            .filter(contribution -> involvementRepository.findEmploymentsForPerson(
+                    contribution.getPerson().getId()).stream()
+                .anyMatch(employment -> InvolvementType.EMPLOYED_AT.equals(
+                    employment.getInvolvementType()) &&
+                    allPossibleInstitutions.contains(employment.getOrganisationUnit().getId())))
+            .forEach(this::migratePersonContributionToUnmanaged);
+
+        project.getOrganisations().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getOrganisationUnit()) &&
+                allPossibleInstitutions.contains(contribution.getOrganisationUnit().getId()))
+            .forEach(contribution -> {
+                contribution.setDisplayOrganisationUnit(multilingualContentService.deepCopy(
+                    contribution.getOrganisationUnit().getName()));
+                contribution.setOrganisationUnit(null);
+            });
+
+        save(project);
+        refreshProjectIndex(project);
+    }
+
+    private void migratePersonContributionToUnmanaged(PersonProjectContribution contribution) {
+        contribution.setPerson(null);
+        contribution.getInstitutions().clear();
     }
 
     @Override
@@ -455,11 +530,33 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 .map(Person::getId)
                 .toList());
 
-        index.setOrganisationUnitIds(project.getOrganisations().stream()
+        var institutionIds = new HashSet<Integer>();
+
+        project.getOrganisations().stream()
                 .map(OrganisationUnitContribution::getOrganisationUnit)
                 .filter(Objects::nonNull)
                 .map(OrganisationUnit::getId)
-                .toList());
+                .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
+                        organisationUnitId));
+
+        project.getPersons().stream()
+                .map(PersonContribution::getPerson)
+                .filter(Objects::nonNull)
+                .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
+                        .stream()
+                        .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
+                                employment.getInvolvementType()))
+                        .forEach(employment -> addWithSuperHierarchy(institutionIds,
+                                employment.getOrganisationUnit().getId())));
+
+        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
+    }
+
+    private void addWithSuperHierarchy(HashSet<Integer> institutionIds,
+                                       Integer organisationUnitId) {
+        institutionIds.add(organisationUnitId);
+        institutionIds.addAll(
+                organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {

@@ -12,6 +12,7 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -71,6 +72,9 @@ public class ProjectServiceTest {
 
     @Mock
     private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private InvolvementRepository involvementRepository;
 
     @InjectMocks
     private ProjectServiceImpl projectService;

@@ -10,15 +10,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.project.annotation.ProjectEditCheck;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -37,9 +43,16 @@ public class ProjectController {
 
     private final ProjectCreationService projectCreationService;
 
+    private final JwtUtil tokenUtil;
+
+    private final PersonService personService;
+
+    private final UserService userService;
+
     @GetMapping("/{projectId}/can-edit")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
-    public boolean canEditProject() {
+    @ProjectEditCheck
+    public boolean canEditProject(@PathVariable Integer projectId) {
         return true;
     }
 
@@ -95,6 +108,7 @@ public class ProjectController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck("CREATE")
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProjectDTO createProject(
@@ -107,6 +121,7 @@ public class ProjectController {
 
     @PutMapping("/{projectId}")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateProject(@PathVariable Integer projectId,
                               @RequestBody @Valid ProjectDTO projectDTO) {
@@ -114,15 +129,42 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}")
-    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteProjects(@PathVariable Integer projectId) {
         projectService.deleteProject(projectId);
     }
 
+    @PatchMapping("/{projectId}/unbind-researcher")
+    @PreAuthorize("hasAuthority('UNBIND_YOURSELF_FROM_PROJECT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ProjectEditCheck
+    public void unbindResearcherFromProject(@PathVariable Integer projectId,
+                                            @RequestHeader(value = "Authorization")
+                                            String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var personId = personService.getPersonIdForUserId(userId);
+
+        projectService.unbindResearcherFromProject(personId, projectId);
+    }
+
+    @PatchMapping("/{projectId}/unbind-institution-researchers")
+    @PreAuthorize("hasAuthority('UNBIND_EMPLOYEES_FROM_PROJECT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ProjectEditCheck
+    public void unbindInstitutionResearchersFromProject(@PathVariable Integer projectId,
+                                                        @RequestHeader(value = "Authorization")
+                                                        String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var institutionId = userService.getUserOrganisationUnitId(userId);
+
+        projectService.unbindInstitutionResearchersFromProject(institutionId, projectId);
+    }
+
 
     @PostMapping("/{projectId}/add-person")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public PersonProjectContributionDTO addProjectPerson(
@@ -132,7 +174,8 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/remove-person/{personContributionId}")
-    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectPerson(@PathVariable Integer projectId,
                                     @PathVariable Integer personContributionId) {
@@ -141,6 +184,7 @@ public class ProjectController {
 
     @PostMapping("/{projectId}/add-organisation")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public OrganisationUnitProjectContributionDTO addProjectOrganisation(
@@ -150,7 +194,8 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/remove-organisation/{organisationContributionId}")
-    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectOrganisation(
             @PathVariable Integer projectId,
@@ -160,6 +205,7 @@ public class ProjectController {
 
     @PostMapping("/{projectId}/add-relation")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProjectsRelationDTO addProjectRelation(
@@ -170,6 +216,7 @@ public class ProjectController {
 
     @DeleteMapping("/{projectId}/remove-relation/{relationId}")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectRelation(@PathVariable Integer projectId,
                                       @PathVariable Integer relationId) {
