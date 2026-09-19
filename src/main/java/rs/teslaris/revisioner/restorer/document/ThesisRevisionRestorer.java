@@ -31,6 +31,6 @@ public class ThesisRevisionRestorer implements RevisionRestorer<ThesisResponseDT
 
     @Override
     public Object readCurrentState(Integer entityId) {
-        return thesisService.readThesisById(entityId);
+        return thesisService.readThesisSnapshot(entityId);
     }
 }

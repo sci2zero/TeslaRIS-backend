@@ -249,6 +249,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         return ThesisConverter.toDTO(thesis);
     }
 
+    // Revision capture runs without a session, so it must bypass the substitution and approval
+    // gating of readThesisById or it would record a substituted thesis as an id-only stub.
+    @Override
+    @Transactional(readOnly = true)
+    public ThesisResponseDTO readThesisSnapshot(Integer thesisId) {
+        return ThesisConverter.toDTO(thesisJPAService.findOne(thesisId));
+    }
+
     @Override
     @Transactional
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
@@ -810,7 +818,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setOrganisationUnit(institution);
             thesis.setPublicationStatus(PublicationStatus.SUBMITTED);
         } else {
-            if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
+            if (!CollectionOperations.containsValues(
+                thesisDTO.getExternalOrganisationUnitName())) {
                 throw new NotFoundException(
                     "No organisation unit ID provided without external OU name reference.");
             }
