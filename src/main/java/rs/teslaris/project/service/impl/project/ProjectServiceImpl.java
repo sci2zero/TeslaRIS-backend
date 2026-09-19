@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.document.OrganisationUnitContribution;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.*;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -48,6 +50,7 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -88,6 +91,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final ProjectsRelationService projectsRelationService;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final InvolvementRepository involvementRepository;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -475,11 +480,33 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 .map(Person::getId)
                 .toList());
 
-        index.setOrganisationUnitIds(project.getOrganisations().stream()
+        var institutionIds = new HashSet<Integer>();
+
+        project.getOrganisations().stream()
                 .map(OrganisationUnitContribution::getOrganisationUnit)
                 .filter(Objects::nonNull)
                 .map(OrganisationUnit::getId)
-                .toList());
+                .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
+                        organisationUnitId));
+
+        project.getPersons().stream()
+                .map(PersonContribution::getPerson)
+                .filter(Objects::nonNull)
+                .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
+                        .stream()
+                        .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
+                                employment.getInvolvementType()))
+                        .forEach(employment -> addWithSuperHierarchy(institutionIds,
+                                employment.getOrganisationUnit().getId())));
+
+        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
+    }
+
+    private void addWithSuperHierarchy(HashSet<Integer> institutionIds,
+                                       Integer organisationUnitId) {
+        institutionIds.add(organisationUnitId);
+        institutionIds.addAll(
+                organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {
