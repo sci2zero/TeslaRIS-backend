@@ -51,6 +51,10 @@ public interface ProjectService extends JPAService<Project> {
 
     void deleteProject(Integer projectId);
 
+    void unbindResearcherFromProject(Integer personId, Integer projectId);
+
+    void unbindInstitutionResearchersFromProject(Integer institutionId, Integer projectId);
+
     PersonProjectContributionDTO addPerson(Integer projectId, PersonProjectContributionDTO personDto);
 
     void removePerson(Integer projectId, Integer personId);

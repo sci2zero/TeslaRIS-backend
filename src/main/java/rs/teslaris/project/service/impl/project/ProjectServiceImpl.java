@@ -37,6 +37,7 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
@@ -229,6 +230,55 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         var index = projectIndexRepository.findProjectIndexByDatabaseId(projectId);
         index.ifPresent(projectIndexRepository::delete);
+    }
+
+    @Override
+    @Transactional
+    public void unbindResearcherFromProject(Integer personId, Integer projectId) {
+        var project = findOne(projectId);
+
+        project.getPersons().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()) &&
+                contribution.getPerson().getId().equals(personId))
+            .forEach(this::migratePersonContributionToUnmanaged);
+
+        save(project);
+        refreshProjectIndex(project);
+    }
+
+    @Override
+    @Transactional
+    public void unbindInstitutionResearchersFromProject(Integer institutionId,
+                                                        Integer projectId) {
+        var project = findOne(projectId);
+        var allPossibleInstitutions =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+        project.getPersons().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+            .filter(contribution -> involvementRepository.findEmploymentsForPerson(
+                    contribution.getPerson().getId()).stream()
+                .anyMatch(employment -> InvolvementType.EMPLOYED_AT.equals(
+                    employment.getInvolvementType()) &&
+                    allPossibleInstitutions.contains(employment.getOrganisationUnit().getId())))
+            .forEach(this::migratePersonContributionToUnmanaged);
+
+        project.getOrganisations().stream()
+            .filter(contribution -> Objects.nonNull(contribution.getOrganisationUnit()) &&
+                allPossibleInstitutions.contains(contribution.getOrganisationUnit().getId()))
+            .forEach(contribution -> {
+                contribution.setDisplayOrganisationUnit(multilingualContentService.deepCopy(
+                    contribution.getOrganisationUnit().getName()));
+                contribution.setOrganisationUnit(null);
+            });
+
+        save(project);
+        refreshProjectIndex(project);
+    }
+
+    private void migratePersonContributionToUnmanaged(PersonProjectContribution contribution) {
+        contribution.setPerson(null);
+        contribution.getInstitutions().clear();
     }
 
     @Override
