@@ -1,18 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
-import io.minio.GetObjectArgs;
-import io.minio.GetObjectResponse;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
-import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,16 +22,24 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.functional.Pair;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
 @RequiredArgsConstructor
 @Traceable
 @Slf4j
-public class FileServiceMinioImpl implements FileService {
+public class FileServiceS3Impl implements FileService {
 
-    private final MinioClient minioClient;
+    private final S3Client s3Client;
 
-    @Value("${spring.minio.bucket}")
+    @Value("${spring.s3.bucket}")
     private String bucketName;
 
 
@@ -60,17 +61,17 @@ public class FileServiceMinioImpl implements FileService {
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
 
         try {
-            PutObjectArgs args = PutObjectArgs.builder()
+            var request = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .object(serverFilename + "." + extension)
-                .headers(Collections.singletonMap("Content-Disposition",
-                    "attachment; filename=\"" + file.getOriginalFilename() + "\""))
-                .stream(file.getInputStream(), file.getSize(), 0)
+                .key(serverFilename + "." + extension)
+                .contentDisposition(
+                    "attachment; filename=\"" + file.getOriginalFilename() + "\"")
                 .build();
-            minioClient.putObject(args);
+            s3Client.putObject(request,
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
         } catch (Exception e) {
             throw new StorageException(
-                "Error while storing file in Minio. Reason: " + e.getMessage());
+                "Error while storing file in S3. Reason: " + e.getMessage());
         }
 
         return serverFilename + "." + extension;
@@ -87,71 +88,77 @@ public class FileServiceMinioImpl implements FileService {
         var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
 
         try {
-            long size;
-            try {
-                if (resource instanceof FileSystemResource fileRes) {
-                    size = fileRes.getFile().length();
-                } else {
-                    size = resource.contentLength();
-                }
-            } catch (IOException e) {
-                size = -1;
-            }
-
-            PutObjectArgs.Builder builder = PutObjectArgs.builder()
+            var request = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .object(serverFilename + "." + extension)
-                .headers(Map.of(
-                    "Content-Disposition",
-                    "attachment; filename=\"" + originalFilename + "\""
-                ));
+                .key(serverFilename + "." + extension)
+                .contentDisposition("attachment; filename=\"" + originalFilename + "\"")
+                .build();
 
-            if (size >= 0) {
-                builder.stream(resource.getInputStream(), size, -1);
+            if (resource instanceof FileSystemResource fileRes) {
+                s3Client.putObject(request, RequestBody.fromFile(fileRes.getFile()));
             } else {
-                builder.stream(resource.getInputStream(), -1, 5 * 1024 * 1024);
-            }
+                long size;
+                try {
+                    size = resource.contentLength();
+                } catch (IOException e) {
+                    size = -1;
+                }
 
-            minioClient.putObject(builder.build());
+                if (size >= 0) {
+                    s3Client.putObject(request,
+                        RequestBody.fromInputStream(resource.getInputStream(), size));
+                } else {
+                    uploadUnknownLength(request, resource.getInputStream());
+                }
+            }
         } catch (Exception e) {
             throw new StorageException(
-                "Error while storing file in Minio. Reason: " + e.getMessage());
+                "Error while storing file in S3. Reason: " + e.getMessage());
         }
 
         return serverFilename + "." + extension;
     }
 
+    private void uploadUnknownLength(PutObjectRequest request, InputStream inputStream)
+        throws IOException {
+        var tempFile = Files.createTempFile("s3-upload-", ".tmp");
+        try (inputStream) {
+            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            s3Client.putObject(request, RequestBody.fromFile(tempFile));
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
     @Override
     public void delete(String serverFilename) {
         try {
-            RemoveObjectArgs args = RemoveObjectArgs.builder()
+            var request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
-                .object(serverFilename)
+                .key(serverFilename)
                 .build();
-            minioClient.removeObject(args);
+            s3Client.deleteObject(request);
         } catch (Exception e) {
             throw new StorageException(
-                "Error while deleting " + serverFilename + " from Minio. Reason: " +
+                "Error while deleting " + serverFilename + " from S3. Reason: " +
                     e.getMessage());
         }
     }
 
     @Override
-    public GetObjectResponse loadAsResource(String serverFilename) {
+    public ResponseInputStream<GetObjectResponse> loadAsResource(String serverFilename) {
         try {
-            StatObjectResponse stat = minioClient.statObject(
-                StatObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(serverFilename)
-                    .build()
-            );
-
-            var args = GetObjectArgs.builder()
+            s3Client.headObject(HeadObjectRequest.builder()
                 .bucket(bucketName)
-                .object(serverFilename)
+                .key(serverFilename)
+                .build());
+
+            var request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(serverFilename)
                 .build();
 
-            return Objects.requireNonNull(minioClient.getObject(args));
+            return Objects.requireNonNull(s3Client.getObject(request));
         } catch (Exception e) {
             throw new NotFoundException("Document " + serverFilename + " does not exist.");
         }
@@ -160,30 +167,28 @@ public class FileServiceMinioImpl implements FileService {
     @Override
     public Pair<String, InputStream> duplicateFile(String serverFilename) {
         try {
-            GetObjectArgs getArgs = GetObjectArgs.builder()
+            var getRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .object(serverFilename)
+                .key(serverFilename)
                 .build();
 
-            var file = minioClient.getObject(getArgs);
-
-            var baos = new ByteArrayOutputStream();
-            file.transferTo(baos);
-            byte[] data = baos.toByteArray();
-
-            InputStream uploadStream = new ByteArrayInputStream(data);
+            byte[] data;
+            try (var file = s3Client.getObject(getRequest)) {
+                var baos = new ByteArrayOutputStream();
+                file.transferTo(baos);
+                data = baos.toByteArray();
+            }
 
             var serverFilenameTokens = serverFilename.split("\\.");
             var extension = serverFilenameTokens[serverFilenameTokens.length - 1];
             var newServerFilename = UUID.randomUUID() + "." + extension;
 
-            PutObjectArgs putArgs = PutObjectArgs.builder()
+            var putRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .object(newServerFilename)
-                .stream(uploadStream, data.length, -1)
+                .key(newServerFilename)
                 .build();
 
-            minioClient.putObject(putArgs);
+            s3Client.putObject(putRequest, RequestBody.fromBytes(data));
 
             return new Pair<>(newServerFilename, new ByteArrayInputStream(data));
 

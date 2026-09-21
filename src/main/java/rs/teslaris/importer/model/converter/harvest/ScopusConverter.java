@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -20,6 +21,7 @@ import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
+@Slf4j
 public class ScopusConverter {
 
     public static Optional<DocumentImport> toCommonImportModel(ScopusImportUtility.Entry entry,
@@ -117,6 +119,10 @@ public class ScopusConverter {
                     ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
 
                 var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
+                if (Objects.isNull(abstractData)) {
+                    log.warn("Abstract data unavailable for {}, event information cannot be " +
+                        "resolved.", entry.identifier());
+                }
                 setConferenceInfo(abstractData, document);
                 break;
         }

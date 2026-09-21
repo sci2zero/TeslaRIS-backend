@@ -959,7 +959,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
@@ -990,7 +992,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
         when(thesisJPAService.findOne(substituteId)).thenReturn(substituteThesis);
@@ -1019,7 +1023,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         thesis.setSubstitutedBy(substitutionThesis);
@@ -1051,7 +1057,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
 
         thesis.setSubstitutedBy(substitutionThesis);
         substitutionThesis.setSubstituteFor(thesis);

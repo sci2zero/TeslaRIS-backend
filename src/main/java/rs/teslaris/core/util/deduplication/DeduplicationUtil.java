@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.importer.model.common.DocumentImport;
 
 @Component
+@Slf4j
 public class DeduplicationUtil {
 
     private static final String DJL_MODEL = "sentence-transformers/all-MiniLM-L6-v2";
@@ -73,6 +75,10 @@ public class DeduplicationUtil {
                     entry.getDoi(), entry.getScopusId(), entry.getOpenAlexId(),
                     entry.getWebOfScienceId(), entry.getInternalIdentifiers().stream().toList())
                 .getContent().isEmpty()) {
+            log.info("Duplicate {}: matching document already exists in the database " +
+                    "(doi={}, scopusId={}, openAlexId={}, wosId={})", entry.getIdentifier(),
+                entry.getDoi(), entry.getScopusId(), entry.getOpenAlexId(),
+                entry.getWebOfScienceId());
             return true;
         }
 
@@ -83,7 +89,14 @@ public class DeduplicationUtil {
 
         var oldEmbedding = Nd4j.create(existingRecord.getEmbedding());
         var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
-        return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
+        if (similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD) {
+            log.info("Duplicate {}: {} similarity with existing import {} exceeds threshold {}",
+                entry.getIdentifier(), String.format("%.4f", similarity),
+                existingRecord.getIdentifier(), DeduplicationUtil.MIN_SIMILARITY_THRESHOLD);
+            return true;
+        }
+
+        return false;
     }
 
     public static List<Double> toDoubleList(INDArray embedding) {

@@ -1,11 +1,12 @@
 package rs.teslaris.core.util.files;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 public class StreamingUtil {
 
@@ -43,7 +44,8 @@ public class StreamingUtil {
         return createStreamingBody(inputStream, BUFFER_SIZE, runnable);
     }
 
-    public static StreamingResponseBody createStreamingBodyFromS3Response(GetObjectResponse file) {
+    public static StreamingResponseBody createStreamingBodyFromS3Response(
+        ResponseInputStream<GetObjectResponse> file) {
         return outputStream -> {
             try (var inputStream = file) {
                 inputStream.transferTo(outputStream);

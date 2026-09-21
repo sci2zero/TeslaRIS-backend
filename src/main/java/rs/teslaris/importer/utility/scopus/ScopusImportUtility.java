@@ -1,5 +1,6 @@
 package rs.teslaris.importer.utility.scopus;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -204,7 +205,9 @@ public class ScopusImportUtility {
         @JsonProperty("prism:publicationName") String publicationName,
         @JsonProperty("prism:issn") String issn,
         @JsonProperty("prism:eIssn") String eIssn,
-        @JsonProperty("prism:isbn") List<Isbn> isbn,
+        @JsonProperty("prism:isbn")
+        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        List<Isbn> isbn,
         @JsonProperty("prism:pageRange") String pageRange,
         @JsonProperty("prism:coverDate") String coverDate,
         @JsonProperty("prism:coverDisplayDate") String coverDisplayDate,
@@ -231,6 +234,10 @@ public class ScopusImportUtility {
         @JsonProperty("@_fa") boolean fa,
         @JsonProperty("$") String value
     ) {
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+        public static Isbn fromString(String value) {
+            return new Isbn(false, value);
+        }
     }
 
     public record Affiliation(
@@ -278,7 +285,9 @@ public class ScopusImportUtility {
         @JsonProperty("coredata") CoreData coreData,
         @JsonProperty("item") ItemRecord item,
         @JsonProperty("authors") Authors authors,
-        @JsonProperty("affiliation") List<FullAffiliation> affiliations
+        @JsonProperty("affiliation")
+        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        List<FullAffiliation> affiliations
     ) {
     }
 
@@ -328,7 +337,9 @@ public class ScopusImportUtility {
         @JsonProperty("prism:publicationName") String publicationName,
         @JsonProperty("prism:issn") String issn,
         @JsonProperty("prism:eIssn") String eIssn,
-        @JsonProperty("prism:isbn") List<Isbn> isbn,
+        @JsonProperty("prism:isbn")
+        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        List<Isbn> isbn,
         @JsonProperty("prism:pageRange") String pageRange,
         @JsonProperty("prism:coverDate") String coverDate,
         @JsonProperty("prism:coverDisplayDate") String coverDisplayDate,

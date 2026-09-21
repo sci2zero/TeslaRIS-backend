@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.json.JsonData;
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +55,8 @@ import rs.teslaris.core.util.files.BackupZipBuilder;
 import rs.teslaris.core.util.scheduling.DateUtil;
 import rs.teslaris.core.util.search.SearchAfterResult;
 import rs.teslaris.core.util.search.StringUtil;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 
 @Service
@@ -337,7 +338,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
     }
 
     @Override
-    public GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
+    public ResponseInputStream<GetObjectResponse> serveBackupFile(String backupFileName,
+                                                                  Integer userId)
         throws IOException {
         var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
             .orElseThrow(() -> new StorageException("No backup with given filename."));

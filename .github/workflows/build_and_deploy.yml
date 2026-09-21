@@ -60,6 +60,11 @@ jobs:
           MINIO_SECRET_KEY: minio-secret-key
         ports:
           - 9000:9000
+        options: >-
+          --health-cmd "mc ready local"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
       mongo:
         image: mongo:7.0.2
         ports:

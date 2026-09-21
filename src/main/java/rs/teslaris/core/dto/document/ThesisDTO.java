@@ -22,7 +22,7 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer organisationUnitId;
 
-    private List<MultilingualContentDTO> externalOrganisationUnitName;
+    private List<MultilingualContentDTO> externalOrganisationUnitName = new ArrayList<>();
 
     @NotNull(message = "You have to provide thesis type.")
     private ThesisType thesisType;

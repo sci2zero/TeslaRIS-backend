@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import io.minio.GetObjectResponse;
 import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -67,6 +66,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.session.SessionUtil;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -726,8 +727,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         documentFileIndexRepository.save(documentIndex);
     }
 
-    public MultipartFile getMultipartFileFromObjectResponse(GetObjectResponse file,
-                                                            DocumentFile documentFile)
+    public MultipartFile getMultipartFileFromObjectResponse(
+        ResponseInputStream<GetObjectResponse> file,
+        DocumentFile documentFile)
         throws IOException {
         return new InMemoryMultipartFile(
             documentFile.getFilename(),                   // original filename

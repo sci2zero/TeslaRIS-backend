@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -124,9 +125,10 @@ public class ThesisLibraryBackupController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
-            .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
-            .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
+                StringUtil.contentDisposition(file.response().contentDisposition()))
+            .header(HttpHeaders.CONTENT_TYPE, file.response().contentType())
+            .header(HttpHeaders.CONTENT_LENGTH,
+                String.valueOf(Objects.requireNonNullElse(file.response().contentLength(), 0L)))
             .body(StreamingUtil.createStreamingBody(file, deleteCallback));
     }
 

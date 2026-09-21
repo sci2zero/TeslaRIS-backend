@@ -249,6 +249,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         return ThesisConverter.toDTO(thesis);
     }
 
+    // Revision capture runs without a session, so it must bypass the substitution and approval
+    // gating of readThesisById or it would record a substituted thesis as an id-only stub.
+    @Override
+    @Transactional(readOnly = true)
+    public ThesisResponseDTO readThesisSnapshot(Integer thesisId) {
+        return ThesisConverter.toDTO(thesisJPAService.findOne(thesisId));
+    }
+
     @Override
     @Transactional
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
@@ -544,11 +552,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesisJPAService.save(staleThesis);
         thesisJPAService.save(substituteThesis);
 
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(staleThesisId)
-            .ifPresent(index -> {
-                index.setIsSubstituted(true);
-                documentPublicationIndexRepository.save(index);
-            });
+        reindexSubstitutionFields(staleThesis);
+        reindexSubstitutionFields(substituteThesis);
     }
 
     @Override
@@ -557,17 +562,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesis = thesisJPAService.findOne(thesisId);
         var substitutionThesis = thesis.getSubstitutedBy();
 
+        if (Objects.isNull(substitutionThesis)) {
+            throw new IllegalArgumentException(
+                "Thesis with ID " + thesisId + " does not have a substitute.");
+        }
+
         thesis.setSubstitutedBy(null);
         substitutionThesis.setSubstituteFor(null);
 
         thesisJPAService.save(thesis);
         thesisJPAService.save(substitutionThesis);
 
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
-            .ifPresent(index -> {
-                index.setIsSubstituted(false);
-                documentPublicationIndexRepository.save(index);
-            });
+        reindexSubstitutionFields(thesis);
+        reindexSubstitutionFields(substitutionThesis);
     }
 
     @Override
@@ -811,7 +818,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setOrganisationUnit(institution);
             thesis.setPublicationStatus(PublicationStatus.SUBMITTED);
         } else {
-            if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
+            if (!CollectionOperations.containsValues(
+                thesisDTO.getExternalOrganisationUnitName())) {
                 throw new NotFoundException(
                     "No organisation unit ID provided without external OU name reference.");
             }
@@ -1012,9 +1020,28 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
+
+        setSubstitutionFields(thesis, index);
+
         documentPublicationIndexRepository.save(index);
 
         return index;
+    }
+
+    private void setSubstitutionFields(Thesis thesis, DocumentPublicationIndex index) {
+        index.setIsSubstituted(Objects.nonNull(thesis.getSubstitutedBy()));
+        index.setSubstitutedBy(
+            Objects.nonNull(thesis.getSubstitutedBy()) ? thesis.getSubstitutedBy().getId() : null);
+        index.setSubstituteFor(
+            Objects.nonNull(thesis.getSubstituteFor()) ? thesis.getSubstituteFor().getId() : null);
+    }
+
+    private void reindexSubstitutionFields(Thesis thesis) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())
+            .ifPresent(index -> {
+                setSubstitutionFields(thesis, index);
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     private void checkIfAvailableForEditing(Thesis thesis) {

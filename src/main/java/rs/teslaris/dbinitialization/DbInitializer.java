@@ -259,6 +259,7 @@ public class DbInitializer implements ApplicationRunner {
         var restoreEntityRevision = new Privilege("RESTORE_ENTITY_REVISION");
         var backfillEntityRevision = new Privilege("BACKFILL_ENTITY_REVISION");
         var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
+        var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -308,7 +309,8 @@ public class DbInitializer implements ApplicationRunner {
                 editPublicationSeriesIdentifiers, readFundingApplications,
                 editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
-                restoreEntityRevision, backfillEntityRevision, assessDataQuality
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality,
+                saveModuleAccessConfiguration
             ));
 
         // AUTHORITIES
@@ -356,7 +358,8 @@ public class DbInitializer implements ApplicationRunner {
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
                 editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
-                restoreEntityRevision, backfillEntityRevision, assessDataQuality
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality,
+                saveModuleAccessConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

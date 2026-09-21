@@ -1,6 +1,5 @@
 package rs.teslaris.thesislibrary.service.impl;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -47,6 +46,8 @@ import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -298,7 +299,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
     }
 
     @Override
-    public GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
+    public ResponseInputStream<GetObjectResponse> serveBackupFile(String backupFileName,
+                                                                  Integer userId)
         throws IOException {
         var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
             .orElseThrow(() -> new StorageException("No backup with given filename."));

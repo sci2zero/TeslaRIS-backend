@@ -386,23 +386,11 @@ public class DataQualityAssessmentIndexer {
                                          QualityDimension dimension, double score, int issueCount,
                                          int passedCount, double fairScore) {
         switch (dimension) {
-            case COMPLETENESS -> {
-                index.setCompletenessScore(score);
-                index.setCompletenessIssueCount(issueCount);
-                index.setCompletenessPassedCount(passedCount);
-                index.setCompletenessFairScore(fairScore);
-            }
-            case VALIDITY -> {
-                index.setValidityScore(score);
-                index.setValidityIssueCount(issueCount);
-                index.setValidityPassedCount(passedCount);
-                index.setValidityFairScore(fairScore);
-            }
-            case UNIQUENESS -> {
-                index.setUniquenessScore(score);
-                index.setUniquenessIssueCount(issueCount);
-                index.setUniquenessPassedCount(passedCount);
-                index.setUniquenessFairScore(fairScore);
+            case ACCURACY -> {
+                index.setAccuracyScore(score);
+                index.setAccuracyIssueCount(issueCount);
+                index.setAccuracyPassedCount(passedCount);
+                index.setAccuracyFairScore(fairScore);
             }
             case CONSISTENCY -> {
                 index.setConsistencyScore(score);
@@ -410,29 +398,35 @@ public class DataQualityAssessmentIndexer {
                 index.setConsistencyPassedCount(passedCount);
                 index.setConsistencyFairScore(fairScore);
             }
-            case TIMELINESS -> {
-                index.setTimelinessScore(score);
-                index.setTimelinessIssueCount(issueCount);
-                index.setTimelinessPassedCount(passedCount);
-                index.setTimelinessFairScore(fairScore);
+            case LINEAGE -> {
+                index.setLineageScore(score);
+                index.setLineageIssueCount(issueCount);
+                index.setLineagePassedCount(passedCount);
+                index.setLineageFairScore(fairScore);
             }
-            case ACCURACY -> {
-                index.setAccuracyScore(score);
-                index.setAccuracyIssueCount(issueCount);
-                index.setAccuracyPassedCount(passedCount);
-                index.setAccuracyFairScore(fairScore);
+            case STRUCTURAL_CONSISTENCY -> {
+                index.setStructuralConsistencyScore(score);
+                index.setStructuralConsistencyIssueCount(issueCount);
+                index.setStructuralConsistencyPassedCount(passedCount);
+                index.setStructuralConsistencyFairScore(fairScore);
             }
-            case CONFORMITY -> {
-                index.setConformityScore(score);
-                index.setConformityIssueCount(issueCount);
-                index.setConformityPassedCount(passedCount);
-                index.setConformityFairScore(fairScore);
+            case QUALITATIVE -> {
+                index.setQualitativeScore(score);
+                index.setQualitativeIssueCount(issueCount);
+                index.setQualitativePassedCount(passedCount);
+                index.setQualitativeFairScore(fairScore);
             }
-            case INTEGRITY -> {
-                index.setIntegrityScore(score);
-                index.setIntegrityIssueCount(issueCount);
-                index.setIntegrityPassedCount(passedCount);
-                index.setIntegrityFairScore(fairScore);
+            case SEMANTIC -> {
+                index.setSemanticScore(score);
+                index.setSemanticIssueCount(issueCount);
+                index.setSemanticPassedCount(passedCount);
+                index.setSemanticFairScore(fairScore);
+            }
+            case CURRENCY -> {
+                index.setCurrencyScore(score);
+                index.setCurrencyIssueCount(issueCount);
+                index.setCurrencyPassedCount(passedCount);
+                index.setCurrencyFairScore(fairScore);
             }
         }
     }

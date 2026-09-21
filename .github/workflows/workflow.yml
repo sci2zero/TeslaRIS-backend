@@ -26,8 +26,6 @@ jobs:
         run: mvn -B package -DskipTests --file pom.xml
         env:
           DB_PASSWORD: postgres
-          MINIO_ACCESS_KEY: minio-access-key
-          MINIO_SECRET_KEY: minio-secret-key
   test:
     runs-on: ubuntu-latest
 
@@ -57,6 +55,11 @@ jobs:
           MINIO_SECRET_KEY: minio-secret-key
         ports:
           - 9000:9000
+        options: >-
+          --health-cmd "mc ready local"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
       mongo:
         image: mongo:7.0.2
         ports:

@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl;
 
-import io.minio.MinioClient;
 import jakarta.persistence.EntityManager;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.HealthCheckService;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +22,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
 
     private final MongoTemplate mongoTemplate;
 
-    private final MinioClient minioClient;
+    private final S3Client s3Client;
 
     private final JavaMailSenderImpl javaMailSender;
 
@@ -54,9 +54,9 @@ public class HealthCheckServiceImpl implements HealthCheckService {
         }
     }
 
-    public Map<String, String> checkMinio() {
+    public Map<String, String> checkS3() {
         try {
-            minioClient.listBuckets();
+            s3Client.listBuckets();
             return Map.of("status", "UP");
         } catch (Exception e) {
             return Map.of("status", "DOWN", "error", e.getMessage());

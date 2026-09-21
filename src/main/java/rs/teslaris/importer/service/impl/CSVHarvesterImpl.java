@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -23,10 +24,12 @@ import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestExceptio
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.importer.model.converter.harvest.CSVConverter;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CSVHarvesterImpl implements CSVHarvester {
 
     private static final List<String> TARGET_COLUMNS = List.of(
@@ -74,6 +77,8 @@ public class CSVHarvesterImpl implements CSVHarvester {
 
                             if (DeduplicationUtil.isDuplicate(existingImport, embedding,
                                 documentImport)) {
+                                log.info("Skipping duplicate CSV record {}",
+                                    CommonHarvestUtility.describe(documentImport));
                                 return;
                             }
 
@@ -84,6 +89,8 @@ public class CSVHarvesterImpl implements CSVHarvester {
 
                             documentImport.getImportUsersId().add(userId);
                             mongoTemplate.save(documentImport, "documentImports");
+                            log.info("Imported new CSV record {}",
+                                CommonHarvestUtility.describe(documentImport));
                             newEntriesCount.merge(userId, 1, Integer::sum);
                         });
                 });

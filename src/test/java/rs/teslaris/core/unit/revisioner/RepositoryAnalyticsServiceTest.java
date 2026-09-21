@@ -1384,8 +1384,8 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(24190.0, accuracy.get(3));
 
             // A dimension nothing was assessed against reports no score.
-            var integrity = rowStartingWith(rows, "repositoryAnalytics.dimension.INTEGRITY");
-            assertEquals("-", integrity.get(1));
+            var lineage = rowStartingWith(rows, "repositoryAnalytics.dimension.LINEAGE");
+            assertEquals("-", lineage.get(1));
         }
     }
 
@@ -1452,16 +1452,16 @@ public class RepositoryAnalyticsServiceTest {
 
         try (var ignored = mockConfigurationLoader()) {
             // when
-            var integrity = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null)
+            var lineage = repositoryAnalyticsService.getQualityByDimension(PROFILE, null, null)
                 .stream()
-                .filter(row -> row.dimension() == QualityDimension.INTEGRITY)
+                .filter(row -> row.dimension() == QualityDimension.LINEAGE)
                 .findFirst()
                 .orElseThrow();
 
             // then
-            assertNull(integrity.averageScore());
-            assertEquals(0, integrity.openIssues());
-            assertEquals(0, integrity.affectedRecords());
+            assertNull(lineage.averageScore());
+            assertEquals(0, lineage.openIssues());
+            assertEquals(0, lineage.affectedRecords());
         }
     }
 

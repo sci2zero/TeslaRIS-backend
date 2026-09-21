@@ -1,6 +1,5 @@
 package rs.teslaris.core.controller.document;
 
-import io.minio.GetObjectResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -58,6 +57,8 @@ import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
 import rs.teslaris.core.util.signposting.LinksetFormat;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @RestController
 @RequestMapping("/api/file")
@@ -203,7 +204,7 @@ public class FileController {
 
     private ResponseEntity<StreamingResponseBody> serveFile(String filename,
                                                             DocumentFile documentFile,
-                                                            GetObjectResponse file,
+                                                            ResponseInputStream<GetObjectResponse> file,
                                                             boolean inline) {
         recordDownloadIfApplicable(filename, documentFile.getResourceType());
 
@@ -266,7 +267,7 @@ public class FileController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
+                StringUtil.contentDisposition(file.response().contentDisposition()))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
@@ -281,7 +282,7 @@ public class FileController {
 
             var resource = new InputStreamResource(file);
 
-            var contentType = file.headers().get("Content-Type");
+            var contentType = file.response().contentType();
             if (Objects.isNull(contentType)) {
                 contentType = Files.probeContentType(Path.of(filename));
             }
@@ -291,10 +292,9 @@ public class FileController {
 
             return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .contentLength(Long.parseLong(
-                    Objects.requireNonNullElse(file.headers().get("Content-Length"), "0")))
+                .contentLength(Objects.requireNonNullElse(file.response().contentLength(), 0L))
                 .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
-                .header(HttpHeaders.ETAG, file.headers().get("ETag"))
+                .header(HttpHeaders.ETAG, file.response().eTag())
                 .body(resource);
 
         } catch (IOException e) {
@@ -350,7 +350,7 @@ public class FileController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
+                StringUtil.contentDisposition(file.response().contentDisposition()))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
@@ -393,10 +393,11 @@ public class FileController {
         }
     }
 
-    private HttpHeaders getFileHeaders(GetObjectResponse file, Boolean inline, byte[] fileBytes) {
+    private HttpHeaders getFileHeaders(ResponseInputStream<GetObjectResponse> file, Boolean inline,
+                                       byte[] fileBytes) {
         HttpHeaders headers = new HttpHeaders();
 
-        var contentDisposition = file.headers().get("Content-Disposition");
+        var contentDisposition = file.response().contentDisposition();
         if (Objects.nonNull(contentDisposition) && inline) {
             contentDisposition = contentDisposition.replace("attachment", "inline");
             var tika = new Tika();
@@ -410,12 +411,13 @@ public class FileController {
                 headers.set(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
             }
         } else {
-            headers.set(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"));
+            headers.set(HttpHeaders.CONTENT_TYPE, file.response().contentType());
         }
 
         headers.set(HttpHeaders.CONTENT_DISPOSITION,
             StringUtil.contentDisposition(contentDisposition));
-        headers.set(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"));
+        headers.set(HttpHeaders.CONTENT_LENGTH,
+            String.valueOf(Objects.requireNonNullElse(file.response().contentLength(), 0L)));
         return headers;
     }
 

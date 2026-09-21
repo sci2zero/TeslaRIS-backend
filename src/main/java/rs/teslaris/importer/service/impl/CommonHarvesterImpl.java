@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -43,11 +44,13 @@ import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CommonHarvesterImpl implements CommonHarvester {
 
     private final ScopusHarvester scopusHarvester;
@@ -344,10 +347,16 @@ public class CommonHarvesterImpl implements CommonHarvester {
         if (Objects.nonNull(existingImport)) {
             if (DeduplicationUtil.isDuplicate(existingImport, embedding, mergedMetadata) &&
                 existingImport.getLoaded()) {
+                log.info("Skipping manual import {}, duplicate of already loaded import {}",
+                    CommonHarvestUtility.describe(mergedMetadata),
+                    existingImport.getIdentifier());
                 return null;
             } else {
                 DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
                 existingImport.setLoaded(false);
+                log.info("Enriched existing import {} with manual import {}",
+                    existingImport.getIdentifier(),
+                    CommonHarvestUtility.describe(mergedMetadata));
             }
 
             existingImport.setSource("ENRICHMENT");
