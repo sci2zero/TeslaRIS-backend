@@ -6,10 +6,13 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
@@ -19,18 +22,23 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 @Service
 @RequiredArgsConstructor
 public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonProjectContribution>
     implements
     PersonProjectContributionService {
+
+    private final FundingPartFactory fundingPartFactory;
+
+    private final FundingPartRepository fundingPartRepository;
 
     private final PersonProjectContributionRepository personProjectContributionRepository;
 
@@ -54,7 +62,9 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
                                                         Project parent) {
         var contribution = new PersonProjectContribution();
 
-        contribution.setPerson(personService.findOne(dto.getPersonId()));
+        // Supports external affiliations (taken from core)
+        var contributor = Objects.nonNull(dto.getPersonId()) ? personService.findOne(dto.getPersonId()) : null;
+        contribution.setPerson(contributor);
         contribution.setOrderNumber(dto.getOrderNumber());
         contribution.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -68,7 +78,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
             contribution.setInstitutions(institutions);
         }
 
-        contribution.setAffiliationStatement(buildAffiliationStatement(dto));
+        contribution.setAffiliationStatement(buildAffiliationStatement(dto, contributor));
 
         contribution.setContributionType(dto.getContributionType());
         contribution.setInvestigationRole(dto.getInvestigationRole());
@@ -79,7 +89,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
             contribution.getFundingParts()
-                .add(buildContributionFundingPart(partDto, contribution)));
+                .add(fundingPartRepository.save(
+                    buildContributionFundingPart(partDto, contribution))));
 
         contribution.setProject(parent);
         contribution.setFavorite(dto.getFavorite());
@@ -95,26 +106,28 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         contribution.setDateFrom(dto.getDateFrom());
         contribution.setDateTo(dto.getDateTo());
         contribution.setUris(dto.getUris());
-        contribution.setIsMainContributor(dto.getIsMainContributor());
-        contribution.setIsInvitedContributor(dto.getIsInvitedContributor());
+        contribution.setIsMainContributor(
+            Objects.requireNonNullElse(dto.getIsMainContributor(), false));
+        contribution.setIsInvitedContributor(
+            Objects.requireNonNullElse(dto.getIsInvitedContributor(), false));
 
         contribution.setDisplayProject(
             multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
 
-        return contribution;
+        // Returns saved contribution entity with id != null (if this part is omitted the Set will treat
+        // each entity with null value id as the same one, thus overwriting/ignoring it each time)
+        return personProjectContributionRepository.save(contribution);
     }
 
-    private AffiliationStatement buildAffiliationStatement(PersonProjectContributionDTO dto) {
+    private AffiliationStatement buildAffiliationStatement(PersonProjectContributionDTO dto,
+                                                           Person contributor) {
         var affiliation = new AffiliationStatement();
 
         affiliation.setDisplayAffiliationStatement(
             multilingualContentService.getMultilingualContent(
                 dto.getDisplayAffiliationStatement()));
 
-        if (Objects.nonNull(dto.getPersonName())) {
-            var personName = new PersonName();
-            affiliation.setDisplayPersonName(personName);
-        }
+        affiliation.setDisplayPersonName(buildDisplayPersonName(dto, contributor));
         if (Objects.nonNull(dto.getPostalAddress())) {
             var address = new PostalAddress();
             affiliation.setPostalAddress(address);
@@ -127,21 +140,33 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         return affiliation;
     }
 
+    private PersonName buildDisplayPersonName(PersonProjectContributionDTO dto,
+                                              Person contributor) {
+        var nameDto = dto.getPersonName();
+
+        if (Objects.nonNull(nameDto) &&
+            (StringUtils.hasText(nameDto.getFirstname()) ||
+                StringUtils.hasText(nameDto.getLastname()))) {
+            return new PersonName(nameDto.getFirstname(), nameDto.getOtherName(),
+                nameDto.getLastname(), nameDto.getDateFrom(), nameDto.getDateTo(),
+                Objects.requireNonNullElse(nameDto.getPersonNameType(),
+                    PersonNameType.CITATION_NAME));
+        }
+
+        if (Objects.nonNull(contributor) && Objects.nonNull(contributor.getName())) {
+            var name = contributor.getName();
+            return new PersonName(name.getFirstname(), name.getOtherName(), name.getLastname(),
+                name.getDateFrom(), name.getDateTo(),
+                Objects.requireNonNullElse(name.getNameType(), PersonNameType.CITATION_NAME));
+        }
+
+        return new PersonName();
+    }
+
     private FundingPart buildContributionFundingPart(FundingPartDTO partDto,
                                                      PersonProjectContribution contribution) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(partDto.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(partDto.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDto.getAmount().getAmount());
-
-        if (Objects.nonNull(partDto.getFundingId())) {
-            part.setPersonContribution(contribution);
-        }
+        var part = fundingPartFactory.buildFundingPart(partDto);
+        part.setPersonContribution(contribution);
 
         return part;
     }

@@ -253,6 +253,9 @@ public class DbInitializer implements ApplicationRunner {
         var editFunding = new Privilege("EDIT_FUNDING");
         var readProjects = new Privilege("READ_PROJECTS");
         var editProjects = new Privilege("EDIT_PROJECTS");
+        var deleteProjects = new Privilege("DELETE_PROJECTS");
+        var unbindYourselfFromProject = new Privilege("UNBIND_YOURSELF_FROM_PROJECT");
+        var unbindEmployeesFromProject = new Privilege("UNBIND_EMPLOYEES_FROM_PROJECT");
         var restoreEntityRevision = new Privilege("RESTORE_ENTITY_REVISION");
         var backfillEntityRevision = new Privilege("BACKFILL_ENTITY_REVISION");
         var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
@@ -304,7 +307,8 @@ public class DbInitializer implements ApplicationRunner {
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding, readProjects, editProjects,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+                unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
                 saveModuleAccessConfiguration
             ));
@@ -353,7 +357,7 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding, readProjects, editProjects,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
                 saveModuleAccessConfiguration
             )));
@@ -365,7 +369,8 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
                 getTopCollaborators, changePublicationType, createExhibitions,
-                setPersonFieldVisibility, enrichDocumentMetadata)));
+                setPersonFieldVisibility, enrichDocumentMetadata, readProjects, editProjects,
+                unbindYourselfFromProject)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -383,7 +388,7 @@ public class DbInitializer implements ApplicationRunner {
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
                     saveChartDisplayConfiguration, getTopCollaborators, changePublicationType,
                     createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata,
-                    assessDataQuality)));
+                    assessDataQuality, readProjects, editProjects, unbindEmployeesFromProject)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
