@@ -25,12 +25,12 @@ public class FundingPartConverter {
         if (Objects.nonNull(fundingPart.getProjectDocument())) {
             dto.setProjectDocumentId(fundingPart.getProjectDocument().getId());
         }
-        if (Objects.nonNull(fundingPart.getPersonProjectContribution())) {
-            dto.setPersonProjectContributionId(fundingPart.getPersonProjectContribution().getId());
+        if (Objects.nonNull(fundingPart.getPersonContribution())) {
+            dto.setPersonProjectContributionId(fundingPart.getPersonContribution().getId());
         }
-        if (Objects.nonNull(fundingPart.getOrganisationUnitProjectContribution())) {
+        if (Objects.nonNull(fundingPart.getOrganisationUnitContribution())) {
             dto.setOrganisationUnitProjectContributionId(
-                fundingPart.getOrganisationUnitProjectContribution().getId());
+                fundingPart.getOrganisationUnitContribution().getId());
         }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
@@ -40,6 +40,8 @@ public class FundingPartConverter {
         if (Objects.nonNull(fundingPart.getAmount())) {
             dto.getAmount().setAmount(fundingPart.getAmount().getAmount());
             dto.getAmount().setCurrencyId(fundingPart.getAmount().getCurrency().getId());
+            dto.getAmount().setCurrencyCode(fundingPart.getAmount().getCurrency().getCode());
+            dto.getAmount().setCurrencySymbol(fundingPart.getAmount().getCurrency().getSymbol());
         }
 
         return dto;

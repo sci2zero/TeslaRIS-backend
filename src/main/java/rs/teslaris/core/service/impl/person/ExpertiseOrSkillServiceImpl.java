@@ -1,6 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.converter.person.ExpertiseOrSkillConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillDTO;
@@ -18,6 +18,7 @@ import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -36,6 +37,8 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
     private final MultilingualContentService multilingualContentService;
 
     private final DocumentFileService documentFileService;
+
+    private final ResearchAreaService researchAreaService;
 
 
     @Override
@@ -56,11 +59,7 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         person.getExpertisesAndSkills().add(newExpertiseOrSkill);
         personService.save(person);
 
-        return new ExpertiseOrSkillResponseDTO(
-            savedExpertiseOrSkill.getId(),
-            MultilingualContentConverter.getMultilingualContentDTO(savedExpertiseOrSkill.getName()),
-            MultilingualContentConverter.getMultilingualContentDTO(
-                savedExpertiseOrSkill.getDescription()), new ArrayList<>());
+        return ExpertiseOrSkillConverter.toDTO(savedExpertiseOrSkill);
     }
 
     @Override
@@ -69,14 +68,9 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         var expertiseOrSkill = findOne(expertiseOrSkillId);
         setCommonFields(expertiseOrSkill, dto);
 
-        expertiseOrSkillRepository.save(expertiseOrSkill);
+        var savedExpertiseOrSkill = expertiseOrSkillRepository.save(expertiseOrSkill);
 
-        return new ExpertiseOrSkillResponseDTO(
-            expertiseOrSkill.getId(),
-            MultilingualContentConverter.getMultilingualContentDTO(expertiseOrSkill.getName()),
-            MultilingualContentConverter.getMultilingualContentDTO(
-                expertiseOrSkill.getDescription()), expertiseOrSkill.getProofs().stream().map(
-            DocumentFileConverter::toDTO).collect(Collectors.toList()));
+        return ExpertiseOrSkillConverter.toDTO(savedExpertiseOrSkill);
     }
 
     @Override
@@ -122,5 +116,12 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         expertiseOrSkill.setName(multilingualContentService.getMultilingualContent(dto.getName()));
         expertiseOrSkill.setDescription(
             multilingualContentService.getMultilingualContent(dto.getDescription()));
+        expertiseOrSkill.setKeywords(
+            multilingualContentService.getMultilingualContent(dto.getKeywords()));
+        expertiseOrSkill.setFavorite(Objects.requireNonNullElse(dto.getFavorite(), false));
+
+        var researchAreas =
+            researchAreaService.getResearchAreasByIds(dto.getResearchAreasId().stream().toList());
+        expertiseOrSkill.setResearchAreas(new HashSet<>(researchAreas));
     }
 }

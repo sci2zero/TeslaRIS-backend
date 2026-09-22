@@ -50,4 +50,6 @@ public class FundingApplicationDTO {
 
     private List<DocumentFileResponseDTO> documents = new ArrayList<>();
 
+    private Integer submitterId;
+
 }

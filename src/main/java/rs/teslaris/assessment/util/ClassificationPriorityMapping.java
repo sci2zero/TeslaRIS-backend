@@ -66,7 +66,8 @@ public class ClassificationPriorityMapping {
                 externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
-                "Failed to reload indicator mapping configuration: " + e.getMessage());
+                "Failed to reload classification priority mapping configuration: " +
+                    e.getMessage());
         }
     }
 

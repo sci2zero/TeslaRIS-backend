@@ -1,9 +1,18 @@
 package rs.teslaris.project.service.interfaces.project;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.project.ProjectEvent;
 
 @Service
 public interface ProjectEventService extends JPAService<ProjectEvent> {
+
+    List<ProjectEventDTO> readProjectEvents(Integer projectId);
+
+    ProjectEvent createProjectEvent(ProjectEventDTO projectEventDTO);
+
+    void deleteProjectEvent(Integer projectEventId);
+
 }

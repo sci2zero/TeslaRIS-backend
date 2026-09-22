@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -22,12 +23,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter
 @Setter
@@ -73,4 +78,54 @@ public class PersonContribution extends BaseEntity {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    @Column(name = "favorite")
+    private Boolean favorite = false;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> keywords = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
+
+    @Column(name = "date_from")
+    private LocalDate dateFrom;
+
+    @Column(name = "date_to")
+    private LocalDate dateTo;
+
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<DocumentFile> proofs = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
+    private Set<String> uris = new HashSet<>();
+
+    @Column(name = "main_contributor", nullable = false)
+    private Boolean isMainContributor = false;
+
+    @Column(name = "invited_contributor")
+    private Boolean isInvitedContributor = false;
+
+    @OneToMany(mappedBy = "personContribution", cascade = CascadeType.ALL,
+        orphanRemoval = true)
+    private Set<FundingPart> fundingParts = new HashSet<>();
+
+    public PersonContribution(Person person,
+                              Set<MultiLingualContent> contributionDescription,
+                              AffiliationStatement affiliationStatement,
+                              Set<OrganisationUnit> institutions,
+                              Integer orderNumber,
+                              ApproveStatus approveStatus, Boolean isMainContributor,
+                              Boolean isInvitedContributor) {
+        this.person = person;
+        this.contributionDescription = contributionDescription;
+        this.affiliationStatement = affiliationStatement;
+        this.institutions = institutions;
+        this.orderNumber = orderNumber;
+        this.approveStatus = approveStatus;
+        this.isMainContributor = isMainContributor;
+        this.isInvitedContributor = isInvitedContributor;
+    }
+
 }

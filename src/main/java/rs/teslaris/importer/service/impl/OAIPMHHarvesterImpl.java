@@ -206,12 +206,17 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                             // perform metadata enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);
                             mongoTemplate.save(existingImport, "documentImports");
+                            log.info("Enriched existing import {} with OAI-PMH record {}",
+                                existingImport.getIdentifier(),
+                                CommonHarvestUtility.describe(documentImport));
                             return;
                         }
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
                     if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
+                        log.info("Skipping duplicate OAI-PMH record {}",
+                            CommonHarvestUtility.describe(documentImport));
                         return;
                     }
 
@@ -229,6 +234,8 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                         personService);
 
                     mongoTemplate.save(documentImport, "documentImports");
+                    log.info("Imported new OAI-PMH record {}",
+                        CommonHarvestUtility.describe(documentImport));
                 });
         } catch (IllegalAccessException | InvocationTargetException e) {
             log.error("SERIOUS: Invalid converter invocation.", e);

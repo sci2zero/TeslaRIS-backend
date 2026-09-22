@@ -1,0 +1,84 @@
+package rs.teslaris.revisioner.util.dataquality;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
+import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
+import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
+import rs.teslaris.revisioner.repository.EntityRevisionRepository;
+import rs.teslaris.revisioner.util.DataQualityCalculator;
+import rs.teslaris.revisioner.util.ObjectMapperProvider;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class DataQualityAssessmentListener {
+
+    private final DataQualityCalculator calculator;
+
+    private final EntityRevisionRepository entityRevisionRepository;
+
+    private final DataQualityAssessmentRepository repository;
+
+
+    public static List<String> resolveTargetTypes(String entityType) {
+        try {
+            return DataQualityAssessmentConfigurationLoader.getTargetTypesFromEntityType(
+                EntityType.valueOf(entityType));
+        } catch (IllegalArgumentException ex) {
+            try {
+                return DataQualityAssessmentConfigurationLoader.getTargetTypesFromDocumentType(
+                    DocumentPublicationType.valueOf(entityType));
+            } catch (IllegalArgumentException ignored) {
+                throw ex;
+            }
+        }
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(DataQualityAssessmentEvent event) {
+        var profiles = DataQualityAssessmentConfigurationLoader.listAvailableProfiles()
+            .stream()
+            .filter(profile -> Objects.isNull(event.profileName()) ||
+                profile.equalsIgnoreCase(event.profileName()))
+            .toList();
+
+        profiles.forEach(profileName -> {
+            var assessment = DataQualityAssessment
+                .builder()
+                .revision(event.entityRevision())
+                .engineVersion("1.0.0")
+                .profileVersion(
+                    DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName))
+                .profileName(profileName)
+                .startedAt(Instant.now())
+                .activitiesCount(0)
+                .build();
+
+            var targetTypes = resolveTargetTypes(event.entityRevision().getEntityType());
+
+            if (targetTypes.isEmpty()) {
+                log.error("Unable to find target type for {} and entity id {{}}",
+                    event.entityRevision().getEntityType(), event.entityRevision().getId());
+                return;
+            }
+
+            event.entityRevision().addAssessment(assessment);
+
+            calculator.assessDataQuality(assessment, event.json(),
+                ObjectMapperProvider.provideObjectmapper(), repository, targetTypes);
+
+            entityRevisionRepository.save(event.entityRevision());
+        });
+    }
+}

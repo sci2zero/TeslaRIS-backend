@@ -31,11 +31,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.Publisher;
@@ -45,6 +47,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.GeneticMaterialServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.GeneticMaterialJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -116,8 +119,12 @@ public class GeneticMaterialServiceTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private CountryService countryService;
+
     @InjectMocks
     private GeneticMaterialServiceImpl geneticMaterialService;
+
 
     private static Stream<Arguments> provideGeneticMaterialTypes() {
         return Stream.of(
@@ -184,7 +191,7 @@ public class GeneticMaterialServiceTest {
 
         verify(geneticMaterialJPAService).findOne(eq(geneticMaterialId));
         verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseIdAndType(
-            eq(geneticMaterialId), eq(DocumentPublicationType.MATERIAL_PRODUCT.name()));
+            eq(geneticMaterialId), eq(DocumentPublicationType.GENETIC_MATERIAL.name()));
     }
 
     @Test
@@ -209,7 +216,7 @@ public class GeneticMaterialServiceTest {
     public void shouldCreateGeneticMaterialWithIndexing() {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setInternalNumber("GM-001");
         dto.setGeneticMaterialType(GeneticMaterialType.GENOTYPE);
         dto.setAuthorReprint(false);
@@ -243,7 +250,7 @@ public class GeneticMaterialServiceTest {
     public void shouldCreateGeneticMaterialWithAuthorReprint() {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setAuthorReprint(true);
 
         var geneticMaterial = new GeneticMaterial();
@@ -267,7 +274,7 @@ public class GeneticMaterialServiceTest {
     public void shouldCreateGeneticMaterialWithoutIndexing() {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
 
         var geneticMaterial = new GeneticMaterial();
         geneticMaterial.setId(1);
@@ -292,7 +299,7 @@ public class GeneticMaterialServiceTest {
         // Given
         Integer geneticMaterialId = 1;
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2024-01-01");
+        dto.setDocumentDate(new FlexibleDateDTO(2024, 1, 1, null));
         dto.setInternalNumber("GM-002");
         dto.setGeneticMaterialType(GeneticMaterialType.GENOTYPE);
         dto.setAuthorReprint(true);
@@ -300,7 +307,7 @@ public class GeneticMaterialServiceTest {
         var existingMaterial = new GeneticMaterial();
         existingMaterial.setId(geneticMaterialId);
         existingMaterial.setApproveStatus(ApproveStatus.REQUESTED);
-        existingMaterial.setDocumentDate("2023");
+        existingMaterial.setDocumentDate(new FlexibleDate(2023));
 
         var index = new DocumentPublicationIndex();
         index.setDatabaseId(geneticMaterialId);
@@ -330,7 +337,7 @@ public class GeneticMaterialServiceTest {
         // Given
         Integer geneticMaterialId = 1;
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2024-01-01");
+        dto.setDocumentDate(new FlexibleDateDTO(2024, 1, 1, null));
 
         var existingMaterial = new GeneticMaterial();
         existingMaterial.setId(geneticMaterialId);
@@ -382,7 +389,7 @@ public class GeneticMaterialServiceTest {
         // Given
         var geneticMaterial = new GeneticMaterial();
         geneticMaterial.setId(1);
-        geneticMaterial.setDocumentDate("2024");
+        geneticMaterial.setDocumentDate(new FlexibleDate(2024));
         var geneticMaterials = List.of(geneticMaterial);
         var page =
             new PageImpl<>(geneticMaterials, PageRequest.of(0, 100), geneticMaterials.size());
@@ -403,7 +410,7 @@ public class GeneticMaterialServiceTest {
     public void shouldSetGeneticMaterialTypeWhenCreating(GeneticMaterialType type) {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setGeneticMaterialType(type);
 
         var geneticMaterial = new GeneticMaterial();
@@ -501,7 +508,7 @@ public class GeneticMaterialServiceTest {
     public void shouldHandleNullPublisherId() {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setAuthorReprint(false);
         // No publisherId set
 
@@ -527,7 +534,7 @@ public class GeneticMaterialServiceTest {
     public void shouldSetInternalNumberWhenCreating() {
         // Given
         var dto = new GeneticMaterialDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         dto.setInternalNumber("GM-12345");
 
         var geneticMaterial = new GeneticMaterial();

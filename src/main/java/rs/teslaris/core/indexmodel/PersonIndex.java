@@ -109,4 +109,12 @@ public class PersonIndex implements ExternallyEnrichable {
 
     @Field(type = FieldType.Boolean, name = "has_contributions")
     private Boolean hasContributions = false;
+
+    /**
+     * Involvements that qualify as activities, i.e. that carry at least a start date, an end date
+     * or a research area. Counted here so repository-wide activity totals can be aggregated rather
+     * than assembled from person records one by one.
+     */
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount = 0;
 }

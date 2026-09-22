@@ -7,14 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -108,15 +107,10 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                     }
                     return new Pair<>("THESIS", thesis.getId());
                 }
-                case Patent ignored -> {
-                    log.info("NAVIGATION SUCCESS - PATENT {} from {} in LANGUAGE {}",
+                case IntellectualProperty ignored -> {
+                    log.info("NAVIGATION SUCCESS - INTELLECTUAL_PROPERTY {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
-                    return new Pair<>("PATENT", document.getId());
-                }
-                case Dataset ignored -> {
-                    log.info("NAVIGATION SUCCESS - DATASET {} from {} in LANGUAGE {}",
-                        document.getId(), source, language);
-                    return new Pair<>("DATASET", document.getId());
+                    return new Pair<>("INTELLECTUAL_PROPERTY", document.getId());
                 }
                 case IntangibleProduct ignored -> {
                     log.info("NAVIGATION SUCCESS - INTANGIBLE_PRODUCT {} from {} in LANGUAGE {}",

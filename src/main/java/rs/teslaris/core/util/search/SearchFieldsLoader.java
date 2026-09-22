@@ -36,7 +36,7 @@ public class SearchFieldsLoader {
                 loadConfiguration(fileName);
             } catch (IOException e) {
                 throw new StorageException(
-                    "Failed to reload classification mapping configuration for " + fileName + ": " +
+                    "Failed to reload search fields configuration for " + fileName + ": " +
                         e.getMessage());
             }
         }

@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.DataQualityAssessmentReindexEvent;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.applicationevent.ProjectEventReindexingEvent;
 import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
@@ -21,20 +22,19 @@ import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
-import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -83,11 +83,9 @@ public class ReindexServiceImpl implements ReindexService {
 
     private final ProceedingsService proceedingsService;
 
-    private final PatentService patentService;
+    private final IntellectualPropertyService intellectualPropertyService;
 
     private final IntangibleProductService intangibleProductService;
-
-    private final DatasetService datasetService;
 
     private final MonographService monographService;
 
@@ -180,6 +178,10 @@ public class ReindexServiceImpl implements ReindexService {
 
             applicationEventPublisher.publishEvent(
                 new ProjectEventReindexingEvent(indexesToRepopulate));
+
+            if (indexesToRepopulate.contains(EntityType.QUALITY_ASSESSMENT)) {
+                applicationEventPublisher.publishEvent(new DataQualityAssessmentReindexEvent());
+            }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing of core entities. Reason: ", e);
         }
@@ -195,10 +197,10 @@ public class ReindexServiceImpl implements ReindexService {
             "Error reindexing journal publications");
         safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
             "Error reindexing proceedings publications");
-        safeReindex(patentService::reindexPatents, "Error reindexing patents");
+        safeReindex(intellectualPropertyService::reindexIntellectualProperties,
+            "Error reindexing intellectual property");
         safeReindex(intangibleProductService::reindexIntangibleProduct,
             "Error reindexing intangible products");
-        safeReindex(datasetService::reindexDatasets, "Error reindexing datasets");
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
@@ -232,9 +234,9 @@ public class ReindexServiceImpl implements ReindexService {
             case PROCEEDINGS_PUBLICATION ->
                 proceedingsPublicationService.reindexProceedingsPublications();
             case MONOGRAPH -> monographService.reindexMonographs();
-            case PATENT -> patentService.reindexPatents();
+            case INTELLECTUAL_PROPERTY ->
+                intellectualPropertyService.reindexIntellectualProperties();
             case INTANGIBLE_PRODUCT -> intangibleProductService.reindexIntangibleProduct();
-            case DATASET -> datasetService.reindexDatasets();
             case MONOGRAPH_PUBLICATION ->
                 monographPublicationService.reindexMonographPublications();
             case MATERIAL_PRODUCT -> materialProductService.reindexMaterialProducts();

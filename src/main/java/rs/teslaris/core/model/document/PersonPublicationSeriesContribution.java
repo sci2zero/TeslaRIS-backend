@@ -6,7 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
@@ -22,16 +21,8 @@ public class PersonPublicationSeriesContribution extends PersonContribution {
     @Column(name = "contribution_type", nullable = false)
     private PublicationSeriesContributionType contributionType;
 
-    @Column(name = "date_from")
-    private LocalDate dateFrom;
-
-    @Column(name = "date_to")
-    private LocalDate dateTo;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id", nullable = false)
     private PublicationSeries publicationSeries;
 
-    @Column(name = "main_contributor", nullable = false)
-    private Boolean isMainContributor = false;
 }

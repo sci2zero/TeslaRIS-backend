@@ -172,6 +172,48 @@ public class TableExportHelper {
         }
     }
 
+    /**
+     * Writes a spreadsheet whose cells keep their type: numbers stay numbers, percentages become
+     * percent-formatted numbers, and anything else is written as text.
+     */
+    public static InputStreamResource createTypedXLSXFile(List<List<Object>> rowsData) {
+        try (var workbook = new XSSFWorkbook();
+             var byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            var sheet = workbook.createSheet("Export Data");
+
+            var percentageStyle = workbook.createCellStyle();
+            percentageStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0%"));
+
+            for (int rowIndex = 0; rowIndex < rowsData.size(); rowIndex++) {
+                var row = sheet.createRow(rowIndex);
+                var rowData = rowsData.get(rowIndex);
+
+                for (int colIndex = 0; colIndex < rowData.size(); colIndex++) {
+                    var cell = row.createCell(colIndex);
+                    var value = rowData.get(colIndex);
+
+                    switch (value) {
+                        case PercentageValue percentage -> {
+                            cell.setCellValue(percentage.percentage() / 100.0);
+                            cell.setCellStyle(percentageStyle);
+                        }
+                        case Number number -> cell.setCellValue(number.doubleValue());
+                        case null -> cell.setBlank();
+                        default -> cell.setCellValue(String.valueOf(value));
+                    }
+                }
+            }
+
+            workbook.write(byteArrayOutputStream);
+
+            return new InputStreamResource(
+                new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating XLSX file", e);
+        }
+    }
+
     private static InputStreamResource createXLSXInputStream(List<List<String>> rowsData) {
         try (var workbook = new XSSFWorkbook();
              var byteArrayOutputStream = new ByteArrayOutputStream()) {
@@ -249,5 +291,12 @@ public class TableExportHelper {
             case "Vancouver" -> Objects.requireNonNullElse(request.getVancouver(), false);
             default -> false;
         };
+    }
+
+    /**
+     * A percentage written as a real number rather than text, so the cell can be sorted, charted
+     * and computed with. Excel stores percentages as fractions, hence the division on write.
+     */
+    public record PercentageValue(double percentage) {
     }
 }

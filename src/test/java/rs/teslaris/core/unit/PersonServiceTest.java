@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,6 +41,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -55,6 +57,7 @@ import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -78,6 +81,7 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
@@ -145,13 +149,45 @@ public class PersonServiceTest {
     @Mock
     private PersonFieldVisibilityRepository personFieldVisibilityRepository;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private InvolvementRepository involvementRepository;
+
     @InjectMocks
     private PersonServiceImpl personService;
 
 
+    private MockedStatic<PersonConverter> personConverter;
+
+
+    /**
+     * {@code PersonConverter} keeps its repositories in static fields set at context startup, so it
+     * reaches the real database rather than the mocks wired here - and a person snapshot walks the
+     * lazy involvement graph, which outside a session fails on detached entities. The converter is
+     * not the unit under test, so it is stubbed away wholesale; tests that care about its output
+     * stub the individual call.
+     */
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(personService, "approvedByDefault", true);
+
+        personConverter = mockStatic(PersonConverter.class);
+        personConverter.when(() -> PersonConverter.toSnapshotDTO(any()))
+            .thenAnswer(invocation -> {
+                // setPersonOtherNames compares the snapshot's names against the requested ones, so
+                // the stub has to be an empty person rather than an empty object.
+                var snapshot = new PersonSnapshotDTO();
+                snapshot.setPersonOtherNames(new ArrayList<>());
+
+                return snapshot;
+            });
+    }
+
+    @AfterEach
+    public void tearDown() {
+        personConverter.close();
     }
 
     @Test
@@ -219,8 +255,8 @@ public class PersonServiceTest {
 
         when(personRepository.findApprovedPersonById(1)).thenReturn(Optional.of(expectedPerson));
 
-        MockedStatic<PersonConverter> mocked = mockStatic(PersonConverter.class);
-        mocked.when(() -> PersonConverter.toDTO(expectedPerson)).thenReturn(expectedResponse);
+        personConverter.when(() -> PersonConverter.toDTO(expectedPerson))
+            .thenReturn(expectedResponse);
 
         // when
         var personDto = personService.readPersonWithBasicInfo(1);
@@ -371,7 +407,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonBiographyWithAnyData() {
         // given
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         var bio1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var bio2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var bioList = Arrays.asList(bio1, bio2);
@@ -390,7 +429,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonKeywordWithAnyData() {
         // given
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         var keyword1 = new MultilingualContentDTO(1, "EN", "English content", 1);
         var keyword2 = new MultilingualContentDTO(2, "FR", "Contenu français", 2);
         var keywordList = Arrays.asList(keyword1, keyword2);
@@ -464,7 +506,7 @@ public class PersonServiceTest {
 
         // then
         verify(personRepository, times(1)).findById(personId);
-        verify(personRepository, times(3)).save(personToUpdate);
+        verify(personRepository, times(1)).save(personToUpdate);
     }
 
     @Test
@@ -863,7 +905,7 @@ public class PersonServiceTest {
         verify(personContributionRepository, times(1)).fetchAllPersonDocumentContributions(
             eq(personId), any());
         verify(personIndexRepository, times(1)).delete(any(PersonIndex.class));
-        verify(documentPublicationIndexRepository, times(7)).deleteByAuthorIdsAndType(anyInt(),
+        verify(documentPublicationIndexRepository, times(6)).deleteByAuthorIdsAndType(anyInt(),
             anyString());
     }
 
@@ -952,7 +994,10 @@ public class PersonServiceTest {
         var personId = 2;
         var personNameDTO =
             new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null, PersonNameType.FULL_NAME);
-        var person = new Person();
+        var person = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         person.setId(personId);
         person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
             PersonNameType.FULL_NAME));
@@ -1413,7 +1458,10 @@ public class PersonServiceTest {
         var personNameDTO =
             new PersonNameDTO(null, "Jane", null, "Smith", null, null, PersonNameType.FULL_NAME);
 
-        var existingPerson = new Person();
+        var existingPerson = new Person() {{
+            setName(new PersonName());
+            setPersonalInfo(new PersonalInfo());
+        }};
         existingPerson.setId(personId);
         existingPerson.setOtherNames(new HashSet<>());
         existingPerson.setApproveStatus(ApproveStatus.REQUESTED); // Not approved

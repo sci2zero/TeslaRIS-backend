@@ -226,9 +226,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.PROCEEDINGS.name(),
                     DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                    DocumentPublicationType.PATENT.name(),
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
                     DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
-                    DocumentPublicationType.DATASET.name(),
                     DocumentPublicationType.THESIS.name(),
                     DocumentPublicationType.MATERIAL_PRODUCT.name(),
                     DocumentPublicationType.GENETIC_MATERIAL.name(),
@@ -263,6 +262,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     m -> m.field("type").value(item.getType())));
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query(item.getDatabaseId())));
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("substitute_for").query(item.getDatabaseId())));
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("substituted_by").query(item.getDatabaseId())));
 
                 return b;
             }))),

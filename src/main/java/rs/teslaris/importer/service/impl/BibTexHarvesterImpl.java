@@ -26,6 +26,7 @@ import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 
@@ -50,16 +51,24 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
             publication.ifPresent(documentImport -> {
                 var existingImport = findExistingImport(documentImport.getIdentifier());
 
-                existingImport = CommonImportUtility.findImportByDOIOrMetadata(documentImport);
+                if (Objects.isNull(existingImport)) {
+                    existingImport = CommonImportUtility.findImportByDOIOrMetadata(documentImport);
+                }
+
                 if (Objects.nonNull(existingImport)) {
                     DeepObjectMerger.deepMerge(existingImport, documentImport);
                     mongoTemplate.save(existingImport, "documentImports");
+                    log.info("Enriched existing import {} with BibTeX record {}",
+                        existingImport.getIdentifier(),
+                        CommonHarvestUtility.describe(documentImport));
                     return;
                 }
 
                 var embedding = generateEmbedding(bibEntry);
 
                 if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
+                    log.info("Skipping duplicate BibTeX record {}",
+                        CommonHarvestUtility.describe(documentImport));
                     return;
                 }
 
@@ -69,6 +78,8 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
 
                 documentImport.getImportUsersId().add(userId);
                 mongoTemplate.save(documentImport, "documentImports");
+                log.info("Imported new BibTeX record {}",
+                    CommonHarvestUtility.describe(documentImport));
                 newEntriesCount.merge(userId, 1, Integer::sum);
             });
         }

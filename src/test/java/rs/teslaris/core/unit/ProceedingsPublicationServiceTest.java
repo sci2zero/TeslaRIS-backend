@@ -43,6 +43,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
@@ -63,6 +64,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -123,6 +125,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private CountryService countryService;
 
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
@@ -195,6 +200,9 @@ public class ProceedingsPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new ProceedingsPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        publicationToUpdate.setProceedings(new Proceedings() {{
+            setEvent(new Conference());
+        }});
 
         var conference = new Conference();
         conference.setId(1);
@@ -328,7 +336,7 @@ public class ProceedingsPublicationServiceTest {
     public void shouldReindexProceedingsPublications() {
         // Given
         var proceedingsPublication = new ProceedingsPublication();
-        proceedingsPublication.setDocumentDate("2024");
+        proceedingsPublication.setDocumentDate(new FlexibleDate(2024));
         var proceedings = new Proceedings();
         proceedings.setEvent(new Conference());
         proceedings.setId(1);
@@ -372,7 +380,7 @@ public class ProceedingsPublicationServiceTest {
         when(proceedingsService.findProceedingsById(proceedingsId))
             .thenReturn(proceedings);
         when(proceedings.getEvent()).thenReturn(conference);
-        when(proceedings.getDocumentDate()).thenReturn(documentDate.toString());
+        when(proceedings.getDocumentDate()).thenReturn(new FlexibleDate(documentDate));
         when(proceedingsPublicationRepository.save(any(ProceedingsPublication.class)))
             .thenReturn(new ProceedingsPublication() {{
                 setId(expectedSavedId);

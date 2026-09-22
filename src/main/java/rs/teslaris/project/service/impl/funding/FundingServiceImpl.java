@@ -3,11 +3,6 @@ package rs.teslaris.project.service.impl.funding;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +21,8 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
@@ -42,12 +37,24 @@ import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
 public class FundingServiceImpl extends JPAServiceImpl<Funding> implements FundingService {
 
     private final FundingRepository fundingRepository;
+
+    private final FundingPartRepository fundingPartRepository;
+
+    private final FundingPartFactory fundingPartFactory;
 
     private final SearchService<FundingIndex> searchService;
 
@@ -64,7 +71,10 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final CurrencyService currencyService;
 
     private final FundingIndexRepository fundingIndexRepository;
+
     private final DocumentFileService documentFileService;
+
+    private final InvolvementService involvementService;
 
     @Override
     protected JpaRepository<Funding, Integer> getEntityRepository() {
@@ -94,12 +104,14 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         setCommonFields(newFunding, fundingDTO);
 
-        var savedFundingCall = save(newFunding);
+        var savedFunding = save(newFunding);
+
+        buildFundingParts(savedFunding, fundingDTO);
 
         fundingIndexRepository.save(
-            indexCommonFields(savedFundingCall, new FundingIndex()));
+            indexCommonFields(savedFunding, new FundingIndex()));
 
-        return savedFundingCall;
+        return savedFunding;
     }
 
     @Override
@@ -125,6 +137,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addAgreementDocument(Integer fundingId,
                                                         DocumentFileDTO agreement) {
         var funding = findOne(fundingId);
@@ -146,6 +159,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
     public void deleteAgreementDocument(Integer agreementFileId, Integer fundingId) {
         var documentFile = documentFileService.findOne(agreementFileId);
         var fundingCall = findOne(fundingId);
@@ -166,7 +180,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             var project = projectService.findOne(fundingDTO.getProjectId());
             funding.setProject(project);
         } else {
-            throw new ReferenceConstraintException("Funding must be bound to a project.");
+            funding.setProject(null);
         }
 
         if (Objects.nonNull(fundingDTO.getFundingCallId())) {
@@ -180,6 +194,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             funding.setFunder(organisationUnitService.findOne(fundingDTO.getFunderId()));
         } else {
             funding.setFunder(null);
+        }
+
+        if (Objects.nonNull(fundingDTO.getInvolvementId())) {
+            funding.setInvolvement(involvementService.findOne(fundingDTO.getInvolvementId()));
+        } else {
+            funding.setInvolvement(null);
         }
 
         funding.setDateSubmitted(fundingDTO.getDateSubmitted());
@@ -227,8 +247,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
-
-        buildFundingParts(funding, fundingDTO);
+        funding.setInternalInvestment(fundingDTO.getInternalInvestment());
     }
 
     private void buildFundingParts(Funding funding,
@@ -239,24 +258,13 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         fundingDTO.getFundingParts().forEach(partDTO -> {
             var part = buildFundingPart(partDTO, funding);
-            funding.getFundingParts().add(part);
+            funding.getFundingParts().add(fundingPartRepository.save(part));
         });
     }
 
     private FundingPart buildFundingPart(FundingPartDTO partDTO, Funding parent) {
-        var part = new FundingPart();
-
-        part.setDescription(
-            multilingualContentService.getMultilingualContent(partDTO.getDescription()));
-
-        part.setAmount(new MonetaryAmount());
-        part.getAmount().setCurrency(
-            currencyService.findOne(partDTO.getAmount().getCurrencyId()));
-        part.getAmount().setAmount(partDTO.getAmount().getAmount());
-
-        if (Objects.nonNull(partDTO.getFundingId())) {
-            part.setFunding(parent);
-        }
+        var part = fundingPartFactory.buildFundingPart(partDTO);
+        part.setFunding(parent);
 
         return part;
     }
@@ -264,6 +272,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFunding() {
+        fundingIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -326,6 +336,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         if (Objects.nonNull(funding.getFundingCall())) {
             index.setFundingCallId(funding.getFundingCall().getId());
+        } else {
+            index.setFundingCallId(null);
         }
 
         index.setDatabaseId(funding.getId());

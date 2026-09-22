@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
@@ -16,7 +17,6 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
-import rs.teslaris.exporter.model.common.ExportPublicationType;
 
 public class ExportProductConverter extends ExportConverterBase {
 
@@ -85,7 +85,8 @@ public class ExportProductConverter extends ExportConverterBase {
                                Map<String, String> typeToIdentifierSuffixMapping) {
         var dcProduct = new DC();
         dcProduct.getType().add(new DCType(
-            exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "product",
+            IntangibleProductType.DATASET.equals(exportDocument.getIntangibleProductType()) ?
+                "dataset" : "product",
             null, null));
         dcProduct.getSource().add(repositoryName);
 
@@ -103,7 +104,8 @@ public class ExportProductConverter extends ExportConverterBase {
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages)
             .forEach(lang -> dcProduct.getIdentifier().add(
                 baseFrontendUrl + lang + "/scientific-result/" +
-                    (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
+                    (IntangibleProductType.DATASET.equals(
+                        exportDocument.getIntangibleProductType()) ? "dataset" :
                         "product") + "/" + exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {

@@ -12,6 +12,8 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 @Repository
 public interface PersonIndexRepository extends ElasticsearchRepository<PersonIndex, String> {
 
+    List<PersonIndex> findAllByDatabaseIdIn(List<Integer> databaseIds);
+
     Optional<PersonIndex> findByDatabaseId(Integer databaseId);
 
     Page<PersonIndex> findByDatabaseIdIn(List<Integer> databaseIds, Pageable pageable);

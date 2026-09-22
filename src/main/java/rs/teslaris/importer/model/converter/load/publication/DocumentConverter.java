@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.InSeriesDTO;
@@ -112,9 +113,9 @@ public class DocumentConverter {
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
         if (Objects.nonNull(record.getPublicationDate())) {
-            dto.setDocumentDate(String.valueOf(
+            dto.setDocumentDate(new FlexibleDateDTO(
                 record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                    .getYear()));
+                    .getYear(), null, null, null));
         }
 
         if (Objects.nonNull(record.getKeywords())) {

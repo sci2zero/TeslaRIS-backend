@@ -42,6 +42,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
@@ -62,6 +63,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.JournalPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -116,6 +118,9 @@ public class JournalPublicationServiceTest {
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
+    @Mock
+    private CountryService countryService;
+
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
 
@@ -146,7 +151,7 @@ public class JournalPublicationServiceTest {
         journal.setId(1);
         var document = new JournalPublication();
         document.setJournal(journal);
-        document.setDocumentDate("2023");
+        document.setDocumentDate(new FlexibleDate(2023, 3));
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -178,6 +183,7 @@ public class JournalPublicationServiceTest {
         publicationDTO.setEventId(1);
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        publicationToUpdate.setJournal(new Journal());
 
         when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publicationToUpdate);
         when(journalService.findJournalById(any())).thenReturn(new Journal() {{
@@ -324,7 +330,7 @@ public class JournalPublicationServiceTest {
     public void shouldReindexJournalPublications() {
         // Given
         var journalPublication = new JournalPublication();
-        journalPublication.setDocumentDate("2024");
+        journalPublication.setDocumentDate(new FlexibleDate(2024));
         journalPublication.setJournal(new Journal());
         var journalPublications = List.of(journalPublication);
         var page1 = new PageImpl<>(journalPublications.subList(0, 1), PageRequest.of(0, 10),

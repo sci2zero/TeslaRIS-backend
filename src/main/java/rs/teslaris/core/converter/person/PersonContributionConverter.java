@@ -1,23 +1,23 @@
 package rs.teslaris.core.converter.person;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.model.document.PersonContribution;
-import rs.teslaris.core.model.document.PersonDocumentContribution;
-import rs.teslaris.core.model.document.PersonEventContribution;
-import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
+import rs.teslaris.core.model.document.*;
+import rs.teslaris.project.dto.funding.PersonFundingCallContributionDTO;
+import rs.teslaris.project.model.funding.PersonFundingCallContribution;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PersonContributionConverter {
 
@@ -36,6 +36,13 @@ public class PersonContributionConverter {
                 contribution.setIsBoardPresident(c.getIsBoardPresident());
                 contribution.setPersonalTitle(c.getPersonalTitle());
                 contribution.setEmploymentTitle(c.getEmploymentTitle());
+                contribution.setDateFrom(c.getDateFrom());
+                contribution.setDateTo(c.getDateTo());
+
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
 
                 contributionDTOs.add(contribution);
             });
@@ -147,5 +154,20 @@ public class PersonContributionConverter {
                         .append("\n");
                 }
             );
+    }
+
+    public static ArrayList<PersonFundingCallContributionDTO> fundingCallContributionToDTO(
+        Set<PersonFundingCallContribution> contributions) {
+        var contributionDTOs = new ArrayList<PersonFundingCallContributionDTO>();
+        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
+                .forEach((c) -> {
+                    var contribution = new PersonFundingCallContributionDTO();
+                    setCommonFields(contribution, c);
+
+                    contribution.setContributionType(c.getContributionType());
+
+                    contributionDTOs.add(contribution);
+                });
+        return contributionDTOs;
     }
 }

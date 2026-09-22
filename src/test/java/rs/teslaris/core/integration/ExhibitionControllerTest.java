@@ -57,7 +57,7 @@ public class ExhibitionControllerTest extends BaseTest {
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
                 PersonNameType.DISPLAY_NAME));
-        exhibitionDTO.setContributions(List.of(contribution));
+        exhibitionDTO.setContributions(new ArrayList<>(List.of(contribution)));
 
         return exhibitionDTO;
     }

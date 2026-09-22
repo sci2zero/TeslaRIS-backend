@@ -996,10 +996,17 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 if (!sb.isEmpty()) {
                     sb.append("\n");
                 }
-                sb.append(member.getPersonalTitle().getValue()).append(" ")
-                    .append(SerbianTransliteration.toCyrillic(
-                        member.getAffiliationStatement().getDisplayPersonName().toString()))
-                    .append(", ").append(member.getEmploymentTitle().getValue());
+
+                if (Objects.nonNull(member.getPersonalTitle())) {
+                    sb.append(member.getPersonalTitle().getValue()).append(" ");
+                }
+
+                sb.append(SerbianTransliteration.toCyrillic(
+                    member.getAffiliationStatement().getDisplayPersonName().toString()));
+
+                if (Objects.nonNull(member.getEmploymentTitle())) {
+                    sb.append(", ").append(member.getEmploymentTitle().getValue());
+                }
 
                 member.getInstitutions().stream().findFirst()
                     .ifPresentOrElse(

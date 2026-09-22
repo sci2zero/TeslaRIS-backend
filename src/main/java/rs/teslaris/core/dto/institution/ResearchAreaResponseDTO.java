@@ -11,13 +11,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResearchAreaResponseDTO {
-
-    private Integer id;
-
-    private List<MultilingualContentDTO> name;
-
-    private List<MultilingualContentDTO> description;
+public class ResearchAreaResponseDTO extends ResearchAreaDTO {
 
     private List<MultilingualContentDTO> superResearchAreaName;
 }

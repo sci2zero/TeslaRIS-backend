@@ -20,9 +20,9 @@ public interface CourseService {
 
     Course createCourse(CourseDTO dto, Boolean index);
 
-    void updateCourse(Integer id, CourseDTO dto);
+    void updateCourse(Integer courseId, CourseDTO dto);
 
-    void deleteCourse(Integer id);
+    void deleteCourse(Integer courseId);
 
     void forceDeleteCourse(Integer courseId);
 

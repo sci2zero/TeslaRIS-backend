@@ -18,6 +18,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
@@ -151,9 +152,11 @@ public class ExportConverterBase {
                 "http://purl.org/coar/resource_type/c_5794" :
                 "http://purl.org/coar/resource_type/c_c94f";
             case MONOGRAPH, BOOK_SERIES -> "http://purl.org/coar/resource_type/c_2f33"; // book
-            case PATENT -> "http://purl.org/coar/resource_type/c_15cd";
-            case INTANGIBLE_PRODUCT -> "http://purl.org/coar/resource_type/c_5ce6";
-            case DATASET -> "http://purl.org/coar/resource_type/c_ddb1";
+            case INTELLECTUAL_PROPERTY -> "http://purl.org/coar/resource_type/c_15cd";
+            case INTANGIBLE_PRODUCT ->
+                IntangibleProductType.DATASET.equals(exportDocument.getIntangibleProductType()) ?
+                    "http://purl.org/coar/resource_type/c_ddb1" :
+                    "http://purl.org/coar/resource_type/c_5ce6";
             case JOURNAL -> "http://purl.org/coar/resource_type/c_0640";
             case MONOGRAPH_PUBLICATION -> "http://purl.org/coar/resource_type/c_3248"; // book part
             case THESIS -> (exportDocument.getThesisType().equals(ThesisType.PHD) ||
@@ -327,9 +330,8 @@ public class ExportConverterBase {
             case PROCEEDINGS -> "proceedings";
             case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
             case MONOGRAPH -> "monograph";
-            case PATENT -> "patent";
+            case INTELLECTUAL_PROPERTY -> "intellectual-property";
             case INTANGIBLE_PRODUCT -> "intangible-product";
-            case DATASET -> "dataset";
             case JOURNAL -> "journal";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
             case THESIS -> "thesis";

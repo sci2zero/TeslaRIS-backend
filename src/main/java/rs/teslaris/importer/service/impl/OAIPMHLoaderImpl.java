@@ -31,11 +31,11 @@ import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
-import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -49,12 +49,12 @@ import rs.teslaris.importer.model.converter.load.event.EventConverter;
 import rs.teslaris.importer.model.converter.load.institution.OrganisationUnitConverter;
 import rs.teslaris.importer.model.converter.load.person.ImportPersonConverter;
 import rs.teslaris.importer.model.converter.load.publication.DissertationConverter;
+import rs.teslaris.importer.model.converter.load.publication.IntellectualPropertyConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.MagistrateConverter;
 import rs.teslaris.importer.model.converter.load.publication.MonographConverter;
 import rs.teslaris.importer.model.converter.load.publication.MonographPublicationConverter;
-import rs.teslaris.importer.model.converter.load.publication.PatentConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProductConverter;
@@ -102,9 +102,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     private final ProceedingsService proceedingsService;
 
-    private final PatentConverter patentConverter;
+    private final IntellectualPropertyConverter intellectualPropertyConverter;
 
-    private final PatentService patentService;
+    private final IntellectualPropertyService intellectualPropertyService;
 
     private final IntangibleProductService intangibleProductService;
 
@@ -152,7 +152,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                 return (R) findAndConvertEntity(Event.class, eventConverter, DataSet.EVENTS,
                     query, userId);
             case PATENTS:
-                return (R) findAndConvertEntity(Patent.class, patentConverter,
+                return (R) findAndConvertEntity(Patent.class, intellectualPropertyConverter,
                     DataSet.PATENTS, query, userId);
             case PRODUCTS:
                 return (R) findAndConvertEntity(Product.class, productConverter,
@@ -423,8 +423,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     hasNextPage = batch.size() == batchSize;
                     break;
                 case PATENTS:
-                    hasNextPage = loadBatch(Patent.class, patentConverter,
-                        patentService::createPatent, query, performIndex, batchSize);
+                    hasNextPage = loadBatch(Patent.class, intellectualPropertyConverter,
+                        intellectualPropertyService::createIntellectualProperty, query,
+                        performIndex, batchSize);
                     break;
                 case PRODUCTS:
                     hasNextPage = loadBatch(Product.class, productConverter,

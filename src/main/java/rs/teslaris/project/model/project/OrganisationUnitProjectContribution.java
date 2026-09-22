@@ -8,60 +8,34 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.project.model.funding.FundingPart;
+import rs.teslaris.core.model.document.OrganisationUnitContribution;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+// Bug case (callSuper=false): same Project has 15 different contributions where 14 of them have
+// the same contributionType -> Set treats them as 2 different entities instead of 15
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "organisation_unit_project_contributions")
 @SQLRestriction("deleted=false")
-public class OrganisationUnitProjectContribution extends BaseEntity {
+public class OrganisationUnitProjectContribution extends OrganisationUnitContribution {
 
     @Column(name = "contribution_type")
     private OrganisationUnitProjectContributionType contributionType;
 
-    @Column(name = "date_from")
-    private LocalDate dateFrom;
-
-    @Column(name = "date_to")
-    private LocalDate dateTo;
-
-    @OneToMany(fetch = FetchType.LAZY)
-    private Set<FundingPart> fundingParts = new HashSet<>();
-    // must be funding parts allocated only to this OU
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisation_unit_id")
-    private OrganisationUnit organisationUnit;
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> displayOU = new HashSet<>();
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> description = new HashSet<>();
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> contactPoint = new HashSet<>();
-
-    @Column(name = "order_number")
-    private Integer orderNumber;
-
-    @Column(name = "approve_status")
-    private ApproveStatus approveStatus;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> displayProject = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

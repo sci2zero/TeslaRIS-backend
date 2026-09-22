@@ -25,4 +25,12 @@ public class MultilingualContentDTO {
 
     @Positive(message = "Priority must be a positive number.")
     private int priority;
+
+
+    public MultilingualContentDTO(MultilingualContentDTO other) {
+        this.languageTagId = other.languageTagId;
+        this.languageTag = other.languageTag;
+        this.content = other.content;
+        this.priority = other.priority;
+    }
 }

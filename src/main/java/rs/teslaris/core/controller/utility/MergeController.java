@@ -19,11 +19,11 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedCourseDTO;
-import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedExhibitionDTO;
 import rs.teslaris.core.dto.deduplication.MergedGeneticMaterialDTO;
 import rs.teslaris.core.dto.deduplication.MergedIntangibleProductDTO;
+import rs.teslaris.core.dto.deduplication.MergedIntellectualPropertyDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMaterialProductDTO;
@@ -31,7 +31,6 @@ import rs.teslaris.core.dto.deduplication.MergedMonographPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOrganisationUnitsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOtherEventDTO;
-import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
@@ -404,32 +403,19 @@ public class MergeController {
         mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedPerformanceRelatedOutput);
     }
 
-    @PatchMapping("/dataset/metadata/{leftDocumentId}/{rightDocumentId}")
+    @PatchMapping("/intellectual-property/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
     @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveMergedDatasetsMetadata(
+    public void saveMergedIntellectualPropertiesMetadata(
         @PathVariable Integer leftDocumentId,
         @PathVariable Integer rightDocumentId,
-        @NotNull @RequestBody MergedDatasetsDTO mergedDatasets) {
-        mergeService.saveMergedDatasetsMetadata(leftDocumentId, rightDocumentId,
-            mergedDatasets.getLeftDataset(), mergedDatasets.getRightDataset());
+        @NotNull @RequestBody MergedIntellectualPropertyDTO mergedIntellectualProperties) {
+        mergeService.saveMergedIntellectualPropertiesMetadata(leftDocumentId, rightDocumentId,
+            mergedIntellectualProperties.getLeftIntellectualProperty(),
+            mergedIntellectualProperties.getRightIntellectualProperty());
 
-        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedDatasets);
-    }
-
-    @PatchMapping("/patent/metadata/{leftDocumentId}/{rightDocumentId}")
-    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
-    @PublicationMergeCheck
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveMergedPatentsMetadata(
-        @PathVariable Integer leftDocumentId,
-        @PathVariable Integer rightDocumentId,
-        @NotNull @RequestBody MergedPatentsDTO mergedPatents) {
-        mergeService.saveMergedPatentsMetadata(leftDocumentId, rightDocumentId,
-            mergedPatents.getLeftPatent(), mergedPatents.getRightPatent());
-
-        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedPatents);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedIntellectualProperties);
     }
 
     @PatchMapping("/proceedings-publication/metadata/{leftDocumentId}/{rightDocumentId}")

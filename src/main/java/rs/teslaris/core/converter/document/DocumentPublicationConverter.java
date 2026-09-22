@@ -13,20 +13,21 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -87,7 +88,7 @@ public class DocumentPublicationConverter {
             PersonContributionConverter.documentContributionToDTO(publication.getContributors()));
 
         publicationDTO.setUris(publication.getUris());
-        publicationDTO.setDocumentDate(publication.getDocumentDate());
+        publicationDTO.setDocumentDate(FlexibleDateConverter.toDTO(publication.getDocumentDate()));
         publicationDTO.setDoi(publication.getDoi());
         publicationDTO.setScopusId(publication.getScopusId());
         publicationDTO.setOpenAlexId(publication.getOpenAlexId());
@@ -96,6 +97,7 @@ public class DocumentPublicationConverter {
         publicationDTO.setArxivId(publication.getArxivId());
         publicationDTO.setPubmedId(publication.getPubmedId());
         publicationDTO.setSsrnId(publication.getSsrnId());
+        publicationDTO.setNationalId(publication.getNationalId());
 
         publicationDTO.setIsMetadataValid(publication.getIsMetadataValid());
         publicationDTO.setAreFilesValid(publication.getAreFilesValid());
@@ -128,10 +130,9 @@ public class DocumentPublicationConverter {
             PersonContributionConverter.toBibTexAuthors(publication.getContributors(), entry);
         }
 
-        if (Objects.nonNull(publication.getDocumentDate()) &&
-            !publication.getDocumentDate().isBlank()) {
+        if (FlexibleDate.isDatePresentAndValid(publication.getDocumentDate())) {
             entry.addField(BibTeXEntry.KEY_YEAR,
-                new StringValue(publication.getDocumentDate().split("-")[0],
+                new StringValue(String.valueOf(publication.getDocumentDate().getYear()),
                     StringValue.Style.BRACED));
         }
 
@@ -183,8 +184,8 @@ public class DocumentPublicationConverter {
             sb.append(refMan ? "DO  - " : "%R ").append(publication.getDoi()).append("\n");
         }
 
-        if (StringUtil.valueExists(publication.getDocumentDate())) {
-            sb.append(refMan ? "PY  - " : "%D ").append(publication.getDocumentDate().split("-")[0])
+        if (FlexibleDate.isDatePresentAndValid(publication.getDocumentDate())) {
+            sb.append(refMan ? "PY  - " : "%D ").append(publication.getDocumentDate().getYear())
                 .append("\n");
         }
 
@@ -273,10 +274,11 @@ public class DocumentPublicationConverter {
     public static BibTeXEntry toBibTeXEntry(Document document, String defaultLanguageTag) {
         return switch (document) {
             case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis, defaultLanguageTag);
-            case Dataset dataset -> DatasetConverter.toBibTexEntry(dataset, defaultLanguageTag);
             case IntangibleProduct intangibleProduct -> IntangibleProductConverter.toBibTexEntry(
                 intangibleProduct, defaultLanguageTag);
-            case Patent patent -> PatentConverter.toBibTexEntry(patent, defaultLanguageTag);
+            case IntellectualProperty intellectualProperty ->
+                IntellectualPropertyConverter.toBibTexEntry(
+                    intellectualProperty, defaultLanguageTag);
             case JournalPublication journalPublication ->
                 JournalPublicationConverter.toBibTexEntry(journalPublication, defaultLanguageTag);
             case Monograph monograph ->
@@ -306,13 +308,12 @@ public class DocumentPublicationConverter {
         return switch (document) {
             case Thesis thesis ->
                 ThesisConverter.toTaggedFormat(thesis, defaultLanguageTag, refMan);
-            case Dataset dataset ->
-                DatasetConverter.toTaggedFormat(dataset, defaultLanguageTag, refMan);
             case IntangibleProduct intangibleProduct ->
                 IntangibleProductConverter.toTaggedFormat(intangibleProduct, defaultLanguageTag,
                     refMan);
-            case Patent patent ->
-                PatentConverter.toTaggedFormat(patent, defaultLanguageTag, refMan);
+            case IntellectualProperty intellectualProperty ->
+                IntellectualPropertyConverter.toTaggedFormat(intellectualProperty,
+                    defaultLanguageTag, refMan);
             case JournalPublication journalPublication ->
                 JournalPublicationConverter.toTaggedFormat(journalPublication, defaultLanguageTag,
                     refMan);

@@ -9,12 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mongodb.client.MongoDatabase;
-import io.minio.MinioClient;
-import io.minio.messages.Bucket;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import java.util.ArrayList;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -26,6 +23,8 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import rs.teslaris.core.service.impl.HealthCheckServiceImpl;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 
 @SpringBootTest
 public class HealthCheckServiceTest {
@@ -40,7 +39,7 @@ public class HealthCheckServiceTest {
     private MongoTemplate mongoTemplate;
 
     @Mock
-    private MinioClient minioClient;
+    private S3Client s3Client;
 
     @Mock
     private JavaMailSenderImpl javaMailSender;
@@ -150,28 +149,27 @@ public class HealthCheckServiceTest {
         assertEquals("Connection timeout", result.get("error"));
     }
 
-    // MinIO Tests
+    // S3 Tests
     @Test
-    void checkMinioShouldReturnUpWhenConnectionSuccessful() throws Exception {
+    void checkS3ShouldReturnUpWhenConnectionSuccessful() throws Exception {
         // Given
-        var bucketList = new ArrayList<Bucket>();
-        when(minioClient.listBuckets()).thenReturn(bucketList);
+        when(s3Client.listBuckets()).thenReturn(ListBucketsResponse.builder().build());
 
         // When
-        var result = healthCheckService.checkMinio();
+        var result = healthCheckService.checkS3();
 
         // Then
         assertEquals("UP", result.get("status"));
-        verify(minioClient).listBuckets();
+        verify(s3Client).listBuckets();
     }
 
     @Test
-    void checkMinioShouldReturnDownWhenConnectionFails() throws Exception {
+    void checkS3ShouldReturnDownWhenConnectionFails() throws Exception {
         // Given
-        when(minioClient.listBuckets()).thenThrow(new RuntimeException("Invalid endpoint"));
+        when(s3Client.listBuckets()).thenThrow(new RuntimeException("Invalid endpoint"));
 
         // When
-        var result = healthCheckService.checkMinio();
+        var result = healthCheckService.checkS3();
 
         // Then
         assertEquals("DOWN", result.get("status"));

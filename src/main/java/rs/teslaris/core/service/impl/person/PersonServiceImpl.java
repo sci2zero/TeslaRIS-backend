@@ -53,11 +53,13 @@ import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
+import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -101,16 +103,34 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
 @Traceable
 @Slf4j
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
+
+    private static final Comparator<PersonNameDTO> PERSON_NAME_COMPARATOR =
+        Comparator
+            .comparing(PersonNameDTO::getLastname,
+                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
+            .thenComparing(PersonNameDTO::getFirstname,
+                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
+            .thenComparing(PersonNameDTO::getOtherName,
+                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))
+            .thenComparing(PersonNameDTO::getDateFrom,
+                Comparator.nullsFirst(LocalDate::compareTo))
+            .thenComparing(PersonNameDTO::getDateTo,
+                Comparator.nullsFirst(LocalDate::compareTo))
+            .thenComparing(PersonNameDTO::getPersonNameType,
+                Comparator.nullsFirst(Enum::compareTo));
 
     private final PersonRepository personRepository;
 
@@ -164,6 +184,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private String defaultRegionCode;
 
 
+    private static PersonNameDTO normalizePersonName(PersonNameDTO dto) {
+        return new PersonNameDTO(
+            null,
+            dto.getFirstname(),
+            dto.getOtherName(),
+            dto.getLastname(),
+            dto.getDateFrom(),
+            dto.getDateTo(),
+            dto.getPersonNameType()
+        );
+    }
+
     @Override
     protected JpaRepository<Person, Integer> getEntityRepository() {
         return personRepository;
@@ -215,6 +247,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         return PersonConverter.toDTO(person.get());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PersonSnapshotDTO readPersonSnapshot(Integer id) {
+        return PersonConverter.toSnapshotDTO(findOne(id));
     }
 
     @Override
@@ -361,7 +399,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             var employment = new Employment(
                 null, null, status, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                institution, false, new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 personDTO.getEmploymentPosition(), new HashSet<>()
             );
             person.addInvolvement(employment);
@@ -374,15 +413,35 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void setPersonBiography(List<MultilingualContentDTO> biographyDTO, Integer personId) {
         var personToUpdate = findOne(personId);
+
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
         personToUpdate.getBiography().clear();
         biographyDTO.stream().map(biography -> {
-            var languageTag = languageTagService.findOne(biography.getLanguageTagId());
-            return new MultiLingualContent(languageTag, biography.getContent(),
+            // A translation whose language tag is gone is dropped, the rest are kept.
+            var languageTag = RestorationSupport.resolveOptional(biography.getLanguageTagId(),
+                languageTagService, languageTagService::findOne, "biography.languageTagId",
+                "restoreLanguageTagMissingMessage");
+
+            return Objects.isNull(languageTag) ? null
+                : new MultiLingualContent(languageTag, biography.getContent(),
                 biography.getPriority());
-        }).forEach(biography -> {
+        }).filter(Objects::nonNull).forEach(biography -> {
             personToUpdate.getBiography().add(biography);
             this.save(personToUpdate);
         });
+
+        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
 
         personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
             indexPersonBiography(index, personToUpdate);
@@ -394,15 +453,35 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void setPersonKeyword(List<MultilingualContentDTO> keywordDTO, Integer personId) {
         var personToUpdate = findOne(personId);
+
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
         personToUpdate.getKeyword().clear();
         keywordDTO.stream().map(keyword -> {
-            var languageTag = languageTagService.findOne(keyword.getLanguageTagId());
-            return new MultiLingualContent(languageTag, keyword.getContent(),
+            // A translation whose language tag is gone is dropped, the rest are kept.
+            var languageTag = RestorationSupport.resolveOptional(keyword.getLanguageTagId(),
+                languageTagService, languageTagService::findOne, "keyword.languageTagId",
+                "restoreLanguageTagMissingMessage");
+
+            return Objects.isNull(languageTag) ? null
+                : new MultiLingualContent(languageTag, keyword.getContent(),
                 keyword.getPriority());
-        }).forEach(keyword -> {
+        }).filter(Objects::nonNull).forEach(keyword -> {
             personToUpdate.getKeyword().add(keyword);
             this.save(personToUpdate);
         });
+
+        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
 
         personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
             setPersonIndexKeywords(index, personToUpdate);
@@ -415,6 +494,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO) {
         var personToUpdate = findOne(personId);
 
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
         personToUpdate.getName().setFirstname(personNameDTO.getFirstname());
         personToUpdate.getName().setOtherName(personNameDTO.getOtherName());
         personToUpdate.getName().setLastname(personNameDTO.getLastname());
@@ -424,7 +505,21 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             Objects.requireNonNullElse(personNameDTO.getPersonNameType(),
                 PersonNameType.PRESENTED_NAME));
 
+        updateUserName(personToUpdate);
+
         save(personToUpdate);
+
+        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
@@ -435,13 +530,30 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void setPersonMainName(Integer personNameId, Integer personId) {
         var personToUpdate = findOne(personId);
+
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
         var chosenName = personNameService.findOne(personNameId);
 
         personToUpdate.getOtherNames().add(personToUpdate.getName());
         personToUpdate.setName(chosenName);
         personToUpdate.getOtherNames().remove(chosenName);
 
+        updateUserName(personToUpdate);
+
         this.save(personToUpdate);
+
+        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
@@ -453,22 +565,54 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
         var personToUpdate = findOne(personId);
 
-        var personNameIds = personToUpdate.getOtherNames().stream().map(PersonName::getId)
-            .collect(Collectors.toList());
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        var currentNames = oldPerson.getPersonOtherNames().stream()
+            .map(PersonServiceImpl::normalizePersonName)
+            .sorted(PERSON_NAME_COMPARATOR)
+            .toList();
+
+        var requestedNames = personNameDTO.stream()
+            .map(PersonServiceImpl::normalizePersonName)
+            .sorted(PERSON_NAME_COMPARATOR)
+            .toList();
+
+        if (currentNames.equals(requestedNames)) {
+            return;
+        }
+
+        var personNameIds = personToUpdate.getOtherNames().stream()
+            .map(PersonName::getId)
+            .filter(Objects::nonNull)
+            .toList();
 
         personToUpdate.getOtherNames().clear();
         personNameService.deletePersonNamesWithIds(personNameIds);
 
-        personNameDTO.stream().map(
-                personName -> new PersonName(personName.getFirstname(), personName.getOtherName(),
-                    personName.getLastname(), personName.getDateFrom(), personName.getDateTo(),
-                    personName.getPersonNameType()))
-            .forEach(personName -> {
-                personToUpdate.getOtherNames().add(personName);
-                personRepository.save(personToUpdate);
-            });
+        personNameDTO.stream()
+            .map(dto -> new PersonName(
+                dto.getFirstname(),
+                dto.getOtherName(),
+                dto.getLastname(),
+                dto.getDateFrom(),
+                dto.getDateTo(),
+                dto.getPersonNameType()))
+            .forEach(personToUpdate.getOtherNames()::add);
 
-        save(personToUpdate);
+        this.save(personToUpdate);
+
+        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
+
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
         }
@@ -478,11 +622,25 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void addPersonOtherName(PersonNameDTO personNameDTO, Integer personId) {
         personRepository.findApprovedByIdWithOtherNames(personId).ifPresent(personToUpdate -> {
+            var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
             personToUpdate.getOtherNames().add(
                 new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
                     personNameDTO.getLastname(), personNameDTO.getDateFrom(),
                     personNameDTO.getDateTo(), personNameDTO.getPersonNameType()));
             personRepository.save(personToUpdate);
+
+            var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
 
             var savedPerson = save(personToUpdate);
 
@@ -504,6 +662,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional
     public void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo) {
         var personToUpdate = findOne(personId);
+
+        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        var newPerson = new PersonSnapshotDTO(oldPerson);
+        personalInfo.setId(personId);
+        newPerson.setPersonalInfo(personalInfo);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PERSON.name(),
+                personId,
+                oldPerson,
+                newPerson,
+                RevisionType.UPDATE
+            )
+        );
+
         setAllPersonIdentifiers(personToUpdate, personalInfo);
 
         var personalInfoToUpdate = personToUpdate.getPersonalInfo();
@@ -581,8 +755,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return;
         }
 
-        var countryId = source.getCountryId();
-        target.setCountry(Objects.nonNull(countryId) ? countryService.findOne(countryId) : null);
+        target.setCountry(RestorationSupport.resolveOptional(source.getCountryId(),
+            countryService, countryService::findOne,
+            "personalInfo.postalAddress.countryId",
+            "restoreCountryMissingMessage"));
 
         target.getStreetAndNumber().clear();
         setPersonStreetAndNumberInfo(person, target, source);
@@ -864,9 +1040,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.INTANGIBLE_PRODUCT.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
-            DocumentPublicationType.DATASET.name());
-        documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
-            DocumentPublicationType.PATENT.name());
+            DocumentPublicationType.INTELLECTUAL_PROPERTY.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.THESIS.name());
 
@@ -1144,7 +1318,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             if (Objects.nonNull(employment.getOrganisationUnit())) {
                 name = employment.getOrganisationUnit().getName();
             } else {
-                name = employment.getAffiliationStatement();
+                name = employment.getDisplayOrganisationUnit();
             }
 
             name.stream()
@@ -1222,6 +1396,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personIndex.setHasInvolvements(personRepository.hasInvolvement(savedPerson.getId()));
         personIndex.setHasContributions(personRepository.hasContribution(savedPerson.getId()));
+        personIndex.setActivitiesCount(Objects.requireNonNullElse(
+            involvementRepository.countActivitiesForPerson(savedPerson.getId()), 0));
     }
 
     private void setPersonIndexKeywords(PersonIndex personIndex, Person savedPerson) {
@@ -1782,6 +1958,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         personIndex.getBirthdateSortable().substring(0, 4));
                 }
             });
+        }
+    }
+
+    private void updateUserName(Person personToUpdate) {
+        if (Objects.nonNull(personToUpdate.getUser())) {
+            personToUpdate.getUser().setFirstname(personToUpdate.getName().getFirstname());
+            personToUpdate.getUser().setLastName(personToUpdate.getName().getLastname());
         }
     }
 }

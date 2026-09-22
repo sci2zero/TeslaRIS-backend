@@ -3,7 +3,6 @@ package rs.teslaris.core.controller.document;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
@@ -221,7 +222,8 @@ public class ThesisController {
         var role = tokenUtil.extractUserRoleFromToken(bearerToken);
 
         if (role.equals("RESEARCHER") &&
-            (Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isEmpty())) {
+            !FlexibleDate.isDatePresentAndValid(
+                FlexibleDateConverter.fromDTO(thesis.getDocumentDate()))) {
             throw new ThesisException(
                 "You have to provide document date when adding thesis as reference.");
         } else if (role.equals("INSTITUTIONAL_LIBRARIAN")) {

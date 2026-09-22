@@ -35,12 +35,16 @@ public class FundingApplicationConverter {
             fundingPart -> dto.getOtherFundingSources()
                 .add(FundingPartConverter.toDTO(fundingPart)));
 
-        dto.setRequestedAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(fundingApplication.getRequestedAmount())) {
+            dto.setRequestedAmount(new MonetaryAmountDTO());
             dto.getRequestedAmount().setAmount(
                 fundingApplication.getRequestedAmount().getAmount());
             dto.getRequestedAmount().setCurrencyId(
                 fundingApplication.getRequestedAmount().getCurrency().getId());
+            dto.getRequestedAmount().setCurrencyCode(
+                    fundingApplication.getRequestedAmount().getCurrency().getCode());
+            dto.getRequestedAmount().setCurrencySymbol(
+                    fundingApplication.getRequestedAmount().getCurrency().getSymbol());
         }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
@@ -59,6 +63,10 @@ public class FundingApplicationConverter {
 
         fundingApplication.getDocuments().forEach(
             document -> dto.getDocuments().add(DocumentFileConverter.toDTO(document)));
+
+        if (Objects.nonNull(fundingApplication.getSubmitter())) {
+            dto.setSubmitterId(fundingApplication.getSubmitter().getId());
+        }
 
         return dto;
     }

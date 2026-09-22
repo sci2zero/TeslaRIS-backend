@@ -12,7 +12,7 @@ public interface HealthCheckService {
 
     Map<String, String> checkMongo();
 
-    Map<String, String> checkMinio();
+    Map<String, String> checkS3();
 
     Map<String, String> checkMail();
 }

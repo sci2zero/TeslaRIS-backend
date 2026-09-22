@@ -14,4 +14,6 @@ public interface CommonExportService {
     void exportEventsToCommonModel(boolean allTime);
 
     void exportDocumentsToCommonModel(boolean allTime, List<ExportPublicationType> exportTypes);
+
+    void deleteDocumentFromCommonModel(Integer documentId, ExportPublicationType exportType);
 }

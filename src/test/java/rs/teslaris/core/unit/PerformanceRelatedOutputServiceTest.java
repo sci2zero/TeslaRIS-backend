@@ -29,10 +29,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
@@ -200,7 +202,7 @@ public class PerformanceRelatedOutputServiceTest {
     public void shouldCreatePerformanceRelatedOutput() {
         // Given
         var dto = new PerformanceRelatedOutputDTO();
-        dto.setDocumentDate("2023-07-09");
+        dto.setDocumentDate(new FlexibleDateDTO(2023, 7, 9, null));
         dto.setType(PerformanceRelatedOutputType.ART_PERFORMANCE);
 
         var output = new PerformanceRelatedOutput();
@@ -230,7 +232,7 @@ public class PerformanceRelatedOutputServiceTest {
     public void shouldCreatePerformanceRelatedOutputWithoutIndexing() {
         // Given
         var dto = new PerformanceRelatedOutputDTO();
-        dto.setDocumentDate("2023-07-09");
+        dto.setDocumentDate(new FlexibleDateDTO(2023, 7, 9, null));
 
         var output = new PerformanceRelatedOutput();
         output.setId(1);
@@ -258,12 +260,12 @@ public class PerformanceRelatedOutputServiceTest {
         // Given
         var outputId = 1;
         var dto = new PerformanceRelatedOutputDTO();
-        dto.setDocumentDate("2024");
+        dto.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
         dto.setType(PerformanceRelatedOutputType.MUSICAL_PERFORMANCE);
 
         var outputToUpdate = new PerformanceRelatedOutput();
         outputToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        outputToUpdate.setDocumentDate("2023");
+        outputToUpdate.setDocumentDate(new FlexibleDate(2023));
         outputToUpdate.setContributors(new HashSet<>());
         outputToUpdate.setLanguages(new HashSet<>());
 
@@ -320,7 +322,7 @@ public class PerformanceRelatedOutputServiceTest {
     public void shouldReindexPerformanceRelatedOutputs() {
         // Given
         var output = new PerformanceRelatedOutput();
-        output.setDocumentDate("2024");
+        output.setDocumentDate(new FlexibleDate(2024));
         var outputs = List.of(output);
         var page1 = new PageImpl<>(outputs.subList(0, 1), PageRequest.of(0, 10), outputs.size());
 
@@ -340,7 +342,7 @@ public class PerformanceRelatedOutputServiceTest {
         // Given
         var output = new PerformanceRelatedOutput();
         output.setId(1);
-        output.setDocumentDate("2024");
+        output.setDocumentDate(new FlexibleDate(2024));
 
         var index = new DocumentPublicationIndex();
 

@@ -95,6 +95,7 @@ public class FundingCall extends BaseEntity {
 
 
     public void addContributor(PersonFundingCallContribution contributor) {
+        contributor.setFundingCall(this);
         this.contributors.add(contributor);
     }
 }

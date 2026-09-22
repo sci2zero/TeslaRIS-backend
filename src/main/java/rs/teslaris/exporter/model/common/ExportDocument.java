@@ -10,6 +10,8 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import rs.teslaris.core.model.document.GeneticMaterialType;
+import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.MaterialProductType;
 import rs.teslaris.core.model.document.MonographPublicationType;
@@ -136,6 +138,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("monograph_publication_type")
     private MonographPublicationType monographPublicationType;
 
+    @Field("intangible_product_type")
+    private IntangibleProductType intangibleProductType;
+
     @Field("monograph")
     private ExportDocument monograph;
 
@@ -153,6 +158,9 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("performance_related_output_type")
     private PerformanceRelatedOutputType performanceRelatedOutputType;
+
+    @Field("intellectual_property_type")
+    private IntellectualPropertyType intellectualPropertyType;
 
     @Field("thesis_grantor")
     private ExportOrganisationUnit thesisGrantor;

@@ -2,15 +2,12 @@ package rs.teslaris.core.dto.person.involvement;
 
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.model.person.DegreeType;
 import rs.teslaris.core.model.person.EducationStatus;
 
@@ -31,12 +28,10 @@ public class EducationDTO extends InvolvementDTO {
     private EducationStatus educationStatus;
 
     @Valid
-    private List<MultilingualContentDTO> degreeCode;
+    private List<MultilingualContentDTO> courseCode;
 
     @Valid
     private List<MultilingualContentDTO> degreeClassification;
-
-    private Set<Integer> researchAreasId = new HashSet<>();
 
     private Integer thesisId;
 
@@ -46,8 +41,6 @@ public class EducationDTO extends InvolvementDTO {
     private List<MultilingualContentDTO> displaySupervisors;
 
     // used only for responses
-
-    private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
 
     private List<String> supervisorNames = new ArrayList<>();
 

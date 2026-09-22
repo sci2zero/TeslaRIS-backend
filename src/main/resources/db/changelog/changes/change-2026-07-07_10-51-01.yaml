@@ -1,0 +1,188 @@
+databaseChangeLog:
+- changeSet:
+    id: 1783421474091-15
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: educations_research_areas
+        constraintName: fkbk7c06ort4gowfov07njc51jd
+- changeSet:
+    id: 1783421474091-16
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: educations_research_areas
+        constraintName: fkj8e0qmtosov9wqufjy9m4fsk3
+- changeSet:
+    id: 1783421474091-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_research_areas_pkey
+            name: involvement_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: involvements_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: involvements_research_areas
+- changeSet:
+    id: 1783421474091-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_research_areas_pkey
+            name: person_contribution_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_contributions_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: person_contributions_research_areas
+- changeSet:
+    id: 1783421474091-3
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: person_contributions
+- changeSet:
+    id: 1783421474091-4
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: person_event_contributions
+- changeSet:
+    id: 1783421474091-5
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1783421474091-6
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: person_project_contribution
+- changeSet:
+    id: 1783421474091-7
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: person_contributions
+- changeSet:
+    id: 1783421474091-8
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: person_event_contributions
+- changeSet:
+    id: 1783421474091-9
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1783421474091-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: person_project_contribution
+- changeSet:
+    id: 1783421474091-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: person_document_contribution
+- changeSet:
+    id: 1783421474091-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: person_document_contribution
+- changeSet:
+    id: 1783421474091-13
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: person_contributions_research_areas
+        constraintName: fkrlfej0np69foaqda59ddhgm55
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+- changeSet:
+    id: 1783421474091-14
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: involvements_research_areas
+        constraintName: fktowl48xwxbrf54aq0d79mupd2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+

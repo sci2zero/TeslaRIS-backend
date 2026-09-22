@@ -38,6 +38,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -50,6 +51,7 @@ import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -58,7 +60,9 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -119,6 +123,15 @@ public class MonographServiceTest {
 
     @Mock
     private DocumentLookupService documentLookupService;
+
+    @Mock
+    private CountryService countryService;
+
+    @Mock
+    private EventService eventService;
+
+    @Mock
+    private PublisherService publisherService;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -236,7 +249,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageIds(new ArrayList<>());
-        monographDTO.setDocumentDate("2025");
+        monographDTO.setDocumentDate(new FlexibleDateDTO(2025, null, null, null));
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.APPROVED);
@@ -262,7 +275,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageIds(new ArrayList<>());
-        monographDTO.setDocumentDate("2025");
+        monographDTO.setDocumentDate(new FlexibleDateDTO(2025, null, null, null));
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.REQUESTED);

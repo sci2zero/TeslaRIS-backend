@@ -29,8 +29,8 @@ import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
 @AllArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DC implements PublicationConvertable, EventConvertable, OrgUnitConvertable,
-    PersonConvertable,
+public class DC
+    implements PublicationConvertable, EventConvertable, OrgUnitConvertable, PersonConvertable,
     PatentConvertable, ProductConvertable {
 
     @XmlElement(name = "title", namespace = "http://purl.org/dc/elements/1.1/")

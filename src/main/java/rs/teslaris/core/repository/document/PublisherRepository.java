@@ -10,11 +10,8 @@ import rs.teslaris.core.model.document.Publisher;
 @Repository
 public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
 
-    @Query("SELECT COUNT(d) > 0 FROM Dataset d JOIN d.publisher p WHERE p.id = :publisherId")
-    boolean hasPublishedDataset(Integer publisherId);
-
-    @Query("SELECT COUNT(pa) > 0 FROM Patent pa JOIN pa.publisher p WHERE p.id = :publisherId")
-    boolean hasPublishedPatent(Integer publisherId);
+    @Query("SELECT COUNT(ip) > 0 FROM IntellectualProperty ip JOIN ip.publisher p WHERE p.id = :publisherId")
+    boolean hasPublishedIntellectualProperty(Integer publisherId);
 
     @Query("SELECT COUNT(pr) > 0 FROM Proceedings pr JOIN pr.publisher p WHERE p.id = :publisherId")
     boolean hasPublishedProceedings(Integer publisherId);
@@ -26,12 +23,8 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
     boolean hasPublishedThesis(Integer publisherId);
 
     @Modifying
-    @Query("UPDATE Dataset d SET d.publisher = null WHERE d.publisher.id = :publisherId")
-    void unbindDataset(Integer publisherId);
-
-    @Modifying
-    @Query("UPDATE Patent p SET p.publisher = null WHERE p.publisher.id = :publisherId")
-    void unbindPatent(Integer publisherId);
+    @Query("UPDATE IntellectualProperty ip SET ip.publisher = null WHERE ip.publisher.id = :publisherId")
+    void unbindIntellectualProperty(Integer publisherId);
 
     @Modifying
     @Query("UPDATE Proceedings p SET p.publisher = null WHERE p.publisher.id = :publisherId")

@@ -178,11 +178,11 @@ public class PersonContributionConverter {
         if (name.contains("академик")) {
             return PersonalTitle.ACADEMIC;
         } else if (name.contains("ум")) {
-            return PersonalTitle.DR_ART;
+            return PersonalTitle.PHD_ART;
         } else if (name.startsWith("мр")) {
             return PersonalTitle.MR;
         } else if (name.startsWith("др")) {
-            return PersonalTitle.DR;
+            return PersonalTitle.PHD;
         } else if (name.isBlank()) {
             return PersonalTitle.NONE;
         }

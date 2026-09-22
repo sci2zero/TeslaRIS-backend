@@ -28,6 +28,7 @@ public class FundingConverter {
         dto.setDateTo(funding.getDateTo());
         dto.setOaMandated(funding.getOaMandated());
         dto.setOaMandateUrl(funding.getOaMandateUrl());
+        dto.setInternalInvestment(funding.getInternalInvestment());
 
         if (Objects.nonNull(funding.getProject())) {
             dto.setProjectId(funding.getProject().getId());
@@ -39,6 +40,10 @@ public class FundingConverter {
 
         if (Objects.nonNull(funding.getFundingCall())) {
             dto.setFundingCallId(funding.getFundingCall().getId());
+        }
+
+        if (Objects.nonNull(funding.getInvolvement())) {
+            dto.setInvolvementId(funding.getInvolvement().getId());
         }
 
         mapTranslations(funding, dto);
@@ -70,10 +75,12 @@ public class FundingConverter {
             .forEach(fp -> dto.getFundingParts().add(FundingPartConverter.toDTO(fp)));
         funding.getResearchAreas().forEach(ra -> dto.getResearchAreasId().add(ra.getId()));
 
-        dto.setAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(funding.getAmount())) {
+            dto.setAmount(new MonetaryAmountDTO());
             dto.getAmount().setAmount(funding.getAmount().getAmount());
             dto.getAmount().setCurrencyId(funding.getAmount().getCurrency().getId());
+            dto.getAmount().setCurrencyCode(funding.getAmount().getCurrency().getCode());
+            dto.getAmount().setCurrencySymbol(funding.getAmount().getCurrency().getSymbol());
         }
     }
 

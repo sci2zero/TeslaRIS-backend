@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -40,11 +41,13 @@ import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
@@ -95,6 +98,15 @@ public class MonographPublicationServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private CountryService countryService;
+
+    @Mock
+    private EventService eventService;
 
     @InjectMocks
     private MonographPublicationServiceImpl monographPublicationService;
@@ -215,6 +227,7 @@ public class MonographPublicationServiceTest {
         var monographPublicationDTO = new MonographPublicationDTO();
         monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
+        newMonographPublication.setMonograph(new Monograph());
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{

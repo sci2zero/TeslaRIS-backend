@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,10 +19,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.PublisherConverter;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.indexrepository.PublisherIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -36,7 +37,10 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
@@ -56,15 +60,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
     private final IndexBulkUpdateService indexBulkUpdateService;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Override
     @Transactional(readOnly = true)
     public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
-        return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
-            MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
-            MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
-            MultilingualContentConverter.getMultilingualContentDTO(p.getState()),
-            p.getCountry() != null ? p.getCountry().getId() : null));
+        return this.findAll(pageable).map(PublisherConverter::toDTO);
     }
 
     @Override
@@ -96,6 +98,16 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         setCommonFields(publisher, publisherDTO);
         var savedPublisher = this.save(publisher);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PUBLISHER.name(),
+                savedPublisher.getId(),
+                null,
+                PublisherConverter.toDTO(savedPublisher),
+                RevisionType.CREATE
+            )
+        );
+
         if (index) {
             indexPublisher(savedPublisher, new PublisherIndex());
         }
@@ -112,7 +124,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
 
         if (Objects.nonNull(publisherDTO.getCountryId())) {
-            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+            publisher.setCountry(RestorationSupport.resolveOptional(
+                publisherDTO.getCountryId(), countryService, countryService::findOne, "countryId",
+                "restoreCountryMissingMessage"));
         }
 
         var savedPublisher = this.save(publisher);
@@ -126,6 +140,16 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Transactional
     public void editPublisher(Integer publisherId, PublisherDTO publisherDTO) {
         var publisherToUpdate = findOne(publisherId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PUBLISHER.name(),
+                publisherId,
+                PublisherConverter.toDTO(publisherToUpdate),
+                publisherDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         publisherToUpdate.setCountry(null);
         setCommonFields(publisherToUpdate, publisherDTO);
@@ -141,8 +165,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Transactional
     public void deletePublisher(Integer publisherId) {
 
-        if (publisherRepository.hasPublishedDataset(publisherId) ||
-            publisherRepository.hasPublishedPatent(publisherId) ||
+        if (publisherRepository.hasPublishedIntellectualProperty(publisherId) ||
             publisherRepository.hasPublishedProceedings(publisherId) ||
             publisherRepository.hasPublishedIntangibleProduct(publisherId) ||
             publisherRepository.hasPublishedThesis(publisherId)) {
@@ -159,8 +182,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Override
     @Transactional
     public void forceDeletePublisher(Integer publisherId) {
-        publisherRepository.unbindDataset(publisherId);
-        publisherRepository.unbindPatent(publisherId);
+        publisherRepository.unbindIntellectualProperty(publisherId);
         publisherRepository.unbindProceedings(publisherId);
         publisherRepository.unbindIntangibleProduct(publisherId);
         publisherRepository.unbindThesis(publisherId);
@@ -212,7 +234,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getState()));
 
         if (Objects.nonNull(publisherDTO.getCountryId())) {
-            publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
+            publisher.setCountry(RestorationSupport.resolveOptional(
+                publisherDTO.getCountryId(), countryService, countryService::findOne, "countryId",
+                "restoreCountryMissingMessage"));
         }
     }
 

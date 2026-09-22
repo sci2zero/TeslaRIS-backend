@@ -1,6 +1,5 @@
 package rs.teslaris.assessment.service.interfaces;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,6 +7,8 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.ReportDTO;
 import rs.teslaris.assessment.model.ReportType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 public interface ReportingService {
@@ -26,6 +27,7 @@ public interface ReportingService {
 
     List<ReportDTO> getAvailableReportsForUser(Integer userId);
 
-    GetObjectResponse serveReportFile(String reportName, Integer userId, Integer commissionId)
+    ResponseInputStream<GetObjectResponse> serveReportFile(String reportName, Integer userId,
+                                                           Integer commissionId)
         throws IOException;
 }

@@ -9,17 +9,16 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
-import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -29,16 +28,16 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.BibliographicFormat;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
@@ -249,10 +248,10 @@ public class FairSignpostingL1Utility {
             case JournalPublicationResponseDTO ignored -> headers.add(HttpHeaders.LINK,
                 "<https://schema.org/ScholarlyArticle> ; rel=\"type\"");
             case IntangibleProductDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/Product> ; rel=\"type\"");
-            case DatasetDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Dataset> ; rel=\"type\"");
-            case PatentDTO ignored ->
+                IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
+                    "https://schema.org/Dataset" :
+                    "https://schema.org/Product" + " ; rel=\"type\"");
+            case IntellectualPropertyDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/result> ; rel=\"type\"");
             case ProceedingsResponseDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/Collection> ; rel=\"type\"");
@@ -279,8 +278,7 @@ public class FairSignpostingL1Utility {
         return switch (document) {
             case JournalPublication ignored -> "journal-publication";
             case IntangibleProduct ignored -> "product";
-            case Dataset ignored -> "dataset";
-            case Patent ignored -> "patent";
+            case IntellectualProperty ignored -> "patent";
             case Proceedings ignored -> "proceedings";
             case ProceedingsPublication ignored -> "proceedings-publication";
             case Monograph ignored -> "monograph";

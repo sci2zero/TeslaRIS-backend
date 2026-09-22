@@ -33,4 +33,8 @@ public class ProceedingsPublicationDTO extends DocumentDTO implements Importable
     private Integer proceedingsId;
 
     private List<MultilingualContentDTO> section = new ArrayList<>();
+
+    // used only for responses
+
+    private List<MultilingualContentDTO> proceedingsName = new ArrayList<>();
 }

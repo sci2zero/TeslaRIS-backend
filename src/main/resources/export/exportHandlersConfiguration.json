@@ -40,7 +40,7 @@
           "identifierSetSpec": "Patents",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportPatentConverter",
-          "publicationTypes": "PATENT"
+          "publicationTypes": "INTELLECTUAL_PROPERTY"
         },
         {
           "setSpec": "openaire_cris_persons",
@@ -54,7 +54,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -90,9 +90,8 @@
         "JOURNAL": "(DEFAULT)http://purl.org/coar/resource_type/c_0640§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "JOURNAL_PUBLICATION": "(RESEARCH_ARTICLE)http://purl.org/coar/resource_type/c_2df8fbb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(DEFAULT)http://purl.org/coar/resource_type/c_3e5a§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "THESIS": "(PHD)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(PHD_ART_PROJECT)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;http://purl.org/coar/resource_type/c_46ec§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
-        "INTANGIBLE_PRODUCT": "(DEFAULT)http://purl.org/coar/resource_type/c_5ce6§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
-        "DATASET": "(DEFAULT)http://purl.org/coar/resource_type/c_ddb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
-        "PATENT": "(DEFAULT)http://purl.org/coar/resource_type/c_15cd§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types"
+        "INTANGIBLE_PRODUCT": "(DATASET)http://purl.org/coar/resource_type/c_ddb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(DEFAULT)http://purl.org/coar/resource_type/c_5ce6§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "INTELLECTUAL_PROPERTY": "(PATENT)http://purl.org/coar/resource_type/c_15cd§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types"
       }
     },
     {
@@ -304,7 +303,7 @@
           "identifierSetSpec": "Patents",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportPatentConverter",
-          "publicationTypes": "PATENT"
+          "publicationTypes": "INTELLECTUAL_PROPERTY"
         },
         {
           "setSpec": "openaire_cris_persons",
@@ -318,7 +317,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -357,9 +356,8 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
-        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
-        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en;(DATASET)Ostalo@sr;(DATASET)Other@en",
+        "INTELLECTUAL_PROPERTY": "(PATENT)Patent@sr;(PATENT)Patent@en"
       }
     },
     {
@@ -406,7 +404,7 @@
           "identifierSetSpec": "Patents",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportPatentConverter",
-          "publicationTypes": "PATENT"
+          "publicationTypes": "INTELLECTUAL_PROPERTY"
         },
         {
           "setSpec": "openaire_cris_persons",
@@ -420,7 +418,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -454,9 +452,8 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
-        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
-        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en;(DATASET)Ostalo@sr;(DATASET)Other@en",
+        "INTELLECTUAL_PROPERTY": "(PATENT)Patent@sr;(PATENT)Patent@en"
       }
     },
     {
@@ -503,7 +500,7 @@
           "identifierSetSpec": "Patents",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportPatentConverter",
-          "publicationTypes": "PATENT"
+          "publicationTypes": "INTELLECTUAL_PROPERTY"
         },
         {
           "setSpec": "openaire_cris_persons",
@@ -517,7 +514,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -551,9 +548,8 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
-        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
-        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en;(DATASET)Ostalo@sr;(DATASET)Other@en",
+        "INTELLECTUAL_PROPERTY": "(PATENT)Patent@sr;(PATENT)Patent@en"
       }
     }
   ]

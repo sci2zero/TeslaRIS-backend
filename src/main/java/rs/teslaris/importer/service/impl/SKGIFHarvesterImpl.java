@@ -235,12 +235,17 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                             // perform metadata enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);
                             mongoTemplate.save(existingImport, "documentImports");
+                            log.info("Enriched existing import {} with SKG-IF record {}",
+                                existingImport.getIdentifier(),
+                                CommonHarvestUtility.describe(documentImport));
                             return;
                         }
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
                     if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
+                        log.info("Skipping duplicate SKG-IF record {}",
+                            CommonHarvestUtility.describe(documentImport));
                         return;
                     }
 
@@ -258,6 +263,8 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                         personService);
 
                     mongoTemplate.save(documentImport, "documentImports");
+                    log.info("Imported new SKG-IF record {}",
+                        CommonHarvestUtility.describe(documentImport));
                 });
         } catch (IllegalAccessException | InvocationTargetException e) {
             log.error("SERIOUS: Invalid converter invocation.", e);

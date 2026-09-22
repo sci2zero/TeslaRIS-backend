@@ -10,9 +10,10 @@ import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.BookSeries;
+import rs.teslaris.core.service.interfaces.ExistenceCheckable;
 
 @Service
-public interface BookSeriesService {
+public interface BookSeriesService extends ExistenceCheckable {
 
     Page<BookSeriesResponseDTO> readAllBookSeries(Pageable pageable);
 

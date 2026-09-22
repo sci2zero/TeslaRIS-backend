@@ -67,4 +67,9 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     Set<Integer> findEmploymentInstitutionIdsByEventIdAndAuthorContribution(
         Integer eventId
     );
+
+    @Modifying
+    @Query("UPDATE PersonEventContribution pec SET pec.deleted = true " +
+        "WHERE pec.event.id = :eventId")
+    void deleteEventContributions(Integer eventId);
 }

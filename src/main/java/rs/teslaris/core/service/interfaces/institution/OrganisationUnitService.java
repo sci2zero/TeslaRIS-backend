@@ -113,6 +113,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     OrganisationUnit findOrganisationUnitByAccountingId(String accountingId);
 
+    OrganisationUnitIndex findOrganisationUnitByTaxNumber(String taxNumber);
+
     String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
         throws IOException;
 
@@ -130,4 +132,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         Integer rootOuId, boolean onlyOnesThatHaveLibrary);
 
     void migrateInstitutionInternalIdentifiers(InternalIdentifierMigrationDTO dto);
+
+    List<OrganisationUnit> getOrganisationUnitsByIds(List<Integer> institutionIds);
 }

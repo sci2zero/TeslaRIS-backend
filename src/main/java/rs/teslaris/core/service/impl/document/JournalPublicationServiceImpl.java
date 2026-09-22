@@ -1,9 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,9 +45,12 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -157,10 +160,20 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                                        Boolean index) {
         var publication = new JournalPublication();
 
-        setCommonFields(publication, publicationDTO);
+        setCommonFields(publication, publicationDTO, new HashSet<>());
         setJournalPublicationRelatedFields(publication, publicationDTO);
 
         var savedPublication = journalPublicationJPAService.save(publication);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                savedPublication.getId(),
+                null,
+                JournalPublicationConverter.toDTO(savedPublication),
+                RevisionType.CREATE
+            )
+        );
 
         if (index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
@@ -181,16 +194,20 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
 
-        var oldContributorIds =
-            publicationToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                publicationId,
+                JournalPublicationConverter.toDTO(publicationToUpdate),
+                publicationDTO,
+                RevisionType.UPDATE
+            )
+        );
 
-        clearCommonFields(publicationToUpdate);
+        var oldContributorIds = clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
 
-        setCommonFields(publicationToUpdate, publicationDTO);
+        setCommonFields(publicationToUpdate, publicationDTO, oldContributorIds);
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
@@ -224,10 +241,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
+        updateIndexedPersonContributions(publicationToDelete);
+
         deleteProofsAndFileItems(publicationToDelete);
 
         journalPublicationJPAService.delete(journalPublicationId);
-        this.delete(journalPublicationId);
+        documentRepository.deleteDocumentContributions(journalPublicationId);
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(journalPublicationId));
@@ -331,6 +350,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         publication.setVolume(publicationDTO.getVolume());
         publication.setIssue(publicationDTO.getIssue());
 
+        RestorationSupport.requireExists(publicationDTO.getJournalId(), journalService,
+            "journalId");
         publication.setJournal(journalService.findJournalById(publicationDTO.getJournalId()));
 
         publication.setSection(

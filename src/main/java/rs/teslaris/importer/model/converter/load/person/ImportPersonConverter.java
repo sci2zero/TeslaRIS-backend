@@ -144,10 +144,10 @@ public class ImportPersonConverter implements RecordConverter<Person, ImportPers
 
         dto.setRole(new ArrayList<>());
         dto.setProofs(new ArrayList<>());
-        dto.setAffiliationStatement(new ArrayList<>());
+        dto.setDisplayOrganisationUnit(new ArrayList<>());
 
         if (Objects.isNull(organisationUnit)) {
-            dto.setAffiliationStatement(
+            dto.setDisplayOrganisationUnit(
                 multilingualContentConverter.toDTO(person.getAffiliation().getDisplayName()));
         } else {
             dto.setOrganisationUnitId(organisationUnit.getId());

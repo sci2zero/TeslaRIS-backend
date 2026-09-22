@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import io.minio.GetObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.util.HashSet;
@@ -23,7 +22,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import okhttp3.Headers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +37,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -51,6 +49,9 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.exporter.service.impl.RoCrateExportServiceImpl;
 import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @SpringBootTest
 class RoCrateExportServiceTest {
@@ -124,7 +125,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldCreateZipWithMetadataAndPreviewOnlyWhenNoFiles() throws Exception {
         var documentId = 2;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -147,7 +148,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldIncludeOnlyApprovedOpenAccessFiles() throws Exception {
         var documentId = 3;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         var approvedFile = mock(DocumentFile.class);
         when(approvedFile.getApproveStatus()).thenReturn(ApproveStatus.APPROVED);
@@ -174,14 +175,10 @@ class RoCrateExportServiceTest {
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         var body = new ByteArrayInputStream("data".getBytes());
-        var headers = Headers.of("Content-Length", "4");
 
-        var response = new GetObjectResponse(
-            headers,
-            "test-bucket",
-            "us-east-1",
-            "server-file.pdf",
-            body
+        var response = new ResponseInputStream<>(
+            GetObjectResponse.builder().contentLength(4L).build(),
+            AbortableInputStream.create(body)
         );
 
         when(fileService.loadAsResource(any())).thenReturn(response);
@@ -204,7 +201,7 @@ class RoCrateExportServiceTest {
     @Test
     void shouldWriteValidZipStructure() throws Exception {
         var documentId = 5;
-        var document = mock(Dataset.class);
+        var document = mock(IntangibleProduct.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -245,7 +242,7 @@ class RoCrateExportServiceTest {
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        when(documentService.findOne(any())).thenReturn(mock(Dataset.class));
+        when(documentService.findOne(any())).thenReturn(mock(IntangibleProduct.class));
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});

@@ -33,6 +33,16 @@ public class PersonNameDTO {
     private PersonNameType personNameType;
 
 
+    public PersonNameDTO(PersonNameDTO other) {
+        this.id = other.id;
+        this.firstname = other.firstname;
+        this.otherName = other.otherName;
+        this.lastname = other.lastname;
+        this.dateFrom = other.dateFrom;
+        this.dateTo = other.dateTo;
+        this.personNameType = other.personNameType;
+    }
+
     @Override
     public String toString() {
         if (Objects.isNull(otherName) || otherName.isEmpty()) {

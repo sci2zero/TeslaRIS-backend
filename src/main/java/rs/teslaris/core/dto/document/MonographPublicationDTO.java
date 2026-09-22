@@ -28,4 +28,8 @@ public class MonographPublicationDTO extends DocumentDTO {
     private Integer monographId;
 
     private List<MultilingualContentDTO> section = new ArrayList<>();
+
+    // used only for responses
+
+    private List<MultilingualContentDTO> monographName = new ArrayList<>();
 }

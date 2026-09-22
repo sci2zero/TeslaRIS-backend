@@ -44,6 +44,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -51,6 +52,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.document.ThesisConverter;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -58,6 +60,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -85,6 +88,8 @@ import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -135,7 +140,7 @@ public class ThesisServiceTest {
     private PublisherService publisherService;
 
     @Mock
-    private LanguageTagService languageService;
+    private LanguageTagService languageTagService;
 
     @Mock
     private CommissionRepository commissionRepository;
@@ -160,6 +165,15 @@ public class ThesisServiceTest {
 
     @Mock
     private TaskManagerService taskManagerService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private CountryService countryService;
+
+    @Mock
+    private LanguageService languageService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -191,7 +205,7 @@ public class ThesisServiceTest {
         var dto = new ThesisDTO();
         dto.setOrganisationUnitId(ou.getId());
         var document = new Thesis();
-        document.setDocumentDate("2023");
+        document.setDocumentDate(new FlexibleDate(2023));
         document.setOrganisationUnit(ou);
         document.setThesisType(ThesisType.PHD);
 
@@ -222,13 +236,13 @@ public class ThesisServiceTest {
         // Given
         var thesisId = 1;
         var thesisDTO = new ThesisDTO();
-        thesisDTO.setDocumentDate("2024");
+        thesisDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
         thesisDTO.setOrganisationUnitId(1);
         thesisDTO.setThesisType(ThesisType.PHD);
 
         var thesisToUpdate = new Thesis();
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        thesisToUpdate.setDocumentDate("2023");
+        thesisToUpdate.setDocumentDate(new FlexibleDate(2023));
 
         when(organisationUnitService.findOne(1)).thenReturn(
             new OrganisationUnit() {{
@@ -290,7 +304,7 @@ public class ThesisServiceTest {
         // Given
         var thesis = new Thesis();
         thesis.setThesisType(ThesisType.UNDERGRADUATE_THESIS);
-        thesis.setDocumentDate("2024");
+        thesis.setDocumentDate(new FlexibleDate(2024));
         thesis.setOrganisationUnit(new OrganisationUnit());
 
         var theses = List.of(thesis);
@@ -636,7 +650,7 @@ public class ThesisServiceTest {
         var thesis = new Thesis();
         thesis.setTitle(new HashSet<>(Set.of(new MultiLingualContent())));
         thesis.setThesisDefenceDate(LocalDate.now());
-        thesis.setDocumentDate(String.valueOf(thesis.getThesisDefenceDate().getYear()));
+        thesis.setDocumentDate(new FlexibleDate(thesis.getThesisDefenceDate().getYear()));
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
@@ -945,7 +959,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
@@ -976,7 +992,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
         when(thesisJPAService.findOne(substituteId)).thenReturn(substituteThesis);
@@ -1005,7 +1023,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         thesis.setSubstitutedBy(substitutionThesis);
@@ -1037,7 +1057,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
 
         thesis.setSubstitutedBy(substitutionThesis);
         substitutionThesis.setSubstituteFor(thesis);

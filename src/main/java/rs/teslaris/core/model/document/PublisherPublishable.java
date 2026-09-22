@@ -1,7 +1,7 @@
 package rs.teslaris.core.model.document;
 
 public sealed interface PublisherPublishable
-    permits Dataset, GeneticMaterial, MaterialProduct, Monograph, Patent, Proceedings,
+    permits GeneticMaterial, MaterialProduct, Monograph, IntellectualProperty, Proceedings,
     IntangibleProduct,
     Thesis {
 

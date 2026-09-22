@@ -214,7 +214,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 var optionalDocument =
                     ScopusConverter.toCommonImportModel(entry, scopusImportUtility, true);
                 if (optionalDocument.isEmpty()) {
-                    log.info("Harvested entry is retracted: {}", entry.title());
+                    log.info("Skipping harvested entry (unsupported type or missing event " +
+                        "information): {}", entry.title());
                     continue;
                 }
 
@@ -223,6 +224,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 var embedding = CommonImportUtility.generateEmbedding(optionalDocument.get());
                 if (DeduplicationUtil.isDuplicate(existingImport, embedding,
                     optionalDocument.get())) {
+                    log.info("Skipping duplicate Scopus record {}",
+                        CommonHarvestUtility.describe(optionalDocument.get()));
                     continue;
                 }
 
@@ -240,6 +243,8 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                     personService);
 
                 mongoTemplate.save(documentImport, "documentImports");
+                log.info("Imported new Scopus record {}",
+                    CommonHarvestUtility.describe(documentImport));
             }
         }
     }

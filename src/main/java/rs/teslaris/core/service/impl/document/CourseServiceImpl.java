@@ -1,9 +1,11 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.CourseConverter;
 import rs.teslaris.core.dto.document.CourseDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -33,6 +36,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -45,28 +50,24 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
 
 
     @Autowired
-    public CourseServiceImpl(
-        EventIndexRepository eventIndexRepository,
-        MultilingualContentService multilingualContentService,
-        PersonContributionService personContributionService,
-        EventRepository eventRepository,
-        IndexBulkUpdateService indexBulkUpdateService,
-        CommissionRepository commissionRepository,
-        EventsRelationRepository eventsRelationRepository,
-        SearchService<EventIndex> searchService,
-        CountryService countryService,
-        OrganisationUnitService organisationUnitService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        ResearchAreaService researchAreaService,
-        CourseJPAServiceImpl courseJPAService,
-        CourseRepository courseRepository
-    ) {
+    public CourseServiceImpl(EventIndexRepository eventIndexRepository,
+                             MultilingualContentService multilingualContentService,
+                             PersonContributionService personContributionService,
+                             EventRepository eventRepository,
+                             IndexBulkUpdateService indexBulkUpdateService,
+                             CommissionRepository commissionRepository,
+                             DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                             ApplicationEventPublisher applicationEventPublisher,
+                             EventsRelationRepository eventsRelationRepository,
+                             SearchService<EventIndex> searchService, CountryService countryService,
+                             OrganisationUnitService organisationUnitService,
+                             ResearchAreaService researchAreaService,
+                             CourseJPAServiceImpl courseJPAService,
+                             CourseRepository courseRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository,
-            documentPublicationIndexRepository, eventsRelationRepository, searchService,
-            countryService, organisationUnitService,
-            researchAreaService);
-
+            documentPublicationIndexRepository, applicationEventPublisher, eventsRelationRepository,
+            searchService, countryService, organisationUnitService, researchAreaService);
         this.courseJPAService = courseJPAService;
         this.courseRepository = courseRepository;
     }
@@ -108,7 +109,7 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     public Course createCourse(CourseDTO dto, Boolean index) {
         var course = new Course();
 
-        setEventCommonFields(course, EventType.COURSE, dto);
+        setEventCommonFields(course, EventType.COURSE, dto, new HashSet<>());
         setCourseFields(course, dto);
 
         var saved = courseJPAService.save(course);
@@ -122,32 +123,39 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
 
     @Override
     @Transactional
-    public void updateCourse(Integer id, CourseDTO dto) {
-        var course = findCourseById(id);
+    public void updateCourse(Integer courseId, CourseDTO dto) {
+        var course = findCourseById(courseId);
 
-        clearEventCommonFields(course);
-        setEventCommonFields(course, EventType.COURSE, dto);
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.COURSE.name(),
+                courseId,
+                CourseConverter.toDTO(course),
+                dto,
+                RevisionType.UPDATE
+            )
+        );
+
+        var oldContributorIds = clearEventCommonFields(course);
+        setEventCommonFields(course, EventType.COURSE, dto, oldContributorIds);
         setCourseFields(course, dto);
 
         courseJPAService.save(course);
 
-        var index = eventIndexRepository.findByDatabaseId(id).orElse(new EventIndex());
+        var index = eventIndexRepository.findByDatabaseId(courseId).orElse(new EventIndex());
         clearEventIndexCommonFields(index);
         indexCourse(course, index);
     }
 
     @Override
     @Transactional
-    public void deleteCourse(Integer id) {
-        var course = courseJPAService.findOne(id);
+    public void deleteCourse(Integer courseId) {
+        var course = courseJPAService.findOne(courseId);
+        eventRepository.deleteEventContributions(courseId);
+        updateIndexedPersonContributions(course);
 
-        course.getContributions().forEach(c -> {
-            c.setDeleted(true);
-            personContributionService.save(c);
-        });
-
-        courseJPAService.delete(id);
-        eventIndexRepository.findByDatabaseId(id).ifPresent(eventIndexRepository::delete);
+        courseJPAService.delete(courseId);
+        eventIndexRepository.findByDatabaseId(courseId).ifPresent(eventIndexRepository::delete);
     }
 
     @Override

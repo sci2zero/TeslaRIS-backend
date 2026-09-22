@@ -21,6 +21,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -132,7 +133,10 @@ public class BeanConfiguration {
         threadPoolTaskExecutor.setMaxPoolSize(32);
         threadPoolTaskExecutor.setQueueCapacity(2000);
         threadPoolTaskExecutor.afterPropertiesSet();
-        return threadPoolTaskExecutor;
+
+        // Propagates the caller's SecurityContext onto the pool thread, so JPA auditing
+        // (AuditorAwareImpl) records the logged-in user instead of falling back to SCRIPT_CREATED.
+        return new DelegatingSecurityContextAsyncTaskExecutor(threadPoolTaskExecutor);
     }
 
     @Bean(name = "reindexExecutor")

@@ -74,7 +74,7 @@ public class CitationServiceImpl implements CitationService {
                                                      String languageCode) {
         var itemBuilder = new CSLItemDataBuilder()
             .id("citationId")
-            .type(deduceCSLType(index.getType()))
+            .type(deduceCSLType(index))
             .title(index.getTitleSr());
 
         if (index.getYear() > 0) {
@@ -227,19 +227,18 @@ public class CitationServiceImpl implements CitationService {
         return craftCitations(documentIndex, languageCode);
     }
 
-    private CSLType deduceCSLType(String type) {
-        if (!StringUtil.valueExists(type)) {
+    private CSLType deduceCSLType(DocumentPublicationIndex index) {
+        if (!StringUtil.valueExists(index.getType())) {
             return CSLType.ARTICLE;
         }
 
-        return switch (type) {
+        return switch (index.getType()) {
             case "JOURNAL_PUBLICATION" -> CSLType.ARTICLE_JOURNAL;
             case "PROCEEDINGS_PUBLICATION" -> CSLType.PAPER_CONFERENCE;
             case "THESIS" -> CSLType.THESIS;
             case "INTANGIBLE_PRODUCT" -> CSLType.SOFTWARE;
-            case "PATENT" -> CSLType.PATENT;
+            case "INTELLECTUAL_PROPERTY" -> CSLType.PATENT;
             case "MONOGRAPH" -> CSLType.BOOK;
-            case "DATASET" -> CSLType.DATASET;
             case "MONOGRAPH_PUBLICATION" -> CSLType.CHAPTER;
             case "PROCEEDINGS" -> CSLType.ARTICLE_MAGAZINE;
             default -> CSLType.ARTICLE; // Should never return

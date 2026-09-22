@@ -374,7 +374,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             .filter(ind -> ind.getIndicator().getCode().equals(indicatorCode))
             .sorted(Comparator.comparingInt(ind -> ind.getFromDate().getYear()))
             .map(ind -> new Pair<>(ind.getFromDate().getYear(),
-                String.valueOf(ind.getNumericValue())))
+                Objects.toString(ind.getNumericValue(), null)))
             .toList();
     }
 

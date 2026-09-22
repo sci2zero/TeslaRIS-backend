@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -43,7 +44,7 @@ public class MaterialProductControllerTest extends BaseTest {
         materialProductDTO.setSubTitle(dummyMC);
         materialProductDTO.setDescription(dummyMC);
         materialProductDTO.setKeywords(dummyMC);
-        materialProductDTO.setDocumentDate("2014-10-24");
+        materialProductDTO.setDocumentDate(new FlexibleDateDTO(2014, 10, 24, null));
         materialProductDTO.setMaterialProductType(MaterialProductType.PROTOTYPE);
         materialProductDTO.setProductUsers(dummyMC);
         materialProductDTO.setResearchAreasId(Set.of(2));
@@ -86,7 +87,9 @@ public class MaterialProductControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_MATERIAL_PRODUCT"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.documentDate").value("2014-10-24"));
+            .andExpect(jsonPath("$.documentDate.year").value(2014))
+            .andExpect(jsonPath("$.documentDate.month").value(10))
+            .andExpect(jsonPath("$.documentDate.day").value(24));
     }
 
     @Test

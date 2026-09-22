@@ -66,6 +66,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintExce
 import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
@@ -244,6 +245,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleLoadingException(HttpServletRequest request, LoadingException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RevisionRestoreException.class)
+    @ResponseBody
+    ErrorObject handleRevisionRestoreException(HttpServletRequest request,
+                                               RevisionRestoreException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)

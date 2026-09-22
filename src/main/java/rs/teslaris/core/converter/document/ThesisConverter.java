@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
@@ -284,7 +285,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
     }
 
     private static void setDCCommonFields(Thesis exportDocument, DC dcPublication) {
-        dcPublication.getDate().add(exportDocument.getDocumentDate());
+        dcPublication.getDate().add(FlexibleDate.toISOString(exportDocument.getDocumentDate()));
         dcPublication.getSource().add(repositoryName);
 
         addIdentifiers(exportDocument, dcPublication);

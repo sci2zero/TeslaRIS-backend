@@ -28,10 +28,11 @@ public class OrganisationUnitConverter {
 
         dto.setKeyword(MultilingualContentConverter.getMultilingualContentDTO(
             organisationUnit.getKeyword()));
-        dto.setResearchAreas(
-            organisationUnit.getResearchAreas().stream().map(ResearchAreaConverter::toDTO)
-                .collect(Collectors.toSet())
-        );
+
+        organisationUnit.getResearchAreas().forEach(researchArea -> {
+            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+            dto.getResearchAreasId().add(researchArea.getId());
+        });
 
         dto.setLocation(GeoLocationConverter.toDTO(organisationUnit.getLocation()));
         dto.setContact(ContactConverter.toDTO(organisationUnit.getContact()));
@@ -43,12 +44,19 @@ public class OrganisationUnitConverter {
         dto.setIsni(organisationUnit.getIsni());
         dto.setTaxNumber(organisationUnit.getTaxNumber());
         dto.setFctId(organisationUnit.getFctId());
+        dto.setGrid(organisationUnit.getGrid());
+        dto.setWikidata(organisationUnit.getWikidata());
+        dto.setNationalId(organisationUnit.getNationalId());
         dto.setUris(organisationUnit.getUris());
         dto.setAllowedThesisTypes(
-            organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
+            organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).collect(
+                Collectors.toSet()));
         dto.setSector(organisationUnit.getSector());
         dto.setStartup(organisationUnit.getStartup());
+        dto.setNumberOfEmployees(organisationUnit.getNumberOfEmployees());
         dto.setDateEstablished(organisationUnit.getDateEstablished());
+        dto.setDateDissolved(organisationUnit.getDateDissolved());
+        dto.setActive(Objects.requireNonNullElse(organisationUnit.getActive(), false));
 
         if (Objects.nonNull(organisationUnit.getPostalAddress())) {
             dto.setPostalAddress(new PostalAddressDTO());

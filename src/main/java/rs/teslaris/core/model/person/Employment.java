@@ -19,6 +19,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
@@ -45,12 +46,14 @@ public class Employment extends Involvement {
 
     public Employment(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
                       Set<DocumentFile> proofs, InvolvementType involvementType,
-                      Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                      Set<MultiLingualContent> displayOrganisationUnit, Person personInvolved,
                       OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
                       Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
+                      Set<ResearchArea> researchAreas, Set<OrganisationUnit> hostInstitutions,
                       EmploymentPosition employmentPosition, Set<MultiLingualContent> role) {
-        super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite, uris, description, keywords);
+        super(dateFrom, dateTo, approveStatus, proofs, involvementType, displayOrganisationUnit,
+            personInvolved, organisationUnit, favorite, uris, description, keywords, researchAreas,
+            hostInstitutions);
         this.employmentPosition = employmentPosition;
         this.role = role;
     }

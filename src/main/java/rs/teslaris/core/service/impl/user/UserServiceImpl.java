@@ -94,6 +94,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.user.TutorialWalkthroughService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailDomainChecker;
@@ -162,6 +163,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final TutorialWalkthroughService tutorialWalkthroughService;
+
     @Value("${frontend.application.address}")
     private String clientAppAddress;
 
@@ -211,7 +214,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional(readOnly = true)
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
-        return UserConverter.toUserResponseDTO(user);
+        var userResponse = UserConverter.toUserResponseDTO(user);
+        userResponse.setCompletedTutorials(
+            tutorialWalkthroughService.getCompletedTutorialKeys(userId));
+        return userResponse;
     }
 
     @Override
@@ -543,7 +549,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 null, null, ApproveStatus.APPROVED, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
                 institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
-                null, new HashSet<>()
+                new HashSet<>(), new HashSet<>(), null, new HashSet<>()
             );
             person.addInvolvement(employment);
         }

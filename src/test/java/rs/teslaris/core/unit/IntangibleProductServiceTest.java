@@ -23,17 +23,20 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -48,11 +51,13 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntangibleProductServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntangibleProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 
@@ -92,6 +97,15 @@ public class IntangibleProductServiceTest {
     @Mock
     private ResearchAreaService researchAreaService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private CountryService countryService;
+
+    @Mock
+    private PublisherService publisherService;
+
     @InjectMocks
     private IntangibleProductServiceImpl intangibleProductService;
 
@@ -117,12 +131,12 @@ public class IntangibleProductServiceTest {
     public void shouldCreateIntangibleProduct() {
         // Given
         var dto = new IntangibleProductDTO();
-        dto.setDocumentDate("2020-03-02");
+        dto.setDocumentDate(new FlexibleDateDTO(2020, 3, 2, null));
         var intangibleProduct = new IntangibleProduct();
         intangibleProduct.setId(1);
         intangibleProduct.setInternalNumber("123");
         var document = new IntangibleProduct();
-        document.setDocumentDate("2023");
+        document.setDocumentDate(new FlexibleDate(2023, 2));
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -149,10 +163,10 @@ public class IntangibleProductServiceTest {
         // Given
         var intangibleProductId = 1;
         var intangibleProductDTO = new IntangibleProductDTO();
-        intangibleProductDTO.setDocumentDate("2024");
+        intangibleProductDTO.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
         var intangibleProductToUpdate = new IntangibleProduct();
         intangibleProductToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        intangibleProductToUpdate.setDocumentDate("2023");
+        intangibleProductToUpdate.setDocumentDate(new FlexibleDate(2023));
 
         when(intangibleProductJPAService.findOne(intangibleProductId)).thenReturn(
             intangibleProductToUpdate);
@@ -212,7 +226,7 @@ public class IntangibleProductServiceTest {
     public void shouldReindexIntangibleProducts() {
         // Given
         var intangibleProduct = new IntangibleProduct();
-        intangibleProduct.setDocumentDate("2024");
+        intangibleProduct.setDocumentDate(new FlexibleDate(2024, 8));
         var intangibleProducts = List.of(intangibleProduct);
         var page1 = new PageImpl<>(intangibleProducts.subList(0, 1), PageRequest.of(0, 10),
             intangibleProducts.size());

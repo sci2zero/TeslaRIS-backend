@@ -39,11 +39,13 @@ import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.TakeRoleOfUserRequestDTO;
+import rs.teslaris.core.dto.user.TutorialProgressRequestDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.user.TutorialWalkthroughService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -60,6 +62,8 @@ public class UserController {
 
     private final UserService userService;
 
+    private final TutorialWalkthroughService tutorialWalkthroughService;
+
 
     public static HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
         var headers = new HttpHeaders();
@@ -73,6 +77,21 @@ public class UserController {
     public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         return userService.getUserProfile(userId);
+    }
+
+    @PutMapping("/tutorial-progress")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void submitTutorialProgress(@RequestHeader("Authorization") String bearerToken,
+                                       @RequestBody @Valid TutorialProgressRequestDTO request) {
+        tutorialWalkthroughService.submitProgress(tokenUtil.extractUserIdFromToken(bearerToken),
+            request);
+    }
+
+    @DeleteMapping("/tutorial-progress")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTutorialProgress(@RequestHeader("Authorization") String bearerToken) {
+        tutorialWalkthroughService.deleteAllProgress(
+            tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
     @GetMapping("/search")
@@ -204,7 +223,8 @@ public class UserController {
             newUser.getPreferredUILanguage().getLanguageTag(),
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), null, null, null,
-            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications());
+            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications(),
+            List.of());
     }
 
     @PostMapping("/register-commission")
@@ -222,7 +242,8 @@ public class UserController {
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
             null, null,
-            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications());
+            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications(),
+            List.of());
     }
 
     @PutMapping
@@ -323,6 +344,6 @@ public class UserController {
             newUser.getPreferredUILanguage().getLanguageTag(),
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod(),
-            newUser.getReceiveOnlyNewNotifications());
+            newUser.getReceiveOnlyNewNotifications(), List.of());
     }
 }

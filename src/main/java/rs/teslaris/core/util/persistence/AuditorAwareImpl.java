@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import rs.teslaris.core.model.user.User;
 
 public class AuditorAwareImpl implements AuditorAware<String> {
+
     @Override
     public Optional<String> getCurrentAuditor() {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {

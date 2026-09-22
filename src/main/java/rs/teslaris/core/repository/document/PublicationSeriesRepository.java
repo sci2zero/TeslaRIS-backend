@@ -43,4 +43,9 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
             (:eISSN != '' AND ps.printISSN = :eISSN)
         """)
     List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN, String printISSN);
+
+    @Modifying
+    @Query("UPDATE PersonPublicationSeriesContribution ppsc SET ppsc.deleted = true " +
+        "WHERE ppsc.publicationSeries.id = :publicationSeriesId")
+    void deletePublicationSeriesContributions(Integer publicationSeriesId);
 }

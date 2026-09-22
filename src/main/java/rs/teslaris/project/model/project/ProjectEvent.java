@@ -34,7 +34,7 @@ public class ProjectEvent extends BaseEntity {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
+    @JoinColumn(name = "event_id")
     private Event event;
 
     @OneToMany(mappedBy = "projectEvent", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -43,6 +43,6 @@ public class ProjectEvent extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> textualDescription = new HashSet<>();
 
-    @Column(name = "relation_type")
+    @Column(name = "relation_type", nullable = false)
     private ProjectEventType relationType;
 }

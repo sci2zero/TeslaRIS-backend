@@ -42,6 +42,8 @@ import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
+import rs.teslaris.revisioner.model.QualityAssessmentTarget;
+import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillService;
 
 @Component
 @RequiredArgsConstructor
@@ -78,6 +80,8 @@ public class DbInitializer implements ApplicationRunner {
     private final BrandingInformationRepository brandingInformationRepository;
 
     private final ReindexService reindexService;
+
+    private final QualityAssessmentBackfillService qualityAssessmentBackfillService;
 
 
     @Override
@@ -247,6 +251,15 @@ public class DbInitializer implements ApplicationRunner {
         var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
         var readFunding = new Privilege("READ_FUNDING");
         var editFunding = new Privilege("EDIT_FUNDING");
+        var readProjects = new Privilege("READ_PROJECTS");
+        var editProjects = new Privilege("EDIT_PROJECTS");
+        var deleteProjects = new Privilege("DELETE_PROJECTS");
+        var unbindYourselfFromProject = new Privilege("UNBIND_YOURSELF_FROM_PROJECT");
+        var unbindEmployeesFromProject = new Privilege("UNBIND_EMPLOYEES_FROM_PROJECT");
+        var restoreEntityRevision = new Privilege("RESTORE_ENTITY_REVISION");
+        var backfillEntityRevision = new Privilege("BACKFILL_ENTITY_REVISION");
+        var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
+        var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -294,7 +307,10 @@ public class DbInitializer implements ApplicationRunner {
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+                unbindYourselfFromProject, unbindEmployeesFromProject,
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality,
+                saveModuleAccessConfiguration
             ));
 
         // AUTHORITIES
@@ -341,7 +357,9 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+                restoreEntityRevision, backfillEntityRevision, assessDataQuality,
+                saveModuleAccessConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -351,7 +369,8 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
                 getTopCollaborators, changePublicationType, createExhibitions,
-                setPersonFieldVisibility, enrichDocumentMetadata)));
+                setPersonFieldVisibility, enrichDocumentMetadata, readProjects, editProjects,
+                unbindYourselfFromProject)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -368,7 +387,8 @@ public class DbInitializer implements ApplicationRunner {
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
                     saveChartDisplayConfiguration, getTopCollaborators, changePublicationType,
-                    createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata)));
+                    createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata,
+                    assessDataQuality, readProjects, editProjects, unbindEmployeesFromProject)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -380,7 +400,8 @@ public class DbInitializer implements ApplicationRunner {
 
         var viceDeanForScienceAuthority =
             new Authority(UserRole.VICE_DEAN_FOR_SCIENCE.toString(), new HashSet<>(List.of(
-                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports
+                updateProfile, allowAccountTakeover, scheduleReportGeneration, downloadReports,
+                assessDataQuality
             )));
 
         var institutionalLibrarianAuthority =
@@ -478,11 +499,15 @@ public class DbInitializer implements ApplicationRunner {
         hungarianLanguage.setLanguageCode(LanguageAbbreviations.HUNGARIAN);
         hungarianLanguage.setName(
             new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Mađarski", 1))));
+        var portugueseLanguage = new Language();
+        portugueseLanguage.setLanguageCode(LanguageAbbreviations.PORTUGUESE);
+        portugueseLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Portugalski", 1))));
 
         languageRepository.saveAll(
             List.of(serbianLanguage, englishLanguage, yuLanguage, germanLanguage, frenchLanguage,
                 spanishLanguage, russianLanguage, croatianLanguage, italianLanguage,
-                slovenianLanguage, hungarianLanguage));
+                slovenianLanguage, hungarianLanguage, portugueseLanguage));
 
         // ADMIN USER
         var adminUser =
@@ -525,6 +550,14 @@ public class DbInitializer implements ApplicationRunner {
                     reindexService
                         .reindexDatabase(Arrays.asList(EntityType.values()),
                             false, null);
+
+                    // Every entity gets a revision and a first assessment, so the data quality
+                    // views have something to show right after a fresh start.
+                    qualityAssessmentBackfillService.performBackfill(
+                        Arrays.asList(QualityAssessmentTarget.values()),
+                        null, null,
+                        "ptcris", false
+                    );
                 }
             });
 

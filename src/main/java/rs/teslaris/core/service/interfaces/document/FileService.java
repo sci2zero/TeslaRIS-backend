@@ -1,12 +1,13 @@
 package rs.teslaris.core.service.interfaces.document;
 
-import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.util.functional.Pair;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 public interface FileService {
@@ -17,7 +18,7 @@ public interface FileService {
 
     void delete(String serverFilename);
 
-    GetObjectResponse loadAsResource(String serverFilename) throws IOException;
+    ResponseInputStream<GetObjectResponse> loadAsResource(String serverFilename) throws IOException;
 
     Pair<String, InputStream> duplicateFile(String serverFilename);
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -10,6 +11,7 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -22,6 +24,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -52,10 +55,12 @@ import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceCon
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -135,6 +140,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.eventIndexRepository = eventIndexRepository;
     }
 
+
+    @Override
+    public boolean exists(Integer id) {
+        return proceedingsJPAService.exists(id);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
@@ -149,6 +160,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
+            Objects.nonNull(SecurityContextHolder.getContext().getAuthentication()) &&
             !proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
@@ -181,10 +193,20 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
 
-        setCommonFields(proceedings, proceedingsDTO);
+        setCommonFields(proceedings, proceedingsDTO, new HashSet<>());
         setProceedingsRelatedFields(proceedings, proceedingsDTO);
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                savedProceedings.getId(),
+                null,
+                ProceedingsConverter.toDTO(savedProceedings),
+                RevisionType.CREATE
+            )
+        );
 
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
@@ -198,19 +220,23 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
 
-        var oldContributorIds =
-            proceedingsToUpdate.getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId())
-                .collect(Collectors.toSet());
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                DocumentPublicationType.PROCEEDINGS.name(),
+                proceedingsId,
+                ProceedingsConverter.toDTO(proceedingsToUpdate),
+                proceedingsDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
 
         proceedingsToUpdate.getLanguages().clear();
-        clearCommonFields(proceedingsToUpdate);
+        var oldContributorIds = clearCommonFields(proceedingsToUpdate);
 
-        setCommonFields(proceedingsToUpdate, proceedingsDTO);
+        setCommonFields(proceedingsToUpdate, proceedingsDTO, oldContributorIds);
         setProceedingsRelatedFields(proceedingsToUpdate, proceedingsDTO);
 
         var proceedingsIndex = findDocumentPublicationIndexByDatabaseId(proceedingsId);
@@ -220,10 +246,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (updatePublicationDates) {
             proceedingsPublicationRepository.setDateToAggregatedPublications(
-                proceedingsToUpdate.getId(), proceedingsToUpdate.getDocumentDate());
+                proceedingsToUpdate.getId(),
+                proceedingsToUpdate.getDocumentDate()
+            );
             indexBulkUpdateService.setYearForAggregatedRecord("proceedings_id",
                 proceedingsToUpdate.getId(),
-                StringUtil.parseYear(proceedingsToUpdate.getDocumentDate()));
+                FlexibleDate.getYearNumber(proceedingsToUpdate.getDocumentDate())
+            );
         }
 
         sendNotifications(proceedingsToUpdate, oldContributorIds);
@@ -238,9 +267,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             throw new ProceedingsReferenceConstraintViolationException("proceedingsInUse");
         }
 
+        updateIndexedPersonContributions(proceedingsToDelete);
+
 //        TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
         proceedingsJPAService.delete(proceedingsToDelete.getId());
+        documentRepository.deleteDocumentContributions(proceedingsToDelete.getId());
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(proceedingsId));
@@ -353,9 +385,18 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(proceedingsDTO.getAcronym()));
 
-        proceedingsDTO.getLanguageIds().forEach(languageId -> proceedings.getLanguages()
-            .add(languageService.findLanguageById(languageId)));
+        proceedingsDTO.getLanguageIds().forEach(languageId -> {
+            var language = RestorationSupport.resolveOptional(languageId, languageService,
+                languageService::findLanguageById, "languageIds",
+                "restoreLanguageMissingMessage");
 
+            if (Objects.nonNull(language)) {
+                proceedings.getLanguages().add(language);
+            }
+        });
+
+        // Proceedings without their event would be orphaned, so this one is not degradable.
+        RestorationSupport.requireExists(proceedingsDTO.getEventId(), eventService, "eventId");
         proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
         if (Objects.nonNull(proceedingsDTO.getPublicationSeriesId())) {
@@ -365,8 +406,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             if (optionalJournal.isPresent()) {
                 proceedings.setPublicationSeries(optionalJournal.get());
             } else {
-                var bookSeries = bookSeriesService.findBookSeriesById(
-                    proceedingsDTO.getPublicationSeriesId());
+                var bookSeries = RestorationSupport.resolveOptional(
+                    proceedingsDTO.getPublicationSeriesId(), bookSeriesService,
+                    bookSeriesService::findBookSeriesById, "publicationSeriesId",
+                    "restorePublicationSeriesMissingMessage");
                 proceedings.setPublicationSeries(bookSeries);
             }
         }
@@ -377,9 +420,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         if (Objects.nonNull(proceedingsDTO.getAuthorReprint()) &&
             proceedingsDTO.getAuthorReprint()) {
             proceedings.setAuthorReprint(true);
-        } else if (Objects.nonNull(proceedingsDTO.getPublisherId())) {
-            proceedings.setPublisher(
-                publisherService.findOne(proceedingsDTO.getPublisherId()));
+        } else {
+            proceedings.setPublisher(RestorationSupport.resolveOptional(
+                proceedingsDTO.getPublisherId(), publisherService, publisherService::findOne,
+                "publisherId",
+                "restorePublisherMissingMessage"));
         }
 
         // Always valid

@@ -23,6 +23,7 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.person.Person;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
 
@@ -87,4 +88,8 @@ public class FundingApplication extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<DocumentFile> documents = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submitter_id")
+    private Person submitter;
 }

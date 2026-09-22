@@ -61,4 +61,16 @@ public class CommonExportWorkerImpl {
             hasNextPage = chunk.size() == chunkSize;
         }
     }
+
+    public <E> long deleteExportEntity(Integer databaseId, Class<E> exportClass,
+                                       ExportPublicationType exportPublicationType) {
+        var query = new Query();
+        query.addCriteria(Criteria.where("database_id").is(databaseId));
+
+        if (Objects.nonNull(exportPublicationType)) {
+            query.addCriteria(Criteria.where("type").is(exportPublicationType.name()));
+        }
+
+        return mongoTemplate.remove(query, exportClass).getDeletedCount();
+    }
 }

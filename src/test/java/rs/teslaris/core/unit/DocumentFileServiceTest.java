@@ -9,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.minio.GetObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +44,9 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @SpringBootTest
 public class DocumentFileServiceTest {
@@ -259,8 +261,9 @@ public class DocumentFileServiceTest {
 
         when(documentFileRepository.findById(documentFileId)).thenReturn(Optional.of(documentFile));
         when(fileService.loadAsResource(any())).thenReturn(
-            new GetObjectResponse(null, null, null, null,
-                new ByteArrayInputStream("Some test data".getBytes())));
+            new ResponseInputStream<>(GetObjectResponse.builder().build(),
+                AbortableInputStream.create(
+                    new ByteArrayInputStream("Some test data".getBytes()))));
 
         // When
         documentFileService.changeApproveStatus(documentFileId, approved);

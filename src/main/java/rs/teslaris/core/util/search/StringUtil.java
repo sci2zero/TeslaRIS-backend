@@ -1,5 +1,6 @@
 package rs.teslaris.core.util.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
@@ -7,27 +8,32 @@ import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.text.Normalizer;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
@@ -40,7 +46,10 @@ import org.jbibtex.BibTeXFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.WebDataBinder;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.language.LocalizedTokenResolver;
 
 @Component
 @Slf4j
@@ -56,8 +65,14 @@ public class StringUtil {
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
 
+    private static final Map<Character, String> UNSAFE_URL_CHARACTER_ENCODINGS = Map.of(
+        ' ', "%20", '"', "%22", '<', "%3C", '>', "%3E", '{', "%7B",
+        '}', "%7D", '|', "%7C", '\\', "%5C", '^', "%5E", '`', "%60"
+    );
+
     private static final List<String> identifierUrlPrefixes = List.of(
-        "https://doi.org/", "https://orcid.org/", "https://www.scopus.com/pages/organization/",
+        "https://doi.org/", "https://orcid.org/", "http://orcid.org/",
+        "https://www.scopus.com/pages/organization/",
         "https://www.scopus.com/authid/detail.uri?authorId=",
         "https://www.scopus.com/pages/publications/",
         "https://openalex.org/", "https://ror.org/",
@@ -219,6 +234,24 @@ public class StringUtil {
         return fallback.getContent();
     }
 
+    public static String getStringContent(List<MultilingualContentDTO> multilingualContent,
+                                          String lang) {
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
+            return "";
+        }
+
+        MultilingualContentDTO fallback = null;
+        for (var content : multilingualContent) {
+            if (lang.equalsIgnoreCase(content.getLanguageTag())) {
+                return content.getContent();
+            }
+
+            fallback = content;
+        }
+
+        return fallback.getContent();
+    }
+
     public static boolean isInteger(String s, int radix) {
         if (s.isEmpty()) {
             return false;
@@ -352,36 +385,6 @@ public class StringUtil {
         return identifier;
     }
 
-    public static int parseYear(String dateString) {
-        if (Objects.isNull(dateString)) {
-            return -1;
-        }
-
-        DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("yyyy"), // Year only
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
-        };
-
-        for (var formatter : formatters) {
-            try {
-                TemporalAccessor parsed = formatter.parse(dateString);
-
-                if (parsed.isSupported(ChronoField.YEAR)) {
-                    return parsed.get(ChronoField.YEAR);
-                }
-            } catch (DateTimeParseException e) {
-                // Parsing failed, try the next formatter
-            }
-        }
-
-        return -1;
-    }
-
     public static String formatNameToLastNameFirst(String fullName) {
         if (Objects.isNull(fullName) || fullName.trim().isEmpty()) {
             return fullName;
@@ -462,5 +465,172 @@ public class StringUtil {
             .trim();
 
         return normalized;
+    }
+
+    public static LocalDate parseDocumentDate(String value) {
+        if (!valueExists(value)) {
+            return null;
+        }
+
+        if (value.matches("\\d{4}")) {
+            return LocalDate.of(Integer.parseInt(value), 1, 1);
+        }
+
+        if (value.matches("\\d{4}-\\d{2}")) {
+            return YearMonth.parse(value).atDay(1);
+        }
+
+        return LocalDate.parse(value);
+    }
+
+    public static Set<MultiLingualContent> buildMultilingualContent(
+        LanguageTagService languageTagService, Map<String, String> localizedContent,
+        Object... params) {
+        var result = new HashSet<MultiLingualContent>();
+        var priority = new AtomicInteger(1);
+
+        localizedContent.forEach((languageCode, template) -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(languageCode.toUpperCase());
+
+            if (Objects.isNull(languageTag) || Objects.isNull(languageTag.getLanguageTag())) {
+                return;
+            }
+
+            Object[] processedParams =
+                processParamsForLanguage(languageCode, params);
+
+            MultiLingualContent content = new MultiLingualContent();
+            content.setLanguage(languageTag);
+            content.setContent(
+                MessageFormat.format(template, processedParams));
+            content.setPriority(priority.getAndIncrement());
+
+            result.add(content);
+        });
+
+        return result;
+    }
+
+    public static List<MultilingualContentDTO> buildMultilingualContentDTO(
+        LanguageTagService languageTagService, Map<String, String> localizedContent,
+        Object... params) {
+        var result = new ArrayList<MultilingualContentDTO>();
+        var priority = new AtomicInteger(1);
+
+        localizedContent.forEach((languageCode, template) -> {
+            var languageTag =
+                languageTagService.findLanguageTagByValue(languageCode.toUpperCase());
+
+            if (Objects.isNull(languageTag) || Objects.isNull(languageTag.getLanguageTag())) {
+                return;
+            }
+
+            Object[] processedParams =
+                processParamsForLanguage(languageCode, params);
+
+            result.add(new MultilingualContentDTO(
+                languageTag.getId(),
+                languageTag.getLanguageTag(),
+                MessageFormat.format(template, processedParams),
+                priority.getAndIncrement()
+            ));
+        });
+
+        return result;
+    }
+
+    private static Object[] processParamsForLanguage(
+        String languageCode,
+        Object... params) {
+
+        return Arrays.stream(params)
+            .map(param -> {
+                if (LocalizedTokenResolver.isToken(param)) {
+                    return LocalizedTokenResolver.resolve((String) param, languageCode);
+                }
+
+                if (param instanceof List<?> list) {
+                    return list.stream()
+                        .filter(MultilingualContentDTO.class::isInstance)
+                        .map(MultilingualContentDTO.class::cast)
+                        .filter(dto ->
+                            dto.getLanguageTag()
+                                .equalsIgnoreCase(languageCode))
+                        .map(MultilingualContentDTO::getContent)
+                        .findFirst()
+                        .orElse("");
+                }
+
+                if (param instanceof Integer) {
+                    return String.valueOf(param);
+                }
+
+                return param;
+            })
+            .toArray();
+    }
+
+    public static String stripExtension(String filename) {
+        int index = filename.lastIndexOf('.');
+        return index == -1
+            ? filename
+            : filename.substring(0, index);
+    }
+
+    @Nullable
+    public static String parseDateParts(JsonNode dateParts) {
+        if (!dateParts.isArray() || dateParts.isEmpty()) {
+            return null;
+        }
+
+        var firstDate = dateParts.get(0);
+        if (!firstDate.isArray() || firstDate.isEmpty()) {
+            return null;
+        }
+
+        var year = firstDate.get(0).asInt();
+        var month = firstDate.size() > 1 ? firstDate.get(1).asInt() : 1;
+        var day = firstDate.size() > 2 ? firstDate.get(2).asInt() : 1;
+
+        return String.format("%04d-%02d-%02d", year, month, day);
+    }
+
+    public static boolean looksLikeAbbreviation(String title) {
+        var trimmed = title.trim();
+        var wordCount = trimmed.split("\\s+").length;
+        return trimmed.length() <= 25 && wordCount <= 3;
+    }
+
+    @Nullable
+    public static String sanitizeUrl(@Nullable String url) {
+        if (Objects.isNull(url) || url.isBlank()) {
+            return null;
+        }
+
+        var sanitized = new StringBuilder();
+        url.trim().chars().forEach(codePoint -> {
+            var character = (char) codePoint;
+            sanitized.append(UNSAFE_URL_CHARACTER_ENCODINGS.getOrDefault(character,
+                String.valueOf(character)));
+        });
+
+        var candidate = sanitized.toString();
+
+        try {
+            var uri = new URI(candidate);
+            if (!uri.isAbsolute() || Objects.isNull(uri.getHost()) ||
+                (!"http".equalsIgnoreCase(uri.getScheme()) &&
+                    !"https".equalsIgnoreCase(uri.getScheme()))) {
+                log.warn("Discarding harvested URL that is not an absolute http(s) address: {}",
+                    url);
+                return null;
+            }
+        } catch (URISyntaxException e) {
+            log.warn("Discarding malformed harvested URL: {}", url);
+            return null;
+        }
+
+        return candidate;
     }
 }

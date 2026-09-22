@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.argThat;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
@@ -39,32 +41,42 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {
 
     @Mock
     private FundingRepository fundingRepository;
+
+    @Mock
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @Mock
     private MultilingualContentService multilingualContentService;
@@ -96,6 +108,8 @@ public class FundingServiceTest extends BaseTest {
     @InjectMocks
     private FundingServiceImpl fundingService;
 
+    @Mock
+    private InvolvementService involvementService;
 
     @Test
     public void shouldReturnEmptyPageWhenNoFundingFound() {
@@ -240,6 +254,9 @@ public class FundingServiceTest extends BaseTest {
         when(fundingCallService.findOne(1)).thenReturn(new FundingCall());
         when(currencyService.findOne(1)).thenReturn(null);
         when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
+        when(fundingPartFactory.buildFundingPart(fundingPartDTO)).thenReturn(new FundingPart());
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
 
         // when
         var result = fundingService.createFunding(fundingDTO);
@@ -247,8 +264,11 @@ public class FundingServiceTest extends BaseTest {
         // then
         assertNotNull(result);
         assertEquals(1, result.getId());
-        verify(multilingualContentService, times(8)).getMultilingualContent(anyList());
-        verify(currencyService, times(2)).findOne(1);
+        verify(multilingualContentService, times(7)).getMultilingualContent(anyList());
+        verify(currencyService).findOne(1);
+        verify(fundingPartFactory).buildFundingPart(fundingPartDTO);
+        verify(fundingPartRepository).save(
+            argThat(part -> part.getFunding().equals(savedFunding)));
         verify(researchAreaService).getResearchAreasByIds(anyList());
         verify(projectService).findOne(1);
         verify(fundingCallService).findOne(1);
@@ -352,30 +372,6 @@ public class FundingServiceTest extends BaseTest {
         verify(fundingCallService).findOne(1);
         verify(currencyService).findOne(1);
         verify(fundingRepository).save(any(Funding.class));
-    }
-
-    @Test
-    public void shouldThrowWhenProjectIdIsNull() {
-        // given
-        var fundingDTO = new FundingDTO();
-        fundingDTO.setName(List.of());
-        fundingDTO.setDescription(List.of());
-        fundingDTO.setNameAbbreviation(List.of());
-        fundingDTO.setKeywords(List.of());
-        fundingDTO.setDisplayCall(List.of());
-        fundingDTO.setDisplayProgram(List.of());
-        fundingDTO.setDisplayFunder(List.of());
-        fundingDTO.setResearchAreasId(Set.of());
-        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
-        fundingDTO.setDateFrom(LocalDate.now());
-        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
-
-        // when & then
-        assertThrows(ReferenceConstraintException.class,
-            () -> fundingService.createFunding(fundingDTO));
-
-        verify(projectService, never()).findOne(any());
-        verify(fundingRepository, never()).save(any());
     }
 
     @Test
@@ -687,6 +683,135 @@ public class FundingServiceTest extends BaseTest {
         fundingService.indexFunding(funding, fundingIndex);
 
         // then
+        verify(fundingIndexRepository).save(any(FundingIndex.class));
+    }
+
+    @Test
+    public void shouldCreateFundingWithInvolvement() {
+        // given
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of());
+        fundingDTO.setProjectId(1);
+        fundingDTO.setInvolvementId(3);
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var savedFunding = new Funding();
+        savedFunding.setId(1);
+        savedFunding.setProject(new Project());
+
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(projectService.findOne(1)).thenReturn(new Project());
+        when(involvementService.findOne(3)).thenReturn(new Employment());
+        when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
+
+        // when
+        var result = fundingService.createFunding(fundingDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(involvementService).findOne(3);
+        verify(fundingRepository).save(any(Funding.class));
+    }
+
+    @Test
+    public void shouldCreateFundingWithoutInvolvement() {
+        // given
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of());
+        fundingDTO.setProjectId(1);
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var savedFunding = new Funding();
+        savedFunding.setId(1);
+        savedFunding.setProject(new Project());
+
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(projectService.findOne(1)).thenReturn(new Project());
+        when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
+
+        // when
+        var result = fundingService.createFunding(fundingDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(involvementService, never()).findOne(any());
+        verify(fundingRepository).save(any(Funding.class));
+    }
+
+    @Test
+    public void shouldClearInvolvementOnUpdateWhenIdNotProvided() {
+        // given
+        var fundingId = 1;
+        var existingFunding = new Funding();
+        existingFunding.setId(fundingId);
+        existingFunding.setName(new HashSet<>());
+        existingFunding.setDescription(new HashSet<>());
+        existingFunding.setNameAbbreviation(new HashSet<>());
+        existingFunding.setKeywords(new HashSet<>());
+        existingFunding.setDisplayCall(new HashSet<>());
+        existingFunding.setDisplayProgram(new HashSet<>());
+        existingFunding.setDisplayFunder(new HashSet<>());
+        existingFunding.setResearchAreas(new HashSet<>());
+        existingFunding.setInvolvement(new Employment());
+
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of());
+        fundingDTO.setProjectId(1);
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var fundingIndex = new FundingIndex();
+        fundingIndex.setDatabaseId(fundingId);
+
+        when(fundingRepository.findById(fundingId))
+            .thenReturn(Optional.of(existingFunding));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+            .thenReturn(List.of());
+        when(projectService.findOne(1))
+            .thenReturn(new Project());
+        when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
+            .thenReturn(Optional.of(fundingIndex));
+
+        // when
+        fundingService.updateFunding(fundingId, fundingDTO);
+
+        // then
+        assertNull(existingFunding.getInvolvement());
+        verify(involvementService, never()).findOne(any());
         verify(fundingIndexRepository).save(any(FundingIndex.class));
     }
 }

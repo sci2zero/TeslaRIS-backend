@@ -169,8 +169,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/proceedings-publication/proceedings/{proceedingsId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/intangible-product/{documentId}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/dataset/{documentId}").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/patent/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/intellectual-property/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/monograph/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/journal/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/{documentId}").permitAll()
@@ -178,6 +177,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/thesis/{documentId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/document/metadata/{documentId}/{format}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/thesis/old-id/{oldId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/material-product/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/genetic-material/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/performance-related-output/{documentId}").permitAll()
 
                 // INVOLVEMENT
                 .requestMatchers(HttpMethod.GET, "/api/involvement/employment/{employmentId}")
@@ -273,6 +275,9 @@ public class SecurityConfiguration {
 
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
+
+                // FEATURE MODULE TOGGLES
+                .requestMatchers(HttpMethod.GET, "/api/feature-module-toggles").permitAll()
 
                 // PUBLIC ASSESSMENT SERVICE
                 // through WEB UI
@@ -382,6 +387,20 @@ public class SecurityConfiguration {
                 // SSE
                 .requestMatchers(HttpMethod.GET, "/api/sse/progress/{exportId}").permitAll()
 
+                // PROJECTS
+                .requestMatchers(HttpMethod.GET, "/api/project/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/for-researcher/{personId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/project/for-organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}/documents").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project/{projectId}/events").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding/search").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding/{fundingId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding-application/search").permitAll()
+                
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

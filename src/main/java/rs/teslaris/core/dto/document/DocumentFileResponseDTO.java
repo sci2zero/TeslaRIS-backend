@@ -1,6 +1,8 @@
 package rs.teslaris.core.dto.document;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,4 +37,21 @@ public class DocumentFileResponseDTO {
     private String mimeType;
 
     private Boolean isArchived;
+
+
+    public DocumentFileResponseDTO(DocumentFileResponseDTO other) {
+        this.id = other.id;
+        this.fileName = other.fileName;
+        this.serverFilename = other.serverFilename;
+        this.description = Objects.nonNull(other.description)
+            ?
+            other.description.stream().map(MultilingualContentDTO::new).collect(Collectors.toList())
+            : null;
+        this.resourceType = other.resourceType;
+        this.accessRights = other.accessRights;
+        this.license = other.license;
+        this.sizeInMb = other.sizeInMb;
+        this.mimeType = other.mimeType;
+        this.isArchived = other.isArchived;
+    }
 }

@@ -17,6 +17,8 @@ public class PublisherConverter {
 
         if (Objects.nonNull(publisher.getCountry())) {
             dto.setCountryId(publisher.getCountry().getId());
+            dto.setCountryName(MultilingualContentConverter.getMultilingualContentDTO(
+                publisher.getCountry().getName()));
         }
 
         return dto;

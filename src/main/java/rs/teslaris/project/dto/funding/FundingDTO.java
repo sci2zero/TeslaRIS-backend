@@ -91,4 +91,9 @@ public class FundingDTO {
 
     private String oaMandateUrl;
 
+    @Positive(message = "Involvement ID cannot be a negative number.")
+    private Integer involvementId;
+
+    private Boolean internalInvestment;
+
 }

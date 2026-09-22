@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -19,12 +19,13 @@ import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.IntellectualProperty;
+import rs.teslaris.core.model.document.IntellectualPropertyType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -40,15 +41,14 @@ import rs.teslaris.core.model.rocrate.MediaObject;
 import rs.teslaris.core.model.rocrate.Organization;
 import rs.teslaris.core.model.rocrate.Periodical;
 import rs.teslaris.core.model.rocrate.RoCrate;
-import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
 import rs.teslaris.core.model.rocrate.RoCrateGeneticMaterial;
 import rs.teslaris.core.model.rocrate.RoCrateIntangibleProduct;
+import rs.teslaris.core.model.rocrate.RoCrateIntellectualProperty;
 import rs.teslaris.core.model.rocrate.RoCrateJournalPublication;
 import rs.teslaris.core.model.rocrate.RoCrateMaterialProduct;
 import rs.teslaris.core.model.rocrate.RoCrateMonograph;
 import rs.teslaris.core.model.rocrate.RoCrateMonographPublication;
-import rs.teslaris.core.model.rocrate.RoCratePatent;
 import rs.teslaris.core.model.rocrate.RoCratePerson;
 import rs.teslaris.core.model.rocrate.RoCrateProceedings;
 import rs.teslaris.core.model.rocrate.RoCrateProceedingsPublication;
@@ -75,25 +75,19 @@ public class RoCrateConverter {
     private static boolean includeFileHashes;
 
 
-    public static RoCrateDataset toRoCrateModel(Dataset document, String documentIdentifier,
-                                                RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "dataset");
+    public static RoCrateIntellectualProperty toRoCrateModel(IntellectualProperty document,
+                                                             String documentIdentifier,
+                                                             RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "intellectual-property");
 
-        var metadata = new RoCrateDataset();
-        setCommonFields(metadata, document, documentIdentifier, metadataInfo);
-        setPublisherInfo(metadataInfo, metadata, document);
-        metadata.setIdentifier(document.getInternalNumber());
-        metadata.setDistribution(
-            baseUrl + "en/scientific-results/dataset/" + document.getId());
+        var metadata = new RoCrateIntellectualProperty();
 
-        return metadata;
-    }
+        if (document.getType().equals(IntellectualPropertyType.PATENT)) {
+            metadata.setType("Patent");
+        } else if (document.getType().equals(IntellectualPropertyType.TRADEMARK)) {
+            metadata.setType("Brand");
+        }
 
-    public static RoCratePatent toRoCrateModel(Patent document, String documentIdentifier,
-                                               RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "patent");
-
-        var metadata = new RoCratePatent();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
         metadata.setPatentNumber(document.getNumber());
@@ -359,7 +353,8 @@ public class RoCrateConverter {
             DEFAULT_RO_CRATE_LANGUAGE));
         metadata.setAbstractText(StringUtil.getStringContent(document.getDescription(),
             DEFAULT_RO_CRATE_LANGUAGE));
-        metadata.setPublicationYear(document.getDocumentDate());
+        metadata.setPublicationYear(FlexibleDate.isDatePresentAndValid(document.getDocumentDate()) ?
+            String.valueOf(document.getDocumentDate().getYear()) : "");
 
         metadata.setDoi(document.getDoi());
 
@@ -414,7 +409,7 @@ public class RoCrateConverter {
             .forEach(employment -> {
                 if (Objects.isNull(employment.getOrganisationUnit())) {
                     personMetadata.getAffiliations().add(new ContextualEntity(
-                        StringUtil.getStringContent(employment.getAffiliationStatement(),
+                        StringUtil.getStringContent(employment.getDisplayOrganisationUnit(),
                             DEFAULT_RO_CRATE_LANGUAGE),
                         "Organization")
                     );

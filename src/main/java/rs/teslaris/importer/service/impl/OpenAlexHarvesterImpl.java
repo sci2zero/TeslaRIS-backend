@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import rs.teslaris.importer.utility.openalex.OpenAlexImportUtility;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
 
     private final OpenAlexImportUtility openAlexImportUtility;
@@ -192,12 +194,17 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                             // perform enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);
                             mongoTemplate.save(existingImport, "documentImports");
+                            log.info("Enriched existing import {} with OpenAlex record {}",
+                                existingImport.getIdentifier(),
+                                CommonHarvestUtility.describe(documentImport));
                             return;
                         }
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
                     if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
+                        log.info("Skipping duplicate OpenAlex record {}",
+                            CommonHarvestUtility.describe(documentImport));
                         return;
                     }
 
@@ -219,6 +226,8 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                         personService);
 
                     mongoTemplate.save(documentImport, "documentImports");
+                    log.info("Imported new OpenAlex record {}",
+                        CommonHarvestUtility.describe(documentImport));
                 }));
     }
 }
