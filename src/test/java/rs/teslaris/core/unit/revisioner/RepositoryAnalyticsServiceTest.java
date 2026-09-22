@@ -522,6 +522,37 @@ public class RepositoryAnalyticsServiceTest {
         }
     }
 
+    /**
+     * Event and publication series contributions are activities without a row of their own, so
+     * they are summed from those three indexes on top of the outputs and persons.
+     */
+    @Test
+    public void shouldAddEventAndPublicationSeriesActivitiesToTheActivitiesRow() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        when(dataQualityAggregator.sumField(eq("events"), any(), eq("activities_count")))
+            .thenReturn(40L);
+        when(dataQualityAggregator.sumField(eq("journal"), any(), eq("activities_count")))
+            .thenReturn(25L);
+        when(dataQualityAggregator.sumField(eq("book_series"), any(), eq("activities_count")))
+            .thenReturn(5L);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities =
+                repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
+
+            // then
+            assertEquals(370, activities.records()); // 300 on outputs + 40 + 25 + 5
+
+            verify(dataQualityAggregator).sumField(eq("events"), any(), eq("activities_count"));
+            verify(dataQualityAggregator).sumField(eq("journal"), any(), eq("activities_count"));
+            verify(dataQualityAggregator).sumField(eq("book_series"), any(),
+                eq("activities_count"));
+        }
+    }
+
     @Test
     public void shouldCountOutputsAndActivitiesFromTheSameDocumentAggregation() {
         // given
@@ -536,12 +567,12 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(1284310, outputs.records());
             assertEquals(50, outputs.affectedRecords());
 
-            // Activities live on outputs and on persons, so their totals are sums of the activity
-            // counters of both passes.
+            // Activities live on outputs, persons, events and publication series, so their totals
+            // are sums of the activity counters of all three passes.
             var activities = result.get(3);
             assertEquals(86204, activities.records());
-            assertEquals(60, activities.affectedRecords());
-            assertEquals(16, activities.openIssues());
+            assertEquals(90, activities.affectedRecords());
+            assertEquals(24, activities.openIssues());
             assertTrue(activities.supported());
 
             verify(dataQualityAggregator).aggregateLinkedDocuments(any());
@@ -555,7 +586,7 @@ public class RepositoryAnalyticsServiceTest {
      */
     @Test
     public void shouldScoreActivitiesPerActivityRatherThanPerRecord() {
-        // given (30 activities per pass, so 60 assessed across outputs and persons)
+        // given (30 activities per pass, so 90 assessed across outputs, persons and the rest)
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300, 12, 2400.0);
 
         try (var ignored = mockConfigurationLoader()) {
@@ -564,9 +595,9 @@ public class RepositoryAnalyticsServiceTest {
                 repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
 
             // then
-            assertEquals(60, activities.affectedRecords());
+            assertEquals(90, activities.affectedRecords());
 
-            // 4800 points over 60 activities, and 24 of them are candidates.
+            // 7200 points over 90 activities, and 36 of them are candidates.
             assertEquals(80.0, activities.averageScore());
             assertEquals(40.0, activities.publicationCandidatePercentage());
         }
@@ -597,11 +628,12 @@ public class RepositoryAnalyticsServiceTest {
             // when
             var statistics = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null);
 
-            // then (three record rows of 90/40/10 plus an activities row of 20/20/20)
-            assertEquals(290, statistics.errorIssues());
-            assertEquals(140, statistics.warningIssues());
-            assertEquals(50, statistics.infoIssues());
-            assertEquals(480, statistics.openIssues());
+            // then (three record rows of 90/40/10 plus an activities row of 30/30/30, the
+            // event and series pass adding activity issues only)
+            assertEquals(300, statistics.errorIssues());
+            assertEquals(150, statistics.warningIssues());
+            assertEquals(60, statistics.infoIssues());
+            assertEquals(510, statistics.openIssues());
         }
     }
 
@@ -628,12 +660,13 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(40, persons.warningIssues());
             assertEquals(10, persons.infoIssues());
 
-            // Documents and persons both raise activities, so that row gathers two passes.
+            // Documents, persons and the event/series pass all raise activities, so that row
+            // gathers three passes.
             var activities = rows.get(3);
             assertEquals(RepositoryEntityType.ACTIVITIES, activities.entityType());
-            assertEquals(20, activities.errorIssues());
-            assertEquals(20, activities.warningIssues());
-            assertEquals(20, activities.infoIssues());
+            assertEquals(30, activities.errorIssues());
+            assertEquals(30, activities.warningIssues());
+            assertEquals(30, activities.infoIssues());
         }
     }
 
@@ -755,7 +788,7 @@ public class RepositoryAnalyticsServiceTest {
             assertTrue(rows.stream().anyMatch(row -> row.contains("Resolvable DOI")));
 
             // Numeric cells stay numeric, so the error total is a number rather than text.
-            assertEquals(290.0,
+            assertEquals(300.0,
                 rowStartingWith(rows, "repositoryAnalytics.header.errorIssues").get(1));
         }
     }

@@ -1,6 +1,8 @@
 package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,4 +46,10 @@ public class BookSeriesIndex implements PublicationSeriesIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
+
+    @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
+    private List<Integer> relatedInstitutionIds = new ArrayList<>();
 }

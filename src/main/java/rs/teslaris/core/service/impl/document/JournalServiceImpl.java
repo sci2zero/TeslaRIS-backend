@@ -339,10 +339,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Override
     @Transactional
     public void indexJournal(Journal journal, JournalIndex index) {
-        index.setDatabaseId(journal.getId());
+        index.setActivitiesCount(0);
 
+        index.setDatabaseId(journal.getId());
         indexCommonFields(journal, index);
         reindexJournalVolatileInformation(journal.getId());
+
         journalIndexRepository.save(index);
     }
 
@@ -480,6 +482,15 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 .stream().toList());
         index.setClassifiedBy(
             commissionRepository.findCommissionsThatClassifiedJournal(journal.getId()));
+
+        journal.getContributions().forEach(contribution -> {
+            if (Objects.nonNull(contribution.getDateFrom()) ||
+                Objects.nonNull(contribution.getDateTo()) ||
+                (Objects.nonNull(contribution.getResearchAreas()) &&
+                    !contribution.getResearchAreas().isEmpty())) {
+                index.setActivitiesCount(index.getActivitiesCount() + 1);
+            }
+        });
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens,

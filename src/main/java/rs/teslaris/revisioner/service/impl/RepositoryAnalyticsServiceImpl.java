@@ -65,6 +65,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final String ORGANISATION_UNIT_TARGET = "OrganisationUnit";
 
+    private static final String EVENT_TARGET = "Event";
+
+    private static final String PUBLICATION_SERIES_TARGET = "PublicationSeries";
+
     private static final String BLOCKING_RULE_KEYS_FIELD = "blocking_rule_keys";
 
     private static final String PERSON_INDEX = "person";
@@ -73,14 +77,23 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
+    private static final String RELATED_INSTITUTION_IDS_FIELD = "related_institution_ids";
+
+    // Records whose contributions are activities but which are neither outputs nor persons.
+    private static final List<String> OTHER_ACTIVITY_PARENT_INDEXES =
+        List.of("events", "journal", "book_series");
+
     private static final String EMPTY_VALUE = "-";
 
     private static final int TOP_RECURRING_CONSTRAINT_COUNT = 5;
 
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
+    private static final List<String> OTHER_ACTIVITY_PARENT_TARGETS =
+        List.of(EVENT_TARGET, PUBLICATION_SERIES_TARGET);
+
     private static final List<String> ACTIVITY_PARENT_TARGETS =
-        List.of(DOCUMENT_TARGET, PERSON_TARGET);
+        List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET);
 
     private final DataQualityAggregator dataQualityAggregator;
 
@@ -227,12 +240,14 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             assessmentDate, termQuery("entity_type", EntityType.ORGANISATION_UNIT.name()));
         var outputs = issueBreakdown(profileName, scopeOrganisationUnitIds, assessmentDate,
             termQuery("target", DOCUMENT_TARGET));
+        var otherActivityParents = issueBreakdown(profileName, scopeOrganisationUnitIds,
+            assessmentDate, stringTermsQuery("target", OTHER_ACTIVITY_PARENT_TARGETS));
 
         var rows = List.of(
             severityRow(RepositoryEntityType.PERSONS, persons),
             severityRow(RepositoryEntityType.ORGANISATION_UNITS, organisationUnits),
             severityRow(RepositoryEntityType.OUTPUTS, outputs),
-            activityRow(List.of(persons, outputs)),
+            activityRow(List.of(persons, outputs, otherActivityParents)),
             // TODO: projects carry no quality assessments yet.
             SeverityBreakdownDTO.unsupported(RepositoryEntityType.PROJECTS),
             // TODO: fundings carry no quality assessments yet.
@@ -652,6 +667,17 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
+        // Events and publication series have no row of their own, but their contributions are
+        // activities all the same.
+        var otherActivityParents = dataQualityAggregator
+            .aggregateAssessments(
+                assessmentQuery(
+                    profileName, scopeOrganisationUnitIds, assessmentDate,
+                    stringTermsQuery("target", OTHER_ACTIVITY_PARENT_TARGETS)
+                ),
+                activityRuleKeys)
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
         var documents = dataQualityAggregator
             .aggregateLinkedDocuments(
                 scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds))
@@ -669,8 +695,9 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             constructQualityByEntityTypeRowData(RepositoryEntityType.OUTPUTS,
                 documents.linkedRecords(), outputs),
             constructQualityByEntityTypeActivitiesRow(
-                documents.linkedActivities() + personActivities(scopeOrganisationUnitIds),
-                outputs, persons),
+                documents.linkedActivities() + personActivities(scopeOrganisationUnitIds) +
+                    otherParentActivities(scopeOrganisationUnitIds),
+                List.of(outputs, persons, otherActivityParents)),
             // TODO: projects carry no quality assessments yet.
             EntityTypeQualityDTO.unsupported(RepositoryEntityType.PROJECTS),
             // TODO: fundings carry no quality assessments yet.
@@ -1072,19 +1099,23 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
      * document that carries it.
      */
     private EntityTypeQualityDTO constructQualityByEntityTypeActivitiesRow(
-        long records, DataQualityAggregator.AssessmentAggregates outputs,
-        DataQualityAggregator.AssessmentAggregates persons) {
+        long records, List<DataQualityAggregator.AssessmentAggregates> parents) {
 
-        var assessedActivities = outputs.activitiesCount() + persons.activitiesCount();
-        var scoreSum = outputs.activityScoreSum() + persons.activityScoreSum();
-        var candidates =
-            outputs.activityPublicationCandidates() + persons.activityPublicationCandidates();
+        var assessedActivities = parents.stream()
+            .mapToLong(DataQualityAggregator.AssessmentAggregates::activitiesCount).sum();
+        var scoreSum = parents.stream()
+            .mapToDouble(DataQualityAggregator.AssessmentAggregates::activityScoreSum).sum();
+        var candidates = parents.stream()
+            .mapToLong(DataQualityAggregator.AssessmentAggregates::activityPublicationCandidates)
+            .sum();
+        var issues = parents.stream()
+            .mapToLong(DataQualityAggregator.AssessmentAggregates::activityIssues).sum();
 
         return new EntityTypeQualityDTO(
             RepositoryEntityType.ACTIVITIES,
             records,
             assessedActivities,
-            outputs.activityIssues() + persons.activityIssues(),
+            issues,
             assessedActivities > 0 ? scoreSum / assessedActivities : null,
             percentage(candidates, assessedActivities),
             true
@@ -1100,6 +1131,18 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         return dataQualityAggregator.sumField(PERSON_INDEX,
             scopedQuery("employment_institutions_id", scopeOrganisationUnitIds),
             ACTIVITIES_COUNT_FIELD);
+    }
+
+    /**
+     * Activities recorded as event and publication series contributions. Those records are scoped
+     * by the institutions of the people who published in them, which is the closest link they have.
+     */
+    private long otherParentActivities(List<Integer> scopeOrganisationUnitIds) {
+        return OTHER_ACTIVITY_PARENT_INDEXES.stream()
+            .mapToLong(index -> dataQualityAggregator.sumField(index,
+                scopedQuery(RELATED_INSTITUTION_IDS_FIELD, scopeOrganisationUnitIds),
+                ACTIVITIES_COUNT_FIELD))
+            .sum();
     }
 
     @Nullable

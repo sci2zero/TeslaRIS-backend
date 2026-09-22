@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -147,7 +148,7 @@ public class DataQualityAssessmentIndexer {
             return fromIndex.orElseGet(() -> contributionPersonIds(dto));
         }
 
-        if (TARGET_EVENT.equals(target)) {
+        if (TARGET_EVENT.equals(target) || TARGET_PUBLICATION_SERIES.equals(target)) {
             return contributionPersonIds(dto);
         }
 
@@ -209,6 +210,10 @@ public class DataQualityAssessmentIndexer {
             return extractPersonIds(event.getContributions());
         }
 
+        if (dto instanceof PublicationSeriesDTO publicationSeries) {
+            return extractPersonIds(publicationSeries.getContributions());
+        }
+
         return List.of();
     }
 
@@ -240,7 +245,7 @@ public class DataQualityAssessmentIndexer {
             return fromIndex.orElseGet(() -> contributionInstitutionIds(dto));
         }
 
-        if (TARGET_EVENT.equals(target)) {
+        if (TARGET_EVENT.equals(target) || TARGET_PUBLICATION_SERIES.equals(target)) {
             return contributionInstitutionIds(dto);
         }
 

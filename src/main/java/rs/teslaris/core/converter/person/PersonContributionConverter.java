@@ -62,6 +62,11 @@ public class PersonContributionConverter {
                 contribution.setDateTo(c.getDateTo());
                 contribution.setIsMainContributor(c.getIsMainContributor());
 
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
+
                 contributionDTOs.add(contribution);
             });
         return contributionDTOs;
@@ -87,6 +92,13 @@ public class PersonContributionConverter {
                     MultilingualContentConverter.getMultilingualContentDTO(
                         c.getLocationJurisdiction()));
                 contribution.setMainArguer(c.getMainArguer());
+                contribution.setDateFrom(c.getDateFrom());
+                contribution.setDateTo(c.getDateTo());
+
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
 
                 contributionDTOs.add(contribution);
             });

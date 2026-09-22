@@ -78,11 +78,20 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private static final String ACTIVITY_TARGET = "Activity";
 
+    private static final String EVENT_TARGET = "Event";
+
+    private static final String PUBLICATION_SERIES_TARGET = "PublicationSeries";
+
     private static final String PERSON_INDEX = "person";
 
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
 
     private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
+
+    private static final String EVENT_INDEX = "events";
+
+    private static final List<String> PUBLICATION_SERIES_INDEXES =
+        List.of("journal", "book_series");
 
     private static final int ISSUE_SCAN_BATCH_SIZE = 500;
 
@@ -258,6 +267,15 @@ public class DataQualityServiceImpl implements DataQualityService {
                 activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
+        // Event and publication series contributions are activities too. A person is linked to
+        // them through the assessment's related persons; a unit through the institutions of the
+        // people who published in them.
+        var otherParentAssessments = dataQualityAggregator
+            .aggregateAssessments(
+                otherParentAssessmentsQuery(isPerson, entityId, scopeIds, profileName),
+                activityRuleKeys)
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
         var documents = dataQualityAggregator
             .aggregateLinkedDocuments(linkedDocumentsQuery(isPerson, entityId, scopeIds))
             .orElseGet(DataQualityAggregator.LinkedDocumentAggregates::empty);
@@ -265,8 +283,12 @@ public class DataQualityServiceImpl implements DataQualityService {
         var personActivities = dataQualityAggregator.sumField(PERSON_INDEX,
             linkedPersonsQuery(isPerson, entityId, scopeIds), ACTIVITIES_COUNT_FIELD);
 
-        var assessedActivities =
-            assessments.activitiesCount() + personAssessments.activitiesCount();
+        var otherParentActivities = otherParentActivities(isPerson, entityId, scopeIds);
+
+        var activityParents = List.of(assessments, personAssessments, otherParentAssessments);
+
+        var assessedActivities = activityParents.stream()
+            .mapToLong(DataQualityAggregator.AssessmentAggregates::activitiesCount).sum();
 
         return List.of(
             relatedPersons(isPerson, scopeIds, personAssessments),
@@ -285,10 +307,11 @@ public class DataQualityServiceImpl implements DataQualityService {
             // record carrying it holds.
             new RelatedQualityDTO(
                 RelatedEntityType.ACTIVITIES,
-                documents.linkedActivities() + personActivities,
+                documents.linkedActivities() + personActivities + otherParentActivities,
                 assessedActivities,
-                assessments.activityIssues() + personAssessments.activityIssues(),
-                averageActivityScore(assessments, personAssessments, assessedActivities),
+                activityParents.stream()
+                    .mapToLong(DataQualityAggregator.AssessmentAggregates::activityIssues).sum(),
+                averageActivityScore(activityParents, assessedActivities),
                 true
             ),
             // TODO: projects have no quality assessments yet.
@@ -374,15 +397,48 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     @Nullable
     private Double averageActivityScore(
-        DataQualityAggregator.AssessmentAggregates assessments,
-        DataQualityAggregator.AssessmentAggregates personAssessments,
-        long assessedActivities) {
+        List<DataQualityAggregator.AssessmentAggregates> parents, long assessedActivities) {
         if (assessedActivities == 0) {
             return null;
         }
 
-        return (assessments.activityScoreSum() + personAssessments.activityScoreSum()) /
+        return parents.stream()
+            .mapToDouble(DataQualityAggregator.AssessmentAggregates::activityScoreSum).sum() /
             assessedActivities;
+    }
+
+    private Query otherParentAssessmentsQuery(boolean isPerson, Integer entityId,
+                                              List<Integer> scopeIds, String profileName) {
+        return BoolQuery.of(b -> b
+            .must(stringTermsQuery("target", List.of(EVENT_TARGET, PUBLICATION_SERIES_TARGET)))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(isPerson
+                ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds))
+        )._toQuery();
+    }
+
+    /**
+     * Journal and book series indexes link to institutions but not to people, so for a person only
+     * events can be counted as records; their series contributions are still assessed above.
+     */
+    private long otherParentActivities(boolean isPerson, Integer entityId,
+                                       List<Integer> scopeIds) {
+        var events = dataQualityAggregator.sumField(EVENT_INDEX,
+            isPerson
+                ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
+                : termsQuery("related_institution_ids", scopeIds),
+            ACTIVITIES_COUNT_FIELD);
+
+        if (isPerson) {
+            return events;
+        }
+
+        return events + PUBLICATION_SERIES_INDEXES.stream()
+            .mapToLong(index -> dataQualityAggregator.sumField(index,
+                termsQuery("related_institution_ids", scopeIds), ACTIVITIES_COUNT_FIELD))
+            .sum();
     }
 
     /**
@@ -488,7 +544,7 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return ACTIVITY_TARGET.equals(target)
-            ? List.of(DOCUMENT_TARGET, PERSON_TARGET)
+            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET)
             : List.of(target);
     }
 
@@ -669,6 +725,13 @@ public class DataQualityServiceImpl implements DataQualityService {
     }
 
     private Query termsQuery(String field, List<Integer> values) {
+        return TermsQuery.of(terms -> terms
+            .field(field)
+            .terms(termValues -> termValues.value(values.stream().map(FieldValue::of).toList()))
+        )._toQuery();
+    }
+
+    private Query stringTermsQuery(String field, List<String> values) {
         return TermsQuery.of(terms -> terms
             .field(field)
             .terms(termValues -> termValues.value(values.stream().map(FieldValue::of).toList()))

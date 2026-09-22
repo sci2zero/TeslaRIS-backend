@@ -56,6 +56,7 @@ import rs.teslaris.core.model.document.Course;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
+import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Exhibition;
@@ -76,7 +77,9 @@ import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
@@ -1356,6 +1359,56 @@ public class TestingDataInitializer {
         otherEvent2.setType(OtherEventType.CEREMONY);
         otherEventRepository.save(otherEvent2);
 
+        var boardChair = eventContribution(person1, dummyOU, country,
+            EventContributionType.ORGANIZATION_BOARD_CHAIR, LocalDate.of(2021, 3, 6),
+            LocalDate.of(2021, 3, 10), Set.of(), 1);
+        conferenceEvent1.addContribution(boardChair);
+
+        var reviewer = eventContribution(person2, dummyOU, country,
+            EventContributionType.REVIEWER, null, null, Set.of(researchArea3), 2);
+        reviewer.setNumberOfReviewsOrAssessment(12);
+        conferenceEvent1.addContribution(reviewer);
+
+        var speaker = eventContribution(person3, dummyOU, country,
+            EventContributionType.SPEAKER, null, null, Set.of(), 1);
+        conferenceEvent2.addContribution(speaker);
+
+        var keynoteSpeaker = eventContribution(person1, dummyOU, country,
+            EventContributionType.KEYNOTE_SPEAKER, LocalDate.of(2020, 6, 19),
+            LocalDate.of(2020, 6, 13), Set.of(), 2);
+        conferenceEvent2.addContribution(keynoteSpeaker);
+
+        var teacher = eventContribution(person1, dummyOU, country,
+            EventContributionType.TEACHER, LocalDate.of(2024, 10, 1), LocalDate.of(2025, 1, 31),
+            Set.of(), 1);
+        teacher.setLectureHoursPerWeek("2");
+        teacher.setTutorialHoursPerWeek("1");
+        course1.addContribution(teacher);
+
+        var lecturer = eventContribution(person2, dummyOU, country,
+            EventContributionType.INSTRUCTOR, LocalDate.of(2025, 5, 12), null, Set.of(), 1);
+        lecturer.setLectureHoursPerWeek("3");
+        otherEvent1.addContribution(lecturer);
+
+        var journalEditor = publicationSeriesContribution(person3, dummyOU, country,
+            PublicationSeriesContributionType.EDITOR, LocalDate.of(2019, 9, 1), null, Set.of(),
+            1);
+        journal2.addContribution(journalEditor);
+
+        var bookSeriesEditor = publicationSeriesContribution(person4, dummyOU, country,
+            PublicationSeriesContributionType.EDITOR, LocalDate.now().plusYears(3), null, Set.of(),
+            1);
+        bookSeries1.addContribution(bookSeriesEditor);
+
+        var boardMember = publicationSeriesContribution(person2, dummyOU, country,
+            PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER, null, null,
+            Set.of(researchArea3), 1);
+        bookSeries2.addContribution(boardMember);
+
+        personContributionRepository.saveAll(
+            List.of(boardChair, reviewer, speaker, keynoteSpeaker, teacher, lecturer,
+                journalEditor, bookSeriesEditor, boardMember));
+
         var identifier1 = new Identifier();
         identifier1.setCode("Code 1");
         identifier1.setTitle(Set.of(new MultiLingualContent(englishTag, "Identifier 1", 1)));
@@ -1431,5 +1484,48 @@ public class TestingDataInitializer {
         thesisRepository.save(dummyDocument);
 
         projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU, dummyDocument);
+    }
+
+    private PersonEventContribution eventContribution(Person person, OrganisationUnit institution,
+                                                      Country country,
+                                                      EventContributionType type,
+                                                      LocalDate dateFrom, LocalDate dateTo,
+                                                      Set<ResearchArea> researchAreas,
+                                                      int orderNumber) {
+        var contribution = new PersonEventContribution();
+        contribution.setContributionType(type);
+        fillContribution(contribution, person, institution, country, dateFrom, dateTo,
+            researchAreas, orderNumber);
+
+        return contribution;
+    }
+
+    private PersonPublicationSeriesContribution publicationSeriesContribution(
+        Person person, OrganisationUnit institution, Country country,
+        PublicationSeriesContributionType type, LocalDate dateFrom, LocalDate dateTo,
+        Set<ResearchArea> researchAreas, int orderNumber) {
+        var contribution = new PersonPublicationSeriesContribution();
+        contribution.setContributionType(type);
+        fillContribution(contribution, person, institution, country, dateFrom, dateTo,
+            researchAreas, orderNumber);
+
+        return contribution;
+    }
+
+    private void fillContribution(PersonContribution contribution, Person person,
+                                  OrganisationUnit institution, Country country,
+                                  LocalDate dateFrom, LocalDate dateTo,
+                                  Set<ResearchArea> researchAreas, int orderNumber) {
+        contribution.setPerson(person);
+        contribution.setDateFrom(dateFrom);
+        contribution.setDateTo(dateTo);
+        contribution.setResearchAreas(new HashSet<>(researchAreas));
+        contribution.setOrderNumber(orderNumber);
+        contribution.setApproveStatus(ApproveStatus.APPROVED);
+        contribution.setInstitutions(Set.of(institution));
+        contribution.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(), person.getName(),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
     }
 }
