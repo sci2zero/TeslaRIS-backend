@@ -24,12 +24,14 @@ public interface OrganisationUnitIndexRepository
           "bool": {
             "should": [
               { "term": { "scopus_afid": "?0" }},
-              { "term": { "open_alex_id": "?0" }}
+              { "term": { "open_alex_id": "?0" }},
+              { "term": { "ror": "?0" }},
+              { "term": { "ringgold": "?0" }}
             ]
           }
         }
         """)
-    Optional<OrganisationUnitIndex> findByScopusAfidOrOpenAlexId(String identifier);
+    Optional<OrganisationUnitIndex> findByImportIdentifier(String identifier);
 
     Optional<OrganisationUnitIndex> findOrganisationUnitIndexByTaxNumberIn(List<String> taxNumbers);
 

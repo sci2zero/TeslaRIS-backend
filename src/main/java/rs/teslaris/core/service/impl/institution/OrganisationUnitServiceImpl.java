@@ -188,7 +188,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             return null;
         }
 
-        return organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(importId)
+        return organisationUnitIndexRepository.findByImportIdentifier(importId)
             .orElse(null);
     }
 
@@ -1038,6 +1038,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 !organisationUnit.getOpenAlexId().isBlank()) ? organisationUnit.getOpenAlexId() :
                 null);
         index.setRor(organisationUnit.getRor());
+        index.setRinggold(organisationUnit.getRinggold());
 
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
             OrganisationUnitIndex::setKeywordsSr,

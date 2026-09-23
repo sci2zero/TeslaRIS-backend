@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.18.1</version>
+            <version>1.23.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -286,12 +286,19 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
+            <version>5.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
-            <version>5.2.1</version>
+            <version>5.4.3</version>
+        </dependency>
+        <dependency>
+            <!-- Pinned alongside httpcore5: the Spring Boot BOM would otherwise hold this
+                 back to 5.2.4 and split the httpcore5 family across two versions. -->
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5-h2</artifactId>
+            <version>5.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

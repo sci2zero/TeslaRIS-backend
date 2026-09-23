@@ -80,6 +80,9 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Keyword, store = true, name = "ror")
     private String ror;
 
+    @Field(type = FieldType.Keyword, store = true, name = "ringgold")
+    private String ringgold;
+
     @Field(type = FieldType.Keyword, store = true, name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
 
