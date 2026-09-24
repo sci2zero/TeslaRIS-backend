@@ -12,12 +12,14 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -47,6 +50,8 @@ import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
+import rs.teslaris.revisioner.dto.PolicyConstraintDTO;
+import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.dto.RelatedQualityDTO;
@@ -835,6 +840,60 @@ public class DataQualityServiceImpl implements DataQualityService {
                     DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                         profileName, version, ruleKey))))
             .toList();
+    }
+
+    // Rules are always those of the latest version; the date moves the counts, not the policy.
+    @Override
+    @Transactional(readOnly = true)
+    public PolicyExplorerDTO getPolicy(@Nullable Integer organisationUnitId, String profileName,
+                                       @Nullable LocalDate assessmentDate) {
+        var version = DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName);
+        var profile = DataQualityAssessmentConfigurationLoader.getProfile(profileName, version);
+
+        var scopeIds = Objects.isNull(organisationUnitId)
+            ? List.<Integer>of()
+            : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var query = buildIssueQuery(
+            scopeIds.isEmpty() ? null : termsQuery("organisation_unit_ids", scopeIds),
+            profileName, List.of(), assessmentDate);
+
+        var ruleKeys = profile.dataQualityRemarks().keySet();
+
+        var affectedRecords = dataQualityAggregator
+            .topFailedRules(query, ruleKeys, ruleKeys.size())
+            .stream()
+            .collect(Collectors.toMap(DataQualityAggregator.TopFailedRule::ruleKey,
+                DataQualityAggregator.TopFailedRule::occurrences));
+
+        var constraints = profile.dataQualityRemarks().entrySet().stream()
+            .map(entry -> new PolicyConstraintDTO(
+                entry.getKey(),
+                StringUtil.buildMultilingualContentDTO(languageTagService,
+                    entry.getValue().title()),
+                entry.getValue().target(),
+                profile.targetWeights().getOrDefault(entry.getValue().target(), 1.0),
+                entry.getValue().dimension(),
+                entry.getValue().severity(),
+                entry.getValue().blocking(),
+                entry.getValue().points(),
+                entry.getValue().usedForFairCompliance(),
+                entry.getValue().constraints(),
+                affectedRecords.getOrDefault(entry.getKey(), 0L)))
+            .sorted(Comparator.comparingLong(PolicyConstraintDTO::affectedRecords).reversed()
+                .thenComparing(PolicyConstraintDTO::key))
+            .toList();
+
+        var dimensionDefinitions = new EnumMap<QualityDimension, List<MultilingualContentDTO>>(
+            QualityDimension.class);
+
+        Arrays.stream(QualityDimension.values()).forEach(dimension ->
+            dimensionDefinitions.put(dimension,
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
+                        profileName, version, dimension))));
+
+        return new PolicyExplorerDTO(profileName, version, constraints, dimensionDefinitions);
     }
 
     @Override

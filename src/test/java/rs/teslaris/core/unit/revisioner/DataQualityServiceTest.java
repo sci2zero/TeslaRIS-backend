@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -1901,6 +1903,154 @@ public class DataQualityServiceTest {
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.getProfile(anyString(), anyString()),
                 never());
+        }
+    }
+
+    private DataQualityAssessmentConfigurationLoader.DataQualityRemark remarkFor(
+        String target, IssueSeverity severity, QualityDimension dimension) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
+            Map.of("EN", "Title"), Map.of("EN", "Message"), target, severity, dimension, true,
+            8.0, false, Map.of("maxLength", 255));
+    }
+
+    private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileWith(
+        Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
+            "1.0.0", 60.0, Map.of(), Map.of("Document.title", 5.0), remarks, Map.of(), Map.of(),
+            Map.of());
+    }
+
+    private MockedStatic<DataQualityAssessmentConfigurationLoader> mockPolicyLoader(
+        Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
+        var configurationLoader = mockStatic(DataQualityAssessmentConfigurationLoader.class);
+
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion("ptcris"))
+            .thenReturn("1.0.0");
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getProfile("ptcris", "1.0.0"))
+            .thenReturn(profileWith(remarks));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
+                anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("Definition")));
+
+        return configurationLoader;
+    }
+
+    @Test
+    public void shouldReturnEveryConstraintOfThePolicyWithItsAffectedRecordCount() {
+        // given
+        var remarks = new LinkedHashMap<String,
+            DataQualityAssessmentConfigurationLoader.DataQualityRemark>();
+        remarks.put("titleTooLong",
+            remarkFor("Document.title", IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+        remarks.put("doiNotResolvable",
+            remarkFor("Document.doi", IssueSeverity.WARNING, QualityDimension.QUALITATIVE));
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt()))
+            .thenReturn(List.of(new DataQualityAggregator.TopFailedRule("doiNotResolvable", 4281)));
+
+        try (var ignored = mockPolicyLoader(remarks)) {
+            // when
+            var policy = dataQualityService.getPolicy(null, "ptcris", null);
+
+            // then
+            assertEquals("ptcris", policy.profileName());
+            assertEquals("1.0.0", policy.version());
+            assertEquals(2, policy.constraints().size());
+
+            var top = policy.constraints().getFirst();
+            assertEquals("doiNotResolvable", top.key());
+            assertEquals(4281, top.affectedRecords());
+            assertEquals(IssueSeverity.WARNING, top.severity());
+            assertEquals(QualityDimension.QUALITATIVE, top.dimension());
+
+            // Rules nothing failed are missing from the buckets and fall back to zero.
+            assertEquals("titleTooLong", policy.constraints().get(1).key());
+            assertEquals(0, policy.constraints().get(1).affectedRecords());
+        }
+    }
+
+    @Test
+    public void shouldCarryRuleMetadataAndTargetWeightIntoThePolicy() {
+        // given
+        var remarks = Map.of("titleTooLong",
+            remarkFor("Document.title", IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(remarks)) {
+            // when
+            var constraint = dataQualityService.getPolicy(null, "ptcris", null)
+                .constraints().getFirst();
+
+            // then
+            assertEquals("Document.title", constraint.target());
+            assertEquals(5.0, constraint.targetWeight());
+            assertEquals(8.0, constraint.points());
+            assertTrue(constraint.blocking());
+            assertFalse(constraint.usedForFairCompliance());
+            assertEquals(255, constraint.constraints().get("maxLength"));
+        }
+    }
+
+    @Test
+    public void shouldDescribeEveryDimensionOfThePolicy() {
+        // given
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            var definitions =
+                dataQualityService.getPolicy(null, "ptcris", null).dimensionDefinitions();
+
+            // then
+            assertEquals(QualityDimension.values().length, definitions.size());
+            assertEquals("Definition",
+                definitions.get(QualityDimension.LINEAGE).getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldCountPolicyFailuresOnlyWithinTheRequestedUnitAndDay() {
+        // given
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
+            .thenReturn(List.of(7, 8));
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            dataQualityService.getPolicy(7, "ptcris", LocalDate.of(2026, 7, 18));
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator).topFailedRules(captor.capture(), any(), anyInt());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("organisation_unit_ids"));
+            assertTrue(query.contains("8"));
+            assertTrue(query.contains("assessment_date"));
+            assertFalse(query.contains("is_latest"));
+        }
+    }
+
+    @Test
+    public void shouldCountPolicyFailuresAgainstTheLatestAssessmentsWhenNoDayIsGiven() {
+        // given
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            dataQualityService.getPolicy(null, "ptcris", null);
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator).topFailedRules(captor.capture(), any(), anyInt());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("is_latest"));
+            assertFalse(query.contains("organisation_unit_ids"));
         }
     }
 

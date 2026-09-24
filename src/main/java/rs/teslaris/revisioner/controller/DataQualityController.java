@@ -21,6 +21,7 @@ import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
+import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
@@ -154,6 +155,17 @@ public class DataQualityController {
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
     public List<DataQualityProfileDTO> listAllPolicies() {
         return dataQualityService.listAllDataQualityProfiles();
+    }
+
+    @GetMapping(value = "/policy", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public PolicyExplorerDTO getPolicy(
+        @RequestParam String profileName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate assessmentDate,
+        @RequestHeader("Authorization") String bearerToken) {
+        return dataQualityService.getPolicy(resolveOrganisationUnitId(bearerToken), profileName,
+            assessmentDate);
     }
 
     // An admin has no unit and sees the repository; everyone else sees their own sub-hierarchy.
