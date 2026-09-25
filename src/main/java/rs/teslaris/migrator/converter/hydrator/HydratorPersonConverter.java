@@ -86,6 +86,7 @@ public class HydratorPersonConverter
                 code.equalsIgnoreCase(identifier.identifierType().value()))
             .map(HydratorCVModel.AuthorIdentifier::identifier)
             .filter(value -> !isBlank(value))
+            .map(String::trim)
             .findFirst()
             .orElse(null);
     }
