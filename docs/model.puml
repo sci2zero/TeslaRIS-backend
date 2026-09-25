@@ -43,7 +43,7 @@ package commonTypes {
     String personNationalIdRegularExpression
     String projectNationalIdRegularExpression
     String organisationUnitNationalIdRegularExpression
-    String projectNationalIdRegularExpression
+    String documentNationalIdRegularExpression
     License metadataLicense
     Boolean digitalLibraryThesesIncluded
     Boolean digitalRepositoryIncluded

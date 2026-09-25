@@ -22,7 +22,7 @@ public class CrossrefWorksClient {
     // When this header is set, Crossref gives access to Polite Pool which increases the rate limit
     // from 5 -> 10 and concurrency limit from 1 -> 3
     private static final String POLITE_POOL_USER_AGENT =
-            "TeslaRIS/1.10 (mailto:teslaris@uns.ac.rs)";
+        "TeslaRIS/1.10 (mailto:teslaris@uns.ac.rs)";
 
     private final RestTemplateProvider restTemplateProvider;
 
@@ -48,7 +48,7 @@ public class CrossrefWorksClient {
             return message.isMissingNode() ? null : message;
         } catch (HttpClientErrorException e) {
             log.warn("Unable to fetch Crossref metadata for DOI: {}. Response code: {}", doi,
-                    e.getStatusCode().value());
+                e.getStatusCode().value());
             return null;
         }
     }

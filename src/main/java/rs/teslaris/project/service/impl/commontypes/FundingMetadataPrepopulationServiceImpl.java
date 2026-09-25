@@ -2,6 +2,7 @@ package rs.teslaris.project.service.impl.commontypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Nullable;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,11 @@ import rs.teslaris.project.service.interfaces.commontypes.FundingMetadataPrepopu
 import rs.teslaris.project.util.CordisDoiUtil;
 import rs.teslaris.project.util.CrossrefWorksClient;
 
-import java.util.Objects;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataPrepopulationService {
+public class FundingMetadataPrepopulationServiceImpl
+    implements FundingMetadataPrepopulationService {
 
     private final CrossrefWorksClient crossrefWorksClient;
 
@@ -35,7 +35,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
     public PrepopulatedFundingMetadataDTO fetchFundingDataForDoi(String doi) {
         if (CordisDoiUtil.isEuHorizonDoi(doi)) {
             return cordisFundingDataService.fetchMetadata(
-                    CordisDoiUtil.extractCordisProjectId(doi), doi);
+                CordisDoiUtil.extractCordisProjectId(doi), doi);
         }
 
         return mapCrossrefFundingData(crossrefWorksClient.fetchWorkMessage(doi), doi);
@@ -52,16 +52,17 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
 
         if (!"grant".equals(message.path("type").asText())) {
             log.warn("DOI {} is not a grant record (type={})",
-                    doi, message.path("type").asText());
+                doi, message.path("type").asText());
             return metadata;
         }
 
         metadata.setDoi(message.path("DOI").asText(doi));
         metadata.setGrantAgreementId(message.path("award").asText(null));
-        metadata.setDateAwarded(StringUtil.parseDateParts(message.path("issued").path("date-parts")));
+        metadata.setDateAwarded(
+            StringUtil.parseDateParts(message.path("issued").path("date-parts")));
 
         var resourceUrl = StringUtil.sanitizeUrl(
-                message.path("resource").path("primary").path("URL").asText(null));
+            message.path("resource").path("primary").path("URL").asText(null));
         var doiUrl = StringUtil.sanitizeUrl(message.path("URL").asText(null));
 
         if (Objects.nonNull(resourceUrl)) {
@@ -78,8 +79,9 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
             populateFromProject(metadata, projectsNode.get(0));
 
             if (projectsNode.size() > 1) {
-                log.warn("Grant with DOI {} has {} projects, but the data is only pulled from the first one",
-                        metadata.getDoi(), projectsNode.size());
+                log.warn(
+                    "Grant with DOI {} has {} projects, but the data is only pulled from the first one",
+                    metadata.getDoi(), projectsNode.size());
             }
         }
 
@@ -94,7 +96,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
             var titleText = titleNode.path("title").asText(null);
             if (Objects.nonNull(titleText)) {
                 var content = new MultilingualContentDTO(
-                        english.getId(), english.getLanguageTag(), titleText, 1);
+                    english.getId(), english.getLanguageTag(), titleText, 1);
 
                 if (StringUtil.looksLikeAbbreviation(titleText)) {
                     metadata.getNameAbbreviation().add(content);
@@ -108,13 +110,15 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
             var descText = descNode.path("description").asText(null);
             if (Objects.nonNull(descText)) {
                 var content = new MultilingualContentDTO(
-                        english.getId(), english.getLanguageTag(), descText, 1);
+                    english.getId(), english.getLanguageTag(), descText, 1);
                 metadata.getDescription().add(content);
             }
         });
 
-        metadata.setDateFrom(StringUtil.parseDateParts(projectNode.path("award-start").path("date-parts")));
-        metadata.setDateTo(StringUtil.parseDateParts(projectNode.path("award-end").path("date-parts")));
+        metadata.setDateFrom(
+            StringUtil.parseDateParts(projectNode.path("award-start").path("date-parts")));
+        metadata.setDateTo(
+            StringUtil.parseDateParts(projectNode.path("award-end").path("date-parts")));
 
         var awardAmountNode = projectNode.path("award-amount");
         if (!awardAmountNode.isMissingNode()) {
@@ -125,10 +129,10 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
                 var currency = currencyService.findCurrencyByCode(currencyCode);
                 if (Objects.nonNull(currency)) {
                     metadata.setMonetaryAmount(
-                            new MonetaryAmountDTO(currency, amountValue.asDouble()));
+                        new MonetaryAmountDTO(currency, amountValue.asDouble()));
                 } else {
                     log.warn("Currency code {} from Crossref not found in local currency table",
-                            currencyCode);
+                        currencyCode);
                 }
             }
         }
@@ -139,7 +143,7 @@ public class FundingMetadataPrepopulationServiceImpl implements FundingMetadataP
             var funderName = funderNode.path("name").asText(null);
             if (Objects.nonNull(funderName)) {
                 metadata.getDisplayFunder().add(new MultilingualContentDTO(
-                        english.getId(), english.getLanguageTag(), funderName, 1));
+                    english.getId(), english.getLanguageTag(), funderName, 1));
             }
 
             for (var idNode : funderNode.path("id")) {

@@ -20,10 +20,10 @@ import rs.teslaris.core.util.session.RestTemplateProvider;
 public class CordisXmlClient {
 
     private static final String CORDIS_PROJECT_URL =
-            "https://cordis.europa.eu/project/id/%s?format=xml";
+        "https://cordis.europa.eu/project/id/%s?format=xml";
 
     private static final Pattern MODEL_VERSION_PATTERN =
-            Pattern.compile("Model Version:(\\d+)");
+        Pattern.compile("Model Version:(\\d+)");
 
     private static final String EXPECTED_MODEL_VERSION = "132";
 
@@ -42,7 +42,7 @@ public class CordisXmlClient {
             return parseXmlSecurely(xml);
         } catch (Exception e) {
             log.error("Failed to parse CORDIS XML for project {}: {}", cordisProjectId,
-                    e.getMessage());
+                e.getMessage());
             return null;
         }
     }
@@ -56,7 +56,7 @@ public class CordisXmlClient {
             return restTemplate.getForObject(url, String.class);
         } catch (HttpClientErrorException e) {
             log.warn("Unable to fetch CORDIS data for project {}. Response code: {}",
-                    cordisProjectId, e.getStatusCode().value());
+                cordisProjectId, e.getStatusCode().value());
             return null;
         }
     }
@@ -65,11 +65,11 @@ public class CordisXmlClient {
         var modelVersion = extractModelVersion(xml);
         if (Objects.nonNull(modelVersion) && !EXPECTED_MODEL_VERSION.equals(modelVersion)) {
             log.warn("CORDIS Model Version changed from expected {} to {} for project {}. " +
-                            "XML structure may have changed - parser might need review.",
-                    EXPECTED_MODEL_VERSION, modelVersion, cordisProjectId);
+                    "XML structure may have changed - parser might need review.",
+                EXPECTED_MODEL_VERSION, modelVersion, cordisProjectId);
         } else if (Objects.isNull(modelVersion)) {
             log.warn("Could not find Model Version comment in CORDIS XML for project {}. " +
-                    "Response format may have changed.", cordisProjectId);
+                "Response format may have changed.", cordisProjectId);
         }
     }
 

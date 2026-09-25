@@ -65,7 +65,7 @@ public class CordisFundingDataServiceImpl implements CordisFundingDataService {
     // but it also returns a list of supported languages which could be used
     // to perform secondary fetch to get data in other languages
     private void populateFromDocument(PrepopulatedFundingMetadataDTO metadata, Document document)
-            throws Exception {
+        throws Exception {
         var xpath = XPathFactory.newInstance().newXPath();
         var english = languageTagService.findLanguageTagByValue("EN");
 
@@ -76,25 +76,25 @@ public class CordisFundingDataServiceImpl implements CordisFundingDataService {
         var title = evaluateText(xpath, document, projectField("title"));
         if (Objects.nonNull(title)) {
             metadata.getName().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), title, 1));
+                english.getId(), english.getLanguageTag(), title, 1));
         }
 
         var acronym = evaluateText(xpath, document, projectField("acronym"));
         if (Objects.nonNull(acronym)) {
             metadata.getNameAbbreviation().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), acronym, 1));
+                english.getId(), english.getLanguageTag(), acronym, 1));
         }
 
         var objective = evaluateText(xpath, document, projectField("objective"));
         if (Objects.nonNull(objective)) {
             metadata.getDescription().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), objective, 1));
+                english.getId(), english.getLanguageTag(), objective, 1));
         }
 
         var keywords = evaluateText(xpath, document, projectField("keywords"));
         if (Objects.nonNull(keywords)) {
             metadata.getKeywords().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), keywords, 1));
+                english.getId(), english.getLanguageTag(), keywords, 1));
         }
 
         metadata.setDateFrom(evaluateText(xpath, document, projectField("startDate")));
@@ -106,33 +106,33 @@ public class CordisFundingDataServiceImpl implements CordisFundingDataService {
             var currency = currencyService.findCurrencyByCode(CURRENCY_CODE);
             try {
                 metadata.setMonetaryAmount(
-                        new MonetaryAmountDTO(currency, Double.parseDouble(ecMaxContribution)));
+                    new MonetaryAmountDTO(currency, Double.parseDouble(ecMaxContribution)));
             } catch (NumberFormatException e) {
                 log.warn("Unable to parse ecMaxContribution value: {}", ecMaxContribution);
             }
         }
 
         metadata.getDisplayFunder().add(new MultilingualContentDTO(
-                english.getId(), english.getLanguageTag(), EU_FUNDER_DISPLAY_NAME, 1));
+            english.getId(), english.getLanguageTag(), EU_FUNDER_DISPLAY_NAME, 1));
 
         // CORDIS does not expose a DOI for the funder itself, only Crossref does.
 
         var call = evaluateText(xpath, document, association("call", "relatedMasterCall"));
         if (Objects.nonNull(call)) {
             metadata.getDisplayCall().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), call, 1));
+                english.getId(), english.getLanguageTag(), call, 1));
         }
 
         var programme = evaluateText(xpath, document,
-                association("programme", "relatedLegalBasis"));
+            association("programme", "relatedLegalBasis"));
         if (Objects.nonNull(programme)) {
             metadata.getDisplayProgram().add(new MultilingualContentDTO(
-                    english.getId(), english.getLanguageTag(), programme, 1));
+                english.getId(), english.getLanguageTag(), programme, 1));
         }
 
         var uriNodes = (NodeList) xpath.evaluate(
-                "//*[local-name()='webLink'][@represents='project'][@type='relatedWebsite']"
-                        + "/*[local-name()='physUrl']", document, XPathConstants.NODESET);
+            "//*[local-name()='webLink'][@represents='project'][@type='relatedWebsite']"
+                + "/*[local-name()='physUrl']", document, XPathConstants.NODESET);
         metadata.setUris(new ArrayList<>());
         for (var i = 0; i < uriNodes.getLength(); i++) {
             var url = StringUtil.sanitizeUrl(uriNodes.item(i).getTextContent());
@@ -148,9 +148,9 @@ public class CordisFundingDataServiceImpl implements CordisFundingDataService {
 
     private String association(String elementName, String type) {
         return "/*[local-name()='project']/*[local-name()='relations']"
-                + "/*[local-name()='associations']"
-                + "/*[local-name()='" + elementName + "'][@type='" + type + "']"
-                + "/*[local-name()='title']";
+            + "/*[local-name()='associations']"
+            + "/*[local-name()='" + elementName + "'][@type='" + type + "']"
+            + "/*[local-name()='title']";
     }
 
     @Nullable

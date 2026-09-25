@@ -52,7 +52,8 @@ public class FundingProgramController {
                                                            @RequestParam(required = false)
                                                            Integer funderId,
                                                            Pageable pageable) {
-        return fundingProgramService.searchFundingPrograms(tokens, dateFrom, dateTo, onlyActive, funderId,
+        return fundingProgramService.searchFundingPrograms(tokens, dateFrom, dateTo, onlyActive,
+            funderId,
             pageable);
     }
 

@@ -32,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -44,6 +45,7 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.IntellectualPropertyType;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -55,6 +57,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntellectualPropertyServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntellectualPropertyJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -109,6 +112,9 @@ public class IntellectualPropertyServiceTest {
     @Mock
     private PublisherService publisherService;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private IntellectualPropertyServiceImpl intellectualPropertyService;
 
@@ -127,6 +133,9 @@ public class IntellectualPropertyServiceTest {
 
     @BeforeEach
     public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true,
+                ".*", ".*", ".*", ".*", License.CC0));
         ReflectionTestUtils.setField(intellectualPropertyService, "documentApprovedByDefault",
             true);
     }

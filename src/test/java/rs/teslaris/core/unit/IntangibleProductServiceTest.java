@@ -30,6 +30,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -42,6 +43,7 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -52,6 +54,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntangibleProductServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntangibleProductJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -106,6 +109,9 @@ public class IntangibleProductServiceTest {
     @Mock
     private PublisherService publisherService;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private IntangibleProductServiceImpl intangibleProductService;
 
@@ -124,6 +130,9 @@ public class IntangibleProductServiceTest {
 
     @BeforeEach
     public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true,
+                ".*", ".*", ".*", ".*", License.CC0));
         ReflectionTestUtils.setField(intangibleProductService, "documentApprovedByDefault", true);
     }
 

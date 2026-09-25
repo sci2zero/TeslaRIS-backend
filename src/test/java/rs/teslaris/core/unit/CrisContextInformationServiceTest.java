@@ -18,24 +18,26 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
-import rs.teslaris.core.dto.commontypes.FeatureModuleTogglesDTO;
-import rs.teslaris.core.model.commontypes.FeatureModuleToggles;
-import rs.teslaris.core.repository.commontypes.FeatureModuleTogglesRepository;
-import rs.teslaris.core.service.impl.commontypes.FeatureModuleTogglesServiceImpl;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
+import rs.teslaris.core.model.commontypes.CrisContextInformation;
+import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.repository.commontypes.CrisContextInformationRepository;
+import rs.teslaris.core.service.impl.commontypes.CrisContextInformationServiceImpl;
 
 @SpringBootTest
-public class FeatureModuleTogglesServiceTest {
+public class CrisContextInformationServiceTest {
 
     @Mock
-    private FeatureModuleTogglesRepository featureModuleTogglesRepository;
+    private CrisContextInformationRepository crisContextInformationRepository;
 
     @InjectMocks
-    private FeatureModuleTogglesServiceImpl service;
+    private CrisContextInformationServiceImpl service;
 
 
-    private FeatureModuleToggles configuration(Integer id, boolean assessment,
-                                               boolean library, boolean repository) {
-        var configuration = new FeatureModuleToggles(assessment, library, repository);
+    private CrisContextInformation configuration(Integer id, boolean assessment,
+                                                 boolean library, boolean repository) {
+        var configuration = new CrisContextInformation(assessment, library, repository,
+            ".*", ".*", ".*", ".*", License.CC0);
         configuration.setId(id);
         return configuration;
     }
@@ -43,7 +45,7 @@ public class FeatureModuleTogglesServiceTest {
     @Test
     public void shouldReturnExistingConfiguration() {
         // Given
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(List.of(configuration(1, false, true, false)));
 
         // When
@@ -53,13 +55,13 @@ public class FeatureModuleTogglesServiceTest {
         assertFalse(result.toggleAssessmentModule());
         assertTrue(result.toggleDigitalLibrary());
         assertFalse(result.toggleDigitalRepository());
-        verify(featureModuleTogglesRepository, never()).deleteAll(anyList());
+        verify(crisContextInformationRepository, never()).deleteAll(anyList());
     }
 
     @Test
     public void shouldReturnDefaultConfigurationWhenNoneExists() {
         // Given
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(Collections.emptyList());
 
         // When
@@ -69,7 +71,7 @@ public class FeatureModuleTogglesServiceTest {
         assertTrue(result.toggleAssessmentModule());
         assertTrue(result.toggleDigitalLibrary());
         assertTrue(result.toggleDigitalRepository());
-        verify(featureModuleTogglesRepository, never()).deleteAll(anyList());
+        verify(crisContextInformationRepository, never()).deleteAll(anyList());
     }
 
     @Test
@@ -78,7 +80,7 @@ public class FeatureModuleTogglesServiceTest {
         var oldest = configuration(1, false, false, true);
         var second = configuration(2, true, true, true);
         var third = configuration(3, true, false, false);
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(List.of(oldest, second, third));
 
         // When
@@ -90,7 +92,7 @@ public class FeatureModuleTogglesServiceTest {
         assertTrue(result.toggleDigitalRepository());
 
         var deletedCaptor = ArgumentCaptor.forClass(List.class);
-        verify(featureModuleTogglesRepository).deleteAll(deletedCaptor.capture());
+        verify(crisContextInformationRepository).deleteAll(deletedCaptor.capture());
         assertEquals(List.of(second, third), deletedCaptor.getValue());
     }
 
@@ -98,43 +100,45 @@ public class FeatureModuleTogglesServiceTest {
     public void shouldUpdateExistingConfigurationOnSave() {
         // Given
         var existing = configuration(1, true, true, true);
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(List.of(existing));
-        when(featureModuleTogglesRepository.save(any(FeatureModuleToggles.class)))
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new FeatureModuleTogglesDTO(false, true, false);
+        var dto = new CrisContextInformationDTO(false, true, false,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         // When
         var result = service.saveConfiguration(dto);
 
         // Then
-        var savedCaptor = ArgumentCaptor.forClass(FeatureModuleToggles.class);
-        verify(featureModuleTogglesRepository).save(savedCaptor.capture());
+        var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
+        verify(crisContextInformationRepository).save(savedCaptor.capture());
         assertSame(existing, savedCaptor.getValue());
         assertFalse(existing.getToggleAssessmentModule());
         assertTrue(existing.getToggleDigitalLibrary());
         assertFalse(existing.getToggleDigitalRepository());
         assertEquals(dto, result);
-        verify(featureModuleTogglesRepository, never()).deleteAll(anyList());
+        verify(crisContextInformationRepository, never()).deleteAll(anyList());
     }
 
     @Test
     public void shouldCreateConfigurationOnSaveWhenNoneExists() {
         // Given
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(Collections.emptyList());
-        when(featureModuleTogglesRepository.save(any(FeatureModuleToggles.class)))
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new FeatureModuleTogglesDTO(true, false, true);
+        var dto = new CrisContextInformationDTO(true, false, true,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         // When
         var result = service.saveConfiguration(dto);
 
         // Then
-        var savedCaptor = ArgumentCaptor.forClass(FeatureModuleToggles.class);
-        verify(featureModuleTogglesRepository).save(savedCaptor.capture());
+        var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
+        verify(crisContextInformationRepository).save(savedCaptor.capture());
         var saved = savedCaptor.getValue();
         assertTrue(saved.getToggleAssessmentModule());
         assertFalse(saved.getToggleDigitalLibrary());
@@ -147,23 +151,24 @@ public class FeatureModuleTogglesServiceTest {
         // Given
         var oldest = configuration(1, true, true, true);
         var redundant = configuration(2, false, false, false);
-        when(featureModuleTogglesRepository.findAll(any(Sort.class)))
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
             .thenReturn(List.of(oldest, redundant));
-        when(featureModuleTogglesRepository.save(any(FeatureModuleToggles.class)))
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new FeatureModuleTogglesDTO(false, false, true);
+        var dto = new CrisContextInformationDTO(false, false, true,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         // When
         service.saveConfiguration(dto);
 
         // Then
         var deletedCaptor = ArgumentCaptor.forClass(List.class);
-        verify(featureModuleTogglesRepository).deleteAll(deletedCaptor.capture());
+        verify(crisContextInformationRepository).deleteAll(deletedCaptor.capture());
         assertEquals(List.of(redundant), deletedCaptor.getValue());
 
-        var savedCaptor = ArgumentCaptor.forClass(FeatureModuleToggles.class);
-        verify(featureModuleTogglesRepository).save(savedCaptor.capture());
+        var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
+        verify(crisContextInformationRepository).save(savedCaptor.capture());
         assertSame(oldest, savedCaptor.getValue());
         assertFalse(oldest.getToggleAssessmentModule());
         assertFalse(oldest.getToggleDigitalLibrary());

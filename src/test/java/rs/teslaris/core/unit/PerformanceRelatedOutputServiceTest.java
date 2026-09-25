@@ -29,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -36,6 +37,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.user.User;
@@ -46,6 +48,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.PerformanceRelatedOutputServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.PerformanceRelatedOutputJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -127,11 +130,18 @@ public class PerformanceRelatedOutputServiceTest {
     @Mock
     private CountryService countryService;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private PerformanceRelatedOutputServiceImpl performanceRelatedOutputService;
 
+
     @BeforeEach
     public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true,
+                ".*", ".*", ".*", ".*", License.CC0));
         ReflectionTestUtils.setField(performanceRelatedOutputService, "documentApprovedByDefault",
             true);
     }

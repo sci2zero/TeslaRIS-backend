@@ -1093,7 +1093,7 @@ public class DataQualityServiceTest {
 
         // when
         var activities = row(dataQualityService.getRelatedQualityForEntity(
-            ORGANISATION_UNIT_ENTITY_TYPE, 1).getFirst().relatedQuality(),
+                ORGANISATION_UNIT_ENTITY_TYPE, 1).getFirst().relatedQuality(),
             RelatedEntityType.ACTIVITIES);
 
         // then

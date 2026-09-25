@@ -48,7 +48,7 @@ public class ProjectCreationServiceImpl implements ProjectCreationService {
         projectDTO.getOrganisations().forEach(organisation -> {
             if (Objects.nonNull(organisation.getNetContribution())) {
                 amountsByOrderNumber.put(organisation.getOrderNumber(),
-                        organisation.getNetContribution());
+                    organisation.getNetContribution());
             }
         });
 
@@ -73,10 +73,10 @@ public class ProjectCreationServiceImpl implements ProjectCreationService {
     }
 
     private List<MultilingualContentDTO> describe(
-            OrganisationUnitProjectContribution contribution) {
+        OrganisationUnitProjectContribution contribution) {
         return MultilingualContentConverter.getMultilingualContentDTO(
-                Objects.nonNull(contribution.getOrganisationUnit())
-                        ? contribution.getOrganisationUnit().getName()
-                        : contribution.getDisplayOrganisationUnit());
+            Objects.nonNull(contribution.getOrganisationUnit())
+                ? contribution.getOrganisationUnit().getName()
+                : contribution.getDisplayOrganisationUnit());
     }
 }

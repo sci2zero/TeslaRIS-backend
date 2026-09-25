@@ -276,8 +276,8 @@ public class SecurityConfiguration {
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
 
-                // FEATURE MODULE TOGGLES
-                .requestMatchers(HttpMethod.GET, "/api/feature-module-toggles").permitAll()
+                // CRIS CONTEXT INFORMATION
+                .requestMatchers(HttpMethod.GET, "/api/cris-context-information").permitAll()
 
                 // PUBLIC ASSESSMENT SERVICE
                 // through WEB UI

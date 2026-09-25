@@ -10,27 +10,27 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.core.dto.commontypes.FeatureModuleTogglesDTO;
-import rs.teslaris.core.service.interfaces.commontypes.FeatureModuleTogglesService;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 
 @RestController
-@RequestMapping("/api/feature-module-toggles")
+@RequestMapping("/api/cris-context-information")
 @RequiredArgsConstructor
-public class FeatureModuleTogglesController {
+public class CrisContextInformationController {
 
-    private final FeatureModuleTogglesService featureModuleTogglesService;
+    private final CrisContextInformationService crisContextInformationService;
 
 
     @GetMapping
-    public FeatureModuleTogglesDTO fetchConfigurationForSystem() {
-        return featureModuleTogglesService.readConfigurationForSystem();
+    public CrisContextInformationDTO fetchConfigurationForSystem() {
+        return crisContextInformationService.readConfigurationForSystem();
     }
 
     @PatchMapping
     @PreAuthorize("hasAuthority('SAVE_MODULE_ACCESS_CONFIGURATION')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public FeatureModuleTogglesDTO saveConfigurationForSystem(
-        @RequestBody @Valid FeatureModuleTogglesDTO configuration) {
-        return featureModuleTogglesService.saveConfiguration(configuration);
+    public CrisContextInformationDTO saveConfigurationForSystem(
+        @RequestBody @Valid CrisContextInformationDTO configuration) {
+        return crisContextInformationService.saveConfiguration(configuration);
     }
 }

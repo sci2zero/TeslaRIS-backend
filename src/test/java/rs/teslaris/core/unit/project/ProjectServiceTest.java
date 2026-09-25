@@ -1,6 +1,27 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -8,11 +29,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -25,20 +49,22 @@ import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
-import rs.teslaris.project.model.project.*;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
+import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.ProjectsRelation;
+import rs.teslaris.project.model.project.ProjectsRelationType;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
-
-import java.time.LocalDate;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class ProjectServiceTest {
@@ -76,8 +102,12 @@ public class ProjectServiceTest {
     @Mock
     private InvolvementRepository involvementRepository;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
+
 
     private static ProjectDTO baseProjectDTO() {
         var dto = new ProjectDTO();
@@ -103,6 +133,13 @@ public class ProjectServiceTest {
         return dto;
     }
 
+    @BeforeEach
+    public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true,
+                ".*", ".*", ".*", ".*", License.CC0));
+    }
+
     @Test
     public void shouldReturnEmptyPageWhenNoProjectsFound() {
         // given
@@ -120,7 +157,7 @@ public class ProjectServiceTest {
 
         // when
         var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
-                onlyWithoutContributions, allowedStatuses ,pageable);
+            onlyWithoutContributions, allowedStatuses, pageable);
 
         // then
         assertNotNull(result);
@@ -154,7 +191,7 @@ public class ProjectServiceTest {
 
         // when
         var result = projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
-                onlyWithoutContributions, allowedStatuses, pageable);
+            onlyWithoutContributions, allowedStatuses, pageable);
 
         // then
         assertNotNull(result);
@@ -394,20 +431,20 @@ public class ProjectServiceTest {
         projectDTO.setPersons(List.of(member1, member2));
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(personProjectContributionService.createContribution(any(), any()))
-                .thenReturn(new PersonProjectContribution());
+            .thenReturn(new PersonProjectContribution());
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(new Project());
+            .thenReturn(new Project());
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         projectService.createProject(projectDTO);
 
         // then
         verify(personProjectContributionService, times(2))
-                .createContribution(any(), any());
+            .createContribution(any(), any());
     }
 
     @Test
@@ -420,13 +457,13 @@ public class ProjectServiceTest {
         savedProject.setId(1);
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(projectsRelationService.createRelation(any(), any()))
-                .thenReturn(new ProjectsRelation());
+            .thenReturn(new ProjectsRelation());
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(savedProject);
+            .thenReturn(savedProject);
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         var result = projectService.createProject(projectDTO);
@@ -444,7 +481,7 @@ public class ProjectServiceTest {
         // given
         var projectDTO = baseProjectDTO();
         projectDTO.setPersons(List.of(new PersonProjectContributionDTO(),
-                new PersonProjectContributionDTO()));
+            new PersonProjectContributionDTO()));
         projectDTO.setOrganisations(List.of(new OrganisationUnitProjectContributionDTO()));
         projectDTO.setRelations(List.of(relationDTO(2), relationDTO(3)));
 
@@ -452,17 +489,17 @@ public class ProjectServiceTest {
         savedProject.setId(1);
 
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(personProjectContributionService.createContribution(any(), any()))
-                .thenReturn(new PersonProjectContribution());
+            .thenReturn(new PersonProjectContribution());
         when(organisationUnitProjectContributionService.createContribution(any(), any()))
-                .thenReturn(new OrganisationUnitProjectContribution());
+            .thenReturn(new OrganisationUnitProjectContribution());
         when(projectsRelationService.createRelation(any(), any()))
-                .thenReturn(new ProjectsRelation());
+            .thenReturn(new ProjectsRelation());
         when(projectRepository.save(any(Project.class)))
-                .thenReturn(savedProject);
+            .thenReturn(savedProject);
         when(projectIndexRepository.save(any(ProjectIndex.class)))
-                .thenReturn(new ProjectIndex());
+            .thenReturn(new ProjectIndex());
 
         // when
         var result = projectService.createProject(projectDTO);
@@ -471,9 +508,9 @@ public class ProjectServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getId());
         verify(personProjectContributionService, times(2))
-                .createContribution(any(), eq(savedProject));
+            .createContribution(any(), eq(savedProject));
         verify(organisationUnitProjectContributionService)
-                .createContribution(any(), eq(savedProject));
+            .createContribution(any(), eq(savedProject));
         verify(projectsRelationService, times(2)).createRelation(any(), eq(savedProject));
         verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
@@ -679,7 +716,7 @@ public class ProjectServiceTest {
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(personProjectContributionService.createContribution(dto, project))
-                .thenReturn(contribution);
+            .thenReturn(contribution);
 
         // when
         var result = projectService.addPerson(projectId, dto);
@@ -735,7 +772,7 @@ public class ProjectServiceTest {
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(organisationUnitProjectContributionService.createContribution(dto, project))
-                .thenReturn(contribution);
+            .thenReturn(contribution);
 
         // when
         var result = projectService.addOrganisation(projectId, dto);
@@ -744,7 +781,7 @@ public class ProjectServiceTest {
         assertNotNull(result);
         assertEquals(20, result.getId());
         assertEquals(OrganisationUnitProjectContributionType.PARTNER,
-                result.getContributionType());
+            result.getContributionType());
         assertEquals(1, result.getOrderNumber());
         assertTrue(project.getOrganisations().contains(contribution));
         verify(projectRepository).save(project);
@@ -766,7 +803,7 @@ public class ProjectServiceTest {
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(organisationUnitProjectContributionService.findOne(contributionId))
-                .thenReturn(contribution);
+            .thenReturn(contribution);
 
         // when
         projectService.removeOrganisation(projectId, contributionId);

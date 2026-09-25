@@ -73,6 +73,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -106,6 +107,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     implements OrganisationUnitService {
 
     private final OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
+
+    private final CrisContextInformationService crisContextInformationService;
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
@@ -712,7 +715,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         IdentifierUtil.validateAndSetIdentifier(
             organisationUnitDTO.getNationalId(),
             organisationUnit.getId(),
-            ".*",
+            crisContextInformationService.readConfigurationForSystem()
+                .organisationUnitNationalIdRegularExpression(),
             organisationUnitRepository::existsByNationalId,
             organisationUnit::setNationalId,
             "nationalIdFormatError",
@@ -919,10 +923,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var normalized = taxNumber.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         var nationalPart = (normalized.length() > 2 && Character.isLetter(normalized.charAt(0)) &&
-                Character.isLetter(normalized.charAt(1))) ? normalized.substring(2) : normalized;
+            Character.isLetter(normalized.charAt(1))) ? normalized.substring(2) : normalized;
 
         return organisationUnitIndexRepository.findOrganisationUnitIndexByTaxNumberIn(
-                List.of(normalized, nationalPart)).orElse(null);
+            List.of(normalized, nationalPart)).orElse(null);
     }
 
     @Override

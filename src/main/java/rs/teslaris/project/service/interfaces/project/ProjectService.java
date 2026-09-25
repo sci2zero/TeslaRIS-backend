@@ -1,5 +1,8 @@
 package rs.teslaris.project.service.interfaces.project;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,10 +14,6 @@ import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectStatus;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public interface ProjectService extends JPAService<Project> {
@@ -55,12 +54,13 @@ public interface ProjectService extends JPAService<Project> {
 
     void unbindInstitutionResearchersFromProject(Integer institutionId, Integer projectId);
 
-    PersonProjectContributionDTO addPerson(Integer projectId, PersonProjectContributionDTO personDto);
+    PersonProjectContributionDTO addPerson(Integer projectId,
+                                           PersonProjectContributionDTO personDto);
 
     void removePerson(Integer projectId, Integer personId);
 
     OrganisationUnitProjectContributionDTO addOrganisation(Integer projectId,
-                                                          OrganisationUnitProjectContributionDTO organisationDto);
+                                                           OrganisationUnitProjectContributionDTO organisationDto);
 
     void removeOrganisation(Integer projectId, Integer organisationId);
 

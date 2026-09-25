@@ -11,10 +11,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.commontypes.FeatureModuleTogglesDTO;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
+import rs.teslaris.core.model.document.License;
 
 @SpringBootTest
-public class FeatureModuleTogglesControllerTest extends BaseTest {
+public class CrisContextInformationControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -23,7 +24,7 @@ public class FeatureModuleTogglesControllerTest extends BaseTest {
     @Test
     public void testReadConfigurationForSystem() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("http://localhost:8081/api/feature-module-toggles")
+                MockMvcRequestBuilders.get("http://localhost:8081/api/cris-context-information")
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.toggleAssessmentModule").exists())
@@ -36,11 +37,12 @@ public class FeatureModuleTogglesControllerTest extends BaseTest {
     public void testSaveConfigurationForSystem() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new FeatureModuleTogglesDTO(false, true, false);
+        var configurationDTO = new CrisContextInformationDTO(false, true, false,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.patch("http://localhost:8081/api/feature-module-toggles")
+                MockMvcRequestBuilders.patch("http://localhost:8081/api/cris-context-information")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
@@ -55,11 +57,12 @@ public class FeatureModuleTogglesControllerTest extends BaseTest {
     public void testSaveConfigurationForSystemRejectsMissingToggle() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new FeatureModuleTogglesDTO(null, true, false);
+        var configurationDTO = new CrisContextInformationDTO(null, true, false,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.patch("http://localhost:8081/api/feature-module-toggles")
+                MockMvcRequestBuilders.patch("http://localhost:8081/api/cris-context-information")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
@@ -71,11 +74,12 @@ public class FeatureModuleTogglesControllerTest extends BaseTest {
     public void testSaveConfigurationForSystemUnauthorizedForResearcher() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
-        var configurationDTO = new FeatureModuleTogglesDTO(false, false, false);
+        var configurationDTO = new CrisContextInformationDTO(false, false, false,
+            ".*", ".*", ".*", ".*", License.CC0);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.patch("http://localhost:8081/api/feature-module-toggles")
+                MockMvcRequestBuilders.patch("http://localhost:8081/api/cris-context-information")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))

@@ -56,7 +56,8 @@ public class FundingCallController {
                                                      @RequestParam(required = false)
                                                      Integer programId,
                                                      Pageable pageable) {
-        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, onlyActive, allowedTypes, programId,
+        return fundingCallService.searchFundingCalls(tokens, dateFrom, dateTo, onlyActive,
+            allowedTypes, programId,
             pageable);
     }
 

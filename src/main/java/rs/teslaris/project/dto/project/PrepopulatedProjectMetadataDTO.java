@@ -1,5 +1,7 @@
 package rs.teslaris.project.dto.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,9 +10,6 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.project.dto.funding.PrepopulatedFundingMetadataDTO;
 import rs.teslaris.project.model.project.ProjectStatus;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
