@@ -20,9 +20,6 @@ public class PublicConfigurationControllerTest extends BaseTest {
             .andExpect(jsonPath("$.schemaVersion").value(1))
             .andExpect(jsonPath("$.updatedAt").exists())
             .andExpect(jsonPath("$.branding.title").exists())
-            .andExpect(jsonPath("$.branding.description").exists())
-            .andExpect(jsonPath("$.features.toggleAssessmentModule").exists())
-            .andExpect(jsonPath("$.features.toggleDigitalLibrary").exists())
-            .andExpect(jsonPath("$.features.toggleDigitalRepository").exists());
+            .andExpect(jsonPath("$.branding.description").exists());
     }
 }

@@ -12,10 +12,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.PublicBrandingDTO;
 import rs.teslaris.core.dto.commontypes.PublicConfigurationDTO;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
-import rs.teslaris.core.model.commontypes.FeatureModuleToggles;
 import rs.teslaris.core.repository.commontypes.BrandingInformationRepository;
-import rs.teslaris.core.repository.commontypes.FeatureModuleTogglesRepository;
-import rs.teslaris.core.service.interfaces.commontypes.FeatureModuleTogglesService;
 import rs.teslaris.core.service.interfaces.commontypes.PublicConfigurationService;
 
 @Service
@@ -26,10 +23,6 @@ public class PublicConfigurationServiceImpl implements PublicConfigurationServic
 
     private final BrandingInformationRepository brandingInformationRepository;
 
-    private final FeatureModuleTogglesRepository featureModuleTogglesRepository;
-
-    private final FeatureModuleTogglesService featureModuleTogglesService;
-
 
     @Override
     public PublicConfigurationDTO readPublicConfiguration() {
@@ -39,8 +32,7 @@ public class PublicConfigurationServiceImpl implements PublicConfigurationServic
         return new PublicConfigurationDTO(
             PublicConfigurationDTO.SCHEMA_VERSION,
             version,
-            toPublicBranding(branding, version),
-            featureModuleTogglesService.readConfigurationForSystem()
+            toPublicBranding(branding, version)
         );
     }
 
@@ -66,12 +58,7 @@ public class PublicConfigurationServiceImpl implements PublicConfigurationServic
 
     private String latestModification(BrandingInformation branding) {
         var brandingDate = branding == null ? null : branding.getLastModification();
-        var togglesDate = featureModuleTogglesRepository.findAll().stream()
-            .findFirst()
-            .map(FeatureModuleToggles::getLastModification)
-            .orElse(null);
-
-        var latestMillis = Math.max(toEpochMillis(brandingDate), toEpochMillis(togglesDate));
+        var latestMillis = toEpochMillis(brandingDate);
         if (latestMillis <= 0) {
             return Instant.EPOCH.toString();
         }

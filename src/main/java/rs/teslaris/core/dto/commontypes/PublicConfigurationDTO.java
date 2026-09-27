@@ -6,9 +6,7 @@ public record PublicConfigurationDTO(
 
     String updatedAt,
 
-    PublicBrandingDTO branding,
-
-    FeatureModuleTogglesDTO features
+    PublicBrandingDTO branding
 ) {
 
     public static final int SCHEMA_VERSION = 1;

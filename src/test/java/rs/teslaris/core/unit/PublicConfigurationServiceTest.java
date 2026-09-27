@@ -12,15 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.dto.commontypes.FeatureModuleTogglesDTO;
 import rs.teslaris.core.dto.commontypes.PublicConfigurationDTO;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.commontypes.BrandingInformationRepository;
-import rs.teslaris.core.repository.commontypes.FeatureModuleTogglesRepository;
 import rs.teslaris.core.service.impl.commontypes.PublicConfigurationServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.FeatureModuleTogglesService;
 
 @SpringBootTest
 public class PublicConfigurationServiceTest {
@@ -28,18 +25,12 @@ public class PublicConfigurationServiceTest {
     @Mock
     private BrandingInformationRepository brandingInformationRepository;
 
-    @Mock
-    private FeatureModuleTogglesRepository featureModuleTogglesRepository;
-
-    @Mock
-    private FeatureModuleTogglesService featureModuleTogglesService;
-
     @InjectMocks
     private PublicConfigurationServiceImpl publicConfigurationService;
 
 
     @Test
-    public void shouldComposePublicConfigurationFromBrandingAndFeatureToggles() {
+    public void shouldComposePublicConfigurationFromBranding() {
         var branding = new BrandingInformation();
         var languageTag = new LanguageTag();
         languageTag.setLanguageTag("EN");
@@ -52,9 +43,6 @@ public class PublicConfigurationServiceTest {
         branding.setLastModification(new Date(1_700_000_000_000L));
 
         when(brandingInformationRepository.findAll()).thenReturn(List.of(branding));
-        when(featureModuleTogglesRepository.findAll()).thenReturn(List.of());
-        when(featureModuleTogglesService.readConfigurationForSystem())
-            .thenReturn(new FeatureModuleTogglesDTO(true, false, true));
 
         var result = publicConfigurationService.readPublicConfiguration();
 
@@ -63,16 +51,11 @@ public class PublicConfigurationServiceTest {
         assertEquals("TeslaRIS", result.branding().title().getFirst().getContent());
         assertEquals("branding/logo?v=" + result.updatedAt(), result.branding().logoUrl());
         assertNull(result.branding().backgroundUrl());
-        assertEquals(true, result.features().toggleAssessmentModule());
-        assertEquals(false, result.features().toggleDigitalLibrary());
     }
 
     @Test
     public void shouldReturnDefaultsWhenBrandingIsMissing() {
         when(brandingInformationRepository.findAll()).thenReturn(List.of());
-        when(featureModuleTogglesRepository.findAll()).thenReturn(List.of());
-        when(featureModuleTogglesService.readConfigurationForSystem())
-            .thenReturn(new FeatureModuleTogglesDTO(true, true, true));
 
         var result = publicConfigurationService.readPublicConfiguration();
 
