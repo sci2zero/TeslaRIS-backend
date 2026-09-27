@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.commontypes;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -25,4 +26,10 @@ public class BrandingInformation extends BaseEntity {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
+
+    @Column(name = "logo_server_name")
+    private String logoServerName;
+
+    @Column(name = "background_server_name")
+    private String backgroundServerName;
 }

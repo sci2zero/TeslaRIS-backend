@@ -5,6 +5,7 @@ import java.util.List;
 public record BrandingInformationDTO(
 
     List<MultilingualContentDTO> title,
+
     List<MultilingualContentDTO> description
 ) {
 }

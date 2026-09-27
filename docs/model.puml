@@ -36,6 +36,8 @@ package commonTypes {
   class BrandingInformation {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
+    String logoServerName
+    String backgroundServerName
   }
   
   /' !!!!! maybe to consider to join with Branding information into one class'/
