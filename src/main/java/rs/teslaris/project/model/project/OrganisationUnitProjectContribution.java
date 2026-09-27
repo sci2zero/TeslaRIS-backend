@@ -23,7 +23,9 @@ import rs.teslaris.core.model.document.OrganisationUnitContribution;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+// Bug case (callSuper=false): same Project has 15 different contributions where 14 of them have
+// the same contributionType -> Set treats them as 2 different entities instead of 15
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "organisation_unit_project_contributions")
 @SQLRestriction("deleted=false")

@@ -1,0 +1,47 @@
+package rs.teslaris.project.dto.funding;
+
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PrepopulatedFundingMetadataDTO {
+
+    private String doi;
+
+    private String grantAgreementId;
+
+    private List<MultilingualContentDTO> name = new ArrayList<>();
+
+    private List<MultilingualContentDTO> nameAbbreviation = new ArrayList<>();
+
+    private List<MultilingualContentDTO> description = new ArrayList<>();
+
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
+
+    private List<String> uris = new ArrayList<>();
+
+    private String dateAwarded;
+
+    private String dateFrom;
+
+    private String dateTo;
+
+    private MonetaryAmountDTO monetaryAmount;
+
+    private List<MultilingualContentDTO> displayCall = new ArrayList<>();
+
+    private List<MultilingualContentDTO> displayProgram = new ArrayList<>();
+
+    private List<MultilingualContentDTO> displayFunder = new ArrayList<>();
+
+    private String funderDoi;
+}

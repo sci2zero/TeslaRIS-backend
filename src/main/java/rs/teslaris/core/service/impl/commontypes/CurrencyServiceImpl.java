@@ -33,4 +33,9 @@ public class CurrencyServiceImpl extends JPAServiceImpl<Currency> implements Cur
     public Page<CurrencyDTO> readCurrencies(Pageable pageable) {
         return findAll(pageable).map(CurrencyConverter::toDTO);
     }
+
+    @Override
+    public Currency findCurrencyByCode(String code) {
+        return currencyRepository.findByCode(code).orElse(null);
+    }
 }

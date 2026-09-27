@@ -18,9 +18,27 @@
     "PROCEEDINGS_PUBLICATION": [
       "proceedingsName"
     ],
-    "JOURNAL_PUBLICATION": [],
+    "JOURNAL_PUBLICATION": [
+      "journalName"
+    ],
     "THESIS": [
-      "languageCode"
+      "languageCode",
+      "preliminaryFiles",
+      "preliminarySupplements",
+      "publicReviewCompleted",
+      "commissionReports",
+      "publicReviewDates",
+      "publicReviewEnd",
+      "publicReviewEndDates",
+      "substitutedBy",
+      "substitutedTitle",
+      "substituteFor",
+      "substituteTitle",
+      "isOnPublicReviewPause",
+      "isShortenedReview",
+      "isOnPublicReview",
+      "isArchived",
+      "publicReviewStartDate"
     ],
     "GENETIC_MATERIAL": [],
     "MATERIAL_PRODUCT": [

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -85,10 +86,10 @@ public class FundingCallServiceTest {
     private FundingCallIndexRepository fundingCallIndexRepository;
 
     @Mock
-    private PersonFundingCallContributionService personFundingCallContributionService;
+    private OrganisationUnitService organisationUnitService;
 
     @Mock
-    private OrganisationUnitService organisationUnitService;
+    private PersonFundingCallContributionService personFundingCallContributionService;
 
     @InjectMocks
     private FundingCallServiceImpl fundingCallService;
@@ -100,7 +101,9 @@ public class FundingCallServiceTest {
         var tokens = List.of("test");
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
+        var onlyActive = false;
         var fundingProgramId = 1;
+        var allowedTypes = new ArrayList<FundingType>();
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
@@ -109,7 +112,7 @@ public class FundingCallServiceTest {
 
         // when
         var result = fundingCallService.searchFundingCalls(
-            tokens, dateFrom, dateTo, fundingProgramId, pageable);
+            tokens, dateFrom, dateTo, onlyActive, allowedTypes, fundingProgramId, pageable);
 
         // then
         assertNotNull(result);
@@ -125,6 +128,8 @@ public class FundingCallServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var fundingProgramId = 1;
+        var onlyActive = false;
+        var allowedTypes = new ArrayList<FundingType>();
         var pageable = PageRequest.of(0, 10);
 
         var fundingCallIndex = new FundingCallIndex();
@@ -141,7 +146,7 @@ public class FundingCallServiceTest {
 
         // when
         var result = fundingCallService.searchFundingCalls(
-            tokens, dateFrom, dateTo, fundingProgramId, pageable);
+            tokens, dateFrom, dateTo, onlyActive, allowedTypes, fundingProgramId, pageable);
 
         // then
         assertNotNull(result);
@@ -442,7 +447,7 @@ public class FundingCallServiceTest {
     }
 
     @Test
-    public void shouldDeleteFundingCallWhenNoProposalsAndFudningExist() {
+    public void shouldDeleteFundingCallWhenNoProposalsAndFundingExist() {
         // given
         var fundingCallId = 1;
 

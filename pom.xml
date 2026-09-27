@@ -47,6 +47,16 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <!-- Overrides the Jackson version managed by the Spring Boot BOM. Keep this
+                     as a BOM import: bumping jackson-databind on its own splits it from
+                     jackson-core and fails at runtime with NoSuchMethodError. -->
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.18.9</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -63,7 +73,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.18.1</version>
+            <version>1.23.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -188,11 +198,6 @@
             <artifactId>spring-data-elasticsearch</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.4</version>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
@@ -286,12 +291,19 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
+            <version>5.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
-            <version>5.2.1</version>
+            <version>5.4.3</version>
+        </dependency>
+        <dependency>
+            <!-- Pinned alongside httpcore5: the Spring Boot BOM would otherwise hold this
+                 back to 5.2.4 and split the httpcore5 family across two versions. -->
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5-h2</artifactId>
+            <version>5.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -435,7 +447,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
+                <version>0.8.12</version>
                 <executions>
                     <execution>
                         <goals>
@@ -488,7 +500,7 @@
                     <dependency>
                         <groupId>com.fasterxml.jackson.core</groupId>
                         <artifactId>jackson-databind</artifactId>
-                        <version>2.15.4</version>
+                        <version>2.18.9</version>
                     </dependency>
                     <dependency>
                         <groupId>org.liquibase</groupId>

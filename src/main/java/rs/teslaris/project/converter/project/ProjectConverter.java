@@ -31,9 +31,6 @@ public class ProjectConverter {
         project.getResearchAreas().forEach(researchArea ->
             dto.getResearchAreasId().add(researchArea.getId()));
 
-        project.getOrganisations().forEach(organisation ->
-            dto.getOrganisationIds().add(organisation.getId()));
-
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());
         dto.setDateTo(project.getDateTo());
@@ -42,19 +39,27 @@ public class ProjectConverter {
         dto.setResearchType(project.getResearchType());
         dto.setNotFunded(project.getNotFunded());
 
-        dto.setCosts(new MonetaryAmountDTO());
         if (Objects.nonNull(project.getCosts())) {
+            dto.setCosts(new MonetaryAmountDTO());
             dto.getCosts().setAmount(project.getCosts().getAmount());
             dto.getCosts().setCurrencyId(project.getCosts().getCurrency().getId());
+            dto.getCosts().setCurrencyCode(project.getCosts().getCurrency().getCode());
+            dto.getCosts().setCurrencySymbol(project.getCosts().getCurrency().getSymbol());
         }
 
+        // TODO: Do we need to fetch all collections with each project?
         project.getPersons().forEach(member ->
             dto.getPersons().add(PersonProjectContributionConverter.toDTO(member)));
+
+        project.getOrganisations().forEach(organisation ->
+            dto.getOrganisations()
+                .add(OrganisationUnitProjectContributionConverter.toDTO(organisation)));
 
         project.getRelatedProjects().forEach(relation ->
             dto.getRelations().add(ProjectsRelationConverter.toDTO(relation)));
 
         return dto;
     }
+
 
 }

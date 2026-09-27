@@ -69,4 +69,6 @@ public class FundingCallDTO {
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
 
     private List<MultilingualContentDTO> fundingProgramName = new ArrayList<>();
+
+    private List<MultilingualContentDTO> funderName = new ArrayList<>();
 }

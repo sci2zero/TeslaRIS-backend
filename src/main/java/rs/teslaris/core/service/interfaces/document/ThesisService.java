@@ -21,6 +21,8 @@ public interface ThesisService {
 
     ThesisResponseDTO readThesisById(Integer thesisId);
 
+    ThesisResponseDTO readThesisSnapshot(Integer thesisId);
+
     ThesisResponseDTO readThesisByOldId(Integer oldId);
 
     Thesis createThesis(ThesisDTO thesisDTO, Boolean index);

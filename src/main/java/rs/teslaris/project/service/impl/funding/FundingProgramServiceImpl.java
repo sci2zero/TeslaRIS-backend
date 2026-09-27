@@ -68,9 +68,11 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     @Override
     public Page<FundingProgramIndex> searchFundingPrograms(List<String> tokens, LocalDate dateFrom,
-                                                           LocalDate dateTo, Integer funderId,
+                                                           LocalDate dateTo, boolean onlyActive,
+                                                           Integer funderId,
                                                            Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, funderId),
+        return searchService.runQuery(
+            buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, funderId),
             pageable, FundingProgramIndex.class, "funding_program");
     }
 
@@ -119,6 +121,10 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
         }
 
         delete(fundingProgramId);
+
+        var index =
+            fundingProgramIndexRepository.findFundingProgramIndexByDatabaseId(fundingProgramId);
+        index.ifPresent(fundingProgramIndexRepository::delete);
     }
 
     @Override
@@ -157,6 +163,8 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFundingPrograms() {
+        fundingProgramIndexRepository.deleteAll();
+
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
@@ -255,17 +263,57 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
-        index.setFunderId(fundingProgram.getFunder().getId());
+        if (Objects.nonNull(fundingProgram.getFunder())) {
+            indexFunderFields(fundingProgram, index);
+        } else {
+            index.setFunderNameSrSortable("");
+            index.setFunderNameOtherSortable("");
+        }
+
         index.setDatabaseId(fundingProgram.getId());
         index.setDateFrom(fundingProgram.getDateFrom());
         index.setDateTo(fundingProgram.getDateTo());
 
+        if (Objects.nonNull(fundingProgram.getTotalAmount())) {
+            index.setTotalAmount(fundingProgram.getTotalAmount().getAmount());
+            index.setCurrencySymbol(fundingProgram.getTotalAmount().getCurrency().getSymbol());
+        }
+
         return index;
+    }
+
+    private void indexFunderFields(FundingProgram fundingProgram,
+                                   FundingProgramIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            fundingProgram.getFunder().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+            fundingProgram.getFunder().getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setFunderNameSr(
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setFunderNameSrSortable(index.getFunderNameSr());
+        index.setFunderNameOther(
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setFunderNameOtherSortable(index.getFunderNameOther());
+
+        index.setFunderId(fundingProgram.getFunder().getId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
+                                         boolean onlyActive,
                                          Integer funderId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
@@ -285,6 +333,12 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                         .should(sb -> sb.matchPhrase(
                                             mq -> mq.field("name_other")
                                                 .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("funder_name_sr")
+                                                .query(token.replace("\"", ""))))
+                                        .should(sb -> sb.matchPhrase(
+                                            mq -> mq.field("funder_name_other")
+                                                .query(token.replace("\"", ""))))
                                     )
                                 );
                             } else if (token.endsWith("*")) {
@@ -298,6 +352,15 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
                                         mq -> mq.field("name_other")
+                                            .value(wildcard + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("funder_name_sr")
+                                            .value(StringUtil.performSimpleLatinPreprocessing(
+                                                wildcard) + "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("funder_name_other")
                                             .value(wildcard + "*")
                                             .caseInsensitive(true)))
                                 ));
@@ -321,6 +384,22 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                     .should(sb -> sb.match(
                                         mq -> mq.field("name_other")
                                             .query(token)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("funder_name_sr")
+                                            .value(
+                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                    "*")
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.wildcard(
+                                        mq -> mq.field("funder_name_other")
+                                            .value(wildcard)
+                                            .caseInsensitive(true)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("funder_name_sr")
+                                            .query(token)))
+                                    .should(sb -> sb.match(
+                                        mq -> mq.field("funder_name_other")
+                                            .query(token)))
                                 ));
                             }
                         });
@@ -337,19 +416,27 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_closes")
+                            r.field("date_from")
                                 .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_opens")
+                            r.field("date_to")
                                 .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
 
                     return dateBool;
                 }));
+            }
+
+            if (onlyActive) {
+                var today = LocalDate.now().toString();
+                b.must(sb -> sb.bool(activeBool -> activeBool
+                    .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                ));
             }
 
             if (Objects.nonNull(funderId)) {

@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -21,6 +22,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -53,15 +55,24 @@ import rs.teslaris.project.indexrepository.funding.FundingApplicationIndexReposi
 import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingApplicationResult;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.service.impl.funding.FundingApplicationServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.util.FundingPartFactory;
 
 @SpringBootTest
 public class FundingApplicationServiceTest {
     @Mock
     private FundingApplicationRepository fundingApplicationRepository;
+
+    @Mock
+    private FundingPartRepository fundingPartRepository;
+
+    @Mock
+    private FundingPartFactory fundingPartFactory;
 
     @Mock
     private FundingApplicationIndexRepository fundingApplicationIndexRepository;
@@ -234,20 +245,23 @@ public class FundingApplicationServiceTest {
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
             .thenReturn(Set.of(new MultiLingualContent()));
-        when(currencyService.findOne(1)).thenReturn(null);
-        when(fundingService.findOne(1)).thenReturn(null);
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
             .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
             .thenReturn(new FundingApplicationIndex());
+        when(fundingPartFactory.buildFundingPart(partDto)).thenReturn(new FundingPart());
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);
 
         // then
         assertNotNull(result);
-        verify(fundingService).findOne(1);
-        verify(multilingualContentService, times(3)).getMultilingualContent(anyList());
+        verify(fundingPartFactory).buildFundingPart(partDto);
+        verify(fundingPartRepository).save(
+            argThat(part -> Objects.nonNull(part.getFundingApplication())));
+        verify(multilingualContentService, times(2)).getMultilingualContent(anyList());
     }
 
     @Test
@@ -665,7 +679,7 @@ public class FundingApplicationServiceTest {
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-            1, null, "AWARDED", null, null, null, null, pageable);
+            null, null, 1, null, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);
@@ -694,7 +708,7 @@ public class FundingApplicationServiceTest {
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-            1, null, "AWARDED", null, null, null, null, pageable);
+            null, null, 1, null, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);

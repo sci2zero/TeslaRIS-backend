@@ -292,9 +292,15 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     private void indexBookSeries(BookSeries bookSeries, BookSeriesIndex index) {
-        index.setDatabaseId(bookSeries.getId());
+        index.setActivitiesCount(0);
 
+        index.setDatabaseId(bookSeries.getId());
         indexCommonFields(bookSeries, index);
+
+        index.setRelatedInstitutionIds(
+            bookSeriesRepository.findInstitutionIdsByBookSeriesIdAndAuthorContribution(
+                bookSeries.getId()).stream().toList());
+
         bookSeriesIndexRepository.save(index);
     }
 
@@ -323,6 +329,15 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         index.setEISSN(bookSeries.getEISSN());
         index.setPrintISSN(bookSeries.getPrintISSN());
         index.setOpenAlexId(bookSeries.getOpenAlexId());
+
+        bookSeries.getContributions().forEach(contribution -> {
+            if (Objects.nonNull(contribution.getDateFrom()) ||
+                Objects.nonNull(contribution.getDateTo()) ||
+                (Objects.nonNull(contribution.getResearchAreas()) &&
+                    !contribution.getResearchAreas().isEmpty())) {
+                index.setActivitiesCount(index.getActivitiesCount() + 1);
+            }
+        });
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

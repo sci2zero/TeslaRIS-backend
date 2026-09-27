@@ -262,6 +262,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     m -> m.field("type").value(item.getType())));
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query(item.getDatabaseId())));
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("substitute_for").query(item.getDatabaseId())));
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("substituted_by").query(item.getDatabaseId())));
 
                 return b;
             }))),

@@ -48,4 +48,23 @@ public class FundingProgramIndex {
 
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
+
+    @Field(type = FieldType.Double, name = "total_amount")
+    private double totalAmount;
+
+    // Maybe swap with the currencyId?
+    @Field(type = FieldType.Text, name = "currency_symbol")
+    private String currencySymbol;
+
+    @Field(type = FieldType.Text, name = "funder_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String funderNameSr;
+
+    @Field(type = FieldType.Keyword, name = "funder_name_sr_sortable", normalizer = "serbian_normalizer")
+    private String funderNameSrSortable;
+
+    @Field(type = FieldType.Text, name = "funder_name_other", analyzer = "english", searchAnalyzer = "english")
+    private String funderNameOther;
+
+    @Field(type = FieldType.Keyword, name = "funder_name_other_sortable", normalizer = "english_normalizer")
+    private String funderNameOtherSortable;
 }

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
@@ -58,6 +62,8 @@ public class RevisionServiceImpl implements RevisionService {
 
     private final RevisionRestorerRegistry revisionRestorerRegistry;
 
+    private final DocumentLookupService documentLookupService;
+
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final PlatformTransactionManager transactionManager;
@@ -81,6 +87,8 @@ public class RevisionServiceImpl implements RevisionService {
                 event.entityType());
 
             var newHash = sha256(newJson);
+
+            revisionRepository.lockForRevisionWrite(event.entityType(), event.entityId());
 
             var latestRevision =
                 revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
@@ -224,13 +232,28 @@ public class RevisionServiceImpl implements RevisionService {
         revision.setAdminNote("revisionBackfill");
 
         // The assessment listener reacts after commit, so the write has to happen in a transaction
-        // of its own rather than outside one, or the event would never be delivered.
-        newTransaction().executeWithoutResult(status -> {
+        // of its own rather than outside one, or the event would never be delivered. The existence
+        // check is repeated under the lock because an update may have recorded 1.0 meanwhile.
+        var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
+            revisionRepository.lockForRevisionWrite(entityType, entityId);
+
+            if (revisionRepository
+                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+                .isPresent()) {
+                return false;
+            }
+
             revisionRepository.save(revision);
 
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, json, profileName));
-        });
+
+            return true;
+        }));
+
+        if (!written) {
+            return false;
+        }
 
         log.info("Captured current state of entity '{}' (ID={}) as revision 1.0.",
             entityType, entityId);
@@ -301,6 +324,8 @@ public class RevisionServiceImpl implements RevisionService {
             .orElseThrow(() -> new RevisionRestoreException(
                 String.format("Restoring revisions of type %s is not supported.", entityType)));
 
+        revisionRepository.lockForRevisionWrite(entityType, entityId);
+
         var revision = revisionRepository
             .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
                 entityType, entityId, majorVersion, minorVersion)
@@ -320,6 +345,8 @@ public class RevisionServiceImpl implements RevisionService {
                 "skipping restore.", majorVersion, minorVersion, entityType, entityId);
             return;
         }
+
+        assertRestorable(entityType, entityId);
 
         var json = CompressionUtil.decompress(revision.getCompressedContent());
 
@@ -355,6 +382,28 @@ public class RevisionServiceImpl implements RevisionService {
 
         log.info("Restored entity '{}' (ID={}) to revision {}.{}.",
             entityType, entityId, majorVersion, minorVersion);
+    }
+
+    // The edit methods refuse these too, but late and with an untranslatable reason.
+    private void assertRestorable(String entityType, Integer entityId) {
+        var isDocument = Arrays.stream(DocumentPublicationType.values())
+            .anyMatch(type -> type.name().equals(entityType));
+
+        if (!isDocument) {
+            return;
+        }
+
+        var document = documentLookupService.fastDocumentLookup(entityId);
+
+        if (Boolean.TRUE.equals(document.getIsArchived())) {
+            throw new RevisionRestoreException("restoreArchivedDocumentMessage");
+        }
+
+        if (document instanceof Thesis thesis &&
+            (Boolean.TRUE.equals(thesis.getIsOnPublicReview()) ||
+                Boolean.TRUE.equals(thesis.getIsOnPublicReviewPause()))) {
+            throw new RevisionRestoreException("restoreThesisOnPublicReviewMessage");
+        }
     }
 
     private void recordRestoredRevision(String entityType, Integer entityId,

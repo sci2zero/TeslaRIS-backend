@@ -1,5 +1,6 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.ArrayList;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
@@ -26,6 +27,7 @@ public class PersonProjectContributionConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 contribution.getContributionDescription()));
 
+        dto.setInstitutionIds(new ArrayList<>());
         contribution.getInstitutions().forEach(institution ->
             dto.getInstitutionIds().add(institution.getId()));
 

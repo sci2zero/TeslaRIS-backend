@@ -55,4 +55,7 @@ public class JournalIndex implements PublicationSeriesIndex {
 
     @Field(type = FieldType.Boolean, name = "has_publications", store = true)
     private Boolean hasPublications;
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

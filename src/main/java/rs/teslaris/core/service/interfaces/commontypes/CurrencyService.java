@@ -14,4 +14,6 @@ public interface CurrencyService extends JPAService<Currency> {
     List<CurrencyDTO> getAllCurrencies();
 
     Page<CurrencyDTO> readCurrencies(Pageable pageable);
+
+    Currency findCurrencyByCode(String code);
 }

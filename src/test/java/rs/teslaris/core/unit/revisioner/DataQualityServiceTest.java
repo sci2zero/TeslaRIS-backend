@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -862,9 +864,10 @@ public class DataQualityServiceTest {
     }
 
     /**
-     * Related quality makes up to three assessment passes per profile: outputs, then persons, then
-     * organisation units. Only the first is stubbed with figures and the rest are empty, so the
-     * assertions stay about the outputs pass unless a test says otherwise.
+     * Related quality makes up to four assessment passes per profile: outputs, persons, events
+     * and publication series, then organisation units. Only the first is stubbed with figures and
+     * the rest are empty, so the assertions stay about the outputs pass unless a test says
+     * otherwise.
      */
     private void stubAggregates(long affectedRecords, long openIssues, long activitiesCount,
                                 long activityIssues, Double averageScore, long linkedRecords,
@@ -962,7 +965,8 @@ public class DataQualityServiceTest {
                 Optional.of(new DataQualityAggregator.AssessmentAggregates(
                     2, 5, 4, 1, 1, 0, 320.0, 0, 92.0)),
                 Optional.of(new DataQualityAggregator.AssessmentAggregates(
-                    1, 3, 6, 2, 2, 0, 480.0, 0, 88.0)));
+                    1, 3, 6, 2, 2, 0, 480.0, 0, 88.0)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(
                 new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
@@ -1009,7 +1013,8 @@ public class DataQualityServiceTest {
                 Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 1, 0, 0.0, 0,
                     92.0)),
                 Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 3, 6, 2, 2, 0, 0.0, 0,
-                    88.0)));
+                    88.0)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
         when(dataQualityAggregator.aggregateLinkedDocuments(any()))
             .thenReturn(Optional.of(
                 new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
@@ -1024,6 +1029,80 @@ public class DataQualityServiceTest {
         assertEquals(8, activities.linkedRecords());   // 5 on outputs + 3 on the person
         assertEquals(10, activities.affectedRecords()); // 4 assessed + 6 assessed
         assertEquals(3, activities.openIssues());       // 1 + 2
+    }
+
+    /**
+     * Event and publication series contributions are activities as well. A person is linked to
+     * both through the assessments, but only events can be counted as records for a person, since
+     * the series indexes hold no person link.
+     */
+    @Test
+    public void shouldAddEventAndSeriesActivitiesToAPersonsActivitiesRow() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(2, 5, 4, 1, 1, 0, 320.0,
+                    0, 92.0)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()),
+                Optional.of(new DataQualityAggregator.AssessmentAggregates(1, 2, 2, 1, 1, 0, 160.0,
+                    0, 80.0)),
+                Optional.of(DataQualityAggregator.AssessmentAggregates.empty()));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(
+                new DataQualityAggregator.LinkedDocumentAggregates(186, 5)));
+        when(dataQualityAggregator.sumField(eq("events"), any(), eq("activities_count")))
+            .thenReturn(2L);
+
+        // when
+        var activities = row(dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
+            .getFirst().relatedQuality(), RelatedEntityType.ACTIVITIES);
+
+        // then
+        assertEquals(7, activities.linkedRecords());   // 5 on outputs + 2 on events
+        assertEquals(6, activities.affectedRecords()); // 4 assessed + 2 assessed
+        assertEquals(2, activities.openIssues());      // 1 + 1
+        assertEquals(80.0, activities.averageScore()); // 480 points over 6 activities
+
+        verify(dataQualityAggregator, never())
+            .sumField(eq("journal"), any(), eq("activities_count"));
+        verify(dataQualityAggregator, never())
+            .sumField(eq("book_series"), any(), eq("activities_count"));
+    }
+
+    @Test
+    public void shouldCountSeriesActivitiesForAnOrganisationUnitByRelatedInstitutions() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ORGANISATION_UNIT_ENTITY_TYPE, 1))
+            .thenReturn(Optional.of(revisionWithProfiles(ORGANISATION_UNIT_ENTITY_TYPE, "PTCRIS")));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1));
+
+        stubAggregates(0, 0, 0, 0, null, 0, 0);
+
+        when(dataQualityAggregator.sumField(eq("events"), any(), eq("activities_count")))
+            .thenReturn(4L);
+        when(dataQualityAggregator.sumField(eq("journal"), any(), eq("activities_count")))
+            .thenReturn(3L);
+        when(dataQualityAggregator.sumField(eq("book_series"), any(), eq("activities_count")))
+            .thenReturn(1L);
+
+        // when
+        var activities = row(dataQualityService.getRelatedQualityForEntity(
+                ORGANISATION_UNIT_ENTITY_TYPE, 1).getFirst().relatedQuality(),
+            RelatedEntityType.ACTIVITIES);
+
+        // then
+        assertEquals(8, activities.linkedRecords());
+
+        var captor = ArgumentCaptor.forClass(Query.class);
+        verify(dataQualityAggregator).sumField(eq("journal"), captor.capture(),
+            eq("activities_count"));
+        assertTrue(captor.getValue().toString().contains("related_institution_ids"));
     }
 
     @Test
@@ -1051,7 +1130,7 @@ public class DataQualityServiceTest {
         assertEquals(80.0, outputs.averageScore());
 
         var queryCaptor = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(3))
+        verify(dataQualityAggregator, times(4))
             .aggregateAssessments(queryCaptor.capture(), any());
 
         assertTrue(queryCaptor.getAllValues().getFirst().toString()
@@ -1076,7 +1155,7 @@ public class DataQualityServiceTest {
 
         // then
         var assessmentQuery = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(3))
+        verify(dataQualityAggregator, times(4))
             .aggregateAssessments(assessmentQuery.capture(), any());
 
         var documentQuery = ArgumentCaptor.forClass(Query.class);
@@ -1824,6 +1903,154 @@ public class DataQualityServiceTest {
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.getProfile(anyString(), anyString()),
                 never());
+        }
+    }
+
+    private DataQualityAssessmentConfigurationLoader.DataQualityRemark remarkFor(
+        String target, IssueSeverity severity, QualityDimension dimension) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
+            Map.of("EN", "Title"), Map.of("EN", "Message"), target, severity, dimension, true,
+            8.0, false, Map.of("maxLength", 255));
+    }
+
+    private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileWith(
+        Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
+            "1.0.0", 60.0, Map.of(), Map.of("Document.title", 5.0), remarks, Map.of(), Map.of(),
+            Map.of());
+    }
+
+    private MockedStatic<DataQualityAssessmentConfigurationLoader> mockPolicyLoader(
+        Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
+        var configurationLoader = mockStatic(DataQualityAssessmentConfigurationLoader.class);
+
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion("ptcris"))
+            .thenReturn("1.0.0");
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getProfile("ptcris", "1.0.0"))
+            .thenReturn(profileWith(remarks));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
+                anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("Definition")));
+
+        return configurationLoader;
+    }
+
+    @Test
+    public void shouldReturnEveryConstraintOfThePolicyWithItsAffectedRecordCount() {
+        // given
+        var remarks = new LinkedHashMap<String,
+            DataQualityAssessmentConfigurationLoader.DataQualityRemark>();
+        remarks.put("titleTooLong",
+            remarkFor("Document.title", IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+        remarks.put("doiNotResolvable",
+            remarkFor("Document.doi", IssueSeverity.WARNING, QualityDimension.QUALITATIVE));
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt()))
+            .thenReturn(List.of(new DataQualityAggregator.TopFailedRule("doiNotResolvable", 4281)));
+
+        try (var ignored = mockPolicyLoader(remarks)) {
+            // when
+            var policy = dataQualityService.getPolicy(null, "ptcris", null);
+
+            // then
+            assertEquals("ptcris", policy.profileName());
+            assertEquals("1.0.0", policy.version());
+            assertEquals(2, policy.constraints().size());
+
+            var top = policy.constraints().getFirst();
+            assertEquals("doiNotResolvable", top.key());
+            assertEquals(4281, top.affectedRecords());
+            assertEquals(IssueSeverity.WARNING, top.severity());
+            assertEquals(QualityDimension.QUALITATIVE, top.dimension());
+
+            // Rules nothing failed are missing from the buckets and fall back to zero.
+            assertEquals("titleTooLong", policy.constraints().get(1).key());
+            assertEquals(0, policy.constraints().get(1).affectedRecords());
+        }
+    }
+
+    @Test
+    public void shouldCarryRuleMetadataAndTargetWeightIntoThePolicy() {
+        // given
+        var remarks = Map.of("titleTooLong",
+            remarkFor("Document.title", IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(remarks)) {
+            // when
+            var constraint = dataQualityService.getPolicy(null, "ptcris", null)
+                .constraints().getFirst();
+
+            // then
+            assertEquals("Document.title", constraint.target());
+            assertEquals(5.0, constraint.targetWeight());
+            assertEquals(8.0, constraint.points());
+            assertTrue(constraint.blocking());
+            assertFalse(constraint.usedForFairCompliance());
+            assertEquals(255, constraint.constraints().get("maxLength"));
+        }
+    }
+
+    @Test
+    public void shouldDescribeEveryDimensionOfThePolicy() {
+        // given
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            var definitions =
+                dataQualityService.getPolicy(null, "ptcris", null).dimensionDefinitions();
+
+            // then
+            assertEquals(QualityDimension.values().length, definitions.size());
+            assertEquals("Definition",
+                definitions.get(QualityDimension.LINEAGE).getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldCountPolicyFailuresOnlyWithinTheRequestedUnitAndDay() {
+        // given
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
+            .thenReturn(List.of(7, 8));
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            dataQualityService.getPolicy(7, "ptcris", LocalDate.of(2026, 7, 18));
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator).topFailedRules(captor.capture(), any(), anyInt());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("organisation_unit_ids"));
+            assertTrue(query.contains("8"));
+            assertTrue(query.contains("assessment_date"));
+            assertFalse(query.contains("is_latest"));
+        }
+    }
+
+    @Test
+    public void shouldCountPolicyFailuresAgainstTheLatestAssessmentsWhenNoDayIsGiven() {
+        // given
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            dataQualityService.getPolicy(null, "ptcris", null);
+
+            // then
+            var captor = ArgumentCaptor.forClass(Query.class);
+            verify(dataQualityAggregator).topFailedRules(captor.capture(), any(), anyInt());
+
+            var query = captor.getValue().toString();
+            assertTrue(query.contains("is_latest"));
+            assertFalse(query.contains("organisation_unit_ids"));
         }
     }
 

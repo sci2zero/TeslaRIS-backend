@@ -52,6 +52,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.document.ThesisConverter;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
@@ -69,6 +70,7 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.LibraryFormat;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
@@ -89,6 +91,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -175,6 +178,9 @@ public class ThesisServiceTest {
     @Mock
     private LanguageService languageService;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private ThesisServiceImpl thesisService;
 
@@ -193,6 +199,9 @@ public class ThesisServiceTest {
 
     @BeforeEach
     public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true,
+                ".*", ".*", ".*", ".*", License.CC0));
         ReflectionTestUtils.setField(thesisService, "documentApprovedByDefault", true);
         ReflectionTestUtils.setField(thesisService, "migrationModeEnabled", true);
     }
@@ -959,7 +968,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
@@ -990,7 +1001,9 @@ public class ThesisServiceTest {
         var substituteId = 2;
 
         var staleThesis = new Thesis();
+        staleThesis.setId(staleThesisId);
         var substituteThesis = new Thesis();
+        substituteThesis.setId(substituteId);
 
         when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
         when(thesisJPAService.findOne(substituteId)).thenReturn(substituteThesis);
@@ -1019,7 +1032,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
         var documentPublicationIndex = new DocumentPublicationIndex();
 
         thesis.setSubstitutedBy(substitutionThesis);
@@ -1051,7 +1066,9 @@ public class ThesisServiceTest {
         var substitutionThesisId = 2;
 
         var thesis = new Thesis();
+        thesis.setId(thesisId);
         var substitutionThesis = new Thesis();
+        substitutionThesis.setId(substitutionThesisId);
 
         thesis.setSubstitutedBy(substitutionThesis);
         substitutionThesis.setSubstituteFor(thesis);

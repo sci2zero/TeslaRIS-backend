@@ -80,6 +80,9 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Keyword, store = true, name = "ror")
     private String ror;
 
+    @Field(type = FieldType.Keyword, store = true, name = "ringgold")
+    private String ringgold;
+
     @Field(type = FieldType.Keyword, store = true, name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
 
@@ -94,4 +97,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "employee_count")
     private Integer employeeCount;
+
+    @Field(type = FieldType.Keyword, store = true, name = "tax_number")
+    private String taxNumber;
 }

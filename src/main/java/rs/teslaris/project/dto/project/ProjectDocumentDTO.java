@@ -23,8 +23,13 @@ public class ProjectDocumentDTO {
     @NotNull(message = "You have to provide project id.")
     private Integer projectId;
 
-    @NotNull(message = "You have to provide document id.")
     private Integer documentId;
+
+    private String documentTitleSr;
+
+    private String documentTitleOther;
+
+    private String documentType;
 
     @Valid
     private List<FundingPartDTO> fundingParts = new ArrayList<>();

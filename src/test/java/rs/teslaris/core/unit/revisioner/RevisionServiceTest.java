@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -30,6 +31,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.PlatformTransactionManager;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
 import rs.teslaris.core.util.restoration.RestorationContext;
@@ -65,6 +69,9 @@ public class RevisionServiceTest {
 
     @Mock
     private PlatformTransactionManager transactionManager;
+
+    @Mock
+    private DocumentLookupService documentLookupService;
 
     @InjectMocks
     private RevisionServiceImpl revisionService;
@@ -199,6 +206,28 @@ public class RevisionServiceTest {
     }
 
     @Test
+    public void shouldTakeThePerEntityLockBeforeReadingTheLatestRevision() {
+        // given
+        var event = new RevisionCreateEvent(ENTITY_TYPE, 1, new DummyDTO(1, "Old title"),
+            new DummyDTO(1, "New title"), RevisionType.UPDATE);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 2, 3)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.createRevisionIfChanged(event);
+
+            // then
+            var order = inOrder(revisionRepository);
+            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            order.verify(revisionRepository)
+                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
+            order.verify(revisionRepository).save(any());
+        }
+    }
+
+    @Test
     public void shouldIncrementMajorVersionOnEnrichment() {
         // given
         var event = new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Enriched"),
@@ -325,6 +354,33 @@ public class RevisionServiceTest {
 
         verify(revisionRepository, never()).save(any());
         verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    public void shouldNotCaptureCurrentStateWhenARevisionAppearedBeforeTheLockWasTaken() {
+        // given (no revision at the fast check, one once the write transaction holds the lock)
+        stubRestorerReturning(new DummyDTO(1, "Title"));
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1))
+            .thenReturn(Optional.empty())
+            .thenReturn(Optional.of(revisionWithContent("{}", 1, 0)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
+
+            // then
+            assertFalse(created);
+
+            var order = inOrder(revisionRepository);
+            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            order.verify(revisionRepository)
+                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
+
+            verify(revisionRepository, never()).save(any());
+            verify(applicationEventPublisher, never()).publishEvent(any());
+        }
     }
 
     @Test
@@ -460,8 +516,49 @@ public class RevisionServiceTest {
             .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
                 ENTITY_TYPE, 1, revision.getMajorVersion(), revision.getMinorVersion()))
             .thenReturn(Optional.of(revision));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(new IntangibleProduct());
 
         return restorer;
+    }
+
+    @Test
+    public void shouldRefuseToRestoreAnArchivedDocument() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
+        var restorer = stubRestorerFor(revision);
+
+        var archived = new IntangibleProduct();
+        archived.setIsArchived(true);
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(archived);
+
+        // when
+        var exception = assertThrows(RevisionRestoreException.class,
+            () -> revisionService.restoreRevision(ENTITY_TYPE, 1, 1, 2));
+
+        // then
+        assertEquals("restoreArchivedDocumentMessage", exception.getMessage());
+        verify(restorer, never()).restore(any(), any());
+        verify(revisionRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldRefuseToRestoreAThesisWhosePublicReviewIsPaused() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);
+        var restorer = stubRestorerFor(revision);
+
+        var thesis = new Thesis();
+        thesis.setIsOnPublicReviewPause(true);
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(thesis);
+
+        // when
+        var exception = assertThrows(RevisionRestoreException.class,
+            () -> revisionService.restoreRevision(ENTITY_TYPE, 1, 1, 2));
+
+        // then
+        assertEquals("restoreThesisOnPublicReviewMessage", exception.getMessage());
+        verify(restorer, never()).restore(any(), any());
+        verify(revisionRepository, never()).save(any());
     }
 
     @Test
@@ -570,6 +667,29 @@ public class RevisionServiceTest {
 
             assertEquals(4, captor.getValue().getMajorVersion());
             assertEquals(3, captor.getValue().getMinorVersion());
+        }
+    }
+
+    @Test
+    public void shouldHoldThePerEntityLockForTheWholeRestore() {
+        // given
+        var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 4, 1);
+        stubRestorerFor(revision);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 4, 2)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.restoreRevision(ENTITY_TYPE, 1, 4, 1);
+
+            // then
+            var order = inOrder(revisionRepository);
+            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            order.verify(revisionRepository)
+                .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                    ENTITY_TYPE, 1, 4, 1);
+            order.verify(revisionRepository).save(any());
         }
     }
 
@@ -704,6 +824,7 @@ public class RevisionServiceTest {
         when(revisionRepository
             .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
                 ENTITY_TYPE, 1, 1, 2)).thenReturn(Optional.of(revision));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(new IntangibleProduct());
 
         try (var ignored = mockConfigurationLoader()) {
             // when

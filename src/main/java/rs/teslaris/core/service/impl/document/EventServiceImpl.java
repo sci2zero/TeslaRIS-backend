@@ -542,6 +542,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     protected void indexEventCommonFields(EventIndex index, Event event) {
+        index.setActivitiesCount(0);
+
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
             EventIndex::setNameOther, false);
         var abbreviationSr =
@@ -598,6 +600,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
         index.setHasProceedings(Objects.nonNull(event.getId()) &&
             (documentPublicationIndexRepository.countByEventId(event.getId()) > 0));
+
+        event.getContributions().forEach(contribution -> {
+            if (Objects.nonNull(contribution.getDateFrom()) ||
+                Objects.nonNull(contribution.getDateTo()) ||
+                (Objects.nonNull(contribution.getResearchAreas()) &&
+                    !contribution.getResearchAreas().isEmpty())) {
+                index.setActivitiesCount(index.getActivitiesCount() + 1);
+            }
+        });
     }
 
     @Override

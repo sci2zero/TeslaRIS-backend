@@ -10,7 +10,10 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,15 +80,18 @@ public class Project extends BaseEntity {
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @OneToMany(mappedBy = "sourceProject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sourceProject", fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+        orphanRemoval = true)
     @BatchSize(size = 50)
     private Set<ProjectsRelation> relatedProjects = new HashSet<>();
 
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+        orphanRemoval = true)
     @BatchSize(size = 50)
     private Set<OrganisationUnitProjectContribution> organisations = new HashSet<>();
 
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+        orphanRemoval = true)
     @BatchSize(size = 50)
     private Set<PersonProjectContribution> persons = new HashSet<>();
 
@@ -121,4 +127,17 @@ public class Project extends BaseEntity {
 
     @Embedded
     private MonetaryAmount costs;
+
+    public Optional<OrganisationUnitProjectContribution> getCoordinator() {
+        return organisations.stream()
+            .filter(o ->
+                o.getContributionType() == OrganisationUnitProjectContributionType.COORDINATOR)
+            .findFirst();
+    }
+
+    public boolean hasContributions() {
+        return Stream.of(relatedProjects, organisations, persons, documents, events, funding,
+                fundingApplications)
+            .anyMatch(collection -> Objects.nonNull(collection) && !collection.isEmpty());
+    }
 }

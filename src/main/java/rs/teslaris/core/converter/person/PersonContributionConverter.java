@@ -19,6 +19,8 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
+import rs.teslaris.project.dto.funding.PersonFundingCallContributionDTO;
+import rs.teslaris.project.model.funding.PersonFundingCallContribution;
 
 public class PersonContributionConverter {
 
@@ -63,6 +65,11 @@ public class PersonContributionConverter {
                 contribution.setDateTo(c.getDateTo());
                 contribution.setIsMainContributor(c.getIsMainContributor());
 
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
+
                 contributionDTOs.add(contribution);
             });
         return contributionDTOs;
@@ -88,6 +95,13 @@ public class PersonContributionConverter {
                     MultilingualContentConverter.getMultilingualContentDTO(
                         c.getLocationJurisdiction()));
                 contribution.setMainArguer(c.getMainArguer());
+                contribution.setDateFrom(c.getDateFrom());
+                contribution.setDateTo(c.getDateTo());
+
+                c.getResearchAreas().forEach(researchArea -> {
+                    contribution.getResearchAreasId().add(researchArea.getId());
+                    contribution.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+                });
 
                 contributionDTOs.add(contribution);
             });
@@ -155,5 +169,20 @@ public class PersonContributionConverter {
                         .append("\n");
                 }
             );
+    }
+
+    public static ArrayList<PersonFundingCallContributionDTO> fundingCallContributionToDTO(
+        Set<PersonFundingCallContribution> contributions) {
+        var contributionDTOs = new ArrayList<PersonFundingCallContributionDTO>();
+        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
+            .forEach((c) -> {
+                var contribution = new PersonFundingCallContributionDTO();
+                setCommonFields(contribution, c);
+
+                contribution.setContributionType(c.getContributionType());
+
+                contributionDTOs.add(contribution);
+            });
+        return contributionDTOs;
     }
 }

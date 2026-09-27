@@ -92,6 +92,7 @@ public class FundingProgramServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var funderId = 1;
+        var onlyActive = false;
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
@@ -100,7 +101,7 @@ public class FundingProgramServiceTest {
 
         // when
         var result = fundingProgramService.searchFundingPrograms(
-            tokens, dateFrom, dateTo, funderId, pageable);
+            tokens, dateFrom, dateTo, onlyActive, funderId, pageable);
 
         // then
         assertNotNull(result);
@@ -116,6 +117,7 @@ public class FundingProgramServiceTest {
         var dateFrom = LocalDate.now().minusMonths(6);
         var dateTo = LocalDate.now();
         var funderId = 1;
+        var onlyActive = false;
         var pageable = PageRequest.of(0, 10);
 
         var fundingProgramIndex = new FundingProgramIndex();
@@ -132,7 +134,7 @@ public class FundingProgramServiceTest {
 
         // when
         var result = fundingProgramService.searchFundingPrograms(
-            tokens, dateFrom, dateTo, funderId, pageable);
+            tokens, dateFrom, dateTo, onlyActive, funderId, pageable);
 
         // then
         assertNotNull(result);

@@ -14,6 +14,13 @@ databaseChangeLog:
         baseTableName: datasets
         constraintName: fk_l86bt5byltucmq4nys2lg51m1
 - changeSet:
+    id: 1784706916091-92
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: tutorial_walkthroughs
+        constraintName: fk_tutorial_walkthrough_user
+- changeSet:
     id: 1784706916091-93
     author: milospopovic (generated)
     changes:
