@@ -1,0 +1,58 @@
+databaseChangeLog:
+- changeSet:
+    id: 1790554948287-1
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: jsonb
+        columnName: activity_dimension_score_sums
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-2
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: activity_error_issues
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-3
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: float8
+        columnName: activity_fair_score_sum
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-4
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: activity_info_issues
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-5
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: activity_publication_candidates_count
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-6
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: float8
+        columnName: activity_score_sum
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790554948287-7
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: activity_warning_issues
+        tableName: data_quality_assessment
+
