@@ -106,7 +106,14 @@
     "Language.tag": 3,
     "Language.name": 3,
     "Country.code": 3,
-    "Country.name": 3
+    "Country.name": 3,
+    "Person.involvements": 3.0,
+    "Person.prize": 1.0,
+    "Person.expertise": 1.0,
+    "OrganisationUnit.openAlexId": 3.0,
+    "OrganisationUnit.sector": 1.0,
+    "Activity.involvementType": 3.0,
+    "Activity.education": 3.0
   },
   "dataQualityRemarks": {
     "titleMissing": {
@@ -3607,6 +3614,1243 @@
       "usedForFairCompliance": false,
       "constraints": {
         "pattern": "^[\\p{L}\\p{N}\\p{M} .,'()\\-/&]+$"
+      }
+    },
+    "authenticusIdTooShort": {
+      "title": {
+        "sr": "Authenticus ID je prekratak/prekratka",
+        "sr-cyr": "Authenticus ID је прекратак/прекратка",
+        "en": "Authenticus ID too short",
+        "pt": "Valor demasiado curto: Person.authenticus"
+      },
+      "message": {
+        "sr": "Authenticus ID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Authenticus ID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The Authenticus ID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.authenticus",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 7
+      }
+    },
+    "authenticusIdTooLong": {
+      "title": {
+        "sr": "Authenticus ID je predugačak/predugačka",
+        "sr-cyr": "Authenticus ID је предугачак/предугачка",
+        "en": "Authenticus ID too long",
+        "pt": "Valor demasiado longo: Person.authenticus"
+      },
+      "message": {
+        "sr": "Authenticus ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Authenticus ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Authenticus ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.authenticus",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 7
+      }
+    },
+    "lattesIdTooShort": {
+      "title": {
+        "sr": "Lattes ID je prekratak/prekratka",
+        "sr-cyr": "Lattes ID је прекратак/прекратка",
+        "en": "Lattes ID too short",
+        "pt": "Valor demasiado curto: Person.lattes"
+      },
+      "message": {
+        "sr": "Lattes ID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Lattes ID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The Lattes ID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.lattes",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 16
+      }
+    },
+    "lattesIdTooLong": {
+      "title": {
+        "sr": "Lattes ID je predugačak/predugačka",
+        "sr-cyr": "Lattes ID је предугачак/предугачка",
+        "en": "Lattes ID too long",
+        "pt": "Valor demasiado longo: Person.lattes"
+      },
+      "message": {
+        "sr": "Lattes ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Lattes ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Lattes ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.lattes",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 16
+      }
+    },
+    "orcidTooShort": {
+      "title": {
+        "sr": "ORCID je prekratak/prekratka",
+        "sr-cyr": "ORCID је прекратак/прекратка",
+        "en": "ORCID too short",
+        "pt": "Valor demasiado curto: Person.orcid"
+      },
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The ORCID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.orcid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 19
+      }
+    },
+    "orcidTooLong": {
+      "title": {
+        "sr": "ORCID je predugačak/predugačka",
+        "sr-cyr": "ORCID је предугачак/предугачка",
+        "en": "ORCID too long",
+        "pt": "Valor demasiado longo: Person.orcid"
+      },
+      "message": {
+        "sr": "ORCID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "ORCID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The ORCID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.orcid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 19
+      }
+    },
+    "personOpenAlexIdTooShort": {
+      "title": {
+        "sr": "OpenAlex ID je prekratak/prekratka",
+        "sr-cyr": "OpenAlex ID је прекратак/прекратка",
+        "en": "OpenAlex ID too short",
+        "pt": "Valor demasiado curto: Person.openAlex"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The OpenAlex ID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.openAlex",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 6
+      }
+    },
+    "personOpenAlexIdTooLong": {
+      "title": {
+        "sr": "OpenAlex ID je predugačak/predugačka",
+        "sr-cyr": "OpenAlex ID је предугачак/предугачка",
+        "en": "OpenAlex ID too long",
+        "pt": "Valor demasiado longo: Person.openAlex"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The OpenAlex ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.openAlex",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 16
+      }
+    },
+    "googleScholarIdTooShort": {
+      "title": {
+        "sr": "Google Scholar ID je prekratak/prekratka",
+        "sr-cyr": "Google Scholar ID је прекратак/прекратка",
+        "en": "Google Scholar ID too short",
+        "pt": "Valor demasiado curto: Person.scholar"
+      },
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The Google Scholar ID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.scholar",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 10
+      }
+    },
+    "googleScholarIdTooLong": {
+      "title": {
+        "sr": "Google Scholar ID je predugačak/predugačka",
+        "sr-cyr": "Google Scholar ID је предугачак/предугачка",
+        "en": "Google Scholar ID too long",
+        "pt": "Valor demasiado longo: Person.scholar"
+      },
+      "message": {
+        "sr": "Google Scholar ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Google Scholar ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Google Scholar ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.scholar",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 12
+      }
+    },
+    "scopusAuthorIdTooLong": {
+      "title": {
+        "sr": "Scopus Author ID je predugačak/predugačka",
+        "sr-cyr": "Scopus Author ID је предугачак/предугачка",
+        "en": "Scopus Author ID too long",
+        "pt": "Valor demasiado longo: Person.scopus"
+      },
+      "message": {
+        "sr": "Scopus Author ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Scopus Author ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Scopus Author ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.scopus",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 20
+      }
+    },
+    "invalidAuthenticusIdFormat": {
+      "title": {
+        "sr": "Neispravan format Authenticus ID-a",
+        "sr-cyr": "Неисправан формат Authenticus ID-а",
+        "en": "Invalid Authenticus ID format",
+        "pt": "Formato inválido: Person.authenticus"
+      },
+      "message": {
+        "sr": "Authenticus ID \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Authenticus ID \"{0}\" у запису особе није у исправном формату.",
+        "en": "The Authenticus ID \"{0}\" in person record is not in a valid format.",
+        "pt": "O Authenticus ID \"{0}\" no registo de pessoa não está num formato válido."
+      },
+      "target": "Person.authenticus",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[A-Z]-[0-9A-Z]{3}-[0-9A-Z]{3}$"
+      }
+    },
+    "biographyTooShort": {
+      "title": {
+        "sr": "Biografija je prekratka",
+        "sr-cyr": "Биографија је прекратка",
+        "en": "Biography too short",
+        "pt": "Valor demasiado curto: Person.biography"
+      },
+      "message": {
+        "sr": "Biografija osobe mora sadržati najmanje {1} karaktera, a sadrži {0}.",
+        "sr-cyr": "Биографија особе мора садржати најмање {1} карактера, а садржи {0}.",
+        "en": "The person's biography must contain at least {1} characters, but contains {0}.",
+        "pt": "A biografia da pessoa deve conter pelo menos {1} caracteres, mas contém {0}."
+      },
+      "target": "Person.biography",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 100
+      }
+    },
+    "birthDateBelowMinAge": {
+      "title": {
+        "sr": "Osoba je mlađa od dozvoljenog minimuma",
+        "sr-cyr": "Особа је млађа од дозвољеног минимума",
+        "en": "Person below minimum age",
+        "pt": "Pessoa abaixo da idade mínima"
+      },
+      "message": {
+        "sr": "Datum rođenja ({0}) u zapisu osobe znači da je osoba mlađa od {1} godina.",
+        "sr-cyr": "Датум рођења ({0}) у запису особе значи да је особа млађа од {1} година.",
+        "en": "The birth date ({0}) in person record means the person is younger than {1} years.",
+        "pt": "A data de nascimento ({0}) no registo de pessoa indica que a pessoa tem menos de {1} anos."
+      },
+      "target": "Person.birthdate",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minAgeYears": 18
+      }
+    },
+    "involvementsMissing": {
+      "title": {
+        "sr": "Nedostaju angažovanja",
+        "sr-cyr": "Недостају ангажовања",
+        "en": "Missing involvements",
+        "pt": "Valor obrigatório em falta: Person.involvements"
+      },
+      "message": {
+        "sr": "Osoba nema nijedno zabeleženo angažovanje (zaposlenje, obrazovanje ili članstvo).",
+        "sr-cyr": "Особа нема ниједно забележено ангажовање (запослење, образовање или чланство).",
+        "en": "The person has no recorded involvement (employment, education or membership).",
+        "pt": "A pessoa não tem qualquer envolvimento registado (emprego, educação ou filiação)."
+      },
+      "target": "Person.involvements",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minCardinality": 1
+      }
+    },
+    "involvementsAboveMaximum": {
+      "title": {
+        "sr": "Previše angažovanja",
+        "sr-cyr": "Превише ангажовања",
+        "en": "Too many involvements",
+        "pt": "Cardinalidade máxima excedida: Person.involvements"
+      },
+      "message": {
+        "sr": "Broj angažovanja ({0}) u zapisu osobe prelazi dozvoljeni maksimum od {1}.",
+        "sr-cyr": "Број ангажовања ({0}) у запису особе прелази дозвољени максимум од {1}.",
+        "en": "The number of involvements ({0}) in person record exceeds the allowed maximum of {1}.",
+        "pt": "O número de envolvimentos ({0}) no registo de pessoa excede o máximo permitido de {1}."
+      },
+      "target": "Person.involvements",
+      "severity": "INFO",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxCardinality": 30
+      }
+    },
+    "lastNameTooShort": {
+      "title": {
+        "sr": "Prezime je prekratak/prekratka",
+        "sr-cyr": "Презиме је прекратак/прекратка",
+        "en": "last name too short",
+        "pt": "Valor demasiado curto: Person.name"
+      },
+      "message": {
+        "sr": "Prezime \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Презиме \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The last name \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 2
+      }
+    },
+    "otherNameTooLong": {
+      "title": {
+        "sr": "Srednje ime je predugačak/predugačka",
+        "sr-cyr": "Средње име је предугачак/предугачка",
+        "en": "other name too long",
+        "pt": "Valor demasiado longo: Person.name"
+      },
+      "message": {
+        "sr": "Srednje ime \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Средње име \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The other name \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidOtherNameFormat": {
+      "title": {
+        "sr": "Neispravan format srednjeg imena",
+        "sr-cyr": "Неисправан формат средњег имена",
+        "en": "Invalid other name format",
+        "pt": "Formato inválido: Person.otherName"
+      },
+      "message": {
+        "sr": "Srednje ime \"{0}\" u zapisu osobe nije u ispravnom formatu.",
+        "sr-cyr": "Средње име \"{0}\" у запису особе није у исправном формату.",
+        "en": "The other name \"{0}\" in person record is not in a valid format.",
+        "pt": "O outro nome \"{0}\" no registo de pessoa não está num formato válido."
+      },
+      "target": "Person.name",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{M}\\s\\.\\-']{1,255}$"
+      }
+    },
+    "personNameTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip imena",
+        "sr-cyr": "Недостаје тип имена",
+        "en": "Missing name type",
+        "pt": "Valor obrigatório em falta: Person.nameType"
+      },
+      "message": {
+        "sr": "Tip imena u zapisu osobe mora biti određen.",
+        "sr-cyr": "Тип имена у запису особе мора бити одређен.",
+        "en": "The name type in person record must be specified.",
+        "pt": "O tipo de nome no registo de pessoa deve ser especificado."
+      },
+      "target": "Person.name",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "expertiseOrSkillResearchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju oblasti istraživanja stručnosti",
+        "sr-cyr": "Недостају области истраживања стручности",
+        "en": "Missing expertise research areas",
+        "pt": "Valor obrigatório em falta: Person.expertise"
+      },
+      "message": {
+        "sr": "Stručnost ili veština osobe mora imati bar jednu oblast istraživanja.",
+        "sr-cyr": "Стручност или вештина особе мора имати бар једну област истраживања.",
+        "en": "The person's expertise or skill must carry at least one research area.",
+        "pt": "A competência ou aptidão da pessoa deve indicar pelo menos uma área de investigação."
+      },
+      "target": "Person.expertise",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "prizeTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip nagrade",
+        "sr-cyr": "Недостаје тип награде",
+        "en": "Missing prize type",
+        "pt": "Valor obrigatório em falta: Person.prize"
+      },
+      "message": {
+        "sr": "Tip nagrade u zapisu osobe mora biti određen.",
+        "sr-cyr": "Тип награде у запису особе мора бити одређен.",
+        "en": "The prize type in person record must be specified.",
+        "pt": "O tipo de prémio no registo de pessoa deve ser especificado."
+      },
+      "target": "Person.prize",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "prizeDateMissing": {
+      "title": {
+        "sr": "Nedostaje datum nagrade",
+        "sr-cyr": "Недостаје датум награде",
+        "en": "Missing prize date",
+        "pt": "Valor obrigatório em falta: Person.prize"
+      },
+      "message": {
+        "sr": "Datum dodele nagrade u zapisu osobe mora biti unet.",
+        "sr-cyr": "Датум доделе награде у запису особе мора бити унет.",
+        "en": "The prize award date in person record must be informed.",
+        "pt": "A data de atribuição do prémio no registo de pessoa deve ser indicada."
+      },
+      "target": "Person.prize",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "prizeResearchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju oblasti istraživanja nagrade",
+        "sr-cyr": "Недостају области истраживања награде",
+        "en": "Missing prize research areas",
+        "pt": "Valor obrigatório em falta: Person.prize"
+      },
+      "message": {
+        "sr": "Nagrada u zapisu osobe mora imati bar jednu oblast istraživanja.",
+        "sr-cyr": "Награда у запису особе мора имати бар једну област истраживања.",
+        "en": "The prize in person record must carry at least one research area.",
+        "pt": "O prémio no registo de pessoa deve indicar pelo menos uma área de investigação."
+      },
+      "target": "Person.prize",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "prizeDateTooFarInFuture": {
+      "title": {
+        "sr": "Datum nagrade previše u budućnosti",
+        "sr-cyr": "Датум награде превише у будућности",
+        "en": "Prize date too far in future",
+        "pt": "Data do prémio demasiado no futuro"
+      },
+      "message": {
+        "sr": "Datum nagrade ({0}) u zapisu osobe ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум награде ({0}) у запису особе не може бити више од {1} година у будућности.",
+        "en": "The prize date ({0}) in person record cannot be more than {1} years in the future.",
+        "pt": "A data do prémio ({0}) no registo de pessoa não pode exceder {1} anos no futuro."
+      },
+      "target": "Person.prize",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "involvementTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip angažovanja ({0} - {1})",
+        "sr-cyr": "Недостаје тип ангажовања ({0} - {1})",
+        "en": "Missing involvement type ({0} - {1})",
+        "pt": "Valor obrigatório em falta: Activity.involvementType"
+      },
+      "message": {
+        "sr": "Tip angažovanja mora biti određen. Aktivnost: {0} - {1}.",
+        "sr-cyr": "Тип ангажовања мора бити одређен. Активност: {0} - {1}.",
+        "en": "The involvement type must be specified. Activity: {0} - {1}.",
+        "pt": "O tipo de envolvimento deve ser especificado. Atividade: {0} - {1}."
+      },
+      "target": "Activity.involvementType",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "membershipTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip članstva ({0} - {1})",
+        "sr-cyr": "Недостаје тип чланства ({0} - {1})",
+        "en": "Missing membership type ({0} - {1})",
+        "pt": "Valor obrigatório em falta: Activity.involvementType"
+      },
+      "message": {
+        "sr": "Tip članstva mora biti određen. Aktivnost: {0} - {1}.",
+        "sr-cyr": "Тип чланства мора бити одређен. Активност: {0} - {1}.",
+        "en": "The membership type must be specified. Activity: {0} - {1}.",
+        "pt": "O tipo de filiação deve ser especificado. Atividade: {0} - {1}."
+      },
+      "target": "Activity.involvementType",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "employmentPositionMissing": {
+      "title": {
+        "sr": "Nedostaje radno mesto ({0} - {1})",
+        "sr-cyr": "Недостаје радно место ({0} - {1})",
+        "en": "Missing employment position ({0} - {1})",
+        "pt": "Valor obrigatório em falta: Activity.involvementType"
+      },
+      "message": {
+        "sr": "Radno mesto u zaposlenju mora biti određeno. Aktivnost: {0} - {1}.",
+        "sr-cyr": "Радно место у запослењу мора бити одређено. Активност: {0} - {1}.",
+        "en": "The employment position must be specified. Activity: {0} - {1}.",
+        "pt": "O cargo de emprego deve ser especificado. Atividade: {0} - {1}."
+      },
+      "target": "Activity.involvementType",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "educationDegreeTypeMissing": {
+      "title": {
+        "sr": "Nedostaje tip zvanja ({0} - {1})",
+        "sr-cyr": "Недостаје тип звања ({0} - {1})",
+        "en": "Missing degree type ({0} - {1})",
+        "pt": "Valor obrigatório em falta: Activity.education"
+      },
+      "message": {
+        "sr": "Tip zvanja u obrazovanju mora biti određen. Aktivnost: {0} - {1}.",
+        "sr-cyr": "Тип звања у образовању мора бити одређен. Активност: {0} - {1}.",
+        "en": "The degree type in education must be specified. Activity: {0} - {1}.",
+        "pt": "O tipo de grau na educação deve ser especificado. Atividade: {0} - {1}."
+      },
+      "target": "Activity.education",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "educationStatusMissing": {
+      "title": {
+        "sr": "Nedostaje status obrazovanja ({0} - {1})",
+        "sr-cyr": "Недостаје статус образовања ({0} - {1})",
+        "en": "Missing education status ({0} - {1})",
+        "pt": "Valor obrigatório em falta: Activity.education"
+      },
+      "message": {
+        "sr": "Status obrazovanja mora biti određen. Aktivnost: {0} - {1}.",
+        "sr-cyr": "Статус образовања мора бити одређен. Активност: {0} - {1}.",
+        "en": "The education status must be specified. Activity: {0} - {1}.",
+        "pt": "O estado da educação deve ser especificado. Atividade: {0} - {1}."
+      },
+      "target": "Activity.education",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "numberOfReviewsTooLow": {
+      "title": {
+        "sr": "Broj recenzija ispod minimuma ({2} - {3})",
+        "sr-cyr": "Број рецензија испод минимума ({2} - {3})",
+        "en": "Number of reviews below minimum ({2} - {3})",
+        "pt": "Valor abaixo do mínimo: Activity.reviews"
+      },
+      "message": {
+        "sr": "Broj recenzija ili procena ({0}) na aktivnosti ({2} - {3}) mora biti najmanje {1}.",
+        "sr-cyr": "Број рецензија или процена ({0}) на активности ({2} - {3}) мора бити најмање {1}.",
+        "en": "The number of reviews or assessments ({0}) on the activity ({2} - {3}) must be at least {1}.",
+        "pt": "O número de revisões ou avaliações ({0}) na atividade ({2} - {3}) deve ser pelo menos {1}."
+      },
+      "target": "Activity.reviews",
+      "severity": "WARNING",
+      "dimension": "ACCURACY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "min": 1
+      }
+    },
+    "rorTooShort": {
+      "title": {
+        "sr": "ROR je prekratak/prekratka",
+        "sr-cyr": "ROR је прекратак/прекратка",
+        "en": "ROR too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.ror"
+      },
+      "message": {
+        "sr": "ROR \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "ROR \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The ROR \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 9
+      }
+    },
+    "rorTooLong": {
+      "title": {
+        "sr": "ROR je predugačak/predugačka",
+        "sr-cyr": "ROR је предугачак/предугачка",
+        "en": "ROR too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.ror"
+      },
+      "message": {
+        "sr": "ROR \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "ROR \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The ROR \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 9
+      }
+    },
+    "isniTooShort": {
+      "title": {
+        "sr": "ISNI je prekratak/prekratka",
+        "sr-cyr": "ISNI је прекратак/прекратка",
+        "en": "ISNI too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.isni"
+      },
+      "message": {
+        "sr": "ISNI \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "ISNI \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The ISNI \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 16
+      }
+    },
+    "isniTooLong": {
+      "title": {
+        "sr": "ISNI je predugačak/predugačka",
+        "sr-cyr": "ISNI је предугачак/предугачка",
+        "en": "ISNI too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.isni"
+      },
+      "message": {
+        "sr": "ISNI \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "ISNI \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The ISNI \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.isni",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 16
+      }
+    },
+    "gridTooShort": {
+      "title": {
+        "sr": "GRID je prekratak/prekratka",
+        "sr-cyr": "GRID је прекратак/прекратка",
+        "en": "GRID too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.grid"
+      },
+      "message": {
+        "sr": "GRID \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "GRID \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The GRID \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 11
+      }
+    },
+    "gridTooLong": {
+      "title": {
+        "sr": "GRID je predugačak/predugačka",
+        "sr-cyr": "GRID је предугачак/предугачка",
+        "en": "GRID too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.grid"
+      },
+      "message": {
+        "sr": "GRID \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "GRID \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The GRID \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.grid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 14
+      }
+    },
+    "fundrefTooShort": {
+      "title": {
+        "sr": "Fundref je prekratak/prekratka",
+        "sr-cyr": "Fundref је прекратак/прекратка",
+        "en": "Fundref too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.fundRef"
+      },
+      "message": {
+        "sr": "Fundref \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Fundref \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The Fundref \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.fundRef",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 6
+      }
+    },
+    "fundrefTooLong": {
+      "title": {
+        "sr": "Fundref je predugačak/predugačka",
+        "sr-cyr": "Fundref је предугачак/предугачка",
+        "en": "Fundref too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.fundRef"
+      },
+      "message": {
+        "sr": "Fundref \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Fundref \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Fundref \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.fundRef",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 9
+      }
+    },
+    "scopusAfidTooShort": {
+      "title": {
+        "sr": "Scopus AFID je prekratak/prekratka",
+        "sr-cyr": "Scopus AFID је прекратак/прекратка",
+        "en": "Scopus AFID too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.scopusAfid"
+      },
+      "message": {
+        "sr": "Scopus AFID \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Scopus AFID \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The Scopus AFID \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 6
+      }
+    },
+    "scopusAfidTooLong": {
+      "title": {
+        "sr": "Scopus AFID je predugačak/predugačka",
+        "sr-cyr": "Scopus AFID је предугачак/предугачка",
+        "en": "Scopus AFID too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.scopusAfid"
+      },
+      "message": {
+        "sr": "Scopus AFID \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Scopus AFID \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Scopus AFID \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.scopusAfid",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 12
+      }
+    },
+    "organisationUnitOpenAlexIdTooShort": {
+      "title": {
+        "sr": "OpenAlex ID je prekratak/prekratka",
+        "sr-cyr": "OpenAlex ID је прекратак/прекратка",
+        "en": "OpenAlex ID too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.openAlexId"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u organizacionoj jedinici mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у организационој јединици мора садржати најмање {1} карактера.",
+        "en": "The OpenAlex ID \"{0}\" in organisation unit record must contain at least {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica deve conter pelo menos {1} caracteres."
+      },
+      "target": "OrganisationUnit.openAlexId",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 6
+      }
+    },
+    "organisationUnitOpenAlexIdTooLong": {
+      "title": {
+        "sr": "OpenAlex ID je predugačak/predugačka",
+        "sr-cyr": "OpenAlex ID је предугачак/предугачка",
+        "en": "OpenAlex ID too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.openAlexId"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The OpenAlex ID \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.openAlexId",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 16
+      }
+    },
+    "ringgoldTooLong": {
+      "title": {
+        "sr": "Ringgold je predugačak/predugačka",
+        "sr-cyr": "Ringgold је предугачак/предугачка",
+        "en": "Ringgold too long",
+        "pt": "Valor demasiado longo: OrganisationUnit.ringgold"
+      },
+      "message": {
+        "sr": "Ringgold \"{0}\" u organizacionoj jedinici prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Ringgold \"{0}\" у организационој јединици прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Ringgold \"{0}\" in organisation unit record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O valor \"{0}\" no registo de unidade orgânica excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "OrganisationUnit.ringgold",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 9
+      }
+    },
+    "invalidOrganisationUnitOpenAlexIdFormat": {
+      "title": {
+        "sr": "Neispravan format OpenAlex ID-a organizacione jedinice",
+        "sr-cyr": "Неисправан формат OpenAlex ID-а организационе јединице",
+        "en": "Invalid organisation unit OpenAlex ID format",
+        "pt": "Formato inválido: OrganisationUnit.openAlexId"
+      },
+      "message": {
+        "sr": "OpenAlex ID \"{0}\" u organizacionoj jedinici nije u ispravnom formatu.",
+        "sr-cyr": "OpenAlex ID \"{0}\" у организационој јединици није у исправном формату.",
+        "en": "The OpenAlex ID \"{0}\" in organisation unit record is not in a valid format.",
+        "pt": "O OpenAlex ID \"{0}\" no registo de unidade orgânica não está num formato válido."
+      },
+      "target": "OrganisationUnit.openAlexId",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^I[0-9]{5,15}$"
+      }
+    },
+    "rorMissing": {
+      "title": {
+        "sr": "Nedostaje ROR",
+        "sr-cyr": "Недостаје ROR",
+        "en": "Missing ROR",
+        "pt": "Valor obrigatório em falta: OrganisationUnit.ror"
+      },
+      "message": {
+        "sr": "ROR identifikator organizacione jedinice mora biti unet.",
+        "sr-cyr": "ROR идентификатор организационе јединице мора бити унет.",
+        "en": "The ROR identifier of the organisation unit must be informed.",
+        "pt": "O identificador ROR da unidade orgânica deve ser indicado."
+      },
+      "target": "OrganisationUnit.ror",
+      "severity": "WARNING",
+      "dimension": "QUALITATIVE",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "organisationUnitDescriptionTooShort": {
+      "title": {
+        "sr": "Opis organizacione jedinice je prekratak",
+        "sr-cyr": "Опис организационе јединице је прекратак",
+        "en": "Organisation unit description too short",
+        "pt": "Valor demasiado curto: OrganisationUnit.description"
+      },
+      "message": {
+        "sr": "Opis organizacione jedinice mora sadržati najmanje {1} karaktera, a sadrži {0}.",
+        "sr-cyr": "Опис организационе јединице мора садржати најмање {1} карактера, а садржи {0}.",
+        "en": "The organisation unit description must contain at least {1} characters, but contains {0}.",
+        "pt": "A descrição da unidade orgânica deve conter pelo menos {1} caracteres, mas contém {0}."
+      },
+      "target": "OrganisationUnit.description",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 100
+      }
+    },
+    "dateEstablishedMissing": {
+      "title": {
+        "sr": "Nedostaje datum osnivanja",
+        "sr-cyr": "Недостаје датум оснивања",
+        "en": "Missing date established",
+        "pt": "Valor obrigatório em falta: OrganisationUnit.date"
+      },
+      "message": {
+        "sr": "Datum osnivanja organizacione jedinice mora biti unet.",
+        "sr-cyr": "Датум оснивања организационе јединице мора бити унет.",
+        "en": "The date the organisation unit was established must be informed.",
+        "pt": "A data de constituição da unidade orgânica deve ser indicada."
+      },
+      "target": "OrganisationUnit.date",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "dateEstablishedTooFarInFuture": {
+      "title": {
+        "sr": "Datum osnivanja previše u budućnosti",
+        "sr-cyr": "Датум оснивања превише у будућности",
+        "en": "Date established too far in future",
+        "pt": "Data de constituição demasiado no futuro"
+      },
+      "message": {
+        "sr": "Datum osnivanja ({0}) organizacione jedinice ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум оснивања ({0}) организационе јединице не може бити више од {1} година у будућности.",
+        "en": "The date established ({0}) of the organisation unit cannot be more than {1} years in the future.",
+        "pt": "A data de constituição ({0}) da unidade orgânica não pode exceder {1} anos no futuro."
+      },
+      "target": "OrganisationUnit.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "dateDissolvedTooFarInFuture": {
+      "title": {
+        "sr": "Datum prestanka rada previše u budućnosti",
+        "sr-cyr": "Датум престанка рада превише у будућности",
+        "en": "Date dissolved too far in future",
+        "pt": "Data de dissolução demasiado no futuro"
+      },
+      "message": {
+        "sr": "Datum prestanka rada ({0}) organizacione jedinice ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум престанка рада ({0}) организационе јединице не може бити више од {1} година у будућности.",
+        "en": "The date dissolved ({0}) of the organisation unit cannot be more than {1} years in the future.",
+        "pt": "A data de dissolução ({0}) da unidade orgânica não pode exceder {1} anos no futuro."
+      },
+      "target": "OrganisationUnit.date",
+      "severity": "INFO",
+      "dimension": "CURRENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 10
+      }
+    },
+    "organisationUnitSectorMissing": {
+      "title": {
+        "sr": "Nedostaje sektor organizacione jedinice",
+        "sr-cyr": "Недостаје сектор организационе јединице",
+        "en": "Missing organisation unit sector",
+        "pt": "Valor obrigatório em falta: OrganisationUnit.sector"
+      },
+      "message": {
+        "sr": "Sektor organizacione jedinice mora biti određen.",
+        "sr-cyr": "Сектор организационе јединице мора бити одређен.",
+        "en": "The organisation unit sector must be specified.",
+        "pt": "O setor da unidade orgânica deve ser especificado."
+      },
+      "target": "OrganisationUnit.sector",
+      "severity": "INFO",
+      "dimension": "SEMANTIC",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "documentDescriptionTooShort": {
+      "title": {
+        "sr": "Opis publikacije je prekratak",
+        "sr-cyr": "Опис публикације је прекратак",
+        "en": "Output description too short",
+        "pt": "Valor demasiado curto: Document.description"
+      },
+      "message": {
+        "sr": "Opis publikacije mora sadržati najmanje {1} karaktera, a sadrži {0}.",
+        "sr-cyr": "Опис публикације мора садржати најмање {1} карактера, а садржи {0}.",
+        "en": "The output description must contain at least {1} characters, but contains {0}.",
+        "pt": "A descrição do resultado deve conter pelo menos {1} caracteres, mas contém {0}."
+      },
+      "target": "Document.description",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 100
+      }
+    },
+    "cienciaIdMissing": {
+      "title": {
+        "sr": "Nedostaje Ciencia ID",
+        "sr-cyr": "Недостаје Ciencia ID",
+        "en": "Missing Ciencia ID",
+        "pt": "Valor obrigatório em falta: Person.ciencia"
+      },
+      "message": {
+        "sr": "Ciencia ID osobe mora biti unet.",
+        "sr-cyr": "Ciencia ID особе мора бити унет.",
+        "en": "The person's Ciencia ID must be informed.",
+        "pt": "O Ciencia ID da pessoa deve ser indicado."
+      },
+      "target": "Person.ciencia",
+      "severity": "WARNING",
+      "dimension": "QUALITATIVE",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {}
+    },
+    "cienciaIdTooShort": {
+      "title": {
+        "sr": "Ciencia ID je prekratak",
+        "sr-cyr": "Ciencia ID је прекратак",
+        "en": "Ciencia ID too short",
+        "pt": "Valor demasiado curto: Person.ciencia"
+      },
+      "message": {
+        "sr": "Ciencia ID \"{0}\" u zapisu osobe mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Ciencia ID \"{0}\" у запису особе мора садржати најмање {1} карактера.",
+        "en": "The Ciencia ID \"{0}\" in person record must contain at least {1} characters.",
+        "pt": "O Ciencia ID \"{0}\" no registo de pessoa deve conter pelo menos {1} caracteres."
+      },
+      "target": "Person.ciencia",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 12
+      }
+    },
+    "cienciaIdTooLong": {
+      "title": {
+        "sr": "Ciencia ID je predugačak",
+        "sr-cyr": "Ciencia ID је предугачак",
+        "en": "Ciencia ID too long",
+        "pt": "Valor demasiado longo: Person.ciencia"
+      },
+      "message": {
+        "sr": "Ciencia ID \"{0}\" u zapisu osobe prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Ciencia ID \"{0}\" у запису особе прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The Ciencia ID \"{0}\" in person record exceeds the maximum allowed length of {1} characters.",
+        "pt": "O Ciencia ID \"{0}\" no registo de pessoa excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Person.ciencia",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 12
       }
     }
   }

@@ -17,11 +17,13 @@ public record IssueCursor(
     Integer assessmentId
 ) {
 
-    // Most severe first; the assessment id keeps the order total under two current assessments.
+    // Entity type first, because one entity id is shared across types and its rows would otherwise
+    // interleave; then most severe first, with the assessment id keeping the order total under two
+    // current assessments.
     public static final Comparator<IssueCursor> WITHIN_RECORD = Comparator
-        .comparingInt((IssueCursor cursor) -> -cursor.severity().ordinal()) // ERROR comes first
+        .comparing(IssueCursor::entityType)
+        .thenComparingInt(cursor -> -cursor.severity().ordinal())
         .thenComparing(IssueCursor::ruleKey)
-        .thenComparing(IssueCursor::entityType)
         .thenComparing(IssueCursor::assessmentId);
 
     private static final String SEPARATOR = "\u001F";

@@ -38,17 +38,24 @@ public class WebOfScienceImportUtility {
     @Value("${wos.max.retries:1}")
     private int maxRetries;
 
+    /**
+     * Overrides the shared read timeout, as WoS harvest queries regularly outlast it. When unset,
+     * the default provided by {@link RestTemplateProvider} applies.
+     */
+    @Value("${wos.read.timeout.millis:0}")
+    private int readTimeoutMillis;
+
 
     public List<WosPublication> getPublicationsForAuthors(List<String> wosIds, String dateFrom,
                                                           String dateTo) {
-        var restTemplate = restTemplateProvider.provideRestTemplate();
+        var restTemplate = restTemplateProvider.provideRestTemplate(readTimeoutMillis);
         var query = buildAuthorQuery(wosIds);
         return fetchPublications(query, dateFrom, dateTo, restTemplate);
     }
 
     public List<WosPublication> getPublicationsForInstitution(String institutionName,
                                                               String dateFrom, String dateTo) {
-        var restTemplate = restTemplateProvider.provideRestTemplate();
+        var restTemplate = restTemplateProvider.provideRestTemplate(readTimeoutMillis);
         var query = "OG=(" + institutionName + ")";
         return fetchPublications(query, dateFrom, dateTo, restTemplate);
     }
@@ -101,10 +108,16 @@ public class WebOfScienceImportUtility {
                 log.error("HTTP error while harvesting from WoS: {}", e.getMessage());
                 break;
             } catch (ResourceAccessException e) {
-                log.warn(
-                    "Unable to access WoS service while performing harvest, aborting... Reason: {}",
-                    e.getMessage());
-                break;
+                if (retries++ >= maxRetries) {
+                    log.warn(
+                        "Unable to access WoS service while performing harvest, keeping the {} " +
+                            "record(s) harvested so far. Reason: {}",
+                        allPublications.size(), e.getMessage());
+                    break;
+                }
+
+                RestTemplateProvider.sleepBeforeRetry(null);
+                continue; // retry the same page, the request is idempotent
             }
 
             if (!response.getStatusCode().is2xxSuccessful() || Objects.isNull(response.getBody())) {
@@ -140,7 +153,7 @@ public class WebOfScienceImportUtility {
     }
 
     public WosPublication getPublicationByDoi(String doi) {
-        var restTemplate = restTemplateProvider.provideRestTemplate();
+        var restTemplate = restTemplateProvider.provideRestTemplate(readTimeoutMillis);
 
         int page = 1;
         int limit = 1; // only need one
