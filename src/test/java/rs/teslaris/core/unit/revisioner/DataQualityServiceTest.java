@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.revisioner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -663,6 +664,56 @@ public class DataQualityServiceTest {
             var query = capturedScanQuery();
             assertTrue(query.contains("is_latest"));
             assertFalse(query.contains("valid_to"));
+        }
+    }
+
+    @Test
+    public void shouldKeepOneRecordsIssuesTogetherWhenEntityTypesShareAnId() {
+        // given (one id reused across two entity types, each failing the same two rules)
+        var document = assessmentIndex(1, "Document",
+            List.of("titleMissing", "doiNotResolvable"));
+        var person = assessmentIndex(1, "Person", List.of("titleMissing", "doiNotResolvable"));
+        person.setId("2");
+        person.setEntityType(PERSON_ENTITY_TYPE);
+
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString())).thenReturn(new PageImpl<>(List.of(document, person)));
+        stubIssueTotal(4);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>(List.of("titleMissing", "doiNotResolvable")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                    anyString(), anyString(), eq("titleMissing")))
+                .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                    anyString(), anyString(), eq("doiNotResolvable")))
+                .thenReturn(remark(IssueSeverity.INFO, QualityDimension.QUALITATIVE));
+
+            // when
+            var result = dataQualityService.findRepositoryIssues(null, "PTCRIS", null, null,
+                null, null, null, null, 10);
+
+            // then (grouped by record, not interleaved by severity across the two of them)
+            assertEquals(4, result.content().size());
+
+            var entityTypes = result.content().stream()
+                .map(issue -> issue.entityType())
+                .toList();
+
+            assertEquals(entityTypes.getFirst(), entityTypes.get(1));
+            assertEquals(entityTypes.get(2), entityTypes.get(3));
+            assertNotEquals(entityTypes.getFirst(), entityTypes.get(2));
+
+            assertEquals(IssueSeverity.ERROR, result.content().getFirst().severity());
+            assertEquals(IssueSeverity.INFO, result.content().get(1).severity());
         }
     }
 
