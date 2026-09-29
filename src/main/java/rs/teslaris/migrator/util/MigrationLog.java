@@ -64,6 +64,15 @@ public class MigrationLog {
             exception.getMessage());
     }
 
+    /**
+     * A converter could not carry a source value over to the target; the item itself proceeds.
+     */
+    public void valueDropped(String source, String entity, String key, String rule,
+                             String reason) {
+        log.info("source={} | entity={} | key={} | status=VALUE_DROPPED | rule={} | reason={}",
+            source, entity, key, rule, reason);
+    }
+
     public void itemFailed(MigrationRun run, MigrationItem<?> item, Exception exception) {
         log.warn("runId={} | source={} | entity={} | key={} | status=FAILED | reason={}",
             run.getId(), run.getSource(), item.type(), item.sourceKey(), exception.getMessage(),

@@ -98,6 +98,7 @@ public class HydratorConversionUtil {
             return LanguageAbbreviations.ENGLISH;
         }
 
-        return language.trim().toUpperCase(Locale.ROOT);
+        // Curricula carry locales such as "pt_PT" / "en_GB"; tags are the bare language code
+        return language.trim().split("[_-]")[0].toUpperCase(Locale.ROOT);
     }
 }

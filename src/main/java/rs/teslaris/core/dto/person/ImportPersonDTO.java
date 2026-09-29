@@ -1,7 +1,9 @@
 package rs.teslaris.core.dto.person;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,4 +29,33 @@ public class ImportPersonDTO extends BasicPersonDTO {
     private List<MultilingualContentDTO> keywords = new ArrayList<>();
 
     private String postalNumber;
+
+    /**
+     * ISO 3166-1 alpha-2 code of the professional address country.
+     */
+    private String countryCode;
+
+    private List<PersonNameDTO> otherNames = new ArrayList<>();
+
+    private String privateContactEmail;
+
+    private String privatePhoneNumber;
+
+    private String privateFaxNumber;
+
+    private String privateMobilePhoneNumber;
+
+    private List<MultilingualContentDTO> privateAddressLine = new ArrayList<>();
+
+    private List<MultilingualContentDTO> privateAddressCity = new ArrayList<>();
+
+    private List<MultilingualContentDTO> privateAddressState = new ArrayList<>();
+
+    private String privatePostalNumber;
+
+    private String privateCountryCode;
+
+    private Set<String> uris = new HashSet<>();
+
+    private String importSource;
 }

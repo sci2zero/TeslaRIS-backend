@@ -21,6 +21,8 @@ public interface CountryRepository extends JpaRepository<Country, Integer> {
     @Query("SELECT c FROM Country c JOIN c.name n WHERE LOWER(n.content) = LOWER(:name)")
     Optional<Country> findCountryByName(String name, Limit limit);
 
+    Optional<Country> findFirstByCodeIgnoreCase(String code);
+
     @Query(value =
         "SELECT c FROM Country c LEFT JOIN c.name name WHERE LOWER(c.code) = :searchExpression OR " +
             "(name.language.languageTag = :languageTag AND " +

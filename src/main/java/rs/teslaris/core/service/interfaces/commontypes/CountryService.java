@@ -23,6 +23,8 @@ public interface CountryService extends JPAService<Country> {
 
     Optional<Country> findCountryByName(String name);
 
+    Optional<Country> findCountryByCode(String code);
+
     void updateCountry(Integer countryId, CountryDTO countryDTO);
 
     void deleteCountry(Integer countryId);

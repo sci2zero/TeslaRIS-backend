@@ -24,6 +24,7 @@ public class HydratorCVModel {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CurriculumData(
         String language,
+        String lastModifiedDate,
         IdentifyingInfo identifyingInfo,
         Employments employments,
         Outputs outputs
@@ -33,16 +34,71 @@ public class HydratorCVModel {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record IdentifyingInfo(
         PersonInfo personInfo,
+        CitationNames citationNames,
         AuthorIdentifiers authorIdentifiers,
-        Resume resume
+        DomainActivities domainActivities,
+        Resume resume,
+        Emails emails,
+        PhoneNumbers phoneNumbers,
+        MailingAddresses mailingAddresses,
+        WebAddresses webAddresses,
+        LanguageCompetencies languageCompetencies
     ) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PersonInfo(
         String fullName,
+        String displayName,
         String names,
-        String surnames
+        String surnames,
+        DateOfBirth dateOfBirth,
+        Gender gender,
+        Photography photography
+    ) {
+    }
+
+    /**
+     * Values are present only when {@code privacyLevel} is {@code publico}; otherwise the source
+     * keeps just the privacy level.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DateOfBirth(
+        String privacyLevel,
+        String year,
+        String month,
+        String day
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Gender(
+        String privacyLevel,
+        String code,
+        String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Photography(
+        String privacyLevel,
+        String fileName
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CitationNames(
+        Integer total,
+        List<CitationName> citationName
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CitationName(
+        String id,
+        String privacyLevel,
+        String preferredCitationName,
+        String value
     ) {
     }
 
@@ -69,8 +125,153 @@ public class HydratorCVModel {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DomainActivities(
+        Integer total,
+        List<DomainActivity> domainActivity
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DomainActivity(
+        String id,
+        ResearchClassification researchClassification,
+        String topic,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ResearchClassification(
+        String code,
+        String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Keywords(
+        Integer total,
+        List<String> keyword
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Resume(
         String text
+    ) {
+    }
+
+    /**
+     * Code-and-label pair of a controlled vocabulary value; map on {@code code}, the label's
+     * language varies.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CodeValue(
+        String code,
+        String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Emails(
+        Integer total,
+        List<Email> email
+    ) {
+    }
+
+    /**
+     * {@code lastModifiedDate} ({@code -common:last-modified-date}) is not served by hydrator yet
+     * for emails, phone numbers and mailing addresses; it stays null until it is.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Email(
+        String id,
+        String lastModifiedDate,
+        String preferredEmail,
+        String emailAddress,
+        CodeValue emailType
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PhoneNumbers(
+        Integer total,
+        List<PhoneNumber> phoneNumber
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PhoneNumber(
+        String id,
+        String lastModifiedDate,
+        String preferredPhoneNumber,
+        String countryCode,
+        String localNumber,
+        String extension,
+        CodeValue phoneType,
+        CodeValue usageType
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record MailingAddresses(
+        Integer total,
+        List<MailingAddress> mailingAddress
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record MailingAddress(
+        String id,
+        String lastModifiedDate,
+        String preferredMailingAddress,
+        String streetAddress,
+        String city,
+        String postalCode,
+        String provinceState,
+        Country country,
+        CodeValue addressType
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Country(
+        String code,
+        String name
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record WebAddresses(
+        Integer total,
+        List<WebAddress> webAddress
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record WebAddress(
+        String id,
+        String url,
+        CodeValue siteType
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record LanguageCompetencies(
+        Integer total,
+        List<LanguageCompetency> languageCompetency
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record LanguageCompetency(
+        String id,
+        CodeValue language,
+        String motherTongue,
+        CodeValue read,
+        CodeValue write,
+        CodeValue speak,
+        CodeValue understandSpoken,
+        CodeValue peerReview
     ) {
     }
 

@@ -64,6 +64,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -332,6 +333,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return person;
     }
 
+    private Country countryByCode(String code) {
+        if (Objects.isNull(code)) {
+            return null;
+        }
+
+        var country = countryService.findCountryByCode(code);
+
+        if (country.isEmpty()) {
+            log.warn("Unknown country code '{}', leaving the address without a country.", code);
+        }
+
+        return country.orElse(null);
+    }
+
     private Person buildBasePerson(BasicPersonDTO personDTO, ApproveStatus status,
                                    boolean isImport) {
         var personNameDTO = personDTO.getPersonName();
@@ -347,17 +362,34 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getFaxNumber(), personDTO.getMobilePhoneNumber());
 
         PostalAddress address;
+        var privateAddress = new PostalAddress();
+        var privateContact = new Contact();
+        var uris = new HashSet<String>();
         if (isImport) {
+            var importDTO = (ImportPersonDTO) personDTO;
             address = new PostalAddress(
                 null,
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressLine()),
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressCity()),
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressState()),
-                ((ImportPersonDTO) personDTO).getPostalNumber()
+                multilingualContentService.getMultilingualContent(importDTO.getAddressLine()),
+                multilingualContentService.getMultilingualContent(importDTO.getAddressCity()),
+                multilingualContentService.getMultilingualContent(importDTO.getAddressState()),
+                importDTO.getPostalNumber()
             );
+            address.setCountry(countryByCode(importDTO.getCountryCode()));
+            privateAddress = new PostalAddress(
+                null,
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressLine()),
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressCity()),
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressState()),
+                importDTO.getPrivatePostalNumber()
+            );
+            privateAddress.setCountry(countryByCode(importDTO.getPrivateCountryCode()));
+            privateContact = new Contact(importDTO.getPrivateContactEmail(),
+                importDTO.getPrivatePhoneNumber(), importDTO.getPrivateFaxNumber(),
+                importDTO.getPrivateMobilePhoneNumber());
+            IdentifierUtil.setUris(uris, importDTO.getUris());
         } else {
             address =
                 new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null);
@@ -367,9 +399,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getLocalBirthDate(),
             isImport ? ((ImportPersonDTO) personDTO).getPlaceOfBirth() : null,
             personDTO.getSex(),
-            address, new PostalAddress(),
-            contact, new Contact(),
-            new HashSet<>(),
+            address, privateAddress,
+            contact, privateContact,
+            uris,
             multilingualContentService.getMultilingualContent(personDTO.getDisplayTitle())
         );
 
@@ -389,6 +421,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 multilingualContentService.getMultilingualContent(importDTO.getBiography()));
             person.setKeyword(
                 multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
+            person.setImportSource(importDTO.getImportSource());
+
+            if (Objects.nonNull(importDTO.getOtherNames())) {
+                importDTO.getOtherNames().forEach(otherName ->
+                    person.getOtherNames().add(new PersonName(otherName.getFirstname(),
+                        otherName.getOtherName(), otherName.getLastname(),
+                        otherName.getDateFrom(), otherName.getDateTo(),
+                        otherName.getPersonNameType())));
+            }
         }
 
         setAllPersonIdentifiers(person, personDTO);

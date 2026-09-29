@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,15 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     @Nullable
     public Optional<Country> findCountryByName(String name) {
         return countryRepository.findCountryByName(name, Limit.of(1));
+    }
+
+    @Override
+    public Optional<Country> findCountryByCode(String code) {
+        if (Objects.isNull(code) || code.isBlank()) {
+            return Optional.empty();
+        }
+
+        return countryRepository.findFirstByCodeIgnoreCase(code.trim());
     }
 
     @Override
