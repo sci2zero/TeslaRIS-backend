@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +145,7 @@ public class DataQualityAssessmentConfigurationLoader {
             version,
             config.minimumRequiredScore(),
             Objects.requireNonNullElse(config.dimensionDefinitions(), Map.of()),
+            Objects.requireNonNullElse(config.metricDefinitions(), Map.of()),
             config.targetWeights(),
             config.dataQualityRemarks(),
             totalPointsByTarget,
@@ -314,6 +316,7 @@ public class DataQualityAssessmentConfigurationLoader {
                     Collections.emptyMap(),
                     Collections.emptyMap(),
                     Collections.emptyMap(),
+                    Collections.emptyMap(),
                     Collections.emptyMap()
                 )
             ).dataQualityRemarks();
@@ -349,6 +352,14 @@ public class DataQualityAssessmentConfigurationLoader {
                                            @Nullable String targetPrefix,
                                            @Nullable QualityDimension dimension,
                                            @Nullable IssueSeverity severity) {
+        return listRuleKeys(profile, version, targetPrefix, dimension, severity, null);
+    }
+
+    public static Set<String> listRuleKeys(String profile, String version,
+                                           @Nullable String targetPrefix,
+                                           @Nullable QualityDimension dimension,
+                                           @Nullable IssueSeverity severity,
+                                           @Nullable String metric) {
         return getProfile(profile.toLowerCase(), version)
             .dataQualityRemarks()
             .entrySet()
@@ -360,8 +371,58 @@ public class DataQualityAssessmentConfigurationLoader {
                 dimension.equals(entry.getValue().dimension()))
             .filter(entry -> Objects.isNull(severity) ||
                 severity.equals(entry.getValue().severity()))
+            .filter(entry -> Objects.isNull(metric) ||
+                metric.equals(entry.getValue().metric()))
             .map(Map.Entry::getKey)
             .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public static Map<String, Set<QualityDimension>> listMetrics(String profile, String version) {
+        var metrics = new LinkedHashMap<String, Set<QualityDimension>>();
+
+        getProfile(profile.toLowerCase(), version)
+            .dataQualityRemarks()
+            .values()
+            .stream()
+            .filter(remark -> Objects.nonNull(remark.metric()))
+            .forEach(remark -> metrics
+                .computeIfAbsent(remark.metric(), ignored -> new LinkedHashSet<>())
+                .add(remark.dimension()));
+
+        return metrics;
+    }
+
+    public static Set<MultiLingualContent> getMetricTitle(String profile, String version,
+                                                          String metric) {
+        var definition = metricDefinition(profile, version, metric);
+
+        return Objects.isNull(definition)
+            ? Collections.emptySet()
+            : StringUtil.buildMultilingualContent(languageTagService, definition.title());
+    }
+
+    public static Set<MultiLingualContent> getMetricDefinition(String profile, String version,
+                                                               String metric) {
+        var definition = metricDefinition(profile, version, metric);
+
+        return Objects.isNull(definition)
+            ? Collections.emptySet()
+            : StringUtil.buildMultilingualContent(languageTagService, definition.description());
+    }
+
+    @Nullable
+    private static MetricDefinition metricDefinition(String profile, String version,
+                                                     String metric) {
+        var definitions = getProfile(profile.toLowerCase(), version).metricDefinitions();
+
+        return Objects.isNull(definitions) ? null : definitions.get(metric);
+    }
+
+    @Nullable
+    public static String getMetric(String profile, String version, String issueKey) {
+        var remark = getRemark(profile.toLowerCase(), version, issueKey);
+
+        return Objects.isNull(remark) ? null : remark.metric();
     }
 
     public static Set<MultiLingualContent> getDimensionDefinition(String profile, String version,
@@ -432,6 +493,9 @@ public class DataQualityAssessmentConfigurationLoader {
         @JsonProperty(value = "dimensionDefinitions")
         Map<QualityDimension, Map<String, String>> dimensionDefinitions,
 
+        @JsonProperty(value = "metricDefinitions")
+        Map<String, MetricDefinition> metricDefinitions,
+
         @JsonProperty(value = "targetWeights", required = true)
         Map<String, Double> targetWeights,
 
@@ -443,6 +507,15 @@ public class DataQualityAssessmentConfigurationLoader {
         Map<String, Double> totalPointsByTargetFair,
 
         Map<String, EnumMap<QualityDimension, Double>> totalPointsByTargetAndDimension
+    ) {
+    }
+
+    public record MetricDefinition(
+        @JsonProperty(value = "title", required = true)
+        Map<String, String> title,
+
+        @JsonProperty(value = "description", required = true)
+        Map<String, String> description
     ) {
     }
 
@@ -461,6 +534,9 @@ public class DataQualityAssessmentConfigurationLoader {
 
         @JsonProperty(value = "dimension", required = true)
         QualityDimension dimension,
+
+        @JsonProperty(value = "metric")
+        String metric,
 
         @JsonProperty(value = "blocking", required = true)
         boolean blocking,
