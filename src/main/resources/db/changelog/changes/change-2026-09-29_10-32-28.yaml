@@ -1,0 +1,36 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 1790670748-1
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.document_files
+              ADD CONSTRAINT document_files_resource_type_check
+              CHECK (resource_type >= 0 AND resource_type <= 12);
+
+  - changeSet:
+      id: 1790670748-2
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.cris_context_information
+              ADD CONSTRAINT cris_context_information_metadata_license_check
+              CHECK (metadata_license >= 0 AND metadata_license <= 6);
+
+  - changeSet:
+      id: 1790670748-3
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.document_files
+              DROP CONSTRAINT document_files_resource_type_check;
