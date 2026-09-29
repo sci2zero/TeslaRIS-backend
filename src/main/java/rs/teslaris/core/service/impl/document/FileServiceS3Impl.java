@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
@@ -64,8 +66,7 @@ public class FileServiceS3Impl implements FileService {
             var request = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(serverFilename + "." + extension)
-                .contentDisposition(
-                    "attachment; filename=\"" + file.getOriginalFilename() + "\"")
+                .contentDisposition(attachmentContentDisposition(file.getOriginalFilename()))
                 .build();
             s3Client.putObject(request,
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
@@ -91,7 +92,7 @@ public class FileServiceS3Impl implements FileService {
             var request = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(serverFilename + "." + extension)
-                .contentDisposition("attachment; filename=\"" + originalFilename + "\"")
+                .contentDisposition(attachmentContentDisposition(originalFilename))
                 .build();
 
             if (resource instanceof FileSystemResource fileRes) {
@@ -117,6 +118,33 @@ public class FileServiceS3Impl implements FileService {
         }
 
         return serverFilename + "." + extension;
+    }
+
+    /**
+     * S3 SigV4 signs header bytes as sent. A raw Unicode filename (š, đ, ž, č, ć)
+     * is encoded differently by the signer and the HTTP client, so S3 returns 403.
+     * RFC 5987 keeps the header ASCII and still preserves the original name.
+     */
+    static String attachmentContentDisposition(String filename) {
+        var name = Objects.requireNonNullElse(filename, "file")
+            .replace("\r", "")
+            .replace("\n", "");
+        if (name.isBlank()) {
+            name = "file";
+        }
+
+        var encoded = URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20");
+        var fallback = new StringBuilder(name.length());
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c >= 0x20 && c <= 0x7E && c != '"' && c != '\\') {
+                fallback.append(c);
+            } else {
+                fallback.append('_');
+            }
+        }
+
+        return "attachment; filename=\"" + fallback + "\"; filename*=UTF-8''" + encoded;
     }
 
     private void uploadUnknownLength(PutObjectRequest request, InputStream inputStream)

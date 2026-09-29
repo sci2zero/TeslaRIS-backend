@@ -78,7 +78,24 @@ public class FileServiceS3Test {
         verify(s3Client, times(1)).putObject(requestCaptor.capture(), any(RequestBody.class));
         assertEquals("bucket-name", requestCaptor.getValue().bucket());
         assertEquals("file1.txt", requestCaptor.getValue().key());
-        assertEquals("attachment; filename=\"test.txt\"",
+        assertEquals(
+            "attachment; filename=\"test.txt\"; filename*=UTF-8''test.txt",
+            requestCaptor.getValue().contentDisposition());
+    }
+
+    @Test
+    public void shouldEncodeNonAsciiFilenameInContentDisposition() {
+        var file = createMockMultipartFile("rad šđžčć.pdf", "content");
+
+        var result = fileService.store(file, "file-unicode");
+
+        assertEquals("file-unicode.pdf", result);
+
+        var requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client, times(1)).putObject(requestCaptor.capture(), any(RequestBody.class));
+        assertEquals("file-unicode.pdf", requestCaptor.getValue().key());
+        assertEquals(
+            "attachment; filename=\"rad _____.pdf\"; filename*=UTF-8''rad%20%C5%A1%C4%91%C5%BE%C4%8D%C4%87.pdf",
             requestCaptor.getValue().contentDisposition());
     }
 
@@ -162,7 +179,8 @@ public class FileServiceS3Test {
         var requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(s3Client, times(1)).putObject(requestCaptor.capture(), any(RequestBody.class));
         assertEquals("file1.txt", requestCaptor.getValue().key());
-        assertEquals("attachment; filename=\"test.txt\"",
+        assertEquals(
+            "attachment; filename=\"test.txt\"; filename*=UTF-8''test.txt",
             requestCaptor.getValue().contentDisposition());
     }
 
