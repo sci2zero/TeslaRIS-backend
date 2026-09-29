@@ -50,6 +50,7 @@ import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
@@ -72,6 +73,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -89,6 +91,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.worker.PersonEmploymentWorker;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -146,6 +149,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final CountryService countryService;
 
     private final LanguageTagService languageTagService;
+
+    private final LanguageService languageService;
 
     private final PersonNameService personNameService;
 
@@ -333,6 +338,26 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return person;
     }
 
+    private LanguageKnowledge toLanguageKnowledge(LanguageKnowledgeDTO dto, Person person) {
+        var language = languageService.findLanguageById(dto.getLanguageId());
+
+        var languageKnowledge = new LanguageKnowledge();
+        languageKnowledge.setLanguage(language);
+        languageKnowledge.setMotherTongue(dto.getMotherTongue());
+        languageKnowledge.setReading(dto.getRead());
+        languageKnowledge.setWriting(dto.getWrite());
+        languageKnowledge.setSpeaking(dto.getSpeak());
+        languageKnowledge.setListening(dto.getUnderstandSpoken());
+        languageKnowledge.setAcademicReview(dto.getPeerReview());
+        // Expertises are listed by name, so the language names stand in for one
+        language.getName().stream()
+            .map(MultiLingualContent::new)
+            .forEach(languageKnowledge.getName()::add);
+        languageKnowledge.setPerson(person);
+
+        return languageKnowledge;
+    }
+
     private Country countryByCode(String code) {
         if (Objects.isNull(code)) {
             return null;
@@ -422,6 +447,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             person.setKeyword(
                 multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
             person.setImportSource(importDTO.getImportSource());
+
+            if (Objects.nonNull(importDTO.getLanguageKnowledges())) {
+                importDTO.getLanguageKnowledges().forEach(languageKnowledge ->
+                    person.getExpertisesAndSkills()
+                        .add(toLanguageKnowledge(languageKnowledge, person)));
+            }
 
             if (Objects.nonNull(importDTO.getOtherNames())) {
                 importDTO.getOtherNames().forEach(otherName ->

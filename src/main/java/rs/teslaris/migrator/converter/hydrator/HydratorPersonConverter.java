@@ -18,7 +18,9 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.person.LanguageLevel;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
@@ -153,7 +155,7 @@ public class HydratorPersonConverter
         dto.setUris(uris(record, info.webAddresses()));
 
         // MAP-000034, MAP-000035
-        logLanguageCompetenciesDropped(record, info.languageCompetencies());
+        dto.setLanguageKnowledges(languageKnowledges(record, info.languageCompetencies()));
         logResearchClassificationsDropped(record, info.domainActivities());
 
         // MAP-000037
@@ -441,16 +443,62 @@ public class HydratorPersonConverter
         return uris;
     }
 
-    // MAP-000034: the person import carries no expertises and skills
-    private void logLanguageCompetenciesDropped(
+    /**
+     * MAP-000034: language knowledge, the language-specific kind of expertise. Stored with the
+     * person, since it references nothing but the language registry. A language missing from the
+     * registry is logged rather than failing the person.
+     */
+    private List<LanguageKnowledgeDTO> languageKnowledges(
         HydratorCVModel.Curriculum record,
         HydratorCVModel.LanguageCompetencies languageCompetencies) {
+        var result = new ArrayList<LanguageKnowledgeDTO>();
+        var seenLanguages = new HashSet<Integer>();
+
         listOf(languageCompetencies, HydratorCVModel.LanguageCompetencies::languageCompetency)
-            .stream()
-            .map(HydratorCVModel.LanguageCompetency::language)
-            .filter(Objects::nonNull)
-            .forEach(language -> dropped(record, "MAP-000034",
-                "language competency '" + language.code() + "'"));
+            .forEach(competency -> {
+                var sourceCode = Objects.isNull(competency.language()) ? null :
+                    competency.language().code();
+                var languageId = conversionUtil.languageId(sourceCode);
+
+                if (Objects.isNull(languageId)) {
+                    dropped(record, "MAP-000034",
+                        "language '" + sourceCode + "' is not in the language registry");
+                    return;
+                }
+
+                if (!seenLanguages.add(languageId)) {
+                    dropped(record, "MAP-000034",
+                        "additional competency for language '" + sourceCode + "'");
+                    return;
+                }
+
+                var dto = new LanguageKnowledgeDTO();
+                dto.setLanguageId(languageId);
+                dto.setMotherTongue(PREFERRED.equals(competency.motherTongue()));
+                dto.setRead(languageLevel(record, competency.read()));
+                dto.setWrite(languageLevel(record, competency.write()));
+                dto.setSpeak(languageLevel(record, competency.speak()));
+                dto.setUnderstandSpoken(languageLevel(record, competency.understandSpoken()));
+                dto.setPeerReview(languageLevel(record, competency.peerReview()));
+                result.add(dto);
+            });
+
+        return result;
+    }
+
+    // Levels are CEFR codes, which is exactly what LanguageLevel enumerates
+    private LanguageLevel languageLevel(HydratorCVModel.Curriculum record,
+                                        HydratorCVModel.CodeValue level) {
+        if (Objects.isNull(level) || isBlank(level.code())) {
+            return null;
+        }
+
+        try {
+            return LanguageLevel.valueOf(level.code().trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            dropped(record, "MAP-000034", "unmapped language level '" + level.code() + "'");
+            return null;
+        }
     }
 
     // MAP-000035: no vocabulary maps FOS codes onto TeslaRIS research areas yet

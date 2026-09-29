@@ -1,14 +1,20 @@
 package rs.teslaris.migrator.converter.hydrator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 
@@ -21,7 +27,33 @@ import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 @Slf4j
 public class HydratorConversionUtil {
 
+    /**
+     * ISO 639-2 codes used by curricula, mapped onto the ISO 639-1 codes of the language
+     * registry. The source sometimes lists the bibliographic and terminology forms together
+     * ({@code FRA/FRE}); each form is tried.
+     */
+    private static final Map<String, String> LANGUAGE_CODES = Map.ofEntries(
+        Map.entry("ENG", "EN"),
+        Map.entry("POR", "PT"),
+        Map.entry("SPA", "ES"),
+        Map.entry("FRA", "FR"),
+        Map.entry("FRE", "FR"),
+        Map.entry("ITA", "IT"),
+        Map.entry("DEU", "DE"),
+        Map.entry("GER", "DE"),
+        Map.entry("RUS", "RU"),
+        Map.entry("HRV", "HR"),
+        Map.entry("HUN", "HU"),
+        Map.entry("SLV", "SL"),
+        Map.entry("SRP", "SR")
+    );
+
     private final LanguageTagService languageTagService;
+
+    private final LanguageService languageService;
+
+    // The language registry is small and static, while every curriculum looks it up
+    private final Map<String, Optional<Integer>> languageIds = new ConcurrentHashMap<>();
 
 
     public List<MultilingualContentDTO> multilingualContent(String content, String language) {
@@ -47,6 +79,33 @@ public class HydratorConversionUtil {
         }
 
         return List.of(dto);
+    }
+
+    /**
+     * Id of the registry language for a curriculum language code, or {@code null} when the code
+     * has no mapping or the registry lacks that language.
+     */
+    public Integer languageId(String sourceCode) {
+        if (Objects.isNull(sourceCode) || sourceCode.isBlank()) {
+            return null;
+        }
+
+        return Arrays.stream(sourceCode.split("/"))
+            .map(code -> LANGUAGE_CODES.get(code.trim().toUpperCase(Locale.ROOT)))
+            .filter(Objects::nonNull)
+            .map(code -> languageIds.computeIfAbsent(code, this::findLanguageId))
+            .flatMap(Optional::stream)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private Optional<Integer> findLanguageId(String code) {
+        try {
+            return Optional.ofNullable(languageService.findLanguageByCode(code).getId());
+        } catch (NotFoundException e) {
+            log.warn("Language '{}' is not in the language registry.", code);
+            return Optional.empty();
+        }
     }
 
     public FlexibleDateDTO flexibleDate(HydratorCVModel.DateInfo dateInfo) {

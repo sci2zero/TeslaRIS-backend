@@ -55,6 +55,7 @@ import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
@@ -65,6 +66,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
@@ -73,6 +75,8 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
+import rs.teslaris.core.model.person.LanguageLevel;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -88,6 +92,7 @@ import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -118,6 +123,9 @@ public class PersonServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private LanguageService languageService;
 
     @Mock
     private PersonIndexRepository personIndexRepository;
@@ -401,6 +409,86 @@ public class PersonServiceTest {
         assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
         assertEquals(EmploymentPosition.RESEARCH_ASSOCIATE,
             ((Employment) currentEmployment).getEmploymentPosition());
+    }
+
+    @Test
+    void shouldImportPrivateContactAddressCountriesOtherNamesAndSource() {
+        // given
+        var personDTO = new ImportPersonDTO();
+        personDTO.setPersonName(new PersonNameDTO(null, "Test", null, "Test", null, null, null));
+        personDTO.setOtherNames(List.of(
+            new PersonNameDTO(null, "T.", null, "Test", null, null,
+                PersonNameType.CITATION_NAME)));
+        personDTO.setPrivateContactEmail("test@mail.test");
+        personDTO.setPrivateMobilePhoneNumber("+351 913453999");
+        personDTO.setPrivatePostalNumber("4600-999");
+        personDTO.setCountryCode("BR");
+        personDTO.setPrivateCountryCode("PT");
+        personDTO.setUris(Set.of("https://www.eshte.pt"));
+        personDTO.setImportSource("CIENCIA_VITAE");
+
+        var portugal = new Country();
+        portugal.setCode("PT");
+        when(countryService.findCountryByCode("PT")).thenReturn(Optional.of(portugal));
+        when(countryService.findCountryByCode("BR")).thenReturn(Optional.empty());
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // when
+        var result = personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        var personalInfo = result.getPersonalInfo();
+        assertEquals("test@mail.test", personalInfo.getPrivateContact().getContactEmail());
+        assertEquals("+351 913453999",
+            personalInfo.getPrivateContact().getMobilePhoneNumber());
+        assertEquals("4600-999", personalInfo.getPrivatePostalAddress().getPostalNumber());
+        assertEquals(portugal, personalInfo.getPrivatePostalAddress().getCountry());
+        assertNull(personalInfo.getProfessionalPostalAddress().getCountry());
+        assertEquals(Set.of("https://www.eshte.pt"), personalInfo.getUris());
+        assertEquals("CIENCIA_VITAE", result.getImportSource());
+        assertEquals(1, result.getOtherNames().size());
+        assertEquals(PersonNameType.CITATION_NAME,
+            result.getOtherNames().iterator().next().getNameType());
+    }
+
+    @Test
+    void shouldImportLanguageKnowledgeWithLanguageNames() {
+        // given
+        var personDTO = new ImportPersonDTO();
+        personDTO.setPersonName(new PersonNameDTO(null, "Ana", null, "Mendes", null, null, null));
+
+        var languageKnowledgeDTO = new LanguageKnowledgeDTO();
+        languageKnowledgeDTO.setLanguageId(1);
+        languageKnowledgeDTO.setMotherTongue(true);
+        languageKnowledgeDTO.setRead(LanguageLevel.C2);
+        languageKnowledgeDTO.setUnderstandSpoken(LanguageLevel.C1);
+        languageKnowledgeDTO.setPeerReview(LanguageLevel.B1);
+        personDTO.setLanguageKnowledges(List.of(languageKnowledgeDTO));
+
+        var english = new Language();
+        english.setId(1);
+        english.getName().add(new MultiLingualContent(new LanguageTag(), "English", 1));
+        when(languageService.findLanguageById(1)).thenReturn(english);
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // when
+        var result = personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        assertEquals(1, result.getExpertisesAndSkills().size());
+        var languageKnowledge =
+            (LanguageKnowledge) result.getExpertisesAndSkills().iterator().next();
+        assertEquals(english, languageKnowledge.getLanguage());
+        assertEquals(true, languageKnowledge.getMotherTongue());
+        assertEquals(LanguageLevel.C2, languageKnowledge.getReading());
+        assertEquals(LanguageLevel.C1, languageKnowledge.getListening());
+        assertEquals(LanguageLevel.B1, languageKnowledge.getAcademicReview());
+        assertEquals(result, languageKnowledge.getPerson());
+        assertEquals("English", languageKnowledge.getName().iterator().next().getContent());
     }
 
 

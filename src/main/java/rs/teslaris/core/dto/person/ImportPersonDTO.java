@@ -58,4 +58,6 @@ public class ImportPersonDTO extends BasicPersonDTO {
     private Set<String> uris = new HashSet<>();
 
     private String importSource;
+
+    private List<LanguageKnowledgeDTO> languageKnowledges = new ArrayList<>();
 }
