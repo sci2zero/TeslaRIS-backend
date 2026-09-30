@@ -21,10 +21,13 @@ public class CrisContextInformation extends BaseEntity {
     private Boolean toggleAssessmentModule = true;
 
     @Column(name = "toggle_digital_library")
-    private Boolean toggleDigitalLibrary = false;
+    private Boolean toggleDigitalLibrary = true;
 
     @Column(name = "toggle_digital_repository")
-    private Boolean toggleDigitalRepository = false;
+    private Boolean toggleDigitalRepository = true;
+
+    @Column(name = "toggle_registration")
+    private Boolean toggleRegistration = true;
 
     @Column(name = "person_national_id_regular_expression")
     private String personNationalIdRegularExpression;

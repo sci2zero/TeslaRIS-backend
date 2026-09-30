@@ -37,8 +37,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
     public void testSaveConfigurationForSystem() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new CrisContextInformationDTO(false, true, false,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var configurationDTO = new CrisContextInformationDTO(false, true, false, false,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -57,8 +57,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
     public void testSaveConfigurationForSystemRejectsMissingToggle() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new CrisContextInformationDTO(null, true, false,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var configurationDTO = new CrisContextInformationDTO(null, true, false, false,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -74,8 +74,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
     public void testSaveConfigurationForSystemUnauthorizedForResearcher() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
-        var configurationDTO = new CrisContextInformationDTO(false, false, false,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var configurationDTO = new CrisContextInformationDTO(false, false, false, false,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

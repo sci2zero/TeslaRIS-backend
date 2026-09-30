@@ -846,46 +846,54 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setDlConfig(emailDlConfig);
     }
 
+    /**
+     * The postal address is an embeddable holding orphanRemoval collections, so it is never
+     * replaced or set to null: Hibernate fails the flush once a managed collection is no longer
+     * reachable from the owning entity. Everything is cleared and refilled in place instead.
+     */
     private void setPostalAddressInfo(OrganisationUnit organisationUnit,
                                       OrganisationUnitRequestDTO organisationUnitDTO) {
-        if (Objects.nonNull(organisationUnitDTO.getPostalAddress())) {
-            if (Objects.isNull(organisationUnit.getPostalAddress())) {
-                organisationUnit.setPostalAddress(new PostalAddress());
-            }
+        if (Objects.isNull(organisationUnit.getPostalAddress())) {
+            organisationUnit.setPostalAddress(new PostalAddress());
+        }
 
-            organisationUnit.getPostalAddress().getStreetAndNumber().clear();
-            organisationUnit.getPostalAddress().getStreetAndNumber().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
-            );
+        var postalAddress = organisationUnit.getPostalAddress();
+        var postalAddressDTO = organisationUnitDTO.getPostalAddress();
 
-            organisationUnit.getPostalAddress().getCity().clear();
-            organisationUnit.getPostalAddress().getCity().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getCity())
-            );
+        postalAddress.getStreetAndNumber().clear();
+        postalAddress.getCity().clear();
+        postalAddress.getState().clear();
 
-            organisationUnit.getPostalAddress().getState().clear();
-            organisationUnit.getPostalAddress().getState().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getState())
-            );
+        if (Objects.isNull(postalAddressDTO)) {
+            postalAddress.setPostalNumber(null);
+            postalAddress.setCountry(null);
+            return;
+        }
 
-            organisationUnit.getPostalAddress()
-                .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
+        postalAddress.getStreetAndNumber().addAll(
+            multilingualContentService.getMultilingualContent(
+                postalAddressDTO.getStreetAndNumber())
+        );
 
-            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
-                organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
-                organisationUnit.getPostalAddress().setCountry(
-                    RestorationSupport.resolveOptional(
-                        organisationUnitDTO.getPostalAddress().getCountryId(), countryService,
-                        countryService::findOne, "postalAddress.countryId",
-                        "restoreCountryMissingMessage"));
-            } else {
-                organisationUnit.getPostalAddress().setCountry(null);
-            }
+        postalAddress.getCity().addAll(
+            multilingualContentService.getMultilingualContent(postalAddressDTO.getCity())
+        );
+
+        postalAddress.getState().addAll(
+            multilingualContentService.getMultilingualContent(postalAddressDTO.getState())
+        );
+
+        postalAddress.setPostalNumber(postalAddressDTO.getPostalNumber());
+
+        if (Objects.nonNull(postalAddressDTO.getCountryId()) &&
+            postalAddressDTO.getCountryId() > 0) {
+            postalAddress.setCountry(
+                RestorationSupport.resolveOptional(
+                    postalAddressDTO.getCountryId(), countryService,
+                    countryService::findOne, "postalAddress.countryId",
+                    "restoreCountryMissingMessage"));
         } else {
-            organisationUnit.setPostalAddress(null);
+            postalAddress.setCountry(null);
         }
     }
 

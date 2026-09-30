@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.model.commontypes.CrisContextInformation;
 import rs.teslaris.core.model.document.License;
@@ -36,10 +37,75 @@ public class CrisContextInformationServiceTest {
 
     private CrisContextInformation configuration(Integer id, boolean assessment,
                                                  boolean library, boolean repository) {
-        var configuration = new CrisContextInformation(assessment, library, repository,
+        var configuration = new CrisContextInformation(assessment, library, repository, false,
             ".*", ".*", ".*", ".*", License.CC0);
         configuration.setId(id);
         return configuration;
+    }
+
+    @Test
+    public void shouldReportOrcidLoginEnabledWhenBothCredentialsAreSet() {
+        // Given
+        ReflectionTestUtils.setField(service, "orcidClientId", "APP-123");
+        ReflectionTestUtils.setField(service, "orcidClientSecret", "secret");
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(configuration(1, true, true, true)));
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertTrue(result.orcidLoginToggle());
+    }
+
+    @Test
+    public void shouldReportOrcidLoginDisabledWhenSecretIsMissing() {
+        // Given
+        ReflectionTestUtils.setField(service, "orcidClientId", "APP-123");
+        ReflectionTestUtils.setField(service, "orcidClientSecret", "  ");
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(configuration(1, true, true, true)));
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertFalse(result.orcidLoginToggle());
+    }
+
+    @Test
+    public void shouldReportOrcidLoginDisabledForUnconfiguredSentinel() {
+        // Given
+        ReflectionTestUtils.setField(service, "orcidClientId", "NOT_CONFIGURED");
+        ReflectionTestUtils.setField(service, "orcidClientSecret", "NOT_CONFIGURED");
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(configuration(1, true, true, true)));
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertFalse(result.orcidLoginToggle());
+    }
+
+    @Test
+    public void shouldIgnoreOrcidLoginToggleSentByClient() {
+        // Given
+        ReflectionTestUtils.setField(service, "orcidClientId", "");
+        ReflectionTestUtils.setField(service, "orcidClientSecret", "");
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var dto = new CrisContextInformationDTO(true, true, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, true);
+
+        // When
+        var result = service.saveConfiguration(dto);
+
+        // Then the derived toggle wins over whatever the client sent
+        assertFalse(result.orcidLoginToggle());
     }
 
     @Test
@@ -105,8 +171,8 @@ public class CrisContextInformationServiceTest {
         when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new CrisContextInformationDTO(false, true, false,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var dto = new CrisContextInformationDTO(false, true, false, false,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -130,8 +196,8 @@ public class CrisContextInformationServiceTest {
         when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new CrisContextInformationDTO(true, false, true,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var dto = new CrisContextInformationDTO(true, false, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -143,6 +209,7 @@ public class CrisContextInformationServiceTest {
         assertTrue(saved.getToggleAssessmentModule());
         assertFalse(saved.getToggleDigitalLibrary());
         assertTrue(saved.getToggleDigitalRepository());
+        assertTrue(saved.getToggleRegistration());
         assertEquals(dto, result);
     }
 
@@ -156,8 +223,8 @@ public class CrisContextInformationServiceTest {
         when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        var dto = new CrisContextInformationDTO(false, false, true,
-            ".*", ".*", ".*", ".*", License.CC0);
+        var dto = new CrisContextInformationDTO(false, false, true, false,
+            ".*", ".*", ".*", ".*", License.CC0, false);
 
         // When
         service.saveConfiguration(dto);
