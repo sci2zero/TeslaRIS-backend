@@ -22,6 +22,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -129,6 +130,14 @@ public class ResearchAreaServiceImpl extends JPAServiceImpl<ResearchArea>
     @Override
     public List<ResearchArea> getResearchAreasByIds(List<Integer> ids) {
         return researchAreaRepository.findAllById(ids);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Pair<Integer, String>> getResearchAreaNames(String languageTag) {
+        return researchAreaRepository.getResearchAreaNames(languageTag).stream()
+            .map(row -> new Pair<>((Integer) row[0], (String) row[1]))
+            .toList();
     }
 
     private void setCommonFields(ResearchArea researchArea, ResearchAreaDTO researchAreaDTO) {

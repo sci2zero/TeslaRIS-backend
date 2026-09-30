@@ -70,6 +70,7 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
@@ -95,6 +96,7 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
@@ -126,6 +128,9 @@ public class PersonServiceTest {
 
     @Mock
     private LanguageService languageService;
+
+    @Mock
+    private ResearchAreaService researchAreaService;
 
     @Mock
     private PersonIndexRepository personIndexRepository;
@@ -424,7 +429,7 @@ public class PersonServiceTest {
         personDTO.setPrivatePostalNumber("4600-999");
         personDTO.setCountryCode("BR");
         personDTO.setPrivateCountryCode("PT");
-        personDTO.setUris(Set.of("https://www.eshte.pt"));
+        personDTO.setUris(Set.of("https://www.example.com"));
         personDTO.setImportSource("CIENCIA_VITAE");
 
         var portugal = new Country();
@@ -446,7 +451,7 @@ public class PersonServiceTest {
         assertEquals("4600-999", personalInfo.getPrivatePostalAddress().getPostalNumber());
         assertEquals(portugal, personalInfo.getPrivatePostalAddress().getCountry());
         assertNull(personalInfo.getProfessionalPostalAddress().getCountry());
-        assertEquals(Set.of("https://www.eshte.pt"), personalInfo.getUris());
+        assertEquals(Set.of("https://www.example.com"), personalInfo.getUris());
         assertEquals("CIENCIA_VITAE", result.getImportSource());
         assertEquals(1, result.getOtherNames().size());
         assertEquals(PersonNameType.CITATION_NAME,
@@ -454,10 +459,32 @@ public class PersonServiceTest {
     }
 
     @Test
+    void shouldImportResearchAreas() {
+        // given
+        var personDTO = new ImportPersonDTO();
+        personDTO.setPersonName(new PersonNameDTO(null, "John", null, "Doe", null, null, null));
+        personDTO.setResearchAreasId(Set.of(11));
+
+        var psychology = new ResearchArea();
+        psychology.setId(11);
+        when(researchAreaService.getResearchAreasByIds(List.of(11))).thenReturn(
+            List.of(psychology));
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // when
+        var result = personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        assertEquals(Set.of(psychology), result.getResearchAreas());
+    }
+
+    @Test
     void shouldImportLanguageKnowledgeWithLanguageNames() {
         // given
         var personDTO = new ImportPersonDTO();
-        personDTO.setPersonName(new PersonNameDTO(null, "Ana", null, "Mendes", null, null, null));
+        personDTO.setPersonName(new PersonNameDTO(null, "John", null, "Doe", null, null, null));
 
         var languageKnowledgeDTO = new LanguageKnowledgeDTO();
         languageKnowledgeDTO.setLanguageId(1);

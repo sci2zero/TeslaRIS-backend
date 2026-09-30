@@ -28,7 +28,9 @@ import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
@@ -47,6 +49,9 @@ public class HydratorPersonConverterTest {
     private LanguageService languageService;
 
     @Mock
+    private ResearchAreaService researchAreaService;
+
+    @Mock
     private MigrationLog migrationLog;
 
     private HydratorPersonConverter converter;
@@ -63,14 +68,21 @@ public class HydratorPersonConverterTest {
         when(languageService.findLanguageByCode("RU")).thenThrow(
             new NotFoundException("Language with given code does not exist."));
 
+        when(researchAreaService.getResearchAreaNames("EN")).thenReturn(List.of(
+            new Pair<>(10, "social sciences"),
+            new Pair<>(11, "psychology"),
+            new Pair<>(20, "natural sciences"),
+            new Pair<>(21, "computer and information sciences"),
+            new Pair<>(30, "agricultural sciences")));
+
         converter = new HydratorPersonConverter(
-            new HydratorConversionUtil(languageTagService, languageService),
+            new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
             migrationLog);
     }
 
     private HydratorCVModel.Curriculum curriculum(String identifyingInfo) throws Exception {
         return MAPPER.readValue("""
-            {"id": "cv-1", "fullName": "Ana Cristina Ferreira Mendes",
+            {"id": "cv-1", "fullName": "John Michael Doe Smith",
              "curriculum": {"language": "pt_PT", "identifyingInfo": %s}}
             """.formatted(identifyingInfo), HydratorCVModel.Curriculum.class);
     }
@@ -79,14 +91,14 @@ public class HydratorPersonConverterTest {
     void shouldBuildDefaultNameFromNamesAndSurnamesAndKeepOtherFormsByType() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"fullName": "Ana Cristina Ferreira Mendes",
-                            "displayName": "Ana Mendes",
-                            "names": "Ana Cristina", "surnames": "Ferreira Mendes"},
+            {"personInfo": {"fullName": "John Michael Doe Smith",
+                            "displayName": "John Smith",
+                            "names": "John Michael", "surnames": "Doe Smith"},
              "citationNames": {"total": 2, "citationName": [
                 {"privacyLevel": "publico", "preferredCitationName": "false",
-                 "value": "Mendes, A."},
+                 "value": "Smith, J."},
                 {"privacyLevel": "publico", "preferredCitationName": "true",
-                 "value": "Mendes, Ana"}]}}
+                 "value": "Smith, John"}]}}
             """);
 
         // when
@@ -94,29 +106,29 @@ public class HydratorPersonConverterTest {
 
         // then
         assertEquals("CIENCIA_VITAE", dto.getImportSource());
-        assertEquals("Ana Cristina", dto.getPersonName().getFirstname());
-        assertEquals("Ferreira Mendes", dto.getPersonName().getLastname());
+        assertEquals("John Michael", dto.getPersonName().getFirstname());
+        assertEquals("Doe Smith", dto.getPersonName().getLastname());
 
-        // full name repeats the default name and "Mendes, Ana" the display name, so both go
+        // full name repeats the default name and "Smith, John" the display name, so both go
         var otherNames = dto.getOtherNames();
         assertEquals(2, otherNames.size());
-        assertName(otherNames.get(0), "Ana", "Mendes", PersonNameType.DISPLAY_NAME);
-        assertName(otherNames.get(1), "A.", "Mendes", PersonNameType.CITATION_NAME);
+        assertName(otherNames.get(0), "John", "Smith", PersonNameType.DISPLAY_NAME);
+        assertName(otherNames.get(1), "J.", "Smith", PersonNameType.CITATION_NAME);
     }
 
     @Test
     void shouldFallBackToFullNameWhenNamesAreMissing() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"fullName": "Maria da Conceição Neves Ferreira"}}
+            {"personInfo": {"fullName": "Jane Anne Test Doe"}}
             """);
 
         // when
         var dto = converter.toDTO(record);
 
         // then
-        assertEquals("Maria da Conceição Neves", dto.getPersonName().getFirstname());
-        assertEquals("Ferreira", dto.getPersonName().getLastname());
+        assertEquals("Jane Anne Test", dto.getPersonName().getFirstname());
+        assertEquals("Doe", dto.getPersonName().getLastname());
         assertTrue(dto.getOtherNames().isEmpty());
     }
 
@@ -124,7 +136,7 @@ public class HydratorPersonConverterTest {
     void shouldMapPublicBirthDateAndGender() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes",
+            {"personInfo": {"names": "John", "surnames": "Doe",
                             "dateOfBirth": {"privacyLevel": "publico", "year": "1987",
                                             "month": "07", "day": "11"},
                             "gender": {"privacyLevel": "publico", "code": "F",
@@ -143,7 +155,7 @@ public class HydratorPersonConverterTest {
     void shouldIgnorePrivateBirthDate() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes",
+            {"personInfo": {"names": "John", "surnames": "Doe",
                             "dateOfBirth": {"privacyLevel": "privado"},
                             "gender": {"privacyLevel": "privado"}}}
             """);
@@ -160,41 +172,41 @@ public class HydratorPersonConverterTest {
     void shouldRouteContactsByType() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "emails": {"total": 2, "email": [
-                {"emailAddress": "ana@uni.pt", "preferredEmail": "true",
+                {"emailAddress": "john.doe@example.com", "preferredEmail": "true",
                  "emailType": {"code": "I", "value": "Professional"}},
-                {"emailAddress": "ana@mail.pt",
+                {"emailAddress": "john@example.org",
                  "emailType": {"code": "R", "value": "Personal"}}]},
              "phoneNumbers": {"total": 2, "phoneNumber": [
-                {"countryCode": "351", "localNumber": "913453035",
+                {"countryCode": "351", "localNumber": "900000001",
                  "phoneType": {"code": "2"}, "usageType": {"code": "R"}},
-                {"localNumber": "210040741", "extension": "12",
+                {"localNumber": "200000002", "extension": "12",
                  "phoneType": {"code": "1"}, "usageType": {"code": "I"}}]},
              "mailingAddresses": {"total": 1, "mailingAddress": [
-                {"id": "1", "streetAddress": "Rua A", "city": "Amarante",
-                 "postalCode": "4600-632", "provinceState": "Porto",
+                {"id": "1", "streetAddress": "Test Street 1", "city": "Test City",
+                 "postalCode": "0000-001", "provinceState": "Test Region",
                  "country": {"code": "PT", "name": "Portugal"},
                  "addressType": {"code": "R"}}]},
              "webAddresses": {"total": 1, "webAddress": [
-                {"url": "www.eshte.pt", "siteType": {"code": "5", "value": "Professional"}}]}}
+                {"url": "www.example.com", "siteType": {"code": "5", "value": "Professional"}}]}}
             """);
 
         // when
         var dto = converter.toDTO(record);
 
         // then
-        assertEquals("ana@uni.pt", dto.getContactEmail());
-        assertEquals("ana@mail.pt", dto.getPrivateContactEmail());
-        assertEquals("+351 913453035", dto.getPrivateMobilePhoneNumber());
-        assertEquals("210040741 ext. 12", dto.getPhoneNumber());
-        assertEquals("Rua A", dto.getPrivateAddressLine().getFirst().getContent());
+        assertEquals("john.doe@example.com", dto.getContactEmail());
+        assertEquals("john@example.org", dto.getPrivateContactEmail());
+        assertEquals("+351 900000001", dto.getPrivateMobilePhoneNumber());
+        assertEquals("200000002 ext. 12", dto.getPhoneNumber());
+        assertEquals("Test Street 1", dto.getPrivateAddressLine().getFirst().getContent());
         assertEquals("PT", dto.getPrivateAddressCity().getFirst().getLanguageTag());
-        assertEquals("4600-632", dto.getPrivatePostalNumber());
+        assertEquals("0000-001", dto.getPrivatePostalNumber());
         assertEquals("PT", dto.getPrivateCountryCode());
         assertNull(dto.getCountryCode());
         assertTrue(dto.getAddressLine().isEmpty());
-        assertEquals(Set.of("https://www.eshte.pt"), dto.getUris());
+        assertEquals(Set.of("https://www.example.com"), dto.getUris());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
             eq("MAP-000033"), anyString());
     }
@@ -203,26 +215,26 @@ public class HydratorPersonConverterTest {
     void shouldRouteIdentifiersByTypeAndCanonicaliseThem() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "authorIdentifiers": {"total": 5, "authorIdentifier": [
-                {"identifierType": {"code": "CIENCIAID"}, "identifier": "3C13-EAF4-315E"},
+                {"identifierType": {"code": "CIENCIAID"}, "identifier": "AAAA-BBBB-CCCC"},
                 {"identifierType": {"code": "ORCID"},
-                 "identifier": "https://orcid.org/0000-0002-3483-8608"},
-                {"identifierType": {"code": "SCOPUS"}, "identifier": "36161897400"},
+                 "identifier": "https://orcid.org/0000-0002-1825-0097"},
+                {"identifierType": {"code": "SCOPUS"}, "identifier": "12345678900"},
                 {"identifierType": {"code": "GOOGLE"},
-                 "identifier": "https://scholar.google.pt/citations?user=UbJfRAsAAAAJ&hl=pt-PT"},
-                {"identifierType": {"code": "WOS"}, "identifier": " b-4165-2015"}]}}
+                 "identifier": "https://scholar.google.pt/citations?user=AbCdEfGhIjKl&hl=pt-PT"},
+                {"identifierType": {"code": "WOS"}, "identifier": " a-1234-2010"}]}}
             """);
 
         // when
         var dto = converter.toDTO(record);
 
         // then
-        assertEquals("3C13-EAF4-315E", dto.getNationalScienceId());
-        assertEquals("0000-0002-3483-8608", dto.getOrcid());
-        assertEquals("36161897400", dto.getScopusAuthorId());
-        assertEquals("UbJfRAsAAAAJ", dto.getScholarId());
-        assertEquals("B-4165-2015", dto.getWebOfScienceResearcherId());
+        assertEquals("AAAA-BBBB-CCCC", dto.getNationalScienceId());
+        assertEquals("0000-0002-1825-0097", dto.getOrcid());
+        assertEquals("12345678900", dto.getScopusAuthorId());
+        assertEquals("AbCdEfGhIjKl", dto.getScholarId());
+        assertEquals("A-1234-2010", dto.getWebOfScienceResearcherId());
         verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
             eq("MAP-000037"), anyString());
     }
@@ -231,17 +243,17 @@ public class HydratorPersonConverterTest {
     void shouldPreferValidIdentifierOverInvalidOneOfSameType() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "authorIdentifiers": {"total": 2, "authorIdentifier": [
                 {"identifierType": {"code": "ORCID"}, "identifier": "not-an-orcid"},
-                {"identifierType": {"code": "ORCID"}, "identifier": "0000-0002-3483-8608"}]}}
+                {"identifierType": {"code": "ORCID"}, "identifier": "0000-0002-1825-0097"}]}}
             """);
 
         // when
         var dto = converter.toDTO(record);
 
         // then
-        assertEquals("0000-0002-3483-8608", dto.getOrcid());
+        assertEquals("0000-0002-1825-0097", dto.getOrcid());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
             eq("MAP-000037"), anyString());
     }
@@ -250,7 +262,7 @@ public class HydratorPersonConverterTest {
     void shouldPassInvalidIdentifierOnSoTheImportFailsThePerson() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "authorIdentifiers": {"total": 1, "authorIdentifier": [
                 {"identifierType": {"code": "WOS"},
                  "identifier": "https://www.researchgate.net/profile/X"}]}}
@@ -267,22 +279,22 @@ public class HydratorPersonConverterTest {
     void shouldRankCompetingValuesForOneSlot() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "emails": {"total": 3, "email": [
                 {"emailAddress": "broken-address", "emailType": {"code": "I"}},
-                {"emailAddress": "old@uni.pt", "lastModifiedDate": "2019-01-01T10:00:00",
+                {"emailAddress": "old@example.com", "lastModifiedDate": "2019-01-01T10:00:00",
                  "emailType": {"code": "I"}},
-                {"emailAddress": "new@uni.pt", "lastModifiedDate": "2024-05-01T10:00:00",
+                {"emailAddress": "new@example.com", "lastModifiedDate": "2024-05-01T10:00:00",
                  "emailType": {"code": "I"}}]},
              "phoneNumbers": {"total": 2, "phoneNumber": [
-                {"localNumber": "913453035", "phoneType": {"code": "2"},
+                {"localNumber": "900000001", "phoneType": {"code": "2"},
                  "usageType": {"code": "I"}},
-                {"countryCode": "351", "localNumber": "912684744",
+                {"countryCode": "351", "localNumber": "900000003",
                  "phoneType": {"code": "2"}, "usageType": {"code": "I"}}]},
              "mailingAddresses": {"total": 2, "mailingAddress": [
-                {"id": "1", "city": "Porto", "addressType": {"code": "I"}},
-                {"id": "2", "streetAddress": "Rua B", "city": "Aveiro",
-                 "postalCode": "3810-193", "addressType": {"code": "I"}}]}}
+                {"id": "1", "city": "Test City", "addressType": {"code": "I"}},
+                {"id": "2", "streetAddress": "Test Street 2", "city": "Other City",
+                 "postalCode": "0000-002", "addressType": {"code": "I"}}]}}
             """);
 
         // when
@@ -290,11 +302,11 @@ public class HydratorPersonConverterTest {
 
         // then
         // valid over invalid, then most recently updated
-        assertEquals("new@uni.pt", dto.getContactEmail());
+        assertEquals("new@example.com", dto.getContactEmail());
         // more complete (with country code) wins
-        assertEquals("+351 912684744", dto.getMobilePhoneNumber());
+        assertEquals("+351 900000003", dto.getMobilePhoneNumber());
         // more complete address wins
-        assertEquals("Aveiro", dto.getAddressCity().getFirst().getContent());
+        assertEquals("Other City", dto.getAddressCity().getFirst().getContent());
         verify(migrationLog, times(2)).valueDropped(anyString(), anyString(), eq("cv-1"),
             eq("MAP-000030"), anyString());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
@@ -307,11 +319,11 @@ public class HydratorPersonConverterTest {
     void shouldLetPreferredValueWinOverMoreRecentOne() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "emails": {"total": 2, "email": [
-                {"emailAddress": "new@uni.pt", "lastModifiedDate": "2024-05-01T10:00:00",
+                {"emailAddress": "new@example.com", "lastModifiedDate": "2024-05-01T10:00:00",
                  "emailType": {"code": "I"}},
-                {"emailAddress": "main@uni.pt", "preferredEmail": "true",
+                {"emailAddress": "main@example.com", "preferredEmail": "true",
                  "lastModifiedDate": "2019-01-01T10:00:00", "emailType": {"code": "I"}}]}}
             """);
 
@@ -319,14 +331,14 @@ public class HydratorPersonConverterTest {
         var dto = converter.toDTO(record);
 
         // then
-        assertEquals("main@uni.pt", dto.getContactEmail());
+        assertEquals("main@example.com", dto.getContactEmail());
     }
 
     @Test
     void shouldMapLanguageCompetenciesToLanguageKnowledge() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "languageCompetencies": {"total": 4, "languageCompetency": [
                 {"language": {"code": "ENG", "value": "English"}, "motherTongue": "false",
                  "read": {"code": "C2"}, "write": {"code": "C1"}, "speak": {"code": "B2"},
@@ -362,10 +374,38 @@ public class HydratorPersonConverterTest {
     }
 
     @Test
+    void shouldMatchResearchClassificationsByName() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "domainActivities": {"total": 5, "domainActivity": [
+                {"researchClassification": {"code": "50100009",
+                                            "value": "Social Sciences - Psychology"}},
+                {"researchClassification": {"code": "70201000", "value":
+                 "Exact Sciences - Computer and Information Sciences - Computer Sciences"}},
+                {"researchClassification": {"code": "40000000",
+                                            "value": "Agrarian Sciences"}},
+                {"researchClassification": {"code": "50100009",
+                                            "value": "Social Sciences - Psychology"}},
+                {"researchClassification": {"code": "99", "value": "Unknown Field"}}]}}
+            """);
+
+        // when
+        var researchAreas = converter.toDTO(record).getResearchAreasId();
+
+        // then
+        // exact, broader (Computer Sciences is not in EuroSciVoc), synonym; duplicates merged
+        assertEquals(Set.of(11, 21, 30), researchAreas);
+        // one broader fallback and one unknown field are logged
+        verify(migrationLog, times(2)).valueDropped(anyString(), anyString(), eq("cv-1"),
+            eq("MAP-000035"), anyString());
+    }
+
+    @Test
     void shouldJoinDomainKeywords() throws Exception {
         // given
         var record = curriculum("""
-            {"personInfo": {"names": "Ana", "surnames": "Mendes"},
+            {"personInfo": {"names": "John", "surnames": "Doe"},
              "domainActivities": {"total": 2, "domainActivity": [
                 {"keywords": {"total": 2, "keyword": ["tourism", "heritage"]}},
                 {"keywords": {"total": 1, "keyword": ["tourism"]}}]}}

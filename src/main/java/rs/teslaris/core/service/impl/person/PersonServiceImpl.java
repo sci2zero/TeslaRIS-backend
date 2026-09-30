@@ -94,6 +94,7 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -108,6 +109,7 @@ import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -151,6 +153,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final LanguageTagService languageTagService;
 
     private final LanguageService languageService;
+
+    private final ResearchAreaService researchAreaService;
 
     private final PersonNameService personNameService;
 
@@ -447,6 +451,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             person.setKeyword(
                 multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
             person.setImportSource(importDTO.getImportSource());
+
+            if (CollectionOperations.containsValues(importDTO.getResearchAreasId())) {
+                person.setResearchAreas(new HashSet<>(researchAreaService.getResearchAreasByIds(
+                    importDTO.getResearchAreasId().stream().toList())));
+            }
 
             if (Objects.nonNull(importDTO.getLanguageKnowledges())) {
                 importDTO.getLanguageKnowledges().forEach(languageKnowledge ->

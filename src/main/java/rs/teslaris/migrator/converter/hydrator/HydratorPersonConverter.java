@@ -156,7 +156,7 @@ public class HydratorPersonConverter
 
         // MAP-000034, MAP-000035
         dto.setLanguageKnowledges(languageKnowledges(record, info.languageCompetencies()));
-        logResearchClassificationsDropped(record, info.domainActivities());
+        dto.setResearchAreasId(researchAreas(record, info.domainActivities()));
 
         // MAP-000037
         setIdentifiers(record, dto);
@@ -501,15 +501,39 @@ public class HydratorPersonConverter
         }
     }
 
-    // MAP-000035: no vocabulary maps FOS codes onto TeslaRIS research areas yet
-    private void logResearchClassificationsDropped(
-        HydratorCVModel.Curriculum record,
-        HydratorCVModel.DomainActivities domainActivities) {
+    /**
+     * MAP-000035: curricula classify by FCT field codes, TeslaRIS by EuroSciVoc, and the two share
+     * no codes - so fields are matched by name. A field missing from EuroSciVoc falls back to its
+     * nearest named ancestor, which loses precision and is logged.
+     */
+    private Set<Integer> researchAreas(HydratorCVModel.Curriculum record,
+                                       HydratorCVModel.DomainActivities domainActivities) {
+        var researchAreas = new LinkedHashSet<Integer>();
+
         listOf(domainActivities, HydratorCVModel.DomainActivities::domainActivity).stream()
             .map(HydratorCVModel.DomainActivity::researchClassification)
-            .filter(Objects::nonNull)
-            .forEach(classification -> dropped(record, "MAP-000035",
-                "research classification '" + classification.code() + "'"));
+            .filter(classification -> Objects.nonNull(classification) &&
+                !isBlank(classification.value()))
+            .forEach(classification -> {
+                var match = conversionUtil.researchArea(classification.value());
+
+                if (Objects.isNull(match)) {
+                    dropped(record, "MAP-000035", "research classification '" +
+                        classification.code() + "' (" + classification.value() +
+                        ") has no research area");
+                    return;
+                }
+
+                if (match.broader()) {
+                    dropped(record, "MAP-000035", "research classification '" +
+                        classification.value() + "' mapped to broader area '" + match.name() +
+                        "'");
+                }
+
+                researchAreas.add(match.id());
+            });
+
+        return researchAreas;
     }
 
     // MAP-000037: the identifier type picks the target field
