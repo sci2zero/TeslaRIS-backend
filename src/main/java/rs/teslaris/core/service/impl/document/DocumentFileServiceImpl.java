@@ -393,10 +393,13 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 documentFileToEdit.getId()).ifPresent(documentFileIndexRepository::delete);
         } else {
             try {
-                parseAndIndexPdfDocument(documentFileToEdit, getMultipartFileFromObjectResponse(
-                        fileService.loadAsResource(documentFileToEdit.getServerFilename()),
-                        documentFileToEdit), documentFileToEdit.getServerFilename(),
-                    new DocumentFileIndex());
+                MultipartFile fileContent;
+                try (var resource =
+                         fileService.loadAsResource(documentFileToEdit.getServerFilename())) {
+                    fileContent = getMultipartFileFromObjectResponse(resource, documentFileToEdit);
+                }
+                parseAndIndexPdfDocument(documentFileToEdit, fileContent,
+                    documentFileToEdit.getServerFilename(), new DocumentFileIndex());
             } catch (Exception e) {
                 log.error("SERIOUS: Could not find file ('{}','{}'). Possible data loss.",
                     documentFileToEdit.getServerFilename(), documentFileToEdit.getFilename());
@@ -457,14 +460,17 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         documentFile.setApproveStatus(approved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
         save(documentFile);
 
-        var fileResource = fileService.loadAsResource(documentFile.getServerFilename());
-
-        parseAndIndexPdfDocument(documentFile,
-            new ResourceMultipartFile(documentFile.getServerFilename(), documentFile.getFilename(),
+        MultipartFile fileContent;
+        try (var fileResource = fileService.loadAsResource(documentFile.getServerFilename())) {
+            fileContent = new ResourceMultipartFile(documentFile.getServerFilename(),
+                documentFile.getFilename(),
                 documentFile.getMimeType(),
                 new ByteArrayResource(
-                    new InputStreamResource(fileResource).getContentAsByteArray())),
-            documentFile.getServerFilename(), new DocumentFileIndex());
+                    new InputStreamResource(fileResource).getContentAsByteArray()));
+        }
+
+        parseAndIndexPdfDocument(documentFile, fileContent, documentFile.getServerFilename(),
+            new DocumentFileIndex());
     }
 
     private String detectMimeType(MultipartFile file) {
@@ -598,10 +604,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Transactional(readOnly = true)
     public DocumentFileIndex reindexDocumentFile(DocumentFile documentFile) {
         try {
-            var resource = fileService.loadAsResource(documentFile.getServerFilename());
-            parseAndIndexPdfDocument(documentFile,
-                getMultipartFileFromObjectResponse(resource, documentFile),
-                documentFile.getServerFilename(), new DocumentFileIndex());
+            MultipartFile fileContent;
+            try (var resource = fileService.loadAsResource(documentFile.getServerFilename())) {
+                fileContent = getMultipartFileFromObjectResponse(resource, documentFile);
+            }
+            parseAndIndexPdfDocument(documentFile, fileContent, documentFile.getServerFilename(),
+                new DocumentFileIndex());
         } catch (Exception e) {
             log.error(
                 "Error reindexing ('{}','{}'). Skipping reindexing. Reason: {}",

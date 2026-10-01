@@ -96,110 +96,123 @@ public class FileController {
         throws IOException {
 
         var file = fileService.loadAsResource(filename);
-        var documentFile = documentFileService.getDocumentByServerFilename(filename);
-        var accessRights = documentFile.getAccessRights();
-        var isVerifiedDocument = documentFile.getIsVerifiedData();
-        var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
-        var isOpenAccess = isOpenAccess(documentFile);
-        var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
-            documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
-                .getType().equals(DocumentPublicationType.THESIS.name());
+        var handedOff = false;
+        try {
+            var documentFile = documentFileService.getDocumentByServerFilename(filename);
+            var accessRights = documentFile.getAccessRights();
+            var isVerifiedDocument = documentFile.getIsVerifiedData();
+            var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
+            var isOpenAccess = isOpenAccess(documentFile);
+            var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
+                documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
+                    .getType().equals(DocumentPublicationType.THESIS.name());
 
-        if (isThesisDocument) {
-            if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
-                Objects.requireNonNullElse(documentFile.getIsArchived(), false).equals(false) &&
-                List.of(ResourceType.PREPRINT, ResourceType.SUPPLEMENT)
-                    .contains(documentFile.getResourceType())) || isOpenAccess) {
-                return serveFile(filename, documentFile, file, inline);
-            }
-
-            if (authenticatedUser) {
-                var userAuthority = SessionUtil.getLoggedInUser().getAuthority().getAuthority();
-                if (Stream.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
-                        UserRole.HEAD_OF_LIBRARY).map(Enum::name).toList()
-                    .contains(userAuthority)) {
-                    return serveFile(filename, documentFile, file, inline);
+            if (isThesisDocument) {
+                if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
+                    Objects.requireNonNullElse(documentFile.getIsArchived(), false).equals(false) &&
+                    List.of(ResourceType.PREPRINT, ResourceType.SUPPLEMENT)
+                        .contains(documentFile.getResourceType())) || isOpenAccess) {
+                    var response = serveFile(filename, documentFile, file, inline);
+                    handedOff = true;
+                    return response;
                 }
 
-                return handleUnauthorisedUser(request);
-            } else {
+                if (authenticatedUser) {
+                    var userAuthority = SessionUtil.getLoggedInUser().getAuthority().getAuthority();
+                    if (Stream.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
+                            UserRole.HEAD_OF_LIBRARY).map(Enum::name).toList()
+                        .contains(userAuthority)) {
+                        var response = serveFile(filename, documentFile, file, inline);
+                        handedOff = true;
+                        return response;
+                    }
+
+                    return handleUnauthorisedUser(request);
+                } else {
+                    return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                        "loginToViewDocumentMessage");
+                }
+            }
+
+            if (!isOpenAccess && !authenticatedUser) {
                 return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
                     "loginToViewDocumentMessage");
             }
-        }
 
-        if (!isOpenAccess && !authenticatedUser) {
-            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
-                "loginToViewDocumentMessage");
-        }
+            if (isOpenAccess && !authenticatedUser && !isVerifiedDocument) {
+                return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                    "loginToViewCCDocumentMessage");
+            }
 
-        if (isOpenAccess && !authenticatedUser && !isVerifiedDocument) {
-            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
-                "loginToViewCCDocumentMessage");
-        }
+            if (accessRights.equals(AccessRights.COMMISSION_ONLY) &&
+                (!authenticatedUser || !isCommissionUser(bearerToken))) {
+                return handleUnauthorisedUser(request);
+            }
 
-        if (accessRights.equals(AccessRights.COMMISSION_ONLY) &&
-            (!authenticatedUser || !isCommissionUser(bearerToken))) {
-            return handleUnauthorisedUser(request);
-        }
+            if (!isOpenAccess) {
+                var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(bearerToken));
+                var userId = tokenUtil.extractUserIdFromToken(bearerToken);
 
-        if (!isOpenAccess) {
-            var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(bearerToken));
-            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
-
-            if (Objects.nonNull(documentFile.getPerson())) {
-                var personId = documentFile.getPerson().getId();
-                switch (role) {
-                    case ADMIN:
-                        break;
-                    case RESEARCHER:
-                        if (!userService.isUserAResearcher(userId, personId)) {
+                if (Objects.nonNull(documentFile.getPerson())) {
+                    var personId = documentFile.getPerson().getId();
+                    switch (role) {
+                        case ADMIN:
+                            break;
+                        case RESEARCHER:
+                            if (!userService.isUserAResearcher(userId, personId)) {
+                                return handleUnauthorisedUser(request);
+                            }
+                            break;
+                        case INSTITUTIONAL_EDITOR:
+                            if (!personService.isPersonEmployedInOrganisationUnit(personId,
+                                userService.getUserOrganisationUnitId(userId))) {
+                                return handleUnauthorisedUser(request);
+                            }
+                            break;
+                        default:
                             return handleUnauthorisedUser(request);
-                        }
-                        break;
-                    case INSTITUTIONAL_EDITOR:
-                        if (!personService.isPersonEmployedInOrganisationUnit(personId,
-                            userService.getUserOrganisationUnitId(userId))) {
-                            return handleUnauthorisedUser(request);
-                        }
-                        break;
-                    default:
-                        return handleUnauthorisedUser(request);
-                }
-            } else if (Objects.nonNull(documentFile.getDocument())) {
-                var document = documentFile.getDocument();
-                var contributors = document.getContributors().stream()
-                    .filter(contribution -> Objects.nonNull(contribution.getPerson()))
-                    .map(contribution -> contribution.getPerson().getId())
-                    .collect(Collectors.toSet());
+                    }
+                } else if (Objects.nonNull(documentFile.getDocument())) {
+                    var document = documentFile.getDocument();
+                    var contributors = document.getContributors().stream()
+                        .filter(contribution -> Objects.nonNull(contribution.getPerson()))
+                        .map(contribution -> contribution.getPerson().getId())
+                        .collect(Collectors.toSet());
 
-                switch (role) {
-                    case ADMIN:
-                        break;
-                    case RESEARCHER:
-                        var personId = userService.getPersonIdForUser(userId);
-                        if (!contributors.contains(personId)) {
+                    switch (role) {
+                        case ADMIN:
+                            break;
+                        case RESEARCHER:
+                            var personId = userService.getPersonIdForUser(userId);
+                            if (!contributors.contains(personId)) {
+                                return handleUnauthorisedUser(request);
+                            }
+                            break;
+                        case INSTITUTIONAL_EDITOR:
+                            if (noResearchersFromUserInstitution(contributors, userId) &&
+                                isDocumentNotAThesis(userId, document)) {
+                                return handleUnauthorisedUser(request);
+                            }
+                            break;
+                        case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
+                            if (isDocumentNotAThesis(userId, document)) {
+                                return handleUnauthorisedUser(request);
+                            }
+                            break;
+                        default:
                             return handleUnauthorisedUser(request);
-                        }
-                        break;
-                    case INSTITUTIONAL_EDITOR:
-                        if (noResearchersFromUserInstitution(contributors, userId) &&
-                            isDocumentNotAThesis(userId, document)) {
-                            return handleUnauthorisedUser(request);
-                        }
-                        break;
-                    case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
-                        if (isDocumentNotAThesis(userId, document)) {
-                            return handleUnauthorisedUser(request);
-                        }
-                        break;
-                    default:
-                        return handleUnauthorisedUser(request);
+                    }
                 }
             }
-        }
 
-        return serveFile(filename, documentFile, file, inline);
+            var response = serveFile(filename, documentFile, file, inline);
+            handedOff = true;
+            return response;
+        } finally {
+            if (!handedOff) {
+                closeQuietly(file);
+            }
+        }
     }
 
     private ResponseEntity<StreamingResponseBody> serveFile(String filename,
@@ -256,18 +269,20 @@ public class FileController {
         }
 
         var filename = person.getProfilePhoto().getImageServerName();
-        var file = fileService.loadAsResource(filename);
-
         var outputStream = new ByteArrayOutputStream();
-        Thumbnails.of(file)
-            .size(person.getProfilePhoto().getWidth(), person.getProfilePhoto().getHeight())
-            .sourceRegion(person.getProfilePhoto().getLeftOffset(),
-                person.getProfilePhoto().getTopOffset(), person.getProfilePhoto().getWidth(),
-                person.getProfilePhoto().getHeight()).toOutputStream(outputStream);
+        String contentDisposition;
+        try (var file = fileService.loadAsResource(filename)) {
+            Thumbnails.of(file)
+                .size(person.getProfilePhoto().getWidth(), person.getProfilePhoto().getHeight())
+                .sourceRegion(person.getProfilePhoto().getLeftOffset(),
+                    person.getProfilePhoto().getTopOffset(), person.getProfilePhoto().getWidth(),
+                    person.getProfilePhoto().getHeight()).toOutputStream(outputStream);
+            contentDisposition = file.response().contentDisposition();
+        }
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.response().contentDisposition()))
+                StringUtil.contentDisposition(contentDisposition))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
@@ -279,23 +294,31 @@ public class FileController {
         try {
             var filename = personService.getPersonProfileImageServerFilename(personId);
             var file = fileService.loadAsResource(filename);
+            var handedOff = false;
+            try {
+                var resource = new InputStreamResource(file);
 
-            var resource = new InputStreamResource(file);
+                var contentType = file.response().contentType();
+                if (Objects.isNull(contentType)) {
+                    contentType = Files.probeContentType(Path.of(filename));
+                }
+                if (Objects.isNull(contentType)) {
+                    contentType = "application/octet-stream";
+                }
 
-            var contentType = file.response().contentType();
-            if (Objects.isNull(contentType)) {
-                contentType = Files.probeContentType(Path.of(filename));
+                var response = ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .contentLength(Objects.requireNonNullElse(file.response().contentLength(), 0L))
+                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+                    .header(HttpHeaders.ETAG, file.response().eTag())
+                    .body(resource);
+                handedOff = true;
+                return response;
+            } finally {
+                if (!handedOff) {
+                    closeQuietly(file);
+                }
             }
-            if (Objects.isNull(contentType)) {
-                contentType = "application/octet-stream";
-            }
-
-            return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .contentLength(Objects.requireNonNullElse(file.response().contentLength(), 0L))
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
-                .header(HttpHeaders.ETAG, file.response().eTag())
-                .body(resource);
 
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
@@ -315,16 +338,19 @@ public class FileController {
         }
 
         var filename = organisationUnit.getLogo().getImageServerName();
-        var file = fileService.loadAsResource(filename);
-
         var outputStream = new ByteArrayOutputStream();
-        var croppedResized = Thumbnails.of(file)
-            .size(organisationUnit.getLogo().getWidth(),
-                organisationUnit.getLogo().getHeight())
-            .sourceRegion(organisationUnit.getLogo().getLeftOffset(),
-                organisationUnit.getLogo().getTopOffset(),
-                organisationUnit.getLogo().getWidth(),
-                organisationUnit.getLogo().getHeight()).asBufferedImage();
+        String contentDisposition;
+        BufferedImage croppedResized;
+        try (var file = fileService.loadAsResource(filename)) {
+            croppedResized = Thumbnails.of(file)
+                .size(organisationUnit.getLogo().getWidth(),
+                    organisationUnit.getLogo().getHeight())
+                .sourceRegion(organisationUnit.getLogo().getLeftOffset(),
+                    organisationUnit.getLogo().getTopOffset(),
+                    organisationUnit.getLogo().getWidth(),
+                    organisationUnit.getLogo().getHeight()).asBufferedImage();
+            contentDisposition = file.response().contentDisposition();
+        }
 
         int cropWidth = organisationUnit.getLogo().getWidth();
         int cropHeight = organisationUnit.getLogo().getHeight();
@@ -350,11 +376,19 @@ public class FileController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                StringUtil.contentDisposition(file.response().contentDisposition()))
+                StringUtil.contentDisposition(contentDisposition))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
                 new ByteArrayResource(outputStream.toByteArray()));
+    }
+
+    private void closeQuietly(ResponseInputStream<?> stream) {
+        try {
+            stream.close();
+        } catch (IOException e) {
+            log.warn("Failed to release S3 connection", e);
+        }
     }
 
     private boolean isOpenAccess(DocumentFile documentFile) {

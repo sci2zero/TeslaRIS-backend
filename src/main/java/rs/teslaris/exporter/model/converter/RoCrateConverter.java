@@ -436,9 +436,9 @@ public class RoCrateConverter {
         metadata.setLicense(new ContextualEntity(getLicenseUrl(file.getLicense()), "URL"));
 
         if (includeFileHashes) {
-            try {
+            try (var resource = fileService.loadAsResource(file.getServerFilename())) {
                 metadata.setSha256(Hashing.sha256()
-                    .hashBytes(fileService.loadAsResource(file.getServerFilename()).readAllBytes())
+                    .hashBytes(resource.readAllBytes())
                     .toString());
             } catch (Exception e) {
                 log.error("Unable to extract SHA256 hash for file: {}. Reason: {}",
