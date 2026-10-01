@@ -10,6 +10,7 @@ import rs.teslaris.project.model.project.Project;
 public interface OrganisationUnitProjectContributionService
     extends JPAService<OrganisationUnitProjectContribution> {
 
-    OrganisationUnitProjectContribution createContribution(OrganisationUnitProjectContributionDTO dto, Project project);
+    OrganisationUnitProjectContribution createContribution(
+        OrganisationUnitProjectContributionDTO dto, Project project);
 
 }

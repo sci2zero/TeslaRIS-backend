@@ -120,7 +120,8 @@ public class ResearchProductConverter extends BaseConverter {
             case STATEMENT -> "http://purl.org/spar/fabio/Statement";
             case ADVISOR_CONFLICT_OF_INTEREST ->
                 "http://purl.org/spar/fabio/ConflictOfInterestStatement";
-            default -> throw new IllegalArgumentException("No FaBiO type for resource type: " + resourceType);
+            default -> throw new IllegalArgumentException(
+                "No FaBiO type for resource type: " + resourceType);
         };
     }
 

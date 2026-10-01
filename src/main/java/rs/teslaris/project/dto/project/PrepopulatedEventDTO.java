@@ -1,13 +1,12 @@
 package rs.teslaris.project.dto.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter

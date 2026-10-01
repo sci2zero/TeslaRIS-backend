@@ -2,6 +2,9 @@ package rs.teslaris.project.indexmodel.project;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,10 +14,6 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import rs.teslaris.project.model.project.ProjectStatus;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter

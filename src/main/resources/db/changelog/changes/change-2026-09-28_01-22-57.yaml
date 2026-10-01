@@ -1,0 +1,163 @@
+databaseChangeLog:
+- changeSet:
+    id: 1790558589594-4
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: cris_context_information_seq
+        startValue: 1
+- changeSet:
+    id: 1790558589594-5
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: feature_module_toggles_seq
+        startValue: 1
+- changeSet:
+    id: 1790558589594-6
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_error_issues
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-7
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_fair_score_sum
+            type: FLOAT8
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-8
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_info_issues
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-9
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_publication_candidates_count
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_score_sum
+            type: FLOAT8
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_warning_issues
+            type: INTEGER
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: activity_dimension_score_sums
+            type: JSONB
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-13
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: tutorial_walkthroughs
+        constraintName: fkcjuo07n5n8iov94t9unjfhvlu
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: users
+        validate: true
+- changeSet:
+    id: 1790558589594-14
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: data_quality_assessment_2
+- changeSet:
+    id: 1790558589594-15
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: entity_revision_2
+- changeSet:
+    id: 1790558589594-1
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: int
+        columnName: blocking_failed_rules
+        tableName: data_quality_assessment
+- changeSet:
+    id: 1790558589594-2
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: int
+        columnName: document_id
+        tableName: project_documents
+- changeSet:
+    id: 1790558589594-3
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: int
+        columnName: event_id
+        tableName: project_events
+

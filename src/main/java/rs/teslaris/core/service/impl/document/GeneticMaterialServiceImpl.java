@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.GeneticMaterialJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -65,6 +66,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                       DocumentFileService documentFileService,
                                       CitationService citationService,
                                       ApplicationEventPublisher applicationEventPublisher,
+                                      CrisContextInformationService crisContextInformationService,
                                       PersonContributionService personContributionService,
                                       ExpressionTransformer expressionTransformer,
                                       EventService eventService,
@@ -79,12 +81,10 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                       PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            applicationEventPublisher, personContributionService, expressionTransformer,
-            eventService,
-            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService,
-            countryService);
+            applicationEventPublisher, crisContextInformationService, personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService, documentLookupService, countryService);
         this.geneticMaterialJPAService = geneticMaterialJPAService;
         this.publisherService = publisherService;
     }

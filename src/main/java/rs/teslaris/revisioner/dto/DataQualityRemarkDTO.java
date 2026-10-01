@@ -19,6 +19,8 @@ public record DataQualityRemarkDTO(
 
     QualityDimension dimension,
 
+    String metric,
+
     boolean blocking,
 
     double points,

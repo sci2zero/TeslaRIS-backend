@@ -87,6 +87,7 @@ import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.worker.PersonEmploymentWorker;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -133,6 +134,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Comparator.nullsFirst(Enum::compareTo));
 
     private final PersonRepository personRepository;
+
+    private final CrisContextInformationService crisContextInformationService;
 
     private final SearchService<PersonIndex> searchService;
 
@@ -1720,11 +1723,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             "lattesIdExistsError"
         );
 
-        // TODO: Maybe add configurable regex validation for this, maybe based on OU or system-wide
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getNationalScienceId(),
             person.getId(),
-            "^.*$",  // Matches any string of any length (including empty)
+            crisContextInformationService.readConfigurationForSystem()
+                .personNationalIdRegularExpression(),
             personRepository::existsByNationalScienceId,
             person::setNationalScienceId,
             "nationalScienceIdFormatError",

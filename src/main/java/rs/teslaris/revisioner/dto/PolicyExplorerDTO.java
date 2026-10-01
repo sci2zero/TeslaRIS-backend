@@ -14,6 +14,8 @@ public record PolicyExplorerDTO(
 
     List<PolicyConstraintDTO> constraints,
 
-    Map<QualityDimension, List<MultilingualContentDTO>> dimensionDefinitions
+    Map<QualityDimension, List<MultilingualContentDTO>> dimensionDefinitions,
+
+    List<MetricSummaryDTO> metrics
 ) {
 }

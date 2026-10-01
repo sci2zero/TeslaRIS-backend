@@ -42,9 +42,9 @@ public class FundingApplicationConverter {
             dto.getRequestedAmount().setCurrencyId(
                 fundingApplication.getRequestedAmount().getCurrency().getId());
             dto.getRequestedAmount().setCurrencyCode(
-                    fundingApplication.getRequestedAmount().getCurrency().getCode());
+                fundingApplication.getRequestedAmount().getCurrency().getCode());
             dto.getRequestedAmount().setCurrencySymbol(
-                    fundingApplication.getRequestedAmount().getCurrency().getSymbol());
+                fundingApplication.getRequestedAmount().getCurrency().getSymbol());
         }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(

@@ -2,7 +2,9 @@ package rs.teslaris.core.util.session;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -17,25 +19,44 @@ public class RestTemplateProvider {
 
     private static final long MAX_BACKOFF_MILLIS = 10000;
 
+    private static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 10 * 1000;
+
+    private static final int DEFAULT_READ_TIMEOUT_MILLIS = 20 * 1000;
+
+    private final RestTemplateBuilder restTemplateBuilder;
+
     private final RestTemplate restTemplate;
 
-    @Value("${proxy.enabled:false}")
-    private boolean proxyEnabled;
+    private final Map<Integer, RestTemplate> restTemplatesByReadTimeout =
+        new ConcurrentHashMap<>();
 
-    @Value("${proxy.host:}")
-    private String proxyHost;
+    private final boolean proxyEnabled;
 
-    @Value("${proxy.port:0}")
-    private int proxyPort;
+    private final String proxyHost;
 
-    @Value("${proxy.type:HTTP}") // HTTP or SOCKS
-    private String proxyType;
+    private final int proxyPort;
+
+    private final String proxyType;
 
 
+    /**
+     * Proxy settings are constructor injected on purpose: {@code RestTemplateBuilder} invokes the
+     * request factory supplier during {@code build()}, which runs before field injection would
+     * have populated them.
+     */
     @Autowired
-    public RestTemplateProvider(RestTemplateBuilder restTemplateBuilder) {
+    public RestTemplateProvider(RestTemplateBuilder restTemplateBuilder,
+                                @Value("${proxy.enabled:false}") boolean proxyEnabled,
+                                @Value("${proxy.host:}") String proxyHost,
+                                @Value("${proxy.port:0}") int proxyPort,
+                                @Value("${proxy.type:HTTP}") String proxyType) { // HTTP or SOCKS
+        this.restTemplateBuilder = restTemplateBuilder;
+        this.proxyEnabled = proxyEnabled;
+        this.proxyHost = proxyHost;
+        this.proxyPort = proxyPort;
+        this.proxyType = proxyType;
         this.restTemplate = restTemplateBuilder
-            .requestFactory(this::createRequestFactory)
+            .requestFactory(() -> createRequestFactory(DEFAULT_READ_TIMEOUT_MILLIS))
             .build();
     }
 
@@ -58,12 +79,12 @@ public class RestTemplateProvider {
         }
     }
 
-    private SimpleClientHttpRequestFactory createRequestFactory() {
+    private SimpleClientHttpRequestFactory createRequestFactory(int readTimeoutMillis) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10 * 1000);
-        factory.setReadTimeout(20 * 1000);
+        factory.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MILLIS);
+        factory.setReadTimeout(readTimeoutMillis);
 
-        if (proxyEnabled && Objects.nonNull(proxyHost) && proxyPort > 0) {
+        if (proxyEnabled && Objects.nonNull(proxyHost) && !proxyHost.isBlank() && proxyPort > 0) {
             Proxy.Type type =
                 "SOCKS".equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
             Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));
@@ -75,5 +96,20 @@ public class RestTemplateProvider {
 
     public RestTemplate provideRestTemplate() {
         return restTemplate;
+    }
+
+    /**
+     * Provides a template with an overridden read timeout, for callers that talk to services
+     * slower than the shared default allows. Non-positive values fall back to the default template.
+     */
+    public RestTemplate provideRestTemplate(int readTimeoutMillis) {
+        if (readTimeoutMillis <= 0 || readTimeoutMillis == DEFAULT_READ_TIMEOUT_MILLIS) {
+            return restTemplate;
+        }
+
+        return restTemplatesByReadTimeout.computeIfAbsent(readTimeoutMillis,
+            timeout -> restTemplateBuilder
+                .requestFactory(() -> createRequestFactory(timeout))
+                .build());
     }
 }

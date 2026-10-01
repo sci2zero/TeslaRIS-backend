@@ -32,6 +32,7 @@ import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -59,7 +60,10 @@ import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.person.involvement.EducationDTO;
+import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
+import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
@@ -280,6 +284,9 @@ public class DataQualityCalculator {
                 }
             });
         }
+
+        checkMultilingualMinLength(assessment, "documentDescriptionTooShort",
+            dto.getDescription());
 
         if (!CollectionOperations.containsValues(dto.getDescription())) {
             reportIssue(assessment, "descriptionMissing");
@@ -623,11 +630,20 @@ public class DataQualityCalculator {
             if (birthDate.isAfter(LocalDate.now())) {
                 reportIssue(assessment, "birthDateInFuture", birthDate);
             }
+
+            var minAgeYears = getIntConstraint(assessment, "birthDateBelowMinAge", "minAgeYears");
+            if (Objects.nonNull(minAgeYears) &&
+                birthDate.isAfter(LocalDate.now().minusYears(minAgeYears))) {
+                reportIssue(assessment, "birthDateBelowMinAge", birthDate, minAgeYears);
+            }
         }
 
         if (!StringUtil.valueExists(personalInfoDTO.getOrcid())) {
             reportIssue(assessment, "noOrcidPresent");
         } else {
+            checkMinLength(assessment, "orcidTooShort", personalInfoDTO.getOrcid());
+            checkMaxLength(assessment, "orcidTooLong", personalInfoDTO.getOrcid());
+
             var orcidPattern = getPatternConstraint(assessment, "invalidOrcidFormat");
             if (Objects.nonNull(orcidPattern) &&
                 !orcidPattern.matcher(personalInfoDTO.getOrcid()).matches()) {
@@ -668,6 +684,8 @@ public class DataQualityCalculator {
         if (StringUtil.valueExists(personalInfoDTO.getScopusAuthorId())) {
             var id = personalInfoDTO.getScopusAuthorId();
 
+            checkMaxLength(assessment, "scopusAuthorIdTooLong", id);
+
             var scopusAuthorIdPattern =
                 getPatternConstraint(assessment, "invalidScopusAuthorIdFormat");
             if (Objects.nonNull(scopusAuthorIdPattern) &&
@@ -681,6 +699,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getOpenAlexId())) {
+            checkMinLength(assessment, "personOpenAlexIdTooShort", personalInfoDTO.getOpenAlexId());
+            checkMaxLength(assessment, "personOpenAlexIdTooLong", personalInfoDTO.getOpenAlexId());
+
             var openAlexPattern = getPatternConstraint(assessment, "invalidOpenAlexIdFormat");
             if (Objects.nonNull(openAlexPattern) &&
                 !openAlexPattern.matcher(personalInfoDTO.getOpenAlexId()).matches()) {
@@ -694,6 +715,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getScholarId())) {
+            checkMinLength(assessment, "googleScholarIdTooShort", personalInfoDTO.getScholarId());
+            checkMaxLength(assessment, "googleScholarIdTooLong", personalInfoDTO.getScholarId());
+
             var scholarPattern = getPatternConstraint(assessment, "invalidGoogleScholarIdFormat");
             if (Objects.nonNull(scholarPattern) &&
                 !scholarPattern.matcher(personalInfoDTO.getScholarId()).matches()) {
@@ -708,6 +732,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getLattesId())) {
+            checkMinLength(assessment, "lattesIdTooShort", personalInfoDTO.getLattesId());
+            checkMaxLength(assessment, "lattesIdTooLong", personalInfoDTO.getLattesId());
+
             var lattesPattern = getPatternConstraint(assessment, "invalidLattesIdFormat");
             if (Objects.nonNull(lattesPattern) &&
                 !lattesPattern.matcher(personalInfoDTO.getLattesId()).matches()) {
@@ -715,7 +742,16 @@ public class DataQualityCalculator {
             }
         }
 
+        if (!StringUtil.valueExists(personalInfoDTO.getNationalScienceId())) {
+            reportIssue(assessment, "cienciaIdMissing");
+        }
+
         if (StringUtil.valueExists(personalInfoDTO.getNationalScienceId())) {
+            checkMinLength(assessment, "cienciaIdTooShort",
+                personalInfoDTO.getNationalScienceId());
+            checkMaxLength(assessment, "cienciaIdTooLong",
+                personalInfoDTO.getNationalScienceId());
+
             var cienciaPattern = getPatternConstraint(assessment, "invalidCienciaIdFormat");
             if (Objects.nonNull(cienciaPattern) &&
                 !cienciaPattern.matcher(personalInfoDTO.getNationalScienceId()).matches()) {
@@ -725,6 +761,11 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(personalInfoDTO.getAuthenticusId())) {
+            checkMinLength(assessment, "authenticusIdTooShort", personalInfoDTO.getAuthenticusId());
+            checkMaxLength(assessment, "authenticusIdTooLong", personalInfoDTO.getAuthenticusId());
+            checkPattern(assessment, "invalidAuthenticusIdFormat",
+                personalInfoDTO.getAuthenticusId());
+
             if (personRepository.existsByAuthenticusId(personalInfoDTO.getAuthenticusId(),
                 dto.getId())) {
                 reportIssue(assessment, "duplicateAuthenticusId",
@@ -777,12 +818,23 @@ public class DataQualityCalculator {
                     !lastNamePattern.matcher(name.getLastname()).matches()) {
                     reportIssue(assessment, "invalidLastNameFormat", name.getLastname());
                 }
+
+                checkMinLength(assessment, "lastNameTooShort", name.getLastname());
+                checkMaxLength(assessment, "otherNameTooLong", name.getOtherName());
+                checkPattern(assessment, "invalidOtherNameFormat", name.getOtherName());
+                reportIfMissing(assessment, "personNameTypeMissing", name.getPersonNameType());
             });
         }
 
         if (!CollectionOperations.containsValues(dto.getBiography())) {
             reportIssue(assessment, "biographyMissing");
         }
+
+        checkMultilingualMinLength(assessment, "biographyTooShort", dto.getBiography());
+
+        assessPrizes(dto, assessment);
+        assessExpertisesOrSkills(dto, assessment);
+        assessInvolvementCardinality(dto, assessment);
 
         assessEntity(personalInfoDTO.getContact(), assessment);
         assessEntity(personalInfoDTO.getPrivateContact(), assessment);
@@ -798,6 +850,58 @@ public class DataQualityCalculator {
         // TODO metadataAccessLevelMissing
         // TODO createDateMissing
         // TODO lastModificationDateMissing
+    }
+
+    private void assessInvolvementCardinality(PersonSnapshotDTO dto,
+                                              DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getEmployments()) && Objects.isNull(dto.getEducations()) &&
+            Objects.isNull(dto.getMemberships())) {
+            return;
+        }
+
+        var involvementCount = involvementCount(dto.getEmployments()) +
+            involvementCount(dto.getEducations()) + involvementCount(dto.getMemberships());
+
+        if (involvementCount == 0) {
+            reportIssue(assessment, "involvementsMissing");
+            return;
+        }
+
+        checkMaxCardinality(assessment, "involvementsAboveMaximum", involvementCount);
+    }
+
+    private int involvementCount(List<? extends InvolvementDTO> involvements) {
+        return Objects.isNull(involvements) ? 0 : involvements.size();
+    }
+
+    private void assessPrizes(PersonSnapshotDTO dto, DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getPrizes())) {
+            return;
+        }
+
+        dto.getPrizes().forEach(prize -> {
+            reportIfMissing(assessment, "prizeTypeMissing", prize.getPrizeType());
+            reportIfMissing(assessment, "prizeDateMissing", prize.getDate());
+
+            if (!CollectionOperations.containsValues(prize.getResearchAreas())) {
+                reportIssue(assessment, "prizeResearchAreasMissing");
+            }
+
+            checkMaxFutureYears(assessment, "prizeDateTooFarInFuture", prize.getDate());
+        });
+    }
+
+    private void assessExpertisesOrSkills(PersonSnapshotDTO dto,
+                                          DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getExpertisesOrSkills())) {
+            return;
+        }
+
+        dto.getExpertisesOrSkills().stream()
+            .filter(expertise -> !CollectionOperations.containsValues(
+                expertise.getResearchAreas()))
+            .forEach(expertise ->
+                reportIssue(assessment, "expertiseOrSkillResearchAreasMissing"));
     }
 
     private void assessInvolvements(List<? extends InvolvementDTO> involvements,
@@ -841,7 +945,16 @@ public class DataQualityCalculator {
             reportIssue(assessment, "organisationUnitDescriptionMissing");
         }
 
+        checkMultilingualMinLength(assessment, "organisationUnitDescriptionTooShort",
+            dto.getDescription());
+
+        if (!StringUtil.valueExists(dto.getRor())) {
+            reportIssue(assessment, "rorMissing");
+        }
+
         if (StringUtil.valueExists(dto.getRor())) {
+            checkMinLength(assessment, "rorTooShort", dto.getRor());
+            checkMaxLength(assessment, "rorTooLong", dto.getRor());
 
             var rorPattern = getPatternConstraint(assessment, "invalidRorFormat");
             if (Objects.nonNull(rorPattern) && !rorPattern.matcher(dto.getRor()).matches()) {
@@ -854,6 +967,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(dto.getIsni())) {
+            checkMinLength(assessment, "isniTooShort", dto.getIsni());
+            checkMaxLength(assessment, "isniTooLong", dto.getIsni());
+
 
             var isniPattern = getPatternConstraint(assessment, "invalidIsniFormat");
             if (Objects.nonNull(isniPattern) && !isniPattern.matcher(dto.getIsni()).matches()) {
@@ -866,6 +982,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(dto.getScopusAfid())) {
+            checkMinLength(assessment, "scopusAfidTooShort", dto.getScopusAfid());
+            checkMaxLength(assessment, "scopusAfidTooLong", dto.getScopusAfid());
+
 
             var scopusAfidPattern = getPatternConstraint(assessment, "invalidScopusAfidFormat");
             if (Objects.nonNull(scopusAfidPattern) &&
@@ -879,6 +998,9 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(dto.getGrid())) {
+            checkMinLength(assessment, "gridTooShort", dto.getGrid());
+            checkMaxLength(assessment, "gridTooLong", dto.getGrid());
+
             var gridPattern = getPatternConstraint(assessment, "invalidGridFormat");
             if (Objects.nonNull(gridPattern) && !gridPattern.matcher(dto.getGrid()).matches()) {
                 reportIssue(assessment, "invalidGridFormat", dto.getGrid());
@@ -890,6 +1012,8 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(dto.getRinggold())) {
+            checkMaxLength(assessment, "ringgoldTooLong", dto.getRinggold());
+
             var ringgoldPattern = getPatternConstraint(assessment, "invalidRinggoldFormat");
             if (Objects.nonNull(ringgoldPattern) &&
                 !ringgoldPattern.matcher(dto.getRinggold()).matches()) {
@@ -902,12 +1026,28 @@ public class DataQualityCalculator {
         }
 
         if (StringUtil.valueExists(dto.getFundref())) {
+            checkMinLength(assessment, "fundrefTooShort", dto.getFundref());
+            checkMaxLength(assessment, "fundrefTooLong", dto.getFundref());
+
             var fundrefPattern = getPatternConstraint(assessment, "invalidFundrefFormat");
             if (Objects.nonNull(fundrefPattern) &&
                 !fundrefPattern.matcher(dto.getFundref()).matches()) {
                 reportIssue(assessment, "invalidFundrefFormat", dto.getFundref());
             }
         }
+
+        if (StringUtil.valueExists(dto.getOpenAlexId())) {
+            checkMinLength(assessment, "organisationUnitOpenAlexIdTooShort", dto.getOpenAlexId());
+            checkMaxLength(assessment, "organisationUnitOpenAlexIdTooLong", dto.getOpenAlexId());
+            checkPattern(assessment, "invalidOrganisationUnitOpenAlexIdFormat",
+                dto.getOpenAlexId());
+        }
+
+        reportIfMissing(assessment, "dateEstablishedMissing", dto.getDateEstablished());
+        reportIfMissing(assessment, "organisationUnitSectorMissing", dto.getSector());
+
+        checkMaxFutureYears(assessment, "dateEstablishedTooFarInFuture", dto.getDateEstablished());
+        checkMaxFutureYears(assessment, "dateDissolvedTooFarInFuture", dto.getDateDissolved());
 
         if (Objects.nonNull(dto.getDateEstablished()) &&
             Objects.nonNull(dto.getDateDissolved()) &&
@@ -1349,6 +1489,26 @@ public class DataQualityCalculator {
         var activityType = activityTypeToken(dto);
         var activityName = activityName(dto);
 
+        reportIfMissing(assessment, "involvementTypeMissing", dto.getInvolvementType(),
+            activityType, activityName);
+
+        if (dto instanceof MembershipDTO membership) {
+            reportIfMissing(assessment, "membershipTypeMissing", membership.getMembershipType(),
+                activityType, activityName);
+        }
+
+        if (dto instanceof EmploymentDTO employment) {
+            reportIfMissing(assessment, "employmentPositionMissing",
+                employment.getEmploymentPosition(), activityType, activityName);
+        }
+
+        if (dto instanceof EducationDTO education) {
+            reportIfMissing(assessment, "educationDegreeTypeMissing", education.getDegreeType(),
+                activityType, activityName);
+            reportIfMissing(assessment, "educationStatusMissing", education.getEducationStatus(),
+                activityType, activityName);
+        }
+
         if (Objects.isNull(dto.getDateFrom())) {
             reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
         } else {
@@ -1523,6 +1683,16 @@ public class DataQualityCalculator {
                         maxReviews, activityType, activityName);
                 }
 
+                var minReviews = getIntConstraint(assessment, "numberOfReviewsTooLow", "min");
+                if (Objects.nonNull(minReviews) &&
+                    eventContribution.getNumberOfReviewsOrAssessment() < minReviews) {
+                    reportIssue(
+                        assessment,
+                        "numberOfReviewsTooLow",
+                        eventContribution.getNumberOfReviewsOrAssessment(),
+                        minReviews, activityType, activityName);
+                }
+
                 if (!(linkedWithConference && reviewerContribution)) {
                     reportIssue(assessment, "numberOfReviewsOnlyForConferenceReviewer", "",
                         activityType, activityName);
@@ -1623,6 +1793,86 @@ public class DataQualityCalculator {
         var max = getIntConstraint(assessment, fieldName + "AboveMaximum", "max");
         if (Objects.nonNull(max) && value > max) {
             reportIssue(assessment, fieldName + "AboveMaximum", value, max);
+        }
+    }
+
+
+    private void checkMinLength(DataQualityAssessment assessment, String issueKey, String value) {
+        if (!StringUtil.valueExists(value)) {
+            return;
+        }
+
+        var minLength = getIntConstraint(assessment, issueKey, "minLength");
+        if (Objects.nonNull(minLength) && value.length() < minLength) {
+            reportIssue(assessment, issueKey, value, minLength);
+        }
+    }
+
+    private void checkMaxLength(DataQualityAssessment assessment, String issueKey, String value) {
+        if (!StringUtil.valueExists(value)) {
+            return;
+        }
+
+        var maxLength = getIntConstraint(assessment, issueKey, "maxLength");
+        if (Objects.nonNull(maxLength) && value.length() > maxLength) {
+            reportIssue(assessment, issueKey, value, maxLength);
+        }
+    }
+
+    private void checkPattern(DataQualityAssessment assessment, String issueKey, String value) {
+        if (!StringUtil.valueExists(value)) {
+            return;
+        }
+
+        var pattern = getPatternConstraint(assessment, issueKey);
+        if (Objects.nonNull(pattern) && !pattern.matcher(value).matches()) {
+            reportIssue(assessment, issueKey, value);
+        }
+    }
+
+    private void checkMultilingualMinLength(DataQualityAssessment assessment, String issueKey,
+                                            List<MultilingualContentDTO> content) {
+        if (!CollectionOperations.containsValues(content)) {
+            return;
+        }
+
+        var minLength = getIntConstraint(assessment, issueKey, "minLength");
+        if (Objects.isNull(minLength)) {
+            return;
+        }
+
+        content.stream()
+            .map(MultilingualContentDTO::getContent)
+            .filter(StringUtil::valueExists)
+            .filter(value -> value.length() < minLength)
+            .forEach(value -> reportIssue(assessment, issueKey, value.length(), minLength));
+    }
+
+    private void checkMaxFutureYears(DataQualityAssessment assessment, String issueKey,
+                                     LocalDate date) {
+        if (Objects.isNull(date)) {
+            return;
+        }
+
+        var maxFutureYears = getIntConstraint(assessment, issueKey, "maxFutureYears");
+        if (Objects.nonNull(maxFutureYears) &&
+            date.isAfter(LocalDate.now().plusYears(maxFutureYears))) {
+            reportIssue(assessment, issueKey, date, maxFutureYears);
+        }
+    }
+
+    private void checkMaxCardinality(DataQualityAssessment assessment, String issueKey,
+                                     int size) {
+        var maxCardinality = getIntConstraint(assessment, issueKey, "maxCardinality");
+        if (Objects.nonNull(maxCardinality) && size > maxCardinality) {
+            reportIssue(assessment, issueKey, size, maxCardinality);
+        }
+    }
+
+    private void reportIfMissing(DataQualityAssessment assessment, String issueKey, Object value,
+                                 Object... params) {
+        if (Objects.isNull(value)) {
+            reportIssue(assessment, issueKey, params);
         }
     }
 

@@ -6,6 +6,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +26,16 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.*;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
+import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.OrganisationUnitProjectContributionConverter;
 import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
@@ -50,18 +62,13 @@ import rs.teslaris.project.service.interfaces.project.PersonProjectContributionS
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl extends JPAServiceImpl<Project> implements ProjectService {
 
     private final ProjectRepository projectRepository;
+
+    private final CrisContextInformationService crisContextInformationService;
 
     private final PersonProjectContributionRepository personProjectContributionRepository;
 
@@ -108,7 +115,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                              boolean onlyWithoutContributions,
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses),
+        return searchService.runQuery(
+            buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions,
+                allowedStatuses),
             pageable, ProjectIndex.class, "project");
     }
 
@@ -364,7 +373,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setUris(projectDTO.getUris());
         project.setDoi(projectDTO.getDoi());
         project.setRaid(projectDTO.getRaid());
-        project.setNationalId(projectDTO.getNationalId());
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getNationalId(),
+            project.getId(),
+            crisContextInformationService.readConfigurationForSystem()
+                .projectNationalIdRegularExpression(),
+            projectRepository::existsByNationalId,
+            project::setNationalId,
+            "nationalIdFormatError",
+            "nationalIdExistsError"
+        );
         project.setDateFrom(projectDTO.getDateFrom());
         project.setDateTo(projectDTO.getDateTo());
         project.setStatus(projectDTO.getStatus());
@@ -399,14 +417,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         projectDTO.getPersons().forEach(personDto -> project.getPersons().add(
-                personProjectContributionService.createContribution(personDto, project)));
+            personProjectContributionService.createContribution(personDto, project)));
 
         if (Objects.isNull(project.getOrganisations())) {
             project.setOrganisations(new HashSet<>());
         }
 
         projectDTO.getOrganisations().forEach(organisationDto -> {
-            project.getOrganisations().add(organisationUnitProjectContributionService.createContribution(organisationDto, project));
+            project.getOrganisations().add(
+                organisationUnitProjectContributionService.createContribution(organisationDto,
+                    project));
         });
 
         if (Objects.isNull(project.getRelatedProjects())) {
@@ -414,13 +434,15 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         projectDTO.getRelations().forEach(relationDto -> {
-            project.getRelatedProjects().add(projectsRelationService.createRelation(relationDto, project));
+            project.getRelatedProjects()
+                .add(projectsRelationService.createRelation(relationDto, project));
         });
     }
 
     @Override
     @Transactional
-    public PersonProjectContributionDTO addPerson(Integer projectId, PersonProjectContributionDTO personDto) {
+    public PersonProjectContributionDTO addPerson(Integer projectId,
+                                                  PersonProjectContributionDTO personDto) {
         var project = findOne(projectId);
         var person = personProjectContributionService.createContribution(personDto, project);
 
@@ -444,9 +466,11 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     @Override
     @Transactional
-    public OrganisationUnitProjectContributionDTO addOrganisation(Integer projectId, OrganisationUnitProjectContributionDTO organisationDto) {
+    public OrganisationUnitProjectContributionDTO addOrganisation(Integer projectId,
+                                                                  OrganisationUnitProjectContributionDTO organisationDto) {
         var project = findOne(projectId);
-        var organisation = organisationUnitProjectContributionService.createContribution(organisationDto, project);
+        var organisation =
+            organisationUnitProjectContributionService.createContribution(organisationDto, project);
 
         project.getOrganisations().add(organisation);
         save(project);
@@ -468,7 +492,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     @Override
     @Transactional
-    public ProjectsRelationDTO addProjectRelation(Integer projectId, ProjectsRelationDTO relationDto) {
+    public ProjectsRelationDTO addProjectRelation(Integer projectId,
+                                                  ProjectsRelationDTO relationDto) {
         var project = findOne(projectId);
         var relation = projectsRelationService.createRelation(relationDto, project);
 
@@ -493,7 +518,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                project.getName(), true);
+            project.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -502,13 +527,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                project.getNameAbbreviation(), false);
+            project.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setNameSrSortable(index.getNameSr());
         index.setNameOther(
-                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
         index.setDateFrom(project.getDateFrom());
@@ -525,29 +550,29 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     private void indexContributorIds(Project project, ProjectIndex index) {
         index.setPersonIds(project.getPersons().stream()
-                .map(PersonContribution::getPerson)
-                .filter(Objects::nonNull)
-                .map(Person::getId)
-                .toList());
+            .map(PersonContribution::getPerson)
+            .filter(Objects::nonNull)
+            .map(Person::getId)
+            .toList());
 
         var institutionIds = new HashSet<Integer>();
 
         project.getOrganisations().stream()
-                .map(OrganisationUnitContribution::getOrganisationUnit)
-                .filter(Objects::nonNull)
-                .map(OrganisationUnit::getId)
-                .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
-                        organisationUnitId));
+            .map(OrganisationUnitContribution::getOrganisationUnit)
+            .filter(Objects::nonNull)
+            .map(OrganisationUnit::getId)
+            .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
+                organisationUnitId));
 
         project.getPersons().stream()
-                .map(PersonContribution::getPerson)
-                .filter(Objects::nonNull)
-                .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
-                        .stream()
-                        .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
-                                employment.getInvolvementType()))
-                        .forEach(employment -> addWithSuperHierarchy(institutionIds,
-                                employment.getOrganisationUnit().getId())));
+            .map(PersonContribution::getPerson)
+            .filter(Objects::nonNull)
+            .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
+                .stream()
+                .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
+                    employment.getInvolvementType()))
+                .forEach(employment -> addWithSuperHierarchy(institutionIds,
+                    employment.getOrganisationUnit().getId())));
 
         index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
     }
@@ -556,13 +581,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                        Integer organisationUnitId) {
         institutionIds.add(organisationUnitId);
         institutionIds.addAll(
-                organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
+            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {
         var coordinator = project.getCoordinator()
-                .map(OrganisationUnitProjectContribution::getOrganisationUnit)
-                .orElse(null);
+            .map(OrganisationUnitProjectContribution::getOrganisationUnit)
+            .orElse(null);
 
         if (Objects.isNull(coordinator)) {
             index.setCoordinatorNameSr("");
@@ -577,7 +602,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                coordinator.getName(), true);
+            coordinator.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -588,10 +613,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
 
         index.setCoordinatorNameSr(
-                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setCoordinatorNameSrSortable(index.getCoordinatorNameSr());
         index.setCoordinatorNameOther(
-                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setCoordinatorNameOtherSortable(index.getCoordinatorNameOther());
         index.setCoordinatorId(coordinator.getId());
     }

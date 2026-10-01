@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -131,13 +130,14 @@ public class Project extends BaseEntity {
 
     public Optional<OrganisationUnitProjectContribution> getCoordinator() {
         return organisations.stream()
-                .filter(o ->
-                        o.getContributionType() == OrganisationUnitProjectContributionType.COORDINATOR)
-                .findFirst();
+            .filter(o ->
+                o.getContributionType() == OrganisationUnitProjectContributionType.COORDINATOR)
+            .findFirst();
     }
 
     public boolean hasContributions() {
-        return Stream.of(relatedProjects, organisations, persons, documents, events, funding, fundingApplications)
-                .anyMatch(collection -> Objects.nonNull(collection) && !collection.isEmpty());
+        return Stream.of(relatedProjects, organisations, persons, documents, events, funding,
+                fundingApplications)
+            .anyMatch(collection -> Objects.nonNull(collection) && !collection.isEmpty());
     }
 }

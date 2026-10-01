@@ -78,6 +78,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -131,6 +132,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected final CitationService citationService;
 
     protected final ApplicationEventPublisher applicationEventPublisher;
+
+    private final CrisContextInformationService crisContextInformationService;
 
     private final PersonContributionService personContributionService;
 
@@ -1236,8 +1239,16 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "ssrnIdExistsError"
         );
 
-        // TODO: Add validation for nationalId
-        document.setNationalId(documentDTO.getNationalId());
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getNationalId(),
+            document.getId(),
+            crisContextInformationService.readConfigurationForSystem()
+                .documentNationalIdRegularExpression(),
+            documentRepository::existsByNationalId,
+            document::setNationalId,
+            "nationalIdFormatError",
+            "nationalIdExistsError"
+        );
     }
 
     @Override

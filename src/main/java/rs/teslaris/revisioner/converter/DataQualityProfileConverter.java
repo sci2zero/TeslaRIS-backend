@@ -29,6 +29,7 @@ public class DataQualityProfileConverter {
                     targetWeight,
                     remark.severity(),
                     remark.dimension(),
+                    remark.metric(),
                     remark.blocking(),
                     remark.points(),
                     remark.usedForFairCompliance(),
