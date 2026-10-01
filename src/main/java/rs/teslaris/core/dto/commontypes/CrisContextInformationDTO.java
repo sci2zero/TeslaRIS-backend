@@ -14,6 +14,9 @@ public record CrisContextInformationDTO(
     @NotNull(message = "You have to specify whether digital repository should be toggled.")
     Boolean toggleDigitalRepository,
 
+    @NotNull(message = "You have to specify whether registration should be toggled.")
+    Boolean toggleRegistration,
+
     @NotBlank(message = "You have to provide a person national ID pattern.")
     String personNationalIdRegularExpression,
 
@@ -27,6 +30,9 @@ public record CrisContextInformationDTO(
     String documentNationalIdRegularExpression,
 
     @NotNull(message = "You have to specify the metadata license.")
-    License metadataLicense
+    License metadataLicense,
+
+    // Derived from the ORCID OAuth2 configuration, never persisted, ignored when saving.
+    Boolean orcidLoginToggle
 ) {
 }

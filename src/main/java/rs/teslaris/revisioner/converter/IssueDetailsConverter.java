@@ -53,7 +53,14 @@ public class IssueDetailsConverter {
             remark.dimension(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 DataQualityAssessmentConfigurationLoader.getDimensionDefinition(profileName,
-                    profileVersion, remark.dimension()))
+                    profileVersion, remark.dimension())),
+            remark.metric(),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                DataQualityAssessmentConfigurationLoader.getMetricTitle(profileName,
+                    profileVersion, remark.metric())),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                DataQualityAssessmentConfigurationLoader.getMetricDefinition(profileName,
+                    profileVersion, remark.metric()))
         );
     }
 

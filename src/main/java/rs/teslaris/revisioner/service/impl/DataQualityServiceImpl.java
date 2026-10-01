@@ -50,6 +50,7 @@ import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
+import rs.teslaris.revisioner.dto.MetricSummaryDTO;
 import rs.teslaris.revisioner.dto.PolicyConstraintDTO;
 import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
@@ -256,7 +257,8 @@ public class DataQualityServiceImpl implements DataQualityService {
         // makes the scope hold whatever the indexer stored.
         var scopeIds = organisationUnitScope(isOrganisationUnit, entityId);
 
-        var activityRuleKeys = expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null);
+        var activityRuleKeys =
+            expandRuleKeys(profileName, ACTIVITY_TARGET, null, null, null, null);
 
         var assessments = dataQualityAggregator
             .aggregateAssessments(
@@ -488,6 +490,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                        QualityDimension dimension,
                                                        IssueSeverity severity,
                                                        String constraintKey,
+                                                       @Nullable String metric,
                                                        @Nullable LocalDate assessmentDate,
                                                        @Nullable String cursor,
                                                        @Nullable Integer size) {
@@ -498,8 +501,8 @@ public class DataQualityServiceImpl implements DataQualityService {
                 organisationUnitScope(isOrganisationUnit, entityId)),
             profileName, issueTargets(target), assessmentDate);
 
-        return issuePage(query, profileName, target, dimension, severity, constraintKey, cursor,
-            size);
+        return issuePage(query, profileName, target, dimension, severity, metric, constraintKey,
+            cursor, size);
     }
 
     @Override
@@ -509,6 +512,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                         QualityDimension dimension,
                                                         IssueSeverity severity,
                                                         String constraintKey,
+                                                        @Nullable String metric,
                                                         @Nullable LocalDate assessmentDate,
                                                         @Nullable String cursor,
                                                         @Nullable Integer size) {
@@ -521,19 +525,20 @@ public class DataQualityServiceImpl implements DataQualityService {
             scopeIds.isEmpty() ? null : termsQuery("organisation_unit_ids", scopeIds),
             profileName, issueTargets(target), assessmentDate);
 
-        return issuePage(query, profileName, target, dimension, severity, constraintKey, cursor,
-            size);
+        return issuePage(query, profileName, target, dimension, severity, metric, constraintKey,
+            cursor, size);
     }
 
     private DataQualityIssuePageDTO issuePage(Query query, String profileName, String target,
                                               QualityDimension dimension, IssueSeverity severity,
+                                              @Nullable String metric,
                                               String constraintKey, @Nullable String cursor,
                                               @Nullable Integer size) {
-        var window = collectIssueWindow(query, target, dimension, severity, constraintKey,
+        var window = collectIssueWindow(query, target, dimension, metric, severity, constraintKey,
             Objects.isNull(cursor) ? null : IssueCursor.decode(cursor), pageSize(size));
 
         var totalIssues = countIssues(query, profileName, target, dimension, severity,
-            constraintKey, window.issues().size());
+            constraintKey, metric, window.issues().size());
 
         return new DataQualityIssuePageDTO(window.issues(), totalIssues, window.nextCursor());
     }
@@ -554,6 +559,7 @@ public class DataQualityServiceImpl implements DataQualityService {
     }
 
     private IssueWindow collectIssueWindow(Query query, String target, QualityDimension dimension,
+                                           @Nullable String metric,
                                            IssueSeverity severity, String constraintKey,
                                            @Nullable IssueCursor cursor, int pageSize) {
         var window = new ArrayList<PendingIssue>();
@@ -583,7 +589,7 @@ public class DataQualityServiceImpl implements DataQualityService {
 
             for (var assessment : batch) {
                 // The watermark is inclusive so that a batch boundary cannot cut a group of
-                // assessments sharing one entity id in half; whatever was already emitted at that
+                // assessments sharing one entity id in half. Whatever was already emitted at that
                 // id is skipped here instead.
                 if (!emittedAtWatermark.add(assessment.getId())) {
                     continue;
@@ -602,7 +608,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                     emittedAtWatermark.add(assessment.getId());
                 }
 
-                expandIssues(assessment, target, dimension, severity, constraintKey,
+                expandIssues(assessment, target, dimension, severity, constraintKey, metric,
                     applicableKeys, block);
             }
 
@@ -615,8 +621,8 @@ public class DataQualityServiceImpl implements DataQualityService {
             }
 
             if (!progressed) {
-                // A single entity id filled an entire batch; step past it rather than rescanning it
-                // forever.
+                // A single entity id filled an entire batch,
+                // step past it rather than rescanning it forever.
                 log.warn("More than {} assessments share entity id {}, skipping the remainder.",
                     ISSUE_SCAN_BATCH_SIZE, watermark);
 
@@ -672,13 +678,14 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private void expandIssues(DataQualityAssessmentIndex assessment, String target,
                               QualityDimension dimension, IssueSeverity severity,
-                              String constraintKey, Map<String, Set<String>> applicableKeys,
+                              String constraintKey, @Nullable String metric,
+                              Map<String, Set<String>> applicableKeys,
                               List<PendingIssue> collector) {
         var keys = applicableKeys.computeIfAbsent(
             assessment.getProfileName() + "#" + assessment.getProfileVersion(),
             ignored -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
                 assessment.getProfileName(), assessment.getProfileVersion(), target, dimension,
-                severity));
+                severity, metric));
 
         Objects.requireNonNullElse(assessment.getFailedRuleKeys(), List.<String>of()).stream()
             .filter(keys::contains)
@@ -711,10 +718,10 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private long countIssues(Query query, String profileName, String target,
                              QualityDimension dimension, IssueSeverity severity,
-                             String constraintKey, long fallback) {
+                             String constraintKey, @Nullable String metric, long fallback) {
         return dataQualityAggregator
             .countIssues(query,
-                expandRuleKeys(profileName, target, dimension, severity, constraintKey))
+                expandRuleKeys(profileName, target, dimension, severity, constraintKey, metric))
             .orElse(fallback);
     }
 
@@ -745,14 +752,15 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private Set<String> expandRuleKeys(String profileName, String target,
                                        QualityDimension dimension, IssueSeverity severity,
-                                       String constraintKey) {
+                                       String constraintKey, @Nullable String metric) {
         var keys = new HashSet<String>();
 
         DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion().stream()
             .filter(profileAndVersion -> profileAndVersion.a.equals(profileName))
             .forEach(profileAndVersion -> keys.addAll(
                 DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    profileAndVersion.a, profileAndVersion.b, target, dimension, severity)));
+                    profileAndVersion.a, profileAndVersion.b, target, dimension, severity,
+                    metric)));
 
         if (Objects.nonNull(constraintKey)) {
             keys.retainAll(Set.of(constraintKey));
@@ -824,14 +832,17 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ConstraintSummaryDTO> listProfileConstraints(String profileName, String target) {
+    public List<ConstraintSummaryDTO> listProfileConstraints(String profileName,
+                                                             @Nullable String target,
+                                                             @Nullable QualityDimension dimension,
+                                                             @Nullable String metric) {
         var version = DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName);
 
         // The rules of a target family are what the issues table can be filtered by, and the family
         // is known here - the picker does not need the rest of the profile to work it out. A null
         // target means every rule of the profile.
         return DataQualityAssessmentConfigurationLoader
-            .listRuleKeys(profileName, version, target, null, null)
+            .listRuleKeys(profileName, version, target, dimension, null, metric)
             .stream()
             .sorted()
             .map(ruleKey -> new ConstraintSummaryDTO(
@@ -874,6 +885,7 @@ public class DataQualityServiceImpl implements DataQualityService {
                 entry.getValue().target(),
                 profile.targetWeights().getOrDefault(entry.getValue().target(), 1.0),
                 entry.getValue().dimension(),
+                entry.getValue().metric(),
                 entry.getValue().severity(),
                 entry.getValue().blocking(),
                 entry.getValue().points(),
@@ -893,7 +905,32 @@ public class DataQualityServiceImpl implements DataQualityService {
                     DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
                         profileName, version, dimension))));
 
-        return new PolicyExplorerDTO(profileName, version, constraints, dimensionDefinitions);
+        return new PolicyExplorerDTO(profileName, version, constraints, dimensionDefinitions,
+            metricSummaries(profileName, version));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MetricSummaryDTO> listProfileMetrics(String profileName) {
+        return metricSummaries(profileName,
+            DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName));
+    }
+
+    private List<MetricSummaryDTO> metricSummaries(String profileName, String version) {
+        return DataQualityAssessmentConfigurationLoader.listMetrics(profileName, version)
+            .entrySet()
+            .stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(entry -> new MetricSummaryDTO(
+                entry.getKey(),
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    DataQualityAssessmentConfigurationLoader.getMetricTitle(
+                        profileName, version, entry.getKey())),
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    DataQualityAssessmentConfigurationLoader.getMetricDefinition(
+                        profileName, version, entry.getKey())),
+                entry.getValue()))
+            .toList();
     }
 
     @Override

@@ -48,6 +48,12 @@ public record DataQualityIssueDetailsDTO(
 
     QualityDimension dimension,
 
-    List<MultilingualContentDTO> dimensionDefinition
+    List<MultilingualContentDTO> dimensionDefinition,
+
+    String metric,
+
+    List<MultilingualContentDTO> metricTitle,
+
+    List<MultilingualContentDTO> metricDefinition
 ) {
 }

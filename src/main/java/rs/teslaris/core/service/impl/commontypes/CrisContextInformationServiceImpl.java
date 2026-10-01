@@ -1,21 +1,23 @@
 package rs.teslaris.core.service.impl.commontypes;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.CrisContextInformationConverter;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.model.commontypes.CrisContextInformation;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.repository.commontypes.CrisContextInformationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +29,16 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
 
     private static final License DEFAULT_METADATA_LICENSE = License.CC0;
 
+    // Mirrors the placeholder default in application.properties.
+    private static final String UNCONFIGURED_OAUTH2_CREDENTIAL = "NOT_CONFIGURED";
+
     private final CrisContextInformationRepository crisContextInformationRepository;
+
+    @Value("${spring.security.oauth2.client.registration.orcid.client-id:}")
+    private String orcidClientId;
+
+    @Value("${spring.security.oauth2.client.registration.orcid.client-secret:}")
+    private String orcidClientSecret;
 
 
     @Override
@@ -39,17 +50,8 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
     @Transactional
     public CrisContextInformationDTO readConfigurationForSystem() {
         return findConfiguration().map(
-                configuration -> new CrisContextInformationDTO(
-                    configuration.getToggleAssessmentModule(),
-                    configuration.getToggleDigitalLibrary(),
-                    configuration.getToggleDigitalRepository(),
-                    patternOrDefault(configuration.getPersonNationalIdRegularExpression()),
-                    patternOrDefault(configuration.getProjectNationalIdRegularExpression()),
-                    patternOrDefault(
-                        configuration.getOrganisationUnitNationalIdRegularExpression()),
-                    patternOrDefault(configuration.getDocumentNationalIdRegularExpression()),
-                    Objects.requireNonNullElse(configuration.getMetadataLicense(),
-                        DEFAULT_METADATA_LICENSE)))
+                configuration -> CrisContextInformationConverter.toDTO(configuration,
+                    isOrcidLoginConfigured(), DEFAULT_METADATA_LICENSE, DEFAULT_NATIONAL_ID_PATTERN))
             .orElseGet(this::readDefaultConfiguration);
     }
 
@@ -66,6 +68,7 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         configuration.setToggleAssessmentModule(dto.toggleAssessmentModule());
         configuration.setToggleDigitalLibrary(dto.toggleDigitalLibrary());
         configuration.setToggleDigitalRepository(dto.toggleDigitalRepository());
+        configuration.setToggleRegistration(dto.toggleRegistration());
         configuration.setPersonNationalIdRegularExpression(
             dto.personNationalIdRegularExpression());
         configuration.setProjectNationalIdRegularExpression(
@@ -77,7 +80,17 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         configuration.setMetadataLicense(dto.metadataLicense());
         save(configuration);
 
-        return dto;
+        return CrisContextInformationConverter.toDTO(configuration, isOrcidLoginConfigured(),
+            DEFAULT_METADATA_LICENSE, DEFAULT_NATIONAL_ID_PATTERN);
+    }
+
+    private boolean isOrcidLoginConfigured() {
+        return isCredentialConfigured(orcidClientId) && isCredentialConfigured(orcidClientSecret);
+    }
+
+    private boolean isCredentialConfigured(String credential) {
+        return StringUtil.valueExists(credential) &&
+            !UNCONFIGURED_OAUTH2_CREDENTIAL.equalsIgnoreCase(credential.trim());
     }
 
     private Optional<CrisContextInformation> findConfiguration() {
@@ -99,15 +112,10 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
     }
 
     private CrisContextInformationDTO readDefaultConfiguration() {
-        return new CrisContextInformationDTO(true, true, true,
+        return new CrisContextInformationDTO(
+            true, true, true, true,
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN,
-            DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_METADATA_LICENSE);
-    }
-
-    // Configurations stored before these fields existed hold nulls, treat them as unrestricted.
-    private String patternOrDefault(String pattern) {
-        return (Objects.isNull(pattern) || pattern.isBlank()) ? DEFAULT_NATIONAL_ID_PATTERN :
-            pattern;
+            DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_METADATA_LICENSE, isOrcidLoginConfigured());
     }
 
     private void validatePattern(String pattern, String entityName) {

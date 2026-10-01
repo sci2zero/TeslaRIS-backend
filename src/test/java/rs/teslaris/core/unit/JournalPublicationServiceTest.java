@@ -146,8 +146,8 @@ public class JournalPublicationServiceTest {
     @BeforeEach
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
-            new CrisContextInformationDTO(true, true, true,
-                ".*", ".*", ".*", ".*", License.CC0));
+            new CrisContextInformationDTO(true, true, true, false,
+                ".*", ".*", ".*", ".*", License.CC0, false));
         ReflectionTestUtils.setField(journalPublicationService, "documentApprovedByDefault", true);
     }
 
