@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -13,11 +14,10 @@ import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.repository.project.ProjectsRelationRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
 
-import java.util.Objects;
-
 @Service
 @RequiredArgsConstructor
-public class ProjectsRelationServiceImpl extends JPAServiceImpl<ProjectsRelation> implements ProjectsRelationService {
+public class ProjectsRelationServiceImpl extends JPAServiceImpl<ProjectsRelation>
+    implements ProjectsRelationService {
 
     private final ProjectsRelationRepository projectsRelationRepository;
 
@@ -38,16 +38,16 @@ public class ProjectsRelationServiceImpl extends JPAServiceImpl<ProjectsRelation
         relation.setDateFrom(dto.getDateFrom());
         relation.setDateTo(dto.getDateTo());
         relation.setSourceProjectDescription(
-                multilingualContentService.getMultilingualContent(
-                        dto.getSourceProjectDescription()));
+            multilingualContentService.getMultilingualContent(
+                dto.getSourceProjectDescription()));
         relation.setTargetProjectDescription(
-                multilingualContentService.getMultilingualContent(
-                        dto.getTargetProjectDescription()));
+            multilingualContentService.getMultilingualContent(
+                dto.getTargetProjectDescription()));
 
         relation.setSourceProject(project);
         if (Objects.nonNull(dto.getTargetProjectId())) {
             relation.setTargetProject(projectRepository.findById(dto.getTargetProjectId())
-                    .orElseThrow(() -> new NotFoundException("Target project does not exist.")));
+                .orElseThrow(() -> new NotFoundException("Target project does not exist.")));
         }
 
         // Adds saved relation entity with id != null (if this part is omitted the Set will treat

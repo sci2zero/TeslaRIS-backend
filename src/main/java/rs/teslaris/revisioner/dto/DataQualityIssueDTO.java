@@ -25,6 +25,8 @@ public record DataQualityIssueDTO(
 
     QualityDimension dimension,
 
+    String metric,
+
     IssueSeverity severity,
 
     boolean blocking,

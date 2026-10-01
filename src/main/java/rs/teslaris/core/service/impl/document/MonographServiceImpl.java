@@ -35,6 +35,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -102,6 +103,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 DocumentFileService documentFileService,
                                 CitationService citationService,
                                 ApplicationEventPublisher applicationEventPublisher,
+                                CrisContextInformationService crisContextInformationService,
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
@@ -120,15 +122,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 PublisherService publisherService,
                                 IndexBulkUpdateService indexBulkUpdateService,
                                 MonographPublicationRepository monographPublicationRepository) {
-
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            applicationEventPublisher, personContributionService, expressionTransformer,
-            eventService,
-            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService,
-            countryService);
+            applicationEventPublisher, crisContextInformationService, personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService, documentLookupService, countryService);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;
@@ -139,7 +138,6 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.indexBulkUpdateService = indexBulkUpdateService;
         this.monographPublicationRepository = monographPublicationRepository;
     }
-
 
     @Override
     public boolean exists(Integer id) {

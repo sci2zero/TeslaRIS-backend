@@ -4,6 +4,11 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,12 +43,6 @@ import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 import rs.teslaris.project.service.interfaces.funding.PersonFundingCallContributionService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -85,7 +84,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                                      List<FundingType> allowedTypes,
                                                      Integer programId,
                                                      Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedTypes,
+        return searchService.runQuery(
+            buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, allowedTypes,
                 programId), pageable, FundingCallIndex.class, "funding_call");
     }
 
@@ -215,14 +215,16 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             fundingCall.setFunder(fundingProgram.getFunder());
 
             // Added fundingCall dateFrom null check because there were no strict constraints in the model nor DTO
-            if (Objects.nonNull(fundingProgram.getDateFrom()) && Objects.nonNull(fundingCallDTO.getDateFrom()) &&
+            if (Objects.nonNull(fundingProgram.getDateFrom()) &&
+                Objects.nonNull(fundingCallDTO.getDateFrom()) &&
                 fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
                 throw new DateRangeException(
                     "fundingCallOpeningBeforeProgramOpeningMessage");
             }
 
             // Added fundingCall dateTo null check because there were no strict constraints in the model nor DTO
-            if (Objects.nonNull(fundingProgram.getDateTo()) && Objects.nonNull(fundingCallDTO.getDateTo()) &&
+            if (Objects.nonNull(fundingProgram.getDateTo()) &&
+                Objects.nonNull(fundingCallDTO.getDateTo()) &&
                 fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
                 throw new DateRangeException(
                     "fundingCallClosingAfterProgramClosingMessage");
@@ -340,12 +342,12 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     }
 
     private void indexFundingProgramFields(FundingCall fundingCall,
-                                   FundingCallIndex index) {
+                                           FundingCallIndex index) {
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                fundingCall.getFundingProgram().getName(), true);
+            fundingCall.getFundingProgram().getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -354,14 +356,14 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                fundingCall.getFundingProgram().getNameAbbreviation(), false);
+            fundingCall.getFundingProgram().getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setProgramNameSr(
-                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setProgramNameSrSortable(index.getProgramNameSr());
         index.setProgramNameOther(
-                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setProgramNameOtherSortable(index.getProgramNameOther());
 
         index.setProgramId(fundingCall.getFundingProgram().getId());
@@ -492,14 +494,14 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             if (onlyActive) {
                 var today = LocalDate.now().toString();
                 b.must(sb -> sb.bool(activeBool -> activeBool
-                        .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
-                        .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
                 ));
             }
 
             if (Objects.nonNull(programId)) {
                 b.must(sb -> sb.term(
-                        m -> m.field("program_id").value(programId)
+                    m -> m.field("program_id").value(programId)
                 ));
             }
 

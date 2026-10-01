@@ -13,6 +13,10 @@ import rs.teslaris.core.model.document.Document;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.nationalId = :nationalId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByNationalId(String nationalId, Integer id);
+
     @Query("SELECT d FROM Document d JOIN FETCH d.contributors WHERE d.id IN :ids")
     List<Document> findBulkDocuments(List<Integer> ids);
 

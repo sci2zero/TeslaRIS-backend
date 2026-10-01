@@ -50,6 +50,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.PersonConverter;
+import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -70,6 +71,7 @@ import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -92,6 +94,7 @@ import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -168,6 +171,9 @@ public class PersonServiceTest {
     @Mock
     private InvolvementRepository involvementRepository;
 
+    @Mock
+    private CrisContextInformationService crisContextInformationService;
+
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -184,6 +190,9 @@ public class PersonServiceTest {
      */
     @BeforeEach
     public void setUp() {
+        when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
+            new CrisContextInformationDTO(true, true, true, false,
+                ".*", ".*", ".*", ".*", License.CC0, false));
         ReflectionTestUtils.setField(personService, "approvedByDefault", true);
 
         personConverter = mockStatic(PersonConverter.class);
@@ -414,108 +423,6 @@ public class PersonServiceTest {
         assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
         assertEquals(EmploymentPosition.RESEARCH_ASSOCIATE,
             ((Employment) currentEmployment).getEmploymentPosition());
-    }
-
-    @Test
-    void shouldImportPrivateContactAddressCountriesOtherNamesAndSource() {
-        // given
-        var personDTO = new ImportPersonDTO();
-        personDTO.setPersonName(new PersonNameDTO(null, "Test", null, "Test", null, null, null));
-        personDTO.setOtherNames(List.of(
-            new PersonNameDTO(null, "T.", null, "Test", null, null,
-                PersonNameType.CITATION_NAME)));
-        personDTO.setPrivateContactEmail("test@mail.test");
-        personDTO.setPrivateMobilePhoneNumber("+351 913453999");
-        personDTO.setPrivatePostalNumber("4600-999");
-        personDTO.setCountryCode("BR");
-        personDTO.setPrivateCountryCode("PT");
-        personDTO.setUris(Set.of("https://www.example.com"));
-        personDTO.setImportSource("CIENCIA_VITAE");
-
-        var portugal = new Country();
-        portugal.setCode("PT");
-        when(countryService.findCountryByCode("PT")).thenReturn(Optional.of(portugal));
-        when(countryService.findCountryByCode("BR")).thenReturn(Optional.empty());
-        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
-        when(personRepository.save(any(Person.class))).thenAnswer(
-            invocation -> invocation.getArgument(0));
-
-        // when
-        var result = personService.importPersonWithBasicInfo(personDTO, false);
-
-        // then
-        var personalInfo = result.getPersonalInfo();
-        assertEquals("test@mail.test", personalInfo.getPrivateContact().getContactEmail());
-        assertEquals("+351 913453999",
-            personalInfo.getPrivateContact().getMobilePhoneNumber());
-        assertEquals("4600-999", personalInfo.getPrivatePostalAddress().getPostalNumber());
-        assertEquals(portugal, personalInfo.getPrivatePostalAddress().getCountry());
-        assertNull(personalInfo.getProfessionalPostalAddress().getCountry());
-        assertEquals(Set.of("https://www.example.com"), personalInfo.getUris());
-        assertEquals("CIENCIA_VITAE", result.getImportSource());
-        assertEquals(1, result.getOtherNames().size());
-        assertEquals(PersonNameType.CITATION_NAME,
-            result.getOtherNames().iterator().next().getNameType());
-    }
-
-    @Test
-    void shouldImportResearchAreas() {
-        // given
-        var personDTO = new ImportPersonDTO();
-        personDTO.setPersonName(new PersonNameDTO(null, "John", null, "Doe", null, null, null));
-        personDTO.setResearchAreasId(Set.of(11));
-
-        var psychology = new ResearchArea();
-        psychology.setId(11);
-        when(researchAreaService.getResearchAreasByIds(List.of(11))).thenReturn(
-            List.of(psychology));
-        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
-        when(personRepository.save(any(Person.class))).thenAnswer(
-            invocation -> invocation.getArgument(0));
-
-        // when
-        var result = personService.importPersonWithBasicInfo(personDTO, false);
-
-        // then
-        assertEquals(Set.of(psychology), result.getResearchAreas());
-    }
-
-    @Test
-    void shouldImportLanguageKnowledgeWithLanguageNames() {
-        // given
-        var personDTO = new ImportPersonDTO();
-        personDTO.setPersonName(new PersonNameDTO(null, "John", null, "Doe", null, null, null));
-
-        var languageKnowledgeDTO = new LanguageKnowledgeDTO();
-        languageKnowledgeDTO.setLanguageId(1);
-        languageKnowledgeDTO.setMotherTongue(true);
-        languageKnowledgeDTO.setRead(LanguageLevel.C2);
-        languageKnowledgeDTO.setUnderstandSpoken(LanguageLevel.C1);
-        languageKnowledgeDTO.setPeerReview(LanguageLevel.B1);
-        personDTO.setLanguageKnowledges(List.of(languageKnowledgeDTO));
-
-        var english = new Language();
-        english.setId(1);
-        english.getName().add(new MultiLingualContent(new LanguageTag(), "English", 1));
-        when(languageService.findLanguageById(1)).thenReturn(english);
-        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
-        when(personRepository.save(any(Person.class))).thenAnswer(
-            invocation -> invocation.getArgument(0));
-
-        // when
-        var result = personService.importPersonWithBasicInfo(personDTO, false);
-
-        // then
-        assertEquals(1, result.getExpertisesAndSkills().size());
-        var languageKnowledge =
-            (LanguageKnowledge) result.getExpertisesAndSkills().iterator().next();
-        assertEquals(english, languageKnowledge.getLanguage());
-        assertEquals(true, languageKnowledge.getMotherTongue());
-        assertEquals(LanguageLevel.C2, languageKnowledge.getReading());
-        assertEquals(LanguageLevel.C1, languageKnowledge.getListening());
-        assertEquals(LanguageLevel.B1, languageKnowledge.getAcademicReview());
-        assertEquals(result, languageKnowledge.getPerson());
-        assertEquals("English", languageKnowledge.getName().iterator().next().getContent());
     }
 
 

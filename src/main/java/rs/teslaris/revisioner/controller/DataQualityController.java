@@ -21,8 +21,9 @@ import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
-import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
+import rs.teslaris.revisioner.dto.MetricSummaryDTO;
+import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
 import rs.teslaris.revisioner.model.qualityassessment.IssueSeverity;
@@ -94,14 +95,15 @@ public class DataQualityController {
         @RequestParam(required = false) QualityDimension dimension,
         @RequestParam(required = false) IssueSeverity severity,
         @RequestParam(required = false) String constraintKey,
+        @RequestParam(required = false) String metric,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate assessmentDate,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false) Integer size,
         @RequestHeader("Authorization") String bearerToken) {
         return dataQualityService.findRepositoryIssues(resolveOrganisationUnitId(bearerToken),
-            profileName, target, dimension, severity, constraintKey, assessmentDate, cursor,
-            size);
+            profileName, target, dimension, severity, constraintKey, metric, assessmentDate,
+            cursor, size);
     }
 
     @GetMapping(value = "/issues/{entityType}/{entityId}",
@@ -118,13 +120,14 @@ public class DataQualityController {
                                               IssueSeverity severity,
                                               @RequestParam(required = false)
                                               String constraintKey,
+                                              @RequestParam(required = false) String metric,
                                               @RequestParam(required = false)
                                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                                               LocalDate assessmentDate,
                                               @RequestParam(required = false) String cursor,
                                               @RequestParam(required = false) Integer size) {
         return dataQualityService.findIssuesForEntity(entityType, entityId, profileName, target,
-            dimension, severity, constraintKey, assessmentDate, cursor, size);
+            dimension, severity, constraintKey, metric, assessmentDate, cursor, size);
     }
 
     @GetMapping(value = "/issue/{assessmentId}/{ruleKey}",
@@ -139,10 +142,19 @@ public class DataQualityController {
     @GetMapping(value = "/profiles/{profileName}/constraints",
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
-    public List<ConstraintSummaryDTO> listProfileConstraints(@PathVariable String profileName,
-                                                             @RequestParam(required = false)
-                                                             String target) {
-        return dataQualityService.listProfileConstraints(profileName, target);
+    public List<ConstraintSummaryDTO> listProfileConstraints(
+        @PathVariable String profileName,
+        @RequestParam(required = false) String target,
+        @RequestParam(required = false) QualityDimension dimension,
+        @RequestParam(required = false) String metric) {
+        return dataQualityService.listProfileConstraints(profileName, target, dimension, metric);
+    }
+
+    @GetMapping(value = "/profiles/{profileName}/metrics",
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    public List<MetricSummaryDTO> listProfileMetrics(@PathVariable String profileName) {
+        return dataQualityService.listProfileMetrics(profileName);
     }
 
     @GetMapping(value = "/profiles/names", produces = MediaType.APPLICATION_JSON_VALUE)

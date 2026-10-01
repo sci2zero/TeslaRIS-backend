@@ -39,11 +39,11 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.util.FundingPartFactory;
 
 @Service

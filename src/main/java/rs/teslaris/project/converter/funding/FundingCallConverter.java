@@ -1,5 +1,6 @@
 package rs.teslaris.project.converter.funding;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -7,8 +8,6 @@ import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.model.funding.FundingCall;
-
-import java.util.Objects;
 
 public class FundingCallConverter {
 
@@ -36,8 +35,10 @@ public class FundingCallConverter {
             dto.setMonetaryAmount(new MonetaryAmountDTO());
             dto.getMonetaryAmount().setAmount(fundingCall.getAmount().getAmount());
             dto.getMonetaryAmount().setCurrencyId(fundingCall.getAmount().getCurrency().getId());
-            dto.getMonetaryAmount().setCurrencyCode(fundingCall.getAmount().getCurrency().getCode());
-            dto.getMonetaryAmount().setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
+            dto.getMonetaryAmount()
+                .setCurrencyCode(fundingCall.getAmount().getCurrency().getCode());
+            dto.getMonetaryAmount()
+                .setCurrencySymbol(fundingCall.getAmount().getCurrency().getSymbol());
         }
 
         if (Objects.nonNull(fundingCall.getFunder())) {
@@ -64,7 +65,8 @@ public class FundingCallConverter {
             fileItem -> dto.getFileItems().add(DocumentFileConverter.toDTO(fileItem)));
 
         dto.setContributors(
-            PersonContributionConverter.fundingCallContributionToDTO(fundingCall.getContributors()));
+            PersonContributionConverter.fundingCallContributionToDTO(
+                fundingCall.getContributors()));
 
         return dto;
     }

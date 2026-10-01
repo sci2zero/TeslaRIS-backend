@@ -1,5 +1,7 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -14,13 +16,10 @@ import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.util.FundingPartFactory;
-import rs.teslaris.project.repository.funding.FundingPartRepository;
-
-import java.util.HashSet;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -49,43 +48,44 @@ public class OrganisationUnitProjectContributionServiceImpl
     }
 
     @Override
-    public OrganisationUnitProjectContribution createContribution(OrganisationUnitProjectContributionDTO dto, Project project) {
+    public OrganisationUnitProjectContribution createContribution(
+        OrganisationUnitProjectContributionDTO dto, Project project) {
         var contribution = new OrganisationUnitProjectContribution();
 
         if (Objects.nonNull(dto.getOrganisationUnitId())) {
             contribution.setOrganisationUnit(
-                    organisationUnitService.findOne(dto.getOrganisationUnitId()));
+                organisationUnitService.findOne(dto.getOrganisationUnitId()));
         } else {
             contribution.setDisplayOrganisationUnit(
-                    multilingualContentService.getMultilingualContent(
-                            dto.getDisplayOrganisationUnit()));
+                multilingualContentService.getMultilingualContent(
+                    dto.getDisplayOrganisationUnit()));
         }
 
         contribution.setContributionType(dto.getContributionType());
         contribution.setContributionDescription(
-                multilingualContentService.getMultilingualContent(
-                        dto.getContributionDescription()));
+            multilingualContentService.getMultilingualContent(
+                dto.getContributionDescription()));
         contribution.setOrderNumber(dto.getOrderNumber());
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         contribution.setDateFrom(dto.getDateFrom());
         contribution.setDateTo(dto.getDateTo());
         contribution.setUris(dto.getUris());
         contribution.setMainContributor(
-                Objects.requireNonNullElse(dto.getIsMainContributor(), false));
+            Objects.requireNonNullElse(dto.getIsMainContributor(), false));
         contribution.setFavorite(Objects.requireNonNullElse(dto.getFavorite(), false));
 
         if (Objects.nonNull(dto.getContactPersonId())) {
             contribution.setContactPerson(
-                    personService.findOne(dto.getContactPersonId()));
+                personService.findOne(dto.getContactPersonId()));
         }
 
         contribution.setDisplayProject(
-                multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
+            multilingualContentService.getMultilingualContent(dto.getDisplayProject()));
 
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
-                contribution.getFundingParts().add(fundingPartRepository.save(
-                        buildContributionFundingPart(partDto, contribution))));
+            contribution.getFundingParts().add(fundingPartRepository.save(
+                buildContributionFundingPart(partDto, contribution))));
 
         contribution.setProject(project);
 

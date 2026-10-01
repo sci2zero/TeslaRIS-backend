@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.harvest;
 
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class ScopusConverter {
                                                                boolean onlyLoadableTypes) {
         var document = new DocumentImport();
         document.setSource("SCOPUS");
+        document.setScopusId(extractScopusId(entry.identifier()));
 
         if (onlyLoadableTypes) {
             deducePublicationType(entry, document, scopusImportUtility);
@@ -40,9 +42,7 @@ public class ScopusConverter {
             }
         }
 
-        setCommonFields(entry, document);
-
-        document.setScopusId(entry.identifier().split(":")[1]); // format is SCOPUS_ID:XXX
+        setCommonFields(entry, document, scopusImportUtility);
 
         if (Objects.nonNull(entry.eIssn())) {
             document.setEIssn(entry.eIssn().substring(0, 4) + "-" + entry.eIssn().substring(4));
@@ -83,6 +83,19 @@ public class ScopusConverter {
         return Optional.of(document);
     }
 
+    /**
+     * Identifiers are formatted as {@code SCOPUS_ID:XXX}, while the APIs expect the bare id.
+     */
+    @Nullable
+    private static String extractScopusId(@Nullable String identifier) {
+        if (!StringUtil.valueExists(identifier)) {
+            return null;
+        }
+
+        var separatorIndex = identifier.indexOf(':');
+        return separatorIndex < 0 ? identifier : identifier.substring(separatorIndex + 1);
+    }
+
     private static void deducePublicationType(ScopusImportUtility.Entry entry,
                                               DocumentImport document,
                                               ScopusImportUtility scopusImportUtility) {
@@ -118,7 +131,7 @@ public class ScopusConverter {
                 document.setProceedingsPublicationType(
                     ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
 
-                var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
+                var abstractData = scopusImportUtility.getAbstractData(document.getScopusId());
                 if (Objects.isNull(abstractData)) {
                     log.warn("Abstract data unavailable for {}, event information cannot be " +
                         "resolved.", entry.identifier());
@@ -129,7 +142,8 @@ public class ScopusConverter {
     }
 
     protected static void setCommonFields(ScopusImportUtility.Entry entry,
-                                          DocumentImport document) {
+                                          DocumentImport document,
+                                          ScopusImportUtility scopusImportUtility) {
         entry.links().forEach(link -> {
             if (link.href().contains("api.") || link.href().contains("citedby")) {
                 return;
@@ -160,7 +174,7 @@ public class ScopusConverter {
                     entry.authKeywords().replace("|", "\n").replace(" ", "")));
         }
 
-        setContributionInformation(entry, document);
+        setContributionInformation(entry, document, scopusImportUtility);
     }
 
     @NotNull
@@ -204,8 +218,11 @@ public class ScopusConverter {
     }
 
     private static void setContributionInformation(ScopusImportUtility.Entry entry,
-                                                   DocumentImport document) {
-        entry.authors().forEach(author -> {
+                                                   DocumentImport document,
+                                                   ScopusImportUtility scopusImportUtility) {
+        var source = resolveFullAuthorList(entry, document, scopusImportUtility);
+
+        source.authors().forEach(author -> {
             var contribution = new PersonDocumentContribution();
             contribution.setContributionType(DocumentContributionType.AUTHOR);
             contribution.setOrderNumber(Integer.parseInt(author.seq()));
@@ -215,7 +232,7 @@ public class ScopusConverter {
 
             if (Objects.nonNull(author.afid())) {
                 author.afid().forEach(authorAfid -> {
-                    var authorAffiliation = entry.affiliations().stream()
+                    var authorAffiliation = source.affiliations().stream()
                         .filter(affiliation -> authorAfid.id().equals(affiliation.afid()))
                         .findFirst();
 
@@ -235,6 +252,48 @@ public class ScopusConverter {
 
             document.getContributions().add(contribution);
         });
+    }
+
+    /**
+     * The Scopus search API caps the {@code author} list at 100 entries,
+     * so fall back to abstract retrieval, which returns all of them.
+     */
+    private static ScopusImportUtility.Entry resolveFullAuthorList(
+        ScopusImportUtility.Entry entry, DocumentImport document,
+        ScopusImportUtility scopusImportUtility) {
+        if (!isAuthorListTruncated(entry)) {
+            return entry;
+        }
+
+        var fullEntry =
+            convertToEntry(scopusImportUtility.getAbstractData(document.getScopusId()));
+
+        if (Objects.nonNull(fullEntry) && Objects.nonNull(fullEntry.authors()) &&
+            fullEntry.authors().size() > entry.authors().size()) {
+
+            log.info("Fetched full author list for {} from abstract data with {} authors.",
+                entry.identifier(), entry.authorCount().total());
+
+            return fullEntry;
+        }
+
+        log.warn("Author list for {} is truncated at {} of {} authors, full list is unavailable.",
+            entry.identifier(), entry.authors().size(), entry.authorCount().total());
+
+        return entry;
+    }
+
+    private static boolean isAuthorListTruncated(ScopusImportUtility.Entry entry) {
+        if (Objects.isNull(entry.authors()) || Objects.isNull(entry.authorCount()) ||
+            Objects.isNull(entry.authorCount().total())) {
+            return false;
+        }
+
+        try {
+            return Integer.parseInt(entry.authorCount().total()) > entry.authors().size();
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private static void setConferenceInfo(ScopusImportUtility.AbstractDataResponse abstractData,

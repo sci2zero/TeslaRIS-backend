@@ -21,10 +21,10 @@ import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.ProjectDocument;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.util.FundingPartFactory;
 
 @Service

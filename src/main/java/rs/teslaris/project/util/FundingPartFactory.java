@@ -37,7 +37,7 @@ public class FundingPartFactory {
     private final PersonProjectContributionRepository personProjectContributionRepository;
 
     private final OrganisationUnitProjectContributionRepository
-            organisationUnitProjectContributionRepository;
+        organisationUnitProjectContributionRepository;
 
     public FundingPart buildFundingPart(FundingPartDTO dto) {
         var fundingPart = new FundingPart();
@@ -61,18 +61,18 @@ public class FundingPartFactory {
 
     private void setBaseFields(FundingPart fundingPart, FundingPartDTO dto) {
         fundingPart.setDescription(
-                multilingualContentService.getMultilingualContent(dto.getDescription()));
+            multilingualContentService.getMultilingualContent(dto.getDescription()));
 
         if (Objects.isNull(fundingPart.getAmount())) {
             fundingPart.setAmount(new MonetaryAmount());
         }
 
         fundingPart.getAmount()
-                .setCurrency(currencyService.findOne(dto.getAmount().getCurrencyId()));
+            .setCurrency(currencyService.findOne(dto.getAmount().getCurrencyId()));
         fundingPart.getAmount().setAmount(dto.getAmount().getAmount());
 
         fundingPart.setFunding(
-                resolve(dto.getFundingId(), fundingRepository::findById, "Funding"));
+            resolve(dto.getFundingId(), fundingRepository::findById, "Funding"));
     }
 
     private void setTarget(FundingPart fundingPart, FundingPartDTO dto) {
@@ -80,21 +80,21 @@ public class FundingPartFactory {
         // standalone endpoint has always used.
         if (Objects.nonNull(dto.getProjectEventId())) {
             fundingPart.setProjectEvent(resolve(dto.getProjectEventId(),
-                    projectEventRepository::findById, "ProjectEvent"));
+                projectEventRepository::findById, "ProjectEvent"));
         } else if (Objects.nonNull(dto.getFundingApplicationId())) {
             fundingPart.setFundingApplication(resolve(dto.getFundingApplicationId(),
-                    fundingApplicationRepository::findById, "FundingApplication"));
+                fundingApplicationRepository::findById, "FundingApplication"));
         } else if (Objects.nonNull(dto.getProjectDocumentId())) {
             fundingPart.setProjectDocument(resolve(dto.getProjectDocumentId(),
-                    projectDocumentRepository::findById, "ProjectDocument"));
+                projectDocumentRepository::findById, "ProjectDocument"));
         } else if (Objects.nonNull(dto.getPersonProjectContributionId())) {
             fundingPart.setPersonContribution(resolve(dto.getPersonProjectContributionId(),
-                    personProjectContributionRepository::findById, "PersonProjectContribution"));
+                personProjectContributionRepository::findById, "PersonProjectContribution"));
         } else if (Objects.nonNull(dto.getOrganisationUnitProjectContributionId())) {
             fundingPart.setOrganisationUnitContribution(
-                    resolve(dto.getOrganisationUnitProjectContributionId(),
-                            organisationUnitProjectContributionRepository::findById,
-                            "OrganisationUnitProjectContribution"));
+                resolve(dto.getOrganisationUnitProjectContributionId(),
+                    organisationUnitProjectContributionRepository::findById,
+                    "OrganisationUnitProjectContribution"));
         }
     }
 
@@ -112,6 +112,6 @@ public class FundingPartFactory {
         }
 
         return lookup.apply(id).orElseThrow(() -> new NotFoundException(
-                "Cannot find entity " + entityName + " with id: " + id));
+            "Cannot find entity " + entityName + " with id: " + id));
     }
 }

@@ -1,16 +1,15 @@
 package rs.teslaris.project.converter.project;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.project.converter.funding.FundingPartConverter;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 
-import java.util.Objects;
-
 public class OrganisationUnitProjectContributionConverter {
 
     public static OrganisationUnitProjectContributionDTO toDTO(
-            OrganisationUnitProjectContribution organisation) {
+        OrganisationUnitProjectContribution organisation) {
         var dto = new OrganisationUnitProjectContributionDTO();
 
         dto.setId(organisation.getId());
@@ -18,13 +17,13 @@ public class OrganisationUnitProjectContributionConverter {
         if (Objects.nonNull(organisation.getOrganisationUnit())) {
             dto.setOrganisationUnitId(organisation.getOrganisationUnit().getId());
             dto.setOrganisationUnitName(MultilingualContentConverter.getMultilingualContentDTO(
-                    organisation.getOrganisationUnit().getName()));
+                organisation.getOrganisationUnit().getName()));
         }
 
         dto.setDisplayOrganisationUnit(MultilingualContentConverter.getMultilingualContentDTO(
-                organisation.getDisplayOrganisationUnit()));
+            organisation.getDisplayOrganisationUnit()));
         dto.setContributionDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                organisation.getContributionDescription()));
+            organisation.getContributionDescription()));
         dto.setContributionType(organisation.getContributionType());
         dto.setOrderNumber(organisation.getOrderNumber());
         dto.setDateFrom(organisation.getDateFrom());
@@ -38,10 +37,10 @@ public class OrganisationUnitProjectContributionConverter {
         }
 
         organisation.getFundingParts().forEach(fundingPart ->
-                dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
+            dto.getFundingParts().add(FundingPartConverter.toDTO(fundingPart)));
 
         dto.setDisplayProject(MultilingualContentConverter.getMultilingualContentDTO(
-                organisation.getDisplayProject()));
+            organisation.getDisplayProject()));
 
         return dto;
     }

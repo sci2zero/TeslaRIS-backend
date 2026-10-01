@@ -74,6 +74,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -172,6 +173,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentFileService documentFileService,
                              CitationService citationService,
                              ApplicationEventPublisher applicationEventPublisher,
+                             CrisContextInformationService crisContextInformationService,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -194,12 +196,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            applicationEventPublisher, personContributionService, expressionTransformer,
-            eventService,
-            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService,
-            countryService);
+            applicationEventPublisher, crisContextInformationService, personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService, documentLookupService, countryService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
