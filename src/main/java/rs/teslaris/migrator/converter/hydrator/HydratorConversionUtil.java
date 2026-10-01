@@ -1,14 +1,20 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.text.Normalizer;
+import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +27,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.util.InvalidSourceValueException;
 
 /**
  * Shared conversion helpers for the hydrator source: language tags, dates, and the synthetic keys
@@ -162,6 +169,39 @@ public class HydratorConversionUtil {
             .orElse(null);
     }
 
+    /**
+     * Research area ids for curriculum classifications, in source order and without duplicates.
+     * Unmatched classifications and those mapped to a broader area are reported through
+     * {@code dropped}.
+     */
+    public Set<Integer> researchAreaIds(
+        Collection<HydratorCVModel.ResearchClassification> classifications,
+        Consumer<String> dropped) {
+        var researchAreas = new LinkedHashSet<Integer>();
+
+        classifications.stream()
+            .filter(classification -> Objects.nonNull(classification) &&
+                Objects.nonNull(classification.value()) && !classification.value().isBlank())
+            .forEach(classification -> {
+                var match = researchArea(classification.value());
+
+                if (Objects.isNull(match)) {
+                    dropped.accept("research classification '" + classification.code() +
+                        "' (" + classification.value() + ") has no research area");
+                    return;
+                }
+
+                if (match.broader()) {
+                    dropped.accept("research classification '" + classification.value() +
+                        "' mapped to broader area '" + match.name() + "'");
+                }
+
+                researchAreas.add(match.id());
+            });
+
+        return researchAreas;
+    }
+
     public void clearResearchAreaCache() {
         researchAreaIdsByName = null;
         researchAreaMatches.clear();
@@ -234,6 +274,48 @@ public class HydratorConversionUtil {
 
         return new FlexibleDateDTO(year, parseInteger(dateInfo.month()),
             parseInteger(dateInfo.day()), null);
+    }
+
+    /**
+     * A date without a year is treated as absent and yields {@code null}; a missing month or day
+     * defaults to 1. A value that is present but cannot form a date (unparsable part, day without
+     * month, month 13, February 30th...) is rejected rather than guessed, so the item fails and the
+     * source can be corrected.
+     *
+     * @throws InvalidSourceValueException when the date is present but invalid
+     */
+    public LocalDate localDate(HydratorCVModel.DateInfo dateInfo) {
+        if (Objects.isNull(dateInfo) || isBlank(dateInfo.year())) {
+            return null;
+        }
+
+        var year = parseInteger(dateInfo.year());
+        var month = parseInteger(dateInfo.month());
+        var day = parseInteger(dateInfo.day());
+
+        if (Objects.isNull(year) ||
+            (!isBlank(dateInfo.month()) && Objects.isNull(month)) ||
+            (!isBlank(dateInfo.day()) && Objects.isNull(day)) ||
+            (Objects.isNull(month) && Objects.nonNull(day))) {
+            throw invalidDate(dateInfo);
+        }
+
+        try {
+            return LocalDate.of(year, Objects.requireNonNullElse(month, 1),
+                Objects.requireNonNullElse(day, 1));
+        } catch (DateTimeException e) {
+            throw invalidDate(dateInfo);
+        }
+    }
+
+    private InvalidSourceValueException invalidDate(HydratorCVModel.DateInfo dateInfo) {
+        return new InvalidSourceValueException(String.format(
+            "invalid date (year='%s', month='%s', day='%s')",
+            dateInfo.year(), dateInfo.month(), dateInfo.day()));
+    }
+
+    private boolean isBlank(String value) {
+        return Objects.isNull(value) || value.isBlank();
     }
 
     public Integer parseInteger(String value) {

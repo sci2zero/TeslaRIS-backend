@@ -27,6 +27,7 @@ public class HydratorCVModel {
         String lastModifiedDate,
         IdentifyingInfo identifyingInfo,
         Employments employments,
+        Distinctions distinctions,
         Outputs outputs
     ) {
     }
@@ -144,6 +145,13 @@ public class HydratorCVModel {
     public record ResearchClassification(
         String code,
         String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ResearchClassifications(
+        Integer total,
+        List<ResearchClassification> researchClassification
     ) {
     }
 
@@ -272,6 +280,37 @@ public class HydratorCVModel {
         CodeValue speak,
         CodeValue understandSpoken,
         CodeValue peerReview
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Distinctions(
+        Integer total,
+        List<Distinction> distinction
+    ) {
+    }
+
+    /**
+     * {@code effectiveDate} is a bare year string, unlike the date triples used elsewhere.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Distinction(
+        String id,
+        String privacyLevel,
+        DistinctionType distinctionType,
+        String name,
+        String effectiveDate,
+        DateInfo endDate,
+        String description,
+        Keywords keywords,
+        ResearchClassifications researchClassifications
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DistinctionType(
+        String code,
+        String type
     ) {
     }
 

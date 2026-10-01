@@ -16,7 +16,9 @@ import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
+import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.pipeline.FailureHandler;
@@ -33,8 +35,10 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  * <p>
  * Passes, in order:
  * <ol>
- *     <li>{@code ORGANISATION_UNIT}, {@code PERSON}, {@code PERSON_EMPLOYMENT} - can also be run as
- *     one traversal through the combined entities pipeline;</li>
+ *     <li>{@code ORGANISATION_UNIT};</li>
+ *     <li>{@code PERSON} - each person is followed by its prizes in the same traversal; a request
+ *     for {@code PERSON_PRIZE} alone runs this pipeline filtered to prizes;</li>
+ *     <li>{@code PERSON_EMPLOYMENT};</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
  * </ol>
  */
@@ -52,9 +56,13 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorEmploymentExtractor employmentExtractor;
 
+    private final HydratorPrizeExtractor prizeExtractor;
+
     private final HydratorOutputRouter outputRouter;
 
     private final EmploymentEntityCreator employmentEntityCreator;
+
+    private final PrizeEntityCreator prizeEntityCreator;
 
     private final PersonMergeFailureHandler personMergeFailureHandler;
 
@@ -110,6 +118,10 @@ public class HydratorPipelineConfiguration {
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> personRouter() {
+        return ItemRouter.ordered(List.of(personMapping(), prizeRouter()));
+    }
+
+    private ItemRouter<HydratorCVModel.Curriculum> personMapping() {
         return new SimpleMapping<>(
             MigrationEntityType.PERSON,
             RecordExtractor.of(personConverter),
@@ -117,6 +129,15 @@ public class HydratorPipelineConfiguration {
                 personService::importPersonWithBasicInfo, Person::getId),
             personMergeFailureHandler,
             (record, dto) -> record.id());
+    }
+
+    private ItemRouter<HydratorCVModel.Curriculum> prizeRouter() {
+        return new SimpleMapping<>(
+            MigrationEntityType.PERSON_PRIZE,
+            prizeExtractor,
+            prizeEntityCreator,
+            FailureHandler.noOp(),
+            prizeExtractor::keyOf);
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> employmentRouter() {

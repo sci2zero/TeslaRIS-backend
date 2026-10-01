@@ -548,7 +548,7 @@ public class DbInitializer implements ApplicationRunner {
             .registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-//                    skosLoader.loadResearchAreas();
+                    skosLoader.loadResearchAreas();
                     reindexService
                         .reindexDatabase(Arrays.asList(EntityType.values()),
                             false, null);
