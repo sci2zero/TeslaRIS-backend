@@ -339,8 +339,9 @@ public class ReportingServiceImpl implements ReportingService {
         var userOptional = userRepository.findByIdWithOrganisationUnit(userId);
 
         userOptional.ifPresent((user) -> {
-            if (user.getAuthority().getAuthority().equals(UserRole.ADMIN.name())) {
-                return;
+            if (user.getAuthority().getAuthority().equals(UserRole.ADMIN.name()) ||
+                Objects.isNull(user.getOrganisationUnit())) {
+                return; // Not bound to an institution, so not restricted to one either.
             }
 
             if (!commissionIds.stream().map(userRepository::findOUIdForCommission).toList()

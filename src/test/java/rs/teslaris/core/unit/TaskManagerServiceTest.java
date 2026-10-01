@@ -107,6 +107,7 @@ class TaskManagerServiceTest {
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(userService.findOrganisationUnitIdForUser(1)).thenReturn(1);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
                 .thenReturn(List.of(1)); // Assuming sub-OU structure
         }
@@ -153,10 +154,12 @@ class TaskManagerServiceTest {
 
         if (isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(10);
+            when(userService.findOrganisationUnitIdForUser(1)).thenReturn(10);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
                 .thenReturn(List.of(10, 1, 2));
         } else {
             when(userService.getUserOrganisationUnitId(2)).thenReturn(5);
+            when(userService.findOrganisationUnitIdForUser(2)).thenReturn(5);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5))
                 .thenReturn(List.of(5, 6, 2));
         }
@@ -203,6 +206,7 @@ class TaskManagerServiceTest {
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(userService.findOrganisationUnitIdForUser(1)).thenReturn(1);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
                 .thenReturn(List.of(1));
         }
@@ -245,6 +249,7 @@ class TaskManagerServiceTest {
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(userService.findOrganisationUnitIdForUser(1)).thenReturn(1);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
                 .thenReturn(List.of(1));
         }
@@ -287,6 +292,7 @@ class TaskManagerServiceTest {
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(userService.findOrganisationUnitIdForUser(1)).thenReturn(1);
             when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
                 .thenReturn(List.of(1));
         }

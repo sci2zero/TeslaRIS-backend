@@ -121,6 +121,13 @@ import rs.teslaris.core.util.session.PasswordUtil;
 @Slf4j
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
+    /**
+     * Roles that may be registered without an employment institution, in which case they operate
+     * across the whole repository instead of a single sub-hierarchy.
+     */
+    private static final Set<UserRole> ROLES_WITH_OPTIONAL_INSTITUTION =
+        Set.of(UserRole.VICE_DEAN_FOR_SCIENCE, UserRole.INSTITUTIONAL_EDITOR);
+
     private final MessageSource messageSource;
 
     private final JwtUtil tokenUtil;
@@ -221,10 +228,24 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Integer findOrganisationUnitIdForUser(Integer userId) {
+        return userRepository.findOrganisationUnitIdForUser(userId);
+    }
+
+    @Override
     public int getUserOrganisationUnitId(Integer userId) {
-        return userRepository.findByIdWithOrganisationUnit(userId)
+        var organisationUnit = userRepository.findByIdWithOrganisationUnit(userId)
             .orElseThrow(() -> new NotFoundException("User with this ID does not exist."))
-            .getOrganisationUnit().getId();
+            .getOrganisationUnit();
+
+        // Operations that are keyed by an institution rather than merely filtered by one cannot
+        // be carried out without one, so they are refused instead of silently widening in scope.
+        if (Objects.isNull(organisationUnit)) {
+            throw new CantEditException("noInstitutionBoundToAccountMessage");
+        }
+
+        return organisationUnit.getId();
     }
 
     @Override
@@ -617,6 +638,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
                                             UserRole userRole) throws NoSuchAlgorithmException {
+        if (Objects.isNull(registrationRequest.getOrganisationUnitId()) &&
+            !ROLES_WITH_OPTIONAL_INSTITUTION.contains(userRole)) {
+            throw new IllegalArgumentException("Organisation unit ID cannot be null.");
+        }
+
         var authorityName = userRole.toString();
         return registerUser(
             registrationRequest.getEmail(),
@@ -653,15 +679,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
-        var checkCrisConfig =
-            !List.of(UserRole.INSTITUTIONAL_LIBRARIAN.name(), UserRole.HEAD_OF_LIBRARY.name(),
-                UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name()).contains(authorityName);
-        validateInstitutionClientStatus(organisationUnitId, email, checkCrisConfig);
+        // Users without an institution are not bound to one, so there is no client status or
+        // e-mail domain to validate against.
+        if (Objects.nonNull(organisationUnitId)) {
+            var checkCrisConfig =
+                !List.of(UserRole.INSTITUTIONAL_LIBRARIAN.name(), UserRole.HEAD_OF_LIBRARY.name(),
+                    UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name()).contains(authorityName);
+            validateInstitutionClientStatus(organisationUnitId, email, checkCrisConfig);
+        }
 
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        var organisationUnit = organisationUnitService.findOne(organisationUnitId);
+        var organisationUnit = Objects.nonNull(organisationUnitId)
+            ? organisationUnitService.findOne(organisationUnitId)
+            : null;
         var commission =
             (Objects.nonNull(commissionId)) ? commissionRepository.findById(commissionId)
                 .orElseThrow(() -> new NotFoundException(

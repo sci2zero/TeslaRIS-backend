@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -82,8 +83,14 @@ public class DataQualityEditCheckAspect {
                 // they belong to rather than its ancestors - so the user's sub-hierarchy is what
                 // decides, otherwise an editor of a faculty could not open a record of its own
                 // department.
-                var scopeIds = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                    userService.getUserOrganisationUnitId(userId));
+                var institutionId = userService.findOrganisationUnitIdForUser(userId);
+
+                if (Objects.isNull(institutionId)) {
+                    break; // Not bound to an institution, so not restricted to one either.
+                }
+
+                var scopeIds =
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
 
                 if (Collections.disjoint(assessment.getOrganisationUnitIds(), scopeIds)) {
                     throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");

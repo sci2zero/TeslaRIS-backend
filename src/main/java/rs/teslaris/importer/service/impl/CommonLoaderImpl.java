@@ -507,6 +507,10 @@ public class CommonLoaderImpl implements CommonLoader {
             return false;
         }
 
+        if (Objects.isNull(user.getOrganisationUnit())) {
+            return true; // Not bound to an institution, so not restricted to one either.
+        }
+
         var institutionIds = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
             user.getOrganisationUnit().getId());
 

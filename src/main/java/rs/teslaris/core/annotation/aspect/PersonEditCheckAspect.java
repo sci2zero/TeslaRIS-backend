@@ -3,6 +3,7 @@ package rs.teslaris.core.annotation.aspect;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -81,8 +82,13 @@ public class PersonEditCheckAspect {
             return;
         }
 
+        var editorInstitution = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(editorInstitution)) {
+            return; // Not bound to an institution, so not restricted to one either.
+        }
+
         var researcherEmploymentInstitution = getEmploymentInstitutionFromDTO(joinPoint);
-        var editorInstitution = userService.getUserOrganisationUnitId(userId);
         var allPossibleInstitutions =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(editorInstitution);
 
@@ -102,8 +108,16 @@ public class PersonEditCheckAspect {
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
-                if (!personService.isPersonEmployedInOrganisationUnit(personId,
-                    userService.getUserOrganisationUnitId(userId)) || assessmentCheck) {
+                var editorInstitution = userService.findOrganisationUnitIdForUser(userId);
+
+                // Not bound to an institution, so not restricted to one either.
+                if (Objects.nonNull(editorInstitution) &&
+                    !personService.isPersonEmployedInOrganisationUnit(personId,
+                        editorInstitution)) {
+                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+                }
+
+                if (assessmentCheck) {
                     throw new CantEditException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;

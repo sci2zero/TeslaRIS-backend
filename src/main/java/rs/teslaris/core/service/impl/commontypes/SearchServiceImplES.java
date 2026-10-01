@@ -23,6 +23,7 @@ import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilterBuilder;
+import org.springframework.data.elasticsearch.core.query.SourceFilter;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -63,24 +64,28 @@ public class SearchServiceImplES<T> implements SearchService<T> {
     @Override
     public Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz,
                                         String indexName) {
-        return runRegularQuery(query, pageable, clazz, indexName, false);
+        return runRegularQuery(query, pageable, clazz, indexName, false, List.of());
+    }
+
+    @Override
+    public Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz,
+                                        String indexName, List<String> sourceFields) {
+        return runRegularQuery(query, pageable, clazz, indexName, false, sourceFields);
     }
 
     private Page<T> runRegularQuery(Query query, Pageable pageable, Class<T> clazz,
                                     String indexName) {
-        return runRegularQuery(query, pageable, clazz, indexName, true);
+        return runRegularQuery(query, pageable, clazz, indexName, true, List.of());
     }
 
     private Page<T> runRegularQuery(Query query, Pageable pageable, Class<T> clazz,
-                                    String indexName, boolean trackTotalHits) {
+                                    String indexName, boolean trackTotalHits,
+                                    List<String> sourceFields) {
         var searchQueryBuilder = new NativeQueryBuilder()
             .withQuery(query)
             .withPageable(pageable)
             .withTrackTotalHits(trackTotalHits)
-            .withSourceFilter(new FetchSourceFilterBuilder()
-                .withExcludes(!indexesExcludedFromFieldOmission.contains(indexName) ?
-                    fieldsToOmit.toArray(new String[0]) : new String[] {})
-                .build());
+            .withSourceFilter(sourceFilter(indexName, sourceFields));
 
         var searchQuery = searchQueryBuilder.build();
         var searchHits =
@@ -88,6 +93,20 @@ public class SearchServiceImplES<T> implements SearchService<T> {
         var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
 
         return (Page<T>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+    }
+
+    // Named fields are read on their own; otherwise the index-wide omissions apply as before.
+    private SourceFilter sourceFilter(String indexName, List<String> sourceFields) {
+        if (!sourceFields.isEmpty()) {
+            return new FetchSourceFilterBuilder()
+                .withIncludes(sourceFields.toArray(new String[0]))
+                .build();
+        }
+
+        return new FetchSourceFilterBuilder()
+            .withExcludes(!indexesExcludedFromFieldOmission.contains(indexName) ?
+                fieldsToOmit.toArray(new String[0]) : new String[] {})
+            .build();
     }
 
     private Page<T> runSearchAfterSequential(Query query, Pageable pageable, Class<T> clazz,

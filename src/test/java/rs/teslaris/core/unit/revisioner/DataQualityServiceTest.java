@@ -327,7 +327,7 @@ public class DataQualityServiceTest {
     private String capturedScanQuery() {
         var captor = ArgumentCaptor.forClass(Query.class);
         verify(searchService, atLeastOnce()).runQueryWithoutTotal(captor.capture(), any(),
-            eq(DataQualityAssessmentIndex.class), anyString());
+            eq(DataQualityAssessmentIndex.class), anyString(), any());
 
         return captor.getValue().toString();
     }
@@ -393,7 +393,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(2);
 
@@ -436,7 +436,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -476,7 +476,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -514,7 +514,7 @@ public class DataQualityServiceTest {
     public void shouldResumeAfterTheCursorRow() {
         // given (two records, each contributing one issue)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")))));
 
@@ -543,7 +543,7 @@ public class DataQualityServiceTest {
     public void shouldResumeInsideARecordWithSeveralIssues() {
         // given (one record with three issues, served one per page)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document",
                 List.of("titleMissing", "doiNotResolvable", "abstractMissing")))));
 
@@ -578,7 +578,7 @@ public class DataQualityServiceTest {
     public void shouldNotOfferACursorWhenThePageIsExactlyTheLastRows() {
         // given (two issues, page size two)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")))));
 
@@ -601,7 +601,7 @@ public class DataQualityServiceTest {
     public void shouldClampThePageSize() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")))));
 
         try (var configurationLoader = mockStatic(
@@ -625,7 +625,7 @@ public class DataQualityServiceTest {
     public void shouldListTheIssuesCurrentOnTheRequestedDay() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -649,7 +649,7 @@ public class DataQualityServiceTest {
     public void shouldListTheLatestIssuesWhenNoDayIsRequested() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -677,7 +677,7 @@ public class DataQualityServiceTest {
         person.setEntityType(PERSON_ENTITY_TYPE);
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(document, person)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(document, person)));
         stubIssueTotal(4);
 
         try (var configurationLoader = mockStatic(
@@ -721,7 +721,7 @@ public class DataQualityServiceTest {
     public void shouldListRepositoryIssuesWithoutAnEntityScope() {
         // given (an admin: no unit, so no scope clause at all)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")))));
 
         try (var configurationLoader = mockStatic(
@@ -750,7 +750,7 @@ public class DataQualityServiceTest {
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
             .thenReturn(List.of(7, 8, 9));
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -790,7 +790,7 @@ public class DataQualityServiceTest {
     public void shouldRenderOnlyTheIssuesThatLandInTheWindow() {
         // given (three records, each contributing one issue)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")),
             assessmentIndex(3, "Document", List.of("titleMissing")))));
@@ -827,7 +827,7 @@ public class DataQualityServiceTest {
     public void shouldResolveApplicableRuleKeysOncePerProfileVersion() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")),
             assessmentIndex(3, "Document", List.of("titleMissing")))));
@@ -855,7 +855,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -1985,11 +1985,60 @@ public class DataQualityServiceTest {
     }
 
     @Test
+    public void shouldKeepDocumentsCarryingNoneOfTheRequestedRulesOutOfTheScan() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+        stubIssueTotal(1);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(new Pair<>("PTCRIS", "1.0.0"))));
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                "titleMissing", null, null, null, 10);
+
+            // then (the constraint reaches Elasticsearch instead of filtering fetched documents)
+            var query = capturedScanQuery();
+            assertTrue(query.contains("failed_rule_keys"));
+            assertTrue(query.contains("titleMissing"));
+        }
+    }
+
+    @Test
+    public void shouldNotPrefilterRuleKeysWhenNothingNarrowsTheRows() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+        stubIssueTotal(1);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                null, null, null, null, 10);
+
+            // then (every assessment in scope yields rows, so the extra clause would only cost)
+            assertFalse(capturedScanQuery().contains("failed_rule_keys"));
+        }
+    }
+
+    @Test
     public void shouldNarrowIssuesToTheRequestedMetric() {
         // given
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
         stubIssueTotal(1);
 
         try (var configurationLoader = mockStatic(

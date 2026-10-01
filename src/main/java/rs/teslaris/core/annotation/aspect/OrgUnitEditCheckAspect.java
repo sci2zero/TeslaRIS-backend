@@ -3,6 +3,7 @@ package rs.teslaris.core.annotation.aspect;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -76,9 +77,21 @@ public class OrgUnitEditCheckAspect {
                 break;
             case INSTITUTIONAL_EDITOR, INSTITUTIONAL_LIBRARIAN:
                 var userId = tokenUtil.extractUserIdFromToken(tokenValue);
+                var userInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+                // Only an editor may be left without an institution, in which case it is not
+                // restricted to one. The allowance is deliberately not extended to librarians.
+                if (Objects.isNull(userInstitutionId)) {
+                    if (!role.equals(UserRole.INSTITUTIONAL_EDITOR)) {
+                        throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
+                    }
+
+                    break;
+                }
+
                 var editableOUs =
                     organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                        userService.getUserOrganisationUnitId(userId));
+                        userInstitutionId);
                 if (!editableOUs.contains(organisationUnitId)) {
                     throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
                 }

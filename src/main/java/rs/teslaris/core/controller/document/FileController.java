@@ -158,8 +158,13 @@ public class FileController {
                         }
                         break;
                     case INSTITUTIONAL_EDITOR:
-                        if (!personService.isPersonEmployedInOrganisationUnit(personId,
-                            userService.getUserOrganisationUnitId(userId))) {
+                        var editorInstitutionId =
+                            userService.findOrganisationUnitIdForUser(userId);
+
+                        // Not bound to an institution, so not restricted to one either.
+                        if (Objects.nonNull(editorInstitutionId) &&
+                            !personService.isPersonEmployedInOrganisationUnit(personId,
+                                editorInstitutionId)) {
                             return handleUnauthorisedUser(request);
                         }
                         break;
@@ -225,7 +230,12 @@ public class FileController {
     }
 
     private boolean isDocumentNotAThesis(Integer userId, Document document) {
-        var userInstitutionId = userService.getUserOrganisationUnitId(userId);
+        var userInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(userInstitutionId)) {
+            return false; // Not bound to an institution, so not restricted to one either.
+        }
+
         var institutionSubUnitIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
 
@@ -235,12 +245,17 @@ public class FileController {
 
     private boolean noResearchersFromUserInstitution(Set<Integer> contributors,
                                                      Integer userId) {
+        var userInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(userInstitutionId)) {
+            return false; // Not bound to an institution, so not restricted to one either.
+        }
+
         return contributors.stream()
             .filter(contributorId -> contributorId > 0) // filter out external affiliates
             .noneMatch(
                 contributorId -> personService.isPersonEmployedInOrganisationUnit(
-                    contributorId,
-                    userService.getUserOrganisationUnitId(userId)));
+                    contributorId, userInstitutionId));
     }
 
     @GetMapping("/image/{personId}")

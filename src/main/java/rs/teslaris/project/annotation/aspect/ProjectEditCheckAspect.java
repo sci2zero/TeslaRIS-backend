@@ -167,7 +167,12 @@ public class ProjectEditCheckAspect {
     private boolean isEditorLinkedToProject(List<Integer> contributorPersonIds,
                                             List<Integer> contributingOrganisationUnitIds,
                                             Integer userId) {
-        var editorInstitutionId = userService.getUserOrganisationUnitId(userId);
+        var editorInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(editorInstitutionId)) {
+            return true; // Not bound to an institution, so not restricted to one either.
+        }
+
         var institutionSubUnitIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(editorInstitutionId);
 
