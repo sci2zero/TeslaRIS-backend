@@ -95,21 +95,30 @@ public class BrandingInformationController {
         }
 
         var file = fileService.loadAsResource(filename);
-        var resource = new InputStreamResource(file);
+        var handedOff = false;
+        try {
+            var resource = new InputStreamResource(file);
 
-        var contentType = file.response().contentType();
-        if (Objects.isNull(contentType)) {
-            contentType = Files.probeContentType(Path.of(filename));
-        }
-        if (Objects.isNull(contentType)) {
-            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        }
+            var contentType = file.response().contentType();
+            if (Objects.isNull(contentType)) {
+                contentType = Files.probeContentType(Path.of(filename));
+            }
+            if (Objects.isNull(contentType)) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
 
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(contentType))
-            .contentLength(Objects.requireNonNullElse(file.response().contentLength(), 0L))
-            .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
-            .header(HttpHeaders.ETAG, file.response().eTag())
-            .body(resource);
+            var response = ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(Objects.requireNonNullElse(file.response().contentLength(), 0L))
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+                .header(HttpHeaders.ETAG, file.response().eTag())
+                .body(resource);
+            handedOff = true;
+            return response;
+        } finally {
+            if (!handedOff) {
+                file.close();
+            }
+        }
     }
 }
