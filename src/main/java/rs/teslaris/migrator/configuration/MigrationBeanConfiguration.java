@@ -5,6 +5,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 @Configuration
 @EnableFeignClients(basePackages = "rs.teslaris.migrator.client")
@@ -18,6 +19,9 @@ public class MigrationBeanConfiguration {
         executor.setQueueCapacity(50);
         executor.setThreadNamePrefix("migration-");
         executor.initialize();
-        return executor;
+
+        // Runs act as the admin who started them: core services read the logged-in user (e.g.
+        // document creation skips contributor notifications for trusted roles) and fail without it.
+        return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }
 }

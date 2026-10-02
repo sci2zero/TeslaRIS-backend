@@ -73,6 +73,16 @@ public class MigrationLog {
             source, entity, key, rule, reason);
     }
 
+    /**
+     * A referenced entity the source names but does not describe (a journal of an article) was
+     * created as a placeholder, to be merged with real data later.
+     */
+    public void stubCreated(String source, String entity, String key, Integer targetId,
+                            String label) {
+        log.info("source={} | entity={} | key={} | status=STUB_CREATED | targetId={} | label={}",
+            source, entity, key, targetId, label);
+    }
+
     public void itemFailed(MigrationRun run, MigrationItem<?> item, Exception exception) {
         log.warn("runId={} | source={} | entity={} | key={} | status=FAILED | reason={}",
             run.getId(), run.getSource(), item.type(), item.sourceKey(), exception.getMessage(),

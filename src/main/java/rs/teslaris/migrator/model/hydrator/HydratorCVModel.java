@@ -356,7 +356,28 @@ public class HydratorCVModel {
         DateInfo publicationDate,
         String url,
         OutputIdentifiers identifiers,
-        OutputAuthors authors
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        CodeValue publicationStatus,
+        PublicationLocation publicationLocation,
+        String refereed,
+        String openAccess,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PublicationLocation(
+        String city,
+        Country country
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ResearchClassifications(
+        Integer total,
+        List<ResearchClassification> researchClassification
     ) {
     }
 
@@ -385,25 +406,35 @@ public class HydratorCVModel {
     ) {
     }
 
+    /**
+     * {@code relationshipType.code} is {@code P} (Self) for the work's own id and {@code PD}
+     * (Part of) for its container's - the ISSN of a journal, the ISBN of a book.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record OutputIdentifier(
         IdentifierType identifierType,
-        String identifier
+        String identifier,
+        CodeValue relationshipType
     ) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record OutputAuthors(
         Integer total,
-        List<OutputAuthor> author
+        List<OutputAuthor> author,
+        String citation
     ) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    /**
+     * The source keeps the whole name in one string ({@code "Surname, Given"} or free form);
+     * {@code self} marks the curriculum owner.
+     */
     public record OutputAuthor(
         String cienciaId,
-        String name,
-        String surname
+        Boolean self,
+        String name
     ) {
     }
 }
