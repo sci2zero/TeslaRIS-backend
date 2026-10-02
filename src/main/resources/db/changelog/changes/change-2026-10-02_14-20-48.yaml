@@ -1,0 +1,18 @@
+databaseChangeLog:
+- changeSet:
+    id: 1790950858863-1
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: chrome_theme
+        newDataType: varchar(255)
+        tableName: branding_information
+- changeSet:
+    id: 1790950858863-2
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: hero_theme
+        newDataType: varchar(255)
+        tableName: branding_information
+

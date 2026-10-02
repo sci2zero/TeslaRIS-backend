@@ -273,7 +273,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
@@ -359,7 +359,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -408,7 +408,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -454,7 +454,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -524,7 +524,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -585,7 +585,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         var savedUser = userService.registerInstitutionEmployee(registrationRequest,
@@ -644,7 +644,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         var savedUser = userService.registerCommissionUser(registrationRequest);
@@ -1104,7 +1104,7 @@ public class UserServiceTest {
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         userService.initiatePasswordResetProcess(forgotPasswordRequest);
@@ -1380,7 +1380,7 @@ public class UserServiceTest {
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         var result = userService.generateNewPasswordForUser(8);
@@ -1405,7 +1405,7 @@ public class UserServiceTest {
         var emailFuture = CompletableFuture.completedFuture(false);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         var result = userService.generateNewPasswordForUser(9);
@@ -1546,7 +1546,7 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 
@@ -1595,7 +1595,7 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 
@@ -1676,7 +1676,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1748,7 +1748,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.empty());
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1783,7 +1783,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1819,7 +1819,7 @@ public class UserServiceTest {
         when(messageSource.getMessage(eq("accountActivation.mailBodyResearcher"), any(), any()))
             .thenReturn("Welcome! Activate your account here: {1}");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
         when(emailUtil.constructBodyWithSignature(any(), any(), any())).thenReturn(
             "Content with signature.");
 
@@ -1890,7 +1890,7 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1920,7 +1920,7 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1956,7 +1956,7 @@ public class UserServiceTest {
             .thenReturn("Willkommen! Aktivieren Sie Ihr Konto hier: {1}");
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -2032,7 +2032,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null)
         );
 
         var authority = new Authority();
@@ -2098,7 +2098,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null)
         );
 
         var authority = new Authority();
@@ -2179,7 +2179,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null)
         );
 
         when(authorityRepository.findByName(anyString()))
@@ -2254,7 +2254,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null, null, null)
         );
 
         when(authorityRepository.findByName(anyString()))

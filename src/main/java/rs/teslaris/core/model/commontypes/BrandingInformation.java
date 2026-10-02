@@ -4,6 +4,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -43,4 +45,12 @@ public class BrandingInformation extends BaseEntity {
 
     @Column(name = "phone_number")
     private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "chrome_theme")
+    private BrandingTheme chromeTheme;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hero_theme")
+    private BrandingTheme heroTheme;
 }

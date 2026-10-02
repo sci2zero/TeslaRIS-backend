@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.PublicConfigurationDTO;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
+import rs.teslaris.core.model.commontypes.BrandingTheme;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.commontypes.BrandingInformationRepository;
@@ -40,6 +41,8 @@ public class PublicConfigurationServiceTest {
         branding.setTitle(Set.of(title));
         branding.setDescription(Set.of(title));
         branding.setLogoServerName("logo.png");
+        branding.setChromeTheme(BrandingTheme.LIGHT);
+        branding.setHeroTheme(BrandingTheme.DARK);
         branding.setLastModification(new Date(1_700_000_000_000L));
 
         when(brandingInformationRepository.findAll()).thenReturn(List.of(branding));
@@ -51,6 +54,8 @@ public class PublicConfigurationServiceTest {
         assertEquals("TeslaRIS", result.branding().title().getFirst().getContent());
         assertEquals("branding/logo?v=" + result.updatedAt(), result.branding().logoUrl());
         assertNull(result.branding().backgroundUrl());
+        assertEquals(BrandingTheme.LIGHT, result.branding().chromeTheme());
+        assertEquals(BrandingTheme.DARK, result.branding().heroTheme());
     }
 
     @Test
@@ -62,5 +67,7 @@ public class PublicConfigurationServiceTest {
         assertEquals(PublicConfigurationDTO.SCHEMA_VERSION, result.schemaVersion());
         assertNull(result.branding().logoUrl());
         assertEquals(0, result.branding().title().size());
+        assertNull(result.branding().chromeTheme());
+        assertNull(result.branding().heroTheme());
     }
 }

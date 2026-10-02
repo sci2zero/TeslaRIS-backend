@@ -177,5 +177,8 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_PRIVATE_KEY }}
           script: |
+            set -euo pipefail
             chmod +x /opt/teslaris/deploy-script.sh
             /opt/teslaris/deploy-script.sh apply-blue
+            /opt/teslaris/deploy-script.sh deploy-green
+            /opt/teslaris/deploy-script.sh apply-green

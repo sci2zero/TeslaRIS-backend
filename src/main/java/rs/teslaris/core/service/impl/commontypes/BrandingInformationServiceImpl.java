@@ -54,7 +54,7 @@ public class BrandingInformationServiceImpl extends JPAServiceImpl<BrandingInfor
     public BrandingInformationDTO readBrandingInformation() {
         var brandingInformation = findCurrent().orElse(null);
         if (brandingInformation == null) {
-            return new BrandingInformationDTO(List.of(), List.of(), null, null, null);
+            return new BrandingInformationDTO(List.of(), List.of(), null, null, null, null, null);
         }
 
         return new BrandingInformationDTO(
@@ -64,7 +64,9 @@ public class BrandingInformationServiceImpl extends JPAServiceImpl<BrandingInfor
                 brandingInformation.getDescription()),
             GeoLocationConverter.toDTO(brandingInformation.getLocation()),
             PostalAddressConverter.toDto(brandingInformation.getPostalAddress()),
-            brandingInformation.getPhoneNumber());
+            brandingInformation.getPhoneNumber(),
+            brandingInformation.getChromeTheme(),
+            brandingInformation.getHeroTheme());
     }
 
     @Override
@@ -77,6 +79,8 @@ public class BrandingInformationServiceImpl extends JPAServiceImpl<BrandingInfor
             brandingInformationDTO.description()));
 
         brandingInformation.setPhoneNumber(brandingInformationDTO.phoneNumber());
+        brandingInformation.setChromeTheme(brandingInformationDTO.chromeTheme());
+        brandingInformation.setHeroTheme(brandingInformationDTO.heroTheme());
 
         setPostalAddressInfo(brandingInformation, brandingInformationDTO);
         setLocationInfo(brandingInformation, brandingInformationDTO);

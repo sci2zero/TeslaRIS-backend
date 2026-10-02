@@ -25,7 +25,7 @@ public class BrandingInformationControllerTest extends BaseTest {
 
     private BrandingInformationDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Dummy MC", 1));
-        return new BrandingInformationDTO(dummyMC, dummyMC, null, null, null);
+        return new BrandingInformationDTO(dummyMC, dummyMC, null, null, null, null, null);
     }
 
     private BrandingInformationDTO getTestPayloadWithAddress() {
@@ -38,7 +38,7 @@ public class BrandingInformationControllerTest extends BaseTest {
         postalAddress.setPostalNumber("21000");
 
         return new BrandingInformationDTO(dummyMC, dummyMC,
-            new GeoLocationDTO(19.8335, 45.2671, null), postalAddress, "+381 21 000 000");
+            new GeoLocationDTO(19.8335, 45.2671, null), postalAddress, "+381 21 000 000", null, null);
     }
 
     @Test
