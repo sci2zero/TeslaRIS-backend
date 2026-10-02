@@ -69,7 +69,8 @@ public class ProjectController {
                                              @RequestParam(required = false)
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
-        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions, allowedStatuses, pageable);
+        return projectService.searchProjects(tokens, dateFrom, dateTo, onlyActive,
+            onlyWithoutContributions, allowedStatuses, pageable);
     }
 
     @GetMapping("/for-researcher/{personId}")
@@ -92,7 +93,8 @@ public class ProjectController {
         @RequestParam(required = false) boolean onlyActive,
         @RequestParam(required = false) List<ProjectStatus> allowedStatuses,
         Pageable pageable) {
-        return projectService.findProjectsForOrganisationUnit(organisationUnitId, tokens, onlyActive,
+        return projectService.findProjectsForOrganisationUnit(organisationUnitId, tokens,
+            onlyActive,
             allowedStatuses, pageable);
     }
 
@@ -168,8 +170,8 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public PersonProjectContributionDTO addProjectPerson(
-            @PathVariable Integer projectId,
-            @RequestBody @Valid PersonProjectContributionDTO personContribution) {
+        @PathVariable Integer projectId,
+        @RequestBody @Valid PersonProjectContributionDTO personContribution) {
         return projectService.addPerson(projectId, personContribution);
     }
 
@@ -188,8 +190,8 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public OrganisationUnitProjectContributionDTO addProjectOrganisation(
-            @PathVariable Integer projectId,
-            @RequestBody @Valid OrganisationUnitProjectContributionDTO organisationContribution) {
+        @PathVariable Integer projectId,
+        @RequestBody @Valid OrganisationUnitProjectContributionDTO organisationContribution) {
         return projectService.addOrganisation(projectId, organisationContribution);
     }
 
@@ -198,8 +200,8 @@ public class ProjectController {
     @ProjectEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeProjectOrganisation(
-            @PathVariable Integer projectId,
-            @PathVariable Integer organisationContributionId) {
+        @PathVariable Integer projectId,
+        @PathVariable Integer organisationContributionId) {
         projectService.removeOrganisation(projectId, organisationContributionId);
     }
 
@@ -209,8 +211,8 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public ProjectsRelationDTO addProjectRelation(
-            @PathVariable Integer projectId,
-            @RequestBody @Valid ProjectsRelationDTO relation) {
+        @PathVariable Integer projectId,
+        @RequestBody @Valid ProjectsRelationDTO relation) {
         return projectService.addProjectRelation(projectId, relation);
     }
 

@@ -10,6 +10,7 @@ import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssuePageDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileDTO;
 import rs.teslaris.revisioner.dto.DataQualityProfileSummaryDTO;
+import rs.teslaris.revisioner.dto.MetricSummaryDTO;
 import rs.teslaris.revisioner.dto.PolicyExplorerDTO;
 import rs.teslaris.revisioner.dto.ProfileRelatedQualityDTO;
 import rs.teslaris.revisioner.dto.QualityReportResponseDTO;
@@ -37,6 +38,7 @@ public interface DataQualityService {
                                                 QualityDimension dimension,
                                                 IssueSeverity severity,
                                                 String constraintKey,
+                                                @Nullable String metric,
                                                 @Nullable LocalDate assessmentDate,
                                                 @Nullable String cursor,
                                                 @Nullable Integer size);
@@ -45,6 +47,7 @@ public interface DataQualityService {
                                                  String profileName, String target,
                                                  QualityDimension dimension,
                                                  IssueSeverity severity, String constraintKey,
+                                                 @Nullable String metric,
                                                  @Nullable LocalDate assessmentDate,
                                                  @Nullable String cursor,
                                                  @Nullable Integer size);
@@ -55,7 +58,12 @@ public interface DataQualityService {
 
     List<DataQualityProfileSummaryDTO> listDataQualityProfileNames();
 
-    List<ConstraintSummaryDTO> listProfileConstraints(String profileName, String target);
+    List<ConstraintSummaryDTO> listProfileConstraints(String profileName,
+                                                      @Nullable String target,
+                                                      @Nullable QualityDimension dimension,
+                                                      @Nullable String metric);
+
+    List<MetricSummaryDTO> listProfileMetrics(String profileName);
 
     PolicyExplorerDTO getPolicy(@Nullable Integer organisationUnitId, String profileName,
                                 @Nullable LocalDate assessmentDate);

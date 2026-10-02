@@ -307,7 +307,8 @@ public class DbInitializer implements ApplicationRunner {
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects,
+                deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
                 saveModuleAccessConfiguration
@@ -357,7 +358,8 @@ public class DbInitializer implements ApplicationRunner {
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
                 editPublicationSeriesIdentifiers, readFundingApplications,
-                editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects,
+                deleteProjects,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
                 saveModuleAccessConfiguration
             )));
@@ -546,7 +548,7 @@ public class DbInitializer implements ApplicationRunner {
             .registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-//                    skosLoader.loadResearchAreas();
+                    skosLoader.loadResearchAreas();
                     reindexService
                         .reindexDatabase(Arrays.asList(EntityType.values()),
                             false, null);

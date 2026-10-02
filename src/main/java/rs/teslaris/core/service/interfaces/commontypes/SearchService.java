@@ -21,6 +21,13 @@ public interface SearchService<T> {
     Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz,
                                  String indexName);
 
+    /**
+     * As above, but reads only the named fields. A scan that discards most of every document it
+     * fetches pays for the rest in transfer and deserialization on every batch.
+     */
+    Page<T> runQueryWithoutTotal(Query query, Pageable pageable, Class<T> clazz, String indexName,
+                                 List<String> sourceFields);
+
     List<Pair<String, Long>> runWordCloudSearch(Query query, String indexName,
                                                 boolean foreignLanguage);
 

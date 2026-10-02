@@ -1,6 +1,13 @@
 package rs.teslaris.core.integration.project;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,15 +23,13 @@ import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
-import rs.teslaris.project.model.project.*;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.ProjectsRelationType;
 
 @SpringBootTest
 public class ProjectControllerTest extends BaseTest {
@@ -62,24 +67,24 @@ public class ProjectControllerTest extends BaseTest {
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
 
         dto.setPersons(List.of(buildPerson(
-                1, 1,
-                PersonProjectContributionType.TEAM_MEMBER,
-                PersonProjectInvestigationRole.RESEARCHER,
-                "Lead researcher",
-                "University of Novi Sad"
+            1, 1,
+            PersonProjectContributionType.TEAM_MEMBER,
+            PersonProjectInvestigationRole.RESEARCHER,
+            "Lead researcher",
+            "University of Novi Sad"
         )));
 
         dto.setOrganisations(List.of(buildOrganisation(
-                1, 1,
-                OrganisationUnitProjectContributionType.COORDINATOR,
-                "Coordinating institution"
+            1, 1,
+            OrganisationUnitProjectContributionType.COORDINATOR,
+            "Coordinating institution"
         )));
 
         dto.setRelations(List.of(buildRelation(
-                2,
-                ProjectsRelationType.PART_OF,
-                "This project is part of the parent project",
-                "Parent project"
+            2,
+            ProjectsRelationType.PART_OF,
+            "This project is part of the parent project",
+            "Parent project"
         )));
 
         return dto;
@@ -129,17 +134,17 @@ public class ProjectControllerTest extends BaseTest {
     }
 
     private static OrganisationUnitProjectContributionDTO buildOrganisation(
-            Integer organisationUnitId,
-            Integer orderNumber,
-            OrganisationUnitProjectContributionType contributionType,
-            String contributionDescription) {
+        Integer organisationUnitId,
+        Integer orderNumber,
+        OrganisationUnitProjectContributionType contributionType,
+        String contributionDescription) {
 
         var member = new OrganisationUnitProjectContributionDTO();
         member.setOrganisationUnitId(organisationUnitId);
         member.setOrderNumber(orderNumber);
         member.setContributionType(contributionType);
         member.setContributionDescription(
-                List.of(buildMultilingualContent(contributionDescription)));
+            List.of(buildMultilingualContent(contributionDescription)));
         member.setDateFrom(LocalDate.of(2025, 1, 1));
         member.setDateTo(LocalDate.of(2026, 3, 1));
         member.setUris(Set.of("https://example.com/consortium-proof"));
@@ -152,10 +157,10 @@ public class ProjectControllerTest extends BaseTest {
     }
 
     private static ProjectsRelationDTO buildRelation(
-            Integer targetProjectId,
-            ProjectsRelationType relationType,
-            String sourceDescription,
-            String targetDescription) {
+        Integer targetProjectId,
+        ProjectsRelationType relationType,
+        String sourceDescription,
+        String targetDescription) {
 
         var relation = new ProjectsRelationDTO();
         relation.setTargetProjectId(targetProjectId);
@@ -283,23 +288,23 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildPerson(
-                2, 3,
-                PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
-                PersonProjectInvestigationRole.SUPERVISOR,
-                "Added via add-person endpoint",
-                "Faculty of Technical Sciences");
+            2, 3,
+            PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
+            PersonProjectInvestigationRole.SUPERVISOR,
+            "Added via add-person endpoint",
+            "Faculty of Technical Sciences");
 
         mockMvc.perform(MockMvcRequestBuilders.post(
-                                "http://localhost:8081/api/project/{projectId}/add-person", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_PERSON"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.personId").value(2))
-                .andExpect(jsonPath("$.contributionType").value("PRINCIPLE_INVESTIGATOR"))
-                .andExpect(jsonPath("$.investigationRole").value("SUPERVISOR"));
+                    "http://localhost:8081/api/project/{projectId}/add-person", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_PERSON"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").isNumber())
+            .andExpect(jsonPath("$.personId").value(2))
+            .andExpect(jsonPath("$.contributionType").value("PRINCIPLE_INVESTIGATOR"))
+            .andExpect(jsonPath("$.investigationRole").value("SUPERVISOR"));
     }
 
     @Test
@@ -308,28 +313,28 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildPerson(
-                1, 4,
-                PersonProjectContributionType.TEAM_MEMBER,
-                PersonProjectInvestigationRole.RESEARCHER,
-                "To be removed",
-                "University of Novi Sad");
+            1, 4,
+            PersonProjectContributionType.TEAM_MEMBER,
+            PersonProjectInvestigationRole.RESEARCHER,
+            "To be removed",
+            "University of Novi Sad");
 
         var addResponse = mockMvc.perform(MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/project/{projectId}/add-person", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_PERSON"))
-                .andReturn().getResponse().getContentAsString();
+                    "http://localhost:8081/api/project/{projectId}/add-person", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_PERSON"))
+            .andReturn().getResponse().getContentAsString();
 
         var contributionId = objectMapper.readTree(addResponse).get("id").asInt();
 
         mockMvc.perform(MockMvcRequestBuilders.delete(
-                                "http://localhost:8081/api/project/{projectId}/remove-person/{personContributionId}",
-                                1, contributionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}/remove-person/{personContributionId}",
+                    1, contributionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -338,20 +343,20 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildOrganisation(
-                1, 1, OrganisationUnitProjectContributionType.PARTNER, "Partner institution");
+            1, 1, OrganisationUnitProjectContributionType.PARTNER, "Partner institution");
 
         mockMvc.perform(MockMvcRequestBuilders.post(
-                                "http://localhost:8081/api/project/{projectId}/add-organisation", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_ORGANISATION"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.organisationUnitId").value(1))
-                .andExpect(jsonPath("$.contributionType").value("PARTNER"))
-                .andExpect(jsonPath("$.orderNumber").value(1))
-                .andExpect(jsonPath("$.contactPersonId").value(1));
+                    "http://localhost:8081/api/project/{projectId}/add-organisation", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_ORGANISATION"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").isNumber())
+            .andExpect(jsonPath("$.organisationUnitId").value(1))
+            .andExpect(jsonPath("$.contributionType").value("PARTNER"))
+            .andExpect(jsonPath("$.orderNumber").value(1))
+            .andExpect(jsonPath("$.contactPersonId").value(1));
     }
 
     @Test
@@ -360,24 +365,24 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildOrganisation(
-                1, 2, OrganisationUnitProjectContributionType.CONSORTIUM_MEMBER, "To be removed");
+            1, 2, OrganisationUnitProjectContributionType.CONSORTIUM_MEMBER, "To be removed");
 
         var addResponse = mockMvc.perform(MockMvcRequestBuilders.post(
-                                "http://localhost:8081/api/project/{projectId}/add-organisation", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_ORGANISATION"))
-                .andReturn().getResponse().getContentAsString();
+                    "http://localhost:8081/api/project/{projectId}/add-organisation", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_ORGANISATION"))
+            .andReturn().getResponse().getContentAsString();
 
         var contributionId = objectMapper.readTree(addResponse).get("id").asInt();
 
         mockMvc.perform(MockMvcRequestBuilders.delete(
-                                "http://localhost:8081/api/project/{projectId}/remove-organisation/{organisationContributionId}",
-                                1, contributionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}/remove-organisation/{organisationContributionId}",
+                    1, contributionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -386,20 +391,20 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildRelation(
-                2, ProjectsRelationType.PREDECESSOR,
-                "Source project description", "Target project description");
+            2, ProjectsRelationType.PREDECESSOR,
+            "Source project description", "Target project description");
 
         mockMvc.perform(MockMvcRequestBuilders.post(
-                                "http://localhost:8081/api/project/{projectId}/add-relation", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_RELATION"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.sourceProjectId").value(1))
-                .andExpect(jsonPath("$.targetProjectId").value(2))
-                .andExpect(jsonPath("$.relationType").value("PREDECESSOR"));
+                    "http://localhost:8081/api/project/{projectId}/add-relation", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_ADD_RELATION"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").isNumber())
+            .andExpect(jsonPath("$.sourceProjectId").value(1))
+            .andExpect(jsonPath("$.targetProjectId").value(2))
+            .andExpect(jsonPath("$.relationType").value("PREDECESSOR"));
     }
 
     @Test
@@ -408,24 +413,24 @@ public class ProjectControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var payload = buildRelation(
-                2, ProjectsRelationType.PART_OF, "To be removed", "Target of removed relation");
+            2, ProjectsRelationType.PART_OF, "To be removed", "Target of removed relation");
 
         var addResponse = mockMvc.perform(MockMvcRequestBuilders.post(
-                                "http://localhost:8081/api/project/{projectId}/add-relation", 1)
-                        .content(objectMapper.writeValueAsString(payload))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                        .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_RELATION"))
-                .andReturn().getResponse().getContentAsString();
+                    "http://localhost:8081/api/project/{projectId}/add-relation", 1)
+                .content(objectMapper.writeValueAsString(payload))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                .header("Idempotency-Key", "MOCK_KEY_PROJECT_REMOVE_RELATION"))
+            .andReturn().getResponse().getContentAsString();
 
         var relationId = objectMapper.readTree(addResponse).get("id").asInt();
 
         mockMvc.perform(MockMvcRequestBuilders.delete(
-                                "http://localhost:8081/api/project/{projectId}/remove-relation/{relationId}",
-                                1, relationId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                    "http://localhost:8081/api/project/{projectId}/remove-relation/{relationId}",
+                    1, relationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
 }

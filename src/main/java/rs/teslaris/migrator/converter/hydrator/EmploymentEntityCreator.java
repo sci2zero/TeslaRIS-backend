@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
+import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
 
@@ -24,6 +25,10 @@ public class EmploymentEntityCreator implements EntityCreator<EmploymentMigratio
 
     @Override
     public Integer create(EmploymentMigrationDTO dto, boolean performIndex) {
+        if (Objects.nonNull(dto.rejection())) {
+            throw new InvalidSourceValueException(dto.rejection());
+        }
+
         var personId = idResolver
             .resolve(HydratorSource.NAME, MigrationEntityType.PERSON, dto.personSourceKey())
             .orElseThrow(() -> new MigrationException(String.format(

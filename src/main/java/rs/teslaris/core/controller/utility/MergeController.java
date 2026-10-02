@@ -221,7 +221,8 @@ public class MergeController {
                                                 String bearerToken) {
         if (tokenUtil.extractUserRoleFromToken(bearerToken)
             .equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            var institutionId = userService.getUserOrganisationUnitId(
+            // A null institution means the whole repository, as it does for an admin.
+            var institutionId = userService.findOrganisationUnitIdForUser(
                 tokenUtil.extractUserIdFromToken(bearerToken));
             mergeService.switchInvolvements(involvementSwitchList.getEntityIds(),
                 sourcePersonId, targetPersonId, institutionId);

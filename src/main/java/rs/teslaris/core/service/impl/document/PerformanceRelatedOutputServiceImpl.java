@@ -24,6 +24,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PerformanceRelatedOutputJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -70,6 +71,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         DocumentFileService documentFileService,
         CitationService citationService,
         ApplicationEventPublisher applicationEventPublisher,
+        CrisContextInformationService crisContextInformationService,
         PersonContributionService personContributionService,
         ExpressionTransformer expressionTransformer,
         EventService eventService,
@@ -85,12 +87,10 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         PerformanceRelatedOutputRepository performanceRelatedOutputRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            applicationEventPublisher, personContributionService, expressionTransformer,
-            eventService,
-            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService,
-            countryService);
+            applicationEventPublisher, crisContextInformationService, personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService, documentLookupService, countryService);
         this.performanceRelatedOutputJPAService = performanceRelatedOutputJPAService;
         this.languageTagService = languageTagService;
         this.performanceRelatedOutputRepository = performanceRelatedOutputRepository;

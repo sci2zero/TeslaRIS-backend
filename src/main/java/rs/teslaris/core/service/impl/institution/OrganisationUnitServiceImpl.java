@@ -73,6 +73,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -106,6 +107,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     implements OrganisationUnitService {
 
     private final OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
+
+    private final CrisContextInformationService crisContextInformationService;
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
@@ -712,7 +715,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         IdentifierUtil.validateAndSetIdentifier(
             organisationUnitDTO.getNationalId(),
             organisationUnit.getId(),
-            ".*",
+            crisContextInformationService.readConfigurationForSystem()
+                .organisationUnitNationalIdRegularExpression(),
             organisationUnitRepository::existsByNationalId,
             organisationUnit::setNationalId,
             "nationalIdFormatError",
@@ -842,46 +846,54 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setDlConfig(emailDlConfig);
     }
 
+    /**
+     * The postal address is an embeddable holding orphanRemoval collections, so it is never
+     * replaced or set to null: Hibernate fails the flush once a managed collection is no longer
+     * reachable from the owning entity. Everything is cleared and refilled in place instead.
+     */
     private void setPostalAddressInfo(OrganisationUnit organisationUnit,
                                       OrganisationUnitRequestDTO organisationUnitDTO) {
-        if (Objects.nonNull(organisationUnitDTO.getPostalAddress())) {
-            if (Objects.isNull(organisationUnit.getPostalAddress())) {
-                organisationUnit.setPostalAddress(new PostalAddress());
-            }
+        if (Objects.isNull(organisationUnit.getPostalAddress())) {
+            organisationUnit.setPostalAddress(new PostalAddress());
+        }
 
-            organisationUnit.getPostalAddress().getStreetAndNumber().clear();
-            organisationUnit.getPostalAddress().getStreetAndNumber().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
-            );
+        var postalAddress = organisationUnit.getPostalAddress();
+        var postalAddressDTO = organisationUnitDTO.getPostalAddress();
 
-            organisationUnit.getPostalAddress().getCity().clear();
-            organisationUnit.getPostalAddress().getCity().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getCity())
-            );
+        postalAddress.getStreetAndNumber().clear();
+        postalAddress.getCity().clear();
+        postalAddress.getState().clear();
 
-            organisationUnit.getPostalAddress().getState().clear();
-            organisationUnit.getPostalAddress().getState().addAll(
-                multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getState())
-            );
+        if (Objects.isNull(postalAddressDTO)) {
+            postalAddress.setPostalNumber(null);
+            postalAddress.setCountry(null);
+            return;
+        }
 
-            organisationUnit.getPostalAddress()
-                .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
+        postalAddress.getStreetAndNumber().addAll(
+            multilingualContentService.getMultilingualContent(
+                postalAddressDTO.getStreetAndNumber())
+        );
 
-            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
-                organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
-                organisationUnit.getPostalAddress().setCountry(
-                    RestorationSupport.resolveOptional(
-                        organisationUnitDTO.getPostalAddress().getCountryId(), countryService,
-                        countryService::findOne, "postalAddress.countryId",
-                        "restoreCountryMissingMessage"));
-            } else {
-                organisationUnit.getPostalAddress().setCountry(null);
-            }
+        postalAddress.getCity().addAll(
+            multilingualContentService.getMultilingualContent(postalAddressDTO.getCity())
+        );
+
+        postalAddress.getState().addAll(
+            multilingualContentService.getMultilingualContent(postalAddressDTO.getState())
+        );
+
+        postalAddress.setPostalNumber(postalAddressDTO.getPostalNumber());
+
+        if (Objects.nonNull(postalAddressDTO.getCountryId()) &&
+            postalAddressDTO.getCountryId() > 0) {
+            postalAddress.setCountry(
+                RestorationSupport.resolveOptional(
+                    postalAddressDTO.getCountryId(), countryService,
+                    countryService::findOne, "postalAddress.countryId",
+                    "restoreCountryMissingMessage"));
         } else {
-            organisationUnit.setPostalAddress(null);
+            postalAddress.setCountry(null);
         }
     }
 
@@ -919,10 +931,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var normalized = taxNumber.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         var nationalPart = (normalized.length() > 2 && Character.isLetter(normalized.charAt(0)) &&
-                Character.isLetter(normalized.charAt(1))) ? normalized.substring(2) : normalized;
+            Character.isLetter(normalized.charAt(1))) ? normalized.substring(2) : normalized;
 
         return organisationUnitIndexRepository.findOrganisationUnitIndexByTaxNumberIn(
-                List.of(normalized, nationalPart)).orElse(null);
+            List.of(normalized, nationalPart)).orElse(null);
     }
 
     @Override

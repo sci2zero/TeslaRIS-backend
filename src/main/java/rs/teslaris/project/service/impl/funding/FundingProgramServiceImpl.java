@@ -3,6 +3,11 @@ package rs.teslaris.project.service.impl.funding;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,12 +39,6 @@ import rs.teslaris.project.model.funding.FundingProgram;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-
 @Service
 @RequiredArgsConstructor
 public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
@@ -69,9 +68,11 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     @Override
     public Page<FundingProgramIndex> searchFundingPrograms(List<String> tokens, LocalDate dateFrom,
-                                                           LocalDate dateTo, boolean onlyActive, Integer funderId,
+                                                           LocalDate dateTo, boolean onlyActive,
+                                                           Integer funderId,
                                                            Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, funderId),
+        return searchService.runQuery(
+            buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, funderId),
             pageable, FundingProgramIndex.class, "funding_program");
     }
 
@@ -121,7 +122,8 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
         delete(fundingProgramId);
 
-        var index = fundingProgramIndexRepository.findFundingProgramIndexByDatabaseId(fundingProgramId);
+        var index =
+            fundingProgramIndexRepository.findFundingProgramIndexByDatabaseId(fundingProgramId);
         index.ifPresent(fundingProgramIndexRepository::delete);
     }
 
@@ -286,7 +288,7 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                fundingProgram.getFunder().getName(), true);
+            fundingProgram.getFunder().getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -295,14 +297,14 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-                fundingProgram.getFunder().getNameAbbreviation(), false);
+            fundingProgram.getFunder().getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setFunderNameSr(
-                !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+            !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         index.setFunderNameSrSortable(index.getFunderNameSr());
         index.setFunderNameOther(
-                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+            !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setFunderNameOtherSortable(index.getFunderNameOther());
 
         index.setFunderId(fundingProgram.getFunder().getId());
@@ -332,11 +334,11 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                             mq -> mq.field("name_other")
                                                 .query(token.replace("\"", ""))))
                                         .should(sb -> sb.matchPhrase(
-                                                mq -> mq.field("funder_name_sr")
-                                                        .query(token.replace("\"", ""))))
+                                            mq -> mq.field("funder_name_sr")
+                                                .query(token.replace("\"", ""))))
                                         .should(sb -> sb.matchPhrase(
-                                                mq -> mq.field("funder_name_other")
-                                                        .query(token.replace("\"", ""))))
+                                            mq -> mq.field("funder_name_other")
+                                                .query(token.replace("\"", ""))))
                                     )
                                 );
                             } else if (token.endsWith("*")) {
@@ -386,7 +388,7 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                                         mq -> mq.field("funder_name_sr")
                                             .value(
                                                 StringUtil.performSimpleLatinPreprocessing(token) +
-                                                        "*")
+                                                    "*")
                                             .caseInsensitive(true)))
                                     .should(sb -> sb.wildcard(
                                         mq -> mq.field("funder_name_other")
@@ -432,8 +434,8 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
             if (onlyActive) {
                 var today = LocalDate.now().toString();
                 b.must(sb -> sb.bool(activeBool -> activeBool
-                        .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
-                        .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_from").lte(JsonData.of(today))))
+                    .must(m -> m.range(r -> r.field("date_to").gte(JsonData.of(today))))
                 ));
             }
 

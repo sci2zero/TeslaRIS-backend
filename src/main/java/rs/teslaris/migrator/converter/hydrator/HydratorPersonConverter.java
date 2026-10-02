@@ -477,32 +477,13 @@ public class HydratorPersonConverter
      */
     private Set<Integer> researchAreas(HydratorCVModel.Curriculum record,
                                        HydratorCVModel.DomainActivities domainActivities) {
-        var researchAreas = new LinkedHashSet<Integer>();
+        var classifications =
+            listOf(domainActivities, HydratorCVModel.DomainActivities::domainActivity).stream()
+                .map(HydratorCVModel.DomainActivity::researchClassification)
+                .toList();
 
-        listOf(domainActivities, HydratorCVModel.DomainActivities::domainActivity).stream()
-            .map(HydratorCVModel.DomainActivity::researchClassification)
-            .filter(classification -> Objects.nonNull(classification) &&
-                !isBlank(classification.value()))
-            .forEach(classification -> {
-                var match = conversionUtil.researchArea(classification.value());
-
-                if (Objects.isNull(match)) {
-                    dropped(record, "MAP-000035", "research classification '" +
-                        classification.code() + "' (" + classification.value() +
-                        ") has no research area");
-                    return;
-                }
-
-                if (match.broader()) {
-                    dropped(record, "MAP-000035", "research classification '" +
-                        classification.value() + "' mapped to broader area '" + match.name() +
-                        "'");
-                }
-
-                researchAreas.add(match.id());
-            });
-
-        return researchAreas;
+        return conversionUtil.researchAreaIds(classifications,
+            reason -> dropped(record, "MAP-000035", reason));
     }
 
     // MAP-000037: the identifier type picks the target field

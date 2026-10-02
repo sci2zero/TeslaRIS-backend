@@ -32,7 +32,8 @@ public class EmployeeRegistrationRequestDTO {
     @Positive(message = "Preferred language tag ID must be a positive number.")
     private Integer preferredLanguageId;
 
-    @NotNull(message = "Organisation unit ID cannot be null.")
+    // Optional only for roles that may operate across the whole repository, which the service
+    // enforces per role, as the role itself is a path variable and not part of this payload.
     @Positive(message = "Organisation Unit ID must be a positive number.")
     private Integer organisationUnitId;
 }

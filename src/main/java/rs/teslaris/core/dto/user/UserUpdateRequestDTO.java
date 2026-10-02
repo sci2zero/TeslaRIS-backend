@@ -36,7 +36,7 @@ public class UserUpdateRequestDTO {
     @Positive(message = "Preferred reference cataloguing language tag ID must be a positive number.")
     private Integer preferredReferenceCataloguingLanguageTagId;
 
-    private Integer organisationalUnitId;
+    private Integer organisationUnitId;
 
     @NotNull(message = "User notification period cannot be null.")
     private UserNotificationPeriod notificationPeriod;

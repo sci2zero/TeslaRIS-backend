@@ -1,6 +1,5 @@
 package rs.teslaris.migrator.converter.hydrator;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +9,7 @@ import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.RecordExtractor;
+import rs.teslaris.migrator.util.InvalidSourceValueException;
 
 /**
  * Employments of one curriculum, each carrying the source keys of the person it belongs to and the
@@ -43,8 +43,14 @@ public class HydratorEmploymentExtractor
 
             var dto = new EmploymentDTO();
             dto.setInvolvementType(InvolvementType.EMPLOYED_AT);
-            dto.setDateFrom(toLocalDate(employment.startDate()));
-            dto.setDateTo(toLocalDate(employment.endDate()));
+            String rejection = null;
+            try {
+                dto.setDateFrom(conversionUtil.localDate(employment.startDate()));
+                dto.setDateTo(conversionUtil.localDate(employment.endDate()));
+            } catch (InvalidSourceValueException e) {
+                rejection = e.getMessage();
+            }
+
             dto.setDisplayOrganisationUnit(
                 conversionUtil.multilingualContent(institution.name(), language));
 
@@ -54,7 +60,7 @@ public class HydratorEmploymentExtractor
             }
 
             result.add(new EmploymentMigrationDTO(record.id(),
-                conversionUtil.institutionKey(institution), dto));
+                conversionUtil.institutionKey(institution), dto, rejection));
         });
 
         return result;
@@ -74,26 +80,5 @@ public class HydratorEmploymentExtractor
         }
 
         return employment.institution().getFirst();
-    }
-
-    private LocalDate toLocalDate(HydratorCVModel.DateInfo dateInfo) {
-        if (Objects.isNull(dateInfo)) {
-            return null;
-        }
-
-        var year = conversionUtil.parseInteger(dateInfo.year());
-
-        if (Objects.isNull(year)) {
-            return null;
-        }
-
-        var month = Objects.requireNonNullElse(conversionUtil.parseInteger(dateInfo.month()), 1);
-        var day = Objects.requireNonNullElse(conversionUtil.parseInteger(dateInfo.day()), 1);
-
-        try {
-            return LocalDate.of(year, month, day);
-        } catch (Exception e) {
-            return LocalDate.of(year, 1, 1);
-        }
     }
 }

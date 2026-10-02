@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.revisioner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -326,7 +327,7 @@ public class DataQualityServiceTest {
     private String capturedScanQuery() {
         var captor = ArgumentCaptor.forClass(Query.class);
         verify(searchService, atLeastOnce()).runQueryWithoutTotal(captor.capture(), any(),
-            eq(DataQualityAssessmentIndex.class), anyString());
+            eq(DataQualityAssessmentIndex.class), anyString(), any());
 
         return captor.getValue().toString();
     }
@@ -346,7 +347,7 @@ public class DataQualityServiceTest {
         MockedStatic<DataQualityAssessmentConfigurationLoader> configurationLoader) {
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                anyString(), anyString(), any(), any(), any()))
+                anyString(), anyString(), any(), any(), any(), any()))
             .thenReturn(new LinkedHashSet<>(List.of("titleMissing")));
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
@@ -383,7 +384,7 @@ public class DataQualityServiceTest {
         IssueSeverity severity, QualityDimension dimension) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
             Map.of("en", "Title"), Map.of("en", "Message"), "Document", severity, dimension,
-            true, 5.0, true, Map.of());
+            "PTCRIS-F1-01DSTRUCT-01", true, 5.0, true, Map.of());
     }
 
     @Test
@@ -392,7 +393,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(2);
 
@@ -401,7 +402,7 @@ public class DataQualityServiceTest {
 
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(List.of("titleMissing", "doiNotResolvable")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
@@ -418,7 +419,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null, 10);
+                null, null, null, null, null, null, 10);
 
             // then
             assertEquals(2, result.totalIssues());
@@ -435,7 +436,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -444,7 +445,7 @@ public class DataQualityServiceTest {
 
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(List.of("titleMissing", "doiNotResolvable")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
@@ -461,7 +462,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, "titleMissing", null, null, 10);
+                null, null, "titleMissing", null, null, null, 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -475,7 +476,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -484,7 +485,7 @@ public class DataQualityServiceTest {
 
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(List.of("doiNotResolvable")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
@@ -501,7 +502,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, null, null, 10);
+                QualityDimension.ACCURACY, IssueSeverity.ERROR, null, null, null, null, 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -513,7 +514,7 @@ public class DataQualityServiceTest {
     public void shouldResumeAfterTheCursorRow() {
         // given (two records, each contributing one issue)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")))));
 
@@ -523,11 +524,11 @@ public class DataQualityServiceTest {
             stubIssueConfiguration(configurationLoader);
 
             var firstPage = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS",
-                null, null, null, null, null, null, 1);
+                null, null, null, null, null, null, null, 1);
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, firstPage.nextCursor(), 1);
+                null, null, null, null, null, firstPage.nextCursor(), 1);
 
             // then (the window starts after the row the cursor names, not after a document count)
             assertEquals(1, firstPage.content().size());
@@ -542,7 +543,7 @@ public class DataQualityServiceTest {
     public void shouldResumeInsideARecordWithSeveralIssues() {
         // given (one record with three issues, served one per page)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document",
                 List.of("titleMissing", "doiNotResolvable", "abstractMissing")))));
 
@@ -552,7 +553,7 @@ public class DataQualityServiceTest {
             stubIssueConfiguration(configurationLoader);
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(
                     List.of("titleMissing", "doiNotResolvable", "abstractMissing")));
 
@@ -562,7 +563,7 @@ public class DataQualityServiceTest {
             // when (walk the record one row at a time)
             do {
                 var page = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                    null, null, null, null, cursor, 1);
+                    null, null, null, null, null, cursor, 1);
 
                 page.content().forEach(issue -> seen.add(issue.ruleKey()));
                 cursor = page.nextCursor();
@@ -577,7 +578,7 @@ public class DataQualityServiceTest {
     public void shouldNotOfferACursorWhenThePageIsExactlyTheLastRows() {
         // given (two issues, page size two)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")))));
 
@@ -588,7 +589,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null, 2);
+                null, null, null, null, null, null, 2);
 
             // then
             assertEquals(2, result.content().size());
@@ -600,7 +601,7 @@ public class DataQualityServiceTest {
     public void shouldClampThePageSize() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")))));
 
         try (var configurationLoader = mockStatic(
@@ -610,9 +611,9 @@ public class DataQualityServiceTest {
 
             // when (a size no caller may ask for, and no size at all)
             var oversized = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null, 10000);
+                null, null, null, null, null, null, 10000);
             var defaulted = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
 
             // then (both serve the one row there is, neither fails)
             assertEquals(1, oversized.content().size());
@@ -624,7 +625,7 @@ public class DataQualityServiceTest {
     public void shouldListTheIssuesCurrentOnTheRequestedDay() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -633,7 +634,7 @@ public class DataQualityServiceTest {
 
             // when
             dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
-                null, LocalDate.of(2026, 7, 18), null, 10);
+                null, null, LocalDate.of(2026, 7, 18), null, 10);
 
             // then (the two validity ranges at the end of that day, and no is_latest clause)
             var query = capturedScanQuery();
@@ -648,7 +649,7 @@ public class DataQualityServiceTest {
     public void shouldListTheLatestIssuesWhenNoDayIsRequested() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -657,7 +658,7 @@ public class DataQualityServiceTest {
 
             // when
             dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
-                null, null, null, 10);
+                null, null, null, null, 10);
 
             // then
             var query = capturedScanQuery();
@@ -667,10 +668,60 @@ public class DataQualityServiceTest {
     }
 
     @Test
+    public void shouldKeepOneRecordsIssuesTogetherWhenEntityTypesShareAnId() {
+        // given (one id reused across two entity types, each failing the same two rules)
+        var document = assessmentIndex(1, "Document",
+            List.of("titleMissing", "doiNotResolvable"));
+        var person = assessmentIndex(1, "Person", List.of("titleMissing", "doiNotResolvable"));
+        person.setId("2");
+        person.setEntityType(PERSON_ENTITY_TYPE);
+
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(document, person)));
+        stubIssueTotal(4);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>(List.of("titleMissing", "doiNotResolvable")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                    anyString(), anyString(), eq("titleMissing")))
+                .thenReturn(remark(IssueSeverity.ERROR, QualityDimension.CONSISTENCY));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
+                    anyString(), anyString(), eq("doiNotResolvable")))
+                .thenReturn(remark(IssueSeverity.INFO, QualityDimension.QUALITATIVE));
+
+            // when
+            var result = dataQualityService.findRepositoryIssues(null, "PTCRIS", null, null,
+                null, null, null, null, null, 10);
+
+            // then (grouped by record, not interleaved by severity across the two of them)
+            assertEquals(4, result.content().size());
+
+            var entityTypes = result.content().stream()
+                .map(issue -> issue.entityType())
+                .toList();
+
+            assertEquals(entityTypes.getFirst(), entityTypes.get(1));
+            assertEquals(entityTypes.get(2), entityTypes.get(3));
+            assertNotEquals(entityTypes.getFirst(), entityTypes.get(2));
+
+            assertEquals(IssueSeverity.ERROR, result.content().getFirst().severity());
+            assertEquals(IssueSeverity.INFO, result.content().get(1).severity());
+        }
+    }
+
+    @Test
     public void shouldListRepositoryIssuesWithoutAnEntityScope() {
         // given (an admin: no unit, so no scope clause at all)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")))));
 
         try (var configurationLoader = mockStatic(
@@ -680,7 +731,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findRepositoryIssues(null, "PTCRIS", null, null,
-                null, null, null, null, 10);
+                null, null, null, null, null, 10);
 
             // then
             assertEquals(1, result.content().size());
@@ -699,7 +750,7 @@ public class DataQualityServiceTest {
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
             .thenReturn(List.of(7, 8, 9));
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of()));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of()));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -707,7 +758,7 @@ public class DataQualityServiceTest {
             stubIssueConfiguration(configurationLoader);
 
             // when
-            dataQualityService.findRepositoryIssues(7, "PTCRIS", null, null, null, null,
+            dataQualityService.findRepositoryIssues(7, "PTCRIS", null, null, null, null, null,
                 LocalDate.of(2026, 7, 18), null, 10);
 
             // then
@@ -726,7 +777,7 @@ public class DataQualityServiceTest {
         // then
         assertThrows(IllegalArgumentException.class,
             () -> dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null,
-                null, null, null, "not-a-cursor", 10));
+                null, null, null, null, "not-a-cursor", 10));
     }
 
     /**
@@ -739,7 +790,7 @@ public class DataQualityServiceTest {
     public void shouldRenderOnlyTheIssuesThatLandInTheWindow() {
         // given (three records, each contributing one issue)
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")),
             assessmentIndex(3, "Document", List.of("titleMissing")))));
@@ -751,7 +802,7 @@ public class DataQualityServiceTest {
 
             // when (one row of three)
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, null, 1);
+                null, null, null, null, null, null, 1);
 
             // then (the lookahead row is scanned but never rendered)
             assertEquals(1, result.content().size());
@@ -776,7 +827,7 @@ public class DataQualityServiceTest {
     public void shouldResolveApplicableRuleKeysOncePerProfileVersion() {
         // given
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
             assessmentIndex(1, "Document", List.of("titleMissing")),
             assessmentIndex(2, "Document", List.of("titleMissing")),
             assessmentIndex(3, "Document", List.of("titleMissing")))));
@@ -788,12 +839,12 @@ public class DataQualityServiceTest {
 
             // when
             dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
-                null, null, null, 10);
+                null, null, null, null, 10);
 
             // then
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()),
+                    anyString(), anyString(), any(), any(), any(), any()),
                 times(1));
         }
     }
@@ -804,7 +855,7 @@ public class DataQualityServiceTest {
         var index = assessmentIndex(1, "Document", List.of("titleMissing"));
 
         when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
-            anyString())).thenReturn(new PageImpl<>(List.of(index)));
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
 
         stubIssueTotal(1);
 
@@ -813,7 +864,7 @@ public class DataQualityServiceTest {
 
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(List.of("titleMissing")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getIssue(
@@ -832,7 +883,7 @@ public class DataQualityServiceTest {
 
             // when
             var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
-                null, null, null, null, lastRow.encode(), 10);
+                null, null, null, null, null, lastRow.encode(), 10);
 
             // then
             assertEquals(1, result.totalIssues());
@@ -1093,7 +1144,7 @@ public class DataQualityServiceTest {
 
         // when
         var activities = row(dataQualityService.getRelatedQualityForEntity(
-            ORGANISATION_UNIT_ENTITY_TYPE, 1).getFirst().relatedQuality(),
+                ORGANISATION_UNIT_ENTITY_TYPE, 1).getFirst().relatedQuality(),
             RelatedEntityType.ACTIVITIES);
 
         // then
@@ -1520,7 +1571,8 @@ public class DataQualityServiceTest {
         boolean fairRelated) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
             Map.of("en", "Resolvable ORCID"), Map.of("en", "The ORCID could not be resolved."),
-            target, severity, dimension, blocking, 8.0, fairRelated, Map.of());
+            target, severity, dimension, "PTCRIS-F1-01DSTRUCT-01", blocking, 8.0, fairRelated,
+            Map.of());
     }
 
     private ConstraintEvaluationResult occurrence(String ruleKey, String... parameters) {
@@ -1754,7 +1806,7 @@ public class DataQualityServiceTest {
                 .thenReturn("1.0.0");
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    "ptcris", "1.0.0", "Document", null, null))
+                    "ptcris", "1.0.0", "Document", null, null, null))
                 .thenReturn(new LinkedHashSet<>(List.of("titleTooLong", "doiNotResolvable")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
@@ -1762,7 +1814,8 @@ public class DataQualityServiceTest {
                 .thenReturn(Set.of(multilingualContent("Title")));
 
             // when
-            var result = dataQualityService.listProfileConstraints("ptcris", "Document");
+            var result = dataQualityService.listProfileConstraints("ptcris", "Document", null,
+                null);
 
             // then
             assertEquals(2, result.size());
@@ -1787,7 +1840,7 @@ public class DataQualityServiceTest {
                 .thenReturn("1.0.0");
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    "ptcris", "1.0.0", null, null, null))
+                    "ptcris", "1.0.0", null, null, null, null))
                 .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
@@ -1795,7 +1848,7 @@ public class DataQualityServiceTest {
                 .thenReturn(Set.of(multilingualContent("Title")));
 
             // when
-            var result = dataQualityService.listProfileConstraints("ptcris", null);
+            var result = dataQualityService.listProfileConstraints("ptcris", null, null, null);
 
             // then
             assertEquals(1, result.size());
@@ -1815,11 +1868,11 @@ public class DataQualityServiceTest {
                 .thenReturn("1.0.0");
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>());
 
             // when
-            var result = dataQualityService.listProfileConstraints("ptcris", "Funding");
+            var result = dataQualityService.listProfileConstraints("ptcris", "Funding", null, null);
 
             // then
             assertNotNull(result);
@@ -1839,7 +1892,7 @@ public class DataQualityServiceTest {
                 .thenReturn("2.0.0");
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    anyString(), anyString(), any(), any(), any()))
+                    anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
             configurationLoader
                 .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
@@ -1847,15 +1900,167 @@ public class DataQualityServiceTest {
                 .thenReturn(Set.of(multilingualContent("Title")));
 
             // when
-            dataQualityService.listProfileConstraints("ptcris", "Document");
+            dataQualityService.listProfileConstraints("ptcris", "Document", null, null);
 
             // then (the picker must describe the rules currently in force)
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
-                    "ptcris", "2.0.0", "Document", null, null));
+                    "ptcris", "2.0.0", "Document", null, null, null));
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
                     "ptcris", "2.0.0", "titleTooLong"));
+        }
+    }
+
+    @Test
+    public void shouldNarrowConstraintsByDimensionAndMetric() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Title")));
+
+            // when
+            var result = dataQualityService.listProfileConstraints("ptcris", "Document",
+                QualityDimension.STRUCTURAL_CONSISTENCY, "PTCRIS-F1-01DSTRUCT-01");
+
+            // then
+            assertEquals(1, result.size());
+
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    "ptcris", "1.0.0", "Document", QualityDimension.STRUCTURAL_CONSISTENCY, null,
+                    "PTCRIS-F1-01DSTRUCT-01"));
+        }
+    }
+
+    @Test
+    public void shouldListEveryMetricOfTheProfileWithItsDescription() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listMetrics(
+                    "ptcris", "1.0.0"))
+                .thenReturn(Map.of(
+                    "PTCRIS-F1-01DSTRUCT-01", Set.of(QualityDimension.STRUCTURAL_CONSISTENCY),
+                    "PTCRIS-F1-01DACURR", Set.of(QualityDimension.ACCURACY)));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getMetricTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Defined data values")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getMetricDefinition(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Definition")));
+
+            // when
+            var result = dataQualityService.listProfileMetrics("ptcris");
+
+            // then (sorted, so the picker is stable regardless of profile order)
+            assertEquals(2, result.size());
+            assertEquals("PTCRIS-F1-01DACURR", result.getFirst().key());
+            assertEquals("PTCRIS-F1-01DSTRUCT-01", result.get(1).key());
+            assertEquals("Defined data values",
+                result.getFirst().title().getFirst().getContent());
+            assertEquals("Definition", result.getFirst().description().getFirst().getContent());
+            assertEquals(Set.of(QualityDimension.ACCURACY), result.getFirst().dimensions());
+        }
+    }
+
+    @Test
+    public void shouldKeepDocumentsCarryingNoneOfTheRequestedRulesOutOfTheScan() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+        stubIssueTotal(1);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(new Pair<>("PTCRIS", "1.0.0"))));
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                "titleMissing", null, null, null, 10);
+
+            // then (the constraint reaches Elasticsearch instead of filtering fetched documents)
+            var query = capturedScanQuery();
+            assertTrue(query.contains("failed_rule_keys"));
+            assertTrue(query.contains("titleMissing"));
+        }
+    }
+
+    @Test
+    public void shouldNotPrefilterRuleKeysWhenNothingNarrowsTheRows() {
+        // given
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(
+            assessmentIndex(1, "Document", List.of("titleMissing")))));
+        stubIssueTotal(1);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+
+            // when
+            dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null, null, null,
+                null, null, null, null, 10);
+
+            // then (every assessment in scope yields rows, so the extra clause would only cost)
+            assertFalse(capturedScanQuery().contains("failed_rule_keys"));
+        }
+    }
+
+    @Test
+    public void shouldNarrowIssuesToTheRequestedMetric() {
+        // given
+        var index = assessmentIndex(1, "Document", List.of("titleMissing", "doiNotResolvable"));
+        when(searchService.runQueryWithoutTotal(any(), any(), eq(DataQualityAssessmentIndex.class),
+            anyString(), any())).thenReturn(new PageImpl<>(List.of(index)));
+        stubIssueTotal(1);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubIssueConfiguration(configurationLoader);
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any(), eq("PTCRIS-F1-01DACURR")))
+                .thenReturn(new LinkedHashSet<>(List.of("doiNotResolvable")));
+
+            // when
+            var result = dataQualityService.findIssuesForEntity(ENTITY_TYPE, 1, "PTCRIS", null,
+                null, null, null, "PTCRIS-F1-01DACURR", null, null, 10);
+
+            // then (only the rule carrying that metric survives)
+            assertEquals(1, result.content().size());
+            assertEquals("doiNotResolvable", result.content().getFirst().ruleKey());
+
+            configurationLoader.verify(
+                () -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any(), eq("PTCRIS-F1-01DACURR")));
         }
     }
 
@@ -1909,15 +2114,15 @@ public class DataQualityServiceTest {
     private DataQualityAssessmentConfigurationLoader.DataQualityRemark remarkFor(
         String target, IssueSeverity severity, QualityDimension dimension) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
-            Map.of("EN", "Title"), Map.of("EN", "Message"), target, severity, dimension, true,
-            8.0, false, Map.of("maxLength", 255));
+            Map.of("EN", "Title"), Map.of("EN", "Message"), target, severity, dimension,
+            "PTCRIS-F1-01DSTRUCT-01", true, 8.0, false, Map.of("maxLength", 255));
     }
 
     private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileWith(
         Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.0.0", 60.0, Map.of(), Map.of("Document.title", 5.0), remarks, Map.of(), Map.of(),
-            Map.of());
+            "1.0.0", 60.0, Map.of(), Map.of(), Map.of("Document.title", 5.0), remarks, Map.of(),
+            Map.of(), Map.of());
     }
 
     private MockedStatic<DataQualityAssessmentConfigurationLoader> mockPolicyLoader(
@@ -1933,6 +2138,18 @@ public class DataQualityServiceTest {
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
                 anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("Definition")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.listMetrics("ptcris", "1.0.0"))
+            .thenReturn(Map.of("PTCRIS-F1-01DSTRUCT-01",
+                Set.of(QualityDimension.STRUCTURAL_CONSISTENCY)));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getMetricTitle(
+                anyString(), anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("Size and type standards")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getMetricDefinition(
+                anyString(), anyString(), anyString()))
             .thenReturn(Set.of(multilingualContent("Definition")));
 
         return configurationLoader;
@@ -2009,6 +2226,24 @@ public class DataQualityServiceTest {
             assertEquals(QualityDimension.values().length, definitions.size());
             assertEquals("Definition",
                 definitions.get(QualityDimension.LINEAGE).getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldCarryTheProfileMetricsAlongsideThePolicy() {
+        // given
+        when(dataQualityAggregator.topFailedRules(any(), any(), anyInt())).thenReturn(List.of());
+
+        try (var ignored = mockPolicyLoader(Map.of())) {
+            // when
+            var metrics = dataQualityService.getPolicy(null, "ptcris", null).metrics();
+
+            // then (so the explorer needs no second request for titles or descriptions)
+            assertEquals(1, metrics.size());
+            assertEquals("PTCRIS-F1-01DSTRUCT-01", metrics.getFirst().key());
+            assertEquals("Size and type standards",
+                metrics.getFirst().title().getFirst().getContent());
+            assertEquals("Definition", metrics.getFirst().description().getFirst().getContent());
         }
     }
 
@@ -2096,7 +2331,7 @@ public class DataQualityServiceTest {
     public void shouldReturnAllConfiguredDataQualityProfiles() {
         // given
         var profile = new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.3", 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+            "1.3", 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
             Map.of("DOCUMENT", new EnumMap<>(QualityDimension.class)));
 
         try (var configurationLoader = mockStatic(

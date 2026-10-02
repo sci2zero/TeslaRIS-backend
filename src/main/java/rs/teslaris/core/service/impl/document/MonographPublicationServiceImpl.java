@@ -30,6 +30,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
+import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -74,6 +75,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            DocumentFileService documentFileService,
                                            CitationService citationService,
                                            ApplicationEventPublisher applicationEventPublisher,
+                                           CrisContextInformationService crisContextInformationService,
                                            PersonContributionService personContributionService,
                                            ExpressionTransformer expressionTransformer,
                                            EventService eventService,
@@ -89,12 +91,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            MonographPublicationRepository monographPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            applicationEventPublisher, personContributionService, expressionTransformer,
-            eventService,
-            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService,
-            countryService);
+            applicationEventPublisher, crisContextInformationService, personContributionService,
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService, documentLookupService, countryService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
         this.monographPublicationRepository = monographPublicationRepository;

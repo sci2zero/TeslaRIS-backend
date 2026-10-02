@@ -1,14 +1,13 @@
 package rs.teslaris.core.indexrepository;
 
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface OrganisationUnitIndexRepository

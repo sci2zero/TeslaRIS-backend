@@ -25,10 +25,10 @@ import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.util.FundingPartFactory;
-import rs.teslaris.project.repository.funding.FundingPartRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +63,8 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         var contribution = new PersonProjectContribution();
 
         // Supports external affiliations (taken from core)
-        var contributor = Objects.nonNull(dto.getPersonId()) ? personService.findOne(dto.getPersonId()) : null;
+        var contributor =
+            Objects.nonNull(dto.getPersonId()) ? personService.findOne(dto.getPersonId()) : null;
         contribution.setPerson(contributor);
         contribution.setOrderNumber(dto.getOrderNumber());
         contribution.setApproveStatus(ApproveStatus.APPROVED);

@@ -50,8 +50,9 @@ public class InstitutionDefaultSubmissionContentServiceImpl
 
         var roleName = user.getAuthority().getName();
 
-        if (roleName.equals(UserRole.INSTITUTIONAL_EDITOR.name()) ||
-            roleName.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name())) {
+        if ((roleName.equals(UserRole.INSTITUTIONAL_EDITOR.name()) ||
+            roleName.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name())) &&
+            Objects.nonNull(user.getOrganisationUnit())) {
             institutionIds = List.of(user.getOrganisationUnit().getId());
         } else if (roleName.equals(UserRole.RESEARCHER.name())) {
             institutionIds = user.getPerson().getInvolvements().stream()

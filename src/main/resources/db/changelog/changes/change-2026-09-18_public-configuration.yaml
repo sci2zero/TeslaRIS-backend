@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-09-18-branding-public-configuration
+      author: teslaris
+      changes:
+        - addColumn:
+            tableName: branding_information
+            columns:
+              - column:
+                  name: logo_server_name
+                  type: VARCHAR(255)
+              - column:
+                  name: background_server_name
+                  type: VARCHAR(255)

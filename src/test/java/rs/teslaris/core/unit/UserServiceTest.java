@@ -273,7 +273,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
@@ -359,7 +359,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -374,6 +374,116 @@ public class UserServiceTest {
         assertEquals("Doe", savedUser.getLastName());
         assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
+    }
+
+    @Test
+    public void shouldRegisterViceDeanForScienceWithoutOrganisationUnit()
+        throws NoSuchAlgorithmException {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(null);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.VICE_DEAN_FOR_SCIENCE.toString());
+        when(authorityRepository.findByName(UserRole.VICE_DEAN_FOR_SCIENCE.toString())).thenReturn(
+            Optional.of(authority));
+
+        var newUser = new User("johndoe@example.com", "password123", "",
+            "John", "Doe", true,
+            false, language, language, authority, null, null, null,
+            UserNotificationPeriod.NEVER, true, null);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.VICE_DEAN_FOR_SCIENCE);
+
+        // Then
+        assertNotNull(savedUser);
+        assertNull(savedUser.getOrganisationUnit());
+        verify(organisationUnitService, never()).findOne(any());
+    }
+
+    @Test
+    public void shouldRegisterInstitutionalEditorWithoutOrganisationUnit()
+        throws NoSuchAlgorithmException {
+        // given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("editor@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(null);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        var authority = new Authority();
+        authority.setName(UserRole.INSTITUTIONAL_EDITOR.toString());
+        when(authorityRepository.findByName(UserRole.INSTITUTIONAL_EDITOR.toString())).thenReturn(
+            Optional.of(authority));
+
+        var newUser = new User("editor@example.com", "password123", "",
+            "Name", "Surname", true,
+            false, language, language, authority, null, null, null,
+            UserNotificationPeriod.NEVER, true, null);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
+        when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
+            Optional.of(new UserAccountIndex()));
+
+        // When
+        var savedUser = userService.registerInstitutionEmployee(registrationRequest,
+            UserRole.INSTITUTIONAL_EDITOR);
+
+        // Then
+        assertNotNull(savedUser);
+        assertNull(savedUser.getOrganisationUnit());
+        verify(organisationUnitService, never()).findOne(any());
+    }
+
+    @Test
+    public void shouldRejectEmployeeRegistrationWithoutOrganisationUnitForOtherRoles() {
+        // Given
+        var registrationRequest = new EmployeeRegistrationRequestDTO();
+        registrationRequest.setEmail("johndoe@example.com");
+        registrationRequest.setNote("note note note");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setOrganisationUnitId(null);
+        registrationRequest.setName("Name");
+        registrationRequest.setSurname("Surname");
+
+        // When
+        // Then
+        assertThrows(IllegalArgumentException.class, () ->
+            userService.registerInstitutionEmployee(registrationRequest,
+                UserRole.INSTITUTIONAL_LIBRARIAN));
     }
 
     @Test
@@ -414,7 +524,7 @@ public class UserServiceTest {
             activationToken);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -475,7 +585,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         var savedUser = userService.registerInstitutionEmployee(registrationRequest,
@@ -534,7 +644,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         var savedUser = userService.registerCommissionUser(registrationRequest);
@@ -660,7 +770,7 @@ public class UserServiceTest {
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setPreferredUILanguageTagId(1);
-        requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setOrganisationUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
 
         var user = new User();
@@ -720,7 +830,7 @@ public class UserServiceTest {
         requestDTO.setLastName("SMITH");
         requestDTO.setPreferredUILanguageTagId(1);
         requestDTO.setPreferredReferenceCataloguingLanguageTagId(1);
-        requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setOrganisationUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
         var user = new User();
@@ -798,7 +908,7 @@ public class UserServiceTest {
         preferredLanguage.setLanguageTag("SR");
         requestDTO.setPreferredUILanguageTagId(1);
         var organisationalUnit = new OrganisationUnit();
-        requestDTO.setOrganisationalUnitId(3);
+        requestDTO.setOrganisationUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(languageTagService.findOne(1)).thenReturn(preferredLanguage);
@@ -913,6 +1023,31 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldRefuseStrictOrganisationUnitLookupWhenUserHasNone() {
+        // given
+        var user = new User();
+        user.setOrganisationUnit(null);
+
+        when(userRepository.findByIdWithOrganisationUnit(1)).thenReturn(Optional.of(user));
+
+        // when
+        // then
+        assertThrows(CantEditException.class, () -> userService.getUserOrganisationUnitId(1));
+    }
+
+    @Test
+    public void shouldReturnNullFromOptionalOrganisationUnitLookupWhenUserHasNone() {
+        // given
+        when(userRepository.findOrganisationUnitIdForUser(1)).thenReturn(null);
+
+        // when
+        var result = userService.findOrganisationUnitIdForUser(1);
+
+        // then
+        assertNull(result);
+    }
+
+    @Test
     public void shouldGetUserOrganisationUnitIdNotFound() {
         // given
         when(userRepository.findByIdWithOrganisationUnit(2)).thenReturn(Optional.empty());
@@ -969,7 +1104,7 @@ public class UserServiceTest {
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         userService.initiatePasswordResetProcess(forgotPasswordRequest);
@@ -1245,7 +1380,7 @@ public class UserServiceTest {
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         var result = userService.generateNewPasswordForUser(8);
@@ -1270,7 +1405,7 @@ public class UserServiceTest {
         var emailFuture = CompletableFuture.completedFuture(false);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         var result = userService.generateNewPasswordForUser(9);
@@ -1411,7 +1546,7 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 
@@ -1460,7 +1595,7 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 
@@ -1541,7 +1676,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1613,7 +1748,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.empty());
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1648,7 +1783,7 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
         when(userRepository.save(user)).thenReturn(user);
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // when
         userService.changeUserEmail(userId, newEmail);
@@ -1684,7 +1819,7 @@ public class UserServiceTest {
         when(messageSource.getMessage(eq("accountActivation.mailBodyResearcher"), any(), any()))
             .thenReturn("Welcome! Activate your account here: {1}");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
         when(emailUtil.constructBodyWithSignature(any(), any(), any())).thenReturn(
             "Content with signature.");
 
@@ -1755,7 +1890,7 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1785,7 +1920,7 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1821,7 +1956,7 @@ public class UserServiceTest {
             .thenReturn("Willkommen! Aktivieren Sie Ihr Konto hier: {1}");
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null));
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1897,7 +2032,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
         );
 
         var authority = new Authority();
@@ -1963,7 +2098,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
         );
 
         var authority = new Authority();
@@ -2044,7 +2179,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
         );
 
         when(authorityRepository.findByName(anyString()))
@@ -2119,7 +2254,7 @@ public class UserServiceTest {
         when(languageTagService.findOne(1)).thenReturn(language);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
-            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>(), null, null, null)
         );
 
         when(authorityRepository.findByName(anyString()))

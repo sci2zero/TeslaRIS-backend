@@ -22,6 +22,7 @@ public class IssueConverter {
             assessment.getAssessmentDate(),
             ruleKey,
             remark.dimension(),
+            remark.metric(),
             remark.severity(),
             remark.blocking(),
             MultilingualContentConverter.getMultilingualContentDTO(

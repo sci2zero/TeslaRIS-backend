@@ -88,16 +88,26 @@ public class PublicationMergeCheckAspect {
 
     private boolean noResearchersFromUserInstitution(List<Integer> contributors,
                                                      Integer userId) {
+        var userInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(userInstitutionId)) {
+            return false; // Not bound to an institution, so not restricted to one either.
+        }
+
         return contributors.stream()
             .filter(contributorId -> contributorId > 0) // filter out external affiliates
             .noneMatch(
                 contributorId -> personService.isPersonEmployedInOrganisationUnit(
-                    contributorId,
-                    userService.getUserOrganisationUnitId(userId)));
+                    contributorId, userInstitutionId));
     }
 
     private boolean isDocumentNotAThesis(Integer documentId, Integer userId) {
-        var userInstitutionId = userService.getUserOrganisationUnitId(userId);
+        var userInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(userInstitutionId)) {
+            return false; // Not bound to an institution, so not restricted to one either.
+        }
+
         var institutionSubUnitIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
 
