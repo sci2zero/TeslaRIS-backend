@@ -53,6 +53,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -189,15 +190,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
-                savedPublication.getId(),
-                null,
-                ProceedingsPublicationConverter.toDTO(savedPublication),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                    savedPublication.getId(),
+                    null,
+                    ProceedingsPublicationConverter.toDTO(savedPublication),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
@@ -207,9 +210,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         sendNotifications(savedPublication, Collections.emptySet());
 
-        applicationEventPublisher.publishEvent(
-            new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
-                savedPublication.getId()));
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
+                    savedPublication.getId()));
+        }
 
         return savedPublication;
     }
@@ -221,15 +226,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         var publicationToUpdate =
             proceedingPublicationJPAService.findOne(publicationId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
-                publicationId,
-                ProceedingsPublicationConverter.toDTO(publicationToUpdate),
-                publicationDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
+                    publicationId,
+                    ProceedingsPublicationConverter.toDTO(publicationToUpdate),
+                    publicationDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldConferenceId = publicationToUpdate.getEvent().getId();
 
@@ -250,9 +257,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         if (!publicationToUpdate.getEvent().getId().equals(oldConferenceId)) {
             conferenceService.reindexVolatileConferenceInformation(oldConferenceId);
 
-            applicationEventPublisher.publishEvent(
-                new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
-                    publicationId));
+            if (!MigrationContext.isActive()) {
+                applicationEventPublisher.publishEvent(
+                    new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
+                        publicationId));
+            }
         }
 
         sendNotifications(publicationToUpdate, oldContributorIds);

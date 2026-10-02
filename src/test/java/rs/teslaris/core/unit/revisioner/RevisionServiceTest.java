@@ -36,6 +36,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
@@ -748,7 +749,7 @@ public class RevisionServiceTest {
     public void shouldNotCreateRevisionForUpdateTriggeredByRestoration() {
         // given (the edit a restorer performs - the restore records its own revision)
         var event = new RevisionCreateEvent(ENTITY_TYPE, 1, new DummyDTO(1, "Old title"),
-            new DummyDTO(1, "New title"), RevisionType.UPDATE, true);
+            new DummyDTO(1, "New title"), RevisionType.UPDATE, true, false);
 
         try (var ignored = mockConfigurationLoader()) {
             // when
@@ -773,6 +774,32 @@ public class RevisionServiceTest {
         assertTrue(eventsDuringRestoration.isEmpty());
         assertFalse(new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
             RevisionType.UPDATE).duringRestoration());
+    }
+
+    @Test
+    public void shouldFlagEventsCreatedWhileMigrationIsInProgress() {
+        // given
+        MigrationContext.runDuring(() ->
+            assertTrue(new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+                RevisionType.UPDATE).duringMigration()));
+
+        // then (context is closed again, so ordinary edits are unaffected)
+        assertFalse(new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+            RevisionType.UPDATE).duringMigration());
+    }
+
+    @Test
+    public void shouldNotRecordRevisionForEventsRaisedDuringMigration() {
+        // given
+        var event = new RevisionCreateEvent(ENTITY_TYPE, 1, null, new DummyDTO(1, "Title"),
+            RevisionType.CREATE, false, true);
+
+        // when
+        revisionService.createRevisionIfChanged(event);
+
+        // then
+        verify(revisionRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test

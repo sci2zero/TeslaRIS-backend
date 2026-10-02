@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
 
@@ -126,15 +127,17 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     public void updateCourse(Integer courseId, CourseDTO dto) {
         var course = findCourseById(courseId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.COURSE.name(),
-                courseId,
-                CourseConverter.toDTO(course),
-                dto,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.COURSE.name(),
+                    courseId,
+                    CourseConverter.toDTO(course),
+                    dto,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldContributorIds = clearEventCommonFields(course);
         setEventCommonFields(course, EventType.COURSE, dto, oldContributorIds);

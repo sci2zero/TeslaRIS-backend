@@ -57,6 +57,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConst
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -232,15 +233,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         var savedMonograph = monographJPAService.save(newMonograph);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH.name(),
-                savedMonograph.getId(),
-                null,
-                MonographConverter.toDTO(savedMonograph),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH.name(),
+                    savedMonograph.getId(),
+                    null,
+                    MonographConverter.toDTO(savedMonograph),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
@@ -256,15 +259,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH.name(),
-                monographId,
-                MonographConverter.toDTO(monographToUpdate),
-                monographDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH.name(),
+                    monographId,
+                    MonographConverter.toDTO(monographToUpdate),
+                    monographDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());

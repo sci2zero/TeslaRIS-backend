@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -159,15 +160,17 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var savedMonographPublication =
             monographPublicationJPAService.save(newMonographPublication);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
-                savedMonographPublication.getId(),
-                null,
-                MonographPublicationConverter.toDTO(savedMonographPublication),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                    savedMonographPublication.getId(),
+                    null,
+                    MonographPublicationConverter.toDTO(savedMonographPublication),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
@@ -206,15 +209,17 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
-                monographPublicationId,
-                MonographPublicationConverter.toDTO(monographPublicationToUpdate),
-                monographPublicationDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
+                    monographPublicationId,
+                    MonographPublicationConverter.toDTO(monographPublicationToUpdate),
+                    monographPublicationDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldContributorIds = clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO, oldContributorIds);

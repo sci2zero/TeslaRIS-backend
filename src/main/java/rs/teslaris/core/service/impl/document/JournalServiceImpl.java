@@ -52,6 +52,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
@@ -194,15 +195,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         var savedJournal = journalJPAService.save(journal);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.JOURNAL.name(),
-                savedJournal.getId(),
-                null,
-                PublicationSeriesConverter.toDTO(savedJournal),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.JOURNAL.name(),
+                    savedJournal.getId(),
+                    null,
+                    PublicationSeriesConverter.toDTO(savedJournal),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexJournal(journal, new JournalIndex());
@@ -233,15 +236,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public void updateJournal(Integer journalId, JournalDTO journalDTO) {
         var journalToUpdate = journalJPAService.findOne(journalId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.JOURNAL.name(),
-                journalId,
-                PublicationSeriesConverter.toDTO(journalToUpdate),
-                journalDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.JOURNAL.name(),
+                    journalId,
+                    PublicationSeriesConverter.toDTO(journalToUpdate),
+                    journalDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         journalToUpdate.getLanguages().clear();
 

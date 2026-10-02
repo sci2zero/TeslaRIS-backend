@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
 import rs.teslaris.revisioner.model.RevisionType;
@@ -190,15 +191,17 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO) {
         var conferenceToUpdate = findConferenceById(conferenceId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.CONFERENCE.name(),
-                conferenceId,
-                ConferenceConverter.toDTO(conferenceToUpdate),
-                conferenceDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.CONFERENCE.name(),
+                    conferenceId,
+                    ConferenceConverter.toDTO(conferenceToUpdate),
+                    conferenceDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldContributorIds = clearEventCommonFields(conferenceToUpdate);
         setEventCommonFields(conferenceToUpdate, EventType.CONFERENCE, conferenceDTO,

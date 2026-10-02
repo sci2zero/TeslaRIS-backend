@@ -103,6 +103,7 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -417,7 +418,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void setPersonBiography(List<MultilingualContentDTO> biographyDTO, Integer personId) {
         var personToUpdate = findOne(personId);
 
-        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        var oldPerson = MigrationContext.isActive()
+            ? null : PersonConverter.toSnapshotDTO(personToUpdate);
 
         personToUpdate.getBiography().clear();
         biographyDTO.stream().map(biography -> {
@@ -434,17 +436,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             this.save(personToUpdate);
         });
 
-        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        if (!MigrationContext.isActive()) {
+            var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
             indexPersonBiography(index, personToUpdate);
@@ -457,7 +461,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void setPersonKeyword(List<MultilingualContentDTO> keywordDTO, Integer personId) {
         var personToUpdate = findOne(personId);
 
-        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        var oldPerson = MigrationContext.isActive()
+            ? null : PersonConverter.toSnapshotDTO(personToUpdate);
 
         personToUpdate.getKeyword().clear();
         keywordDTO.stream().map(keyword -> {
@@ -474,17 +479,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             this.save(personToUpdate);
         });
 
-        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        if (!MigrationContext.isActive()) {
+            var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         personIndexRepository.findByDatabaseId(personId).ifPresent(index -> {
             setPersonIndexKeywords(index, personToUpdate);
@@ -497,7 +504,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void updatePersonMainName(Integer personId, PersonNameDTO personNameDTO) {
         var personToUpdate = findOne(personId);
 
-        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        var oldPerson = MigrationContext.isActive()
+            ? null : PersonConverter.toSnapshotDTO(personToUpdate);
 
         personToUpdate.getName().setFirstname(personNameDTO.getFirstname());
         personToUpdate.getName().setOtherName(personNameDTO.getOtherName());
@@ -512,17 +520,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         save(personToUpdate);
 
-        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        if (!MigrationContext.isActive()) {
+            var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
@@ -534,7 +544,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void setPersonMainName(Integer personNameId, Integer personId) {
         var personToUpdate = findOne(personId);
 
-        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        var oldPerson = MigrationContext.isActive()
+            ? null : PersonConverter.toSnapshotDTO(personToUpdate);
 
         var chosenName = personNameService.findOne(personNameId);
 
@@ -546,17 +557,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         this.save(personToUpdate);
 
-        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+        if (!MigrationContext.isActive()) {
+            var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
@@ -568,6 +581,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void setPersonOtherNames(List<PersonNameDTO> personNameDTO, Integer personId) {
         var personToUpdate = findOne(personId);
 
+        // Needed regardless of migration: the new names are diffed against it below.
         var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
         var currentNames = oldPerson.getPersonOtherNames().stream()
@@ -604,35 +618,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         this.save(personToUpdate);
 
-        var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
-
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
-
-        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void addPersonOtherName(PersonNameDTO personNameDTO, Integer personId) {
-        personRepository.findApprovedByIdWithOtherNames(personId).ifPresent(personToUpdate -> {
-            var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
-
-            personToUpdate.getOtherNames().add(
-                new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
-                    personNameDTO.getLastname(), personNameDTO.getDateFrom(),
-                    personNameDTO.getDateTo(), personNameDTO.getPersonNameType()));
-            personRepository.save(personToUpdate);
-
+        if (!MigrationContext.isActive()) {
             var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
 
             applicationEventPublisher.publishEvent(
@@ -644,6 +630,39 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     RevisionType.UPDATE
                 )
             );
+        }
+
+        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            indexPerson(personToUpdate);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void addPersonOtherName(PersonNameDTO personNameDTO, Integer personId) {
+        personRepository.findApprovedByIdWithOtherNames(personId).ifPresent(personToUpdate -> {
+            var oldPerson = MigrationContext.isActive()
+                ? null : PersonConverter.toSnapshotDTO(personToUpdate);
+
+            personToUpdate.getOtherNames().add(
+                new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
+                    personNameDTO.getLastname(), personNameDTO.getDateFrom(),
+                    personNameDTO.getDateTo(), personNameDTO.getPersonNameType()));
+            personRepository.save(personToUpdate);
+
+            if (!MigrationContext.isActive()) {
+                var newPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+
+                applicationEventPublisher.publishEvent(
+                    new RevisionCreateEvent(
+                        EntityType.PERSON.name(),
+                        personId,
+                        oldPerson,
+                        newPerson,
+                        RevisionType.UPDATE
+                    )
+                );
+            }
 
             var savedPerson = save(personToUpdate);
 
@@ -666,20 +685,23 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public void updatePersonalInfo(Integer personId, PersonalInfoDTO personalInfo) {
         var personToUpdate = findOne(personId);
 
-        var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
-        var newPerson = new PersonSnapshotDTO(oldPerson);
         personalInfo.setId(personId);
-        newPerson.setPersonalInfo(personalInfo);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                oldPerson,
-                newPerson,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            var oldPerson = PersonConverter.toSnapshotDTO(personToUpdate);
+            var newPerson = new PersonSnapshotDTO(oldPerson);
+            newPerson.setPersonalInfo(personalInfo);
+
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    oldPerson,
+                    newPerson,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         setAllPersonIdentifiers(personToUpdate, personalInfo);
 

@@ -89,6 +89,7 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -533,15 +534,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.ORGANISATION_UNIT.name(),
-                organisationUnitId,
-                OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
-                organisationUnitDTORequest,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.ORGANISATION_UNIT.name(),
+                    organisationUnitId,
+                    OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
+                    organisationUnitDTORequest,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldNames = organisationUnitToUpdate.getName().stream()
             .map(MultiLingualContent::getContent)

@@ -102,6 +102,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.DegradationOutcome;
 import rs.teslaris.core.util.restoration.RestorationContext;
@@ -298,15 +299,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedThesis = thesisJPAService.save(newThesis);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.THESIS.name(),
-                savedThesis.getId(),
-                null,
-                ThesisConverter.toDTO(savedThesis),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.THESIS.name(),
+                    savedThesis.getId(),
+                    null,
+                    ThesisConverter.toDTO(savedThesis),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
@@ -322,15 +325,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.THESIS.name(),
-                thesisId,
-                ThesisConverter.toDTO(thesisToUpdate),
-                thesisDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.THESIS.name(),
+                    thesisId,
+                    ThesisConverter.toDTO(thesisToUpdate),
+                    thesisDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkIfAvailableForEditing(thesisToUpdate);
 

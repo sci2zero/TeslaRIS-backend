@@ -41,6 +41,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -135,15 +136,17 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
 
         var savedIntangibleProduct = intangibleProductJPAService.save(newIntangibleProduct);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
-                savedIntangibleProduct.getId(),
-                null,
-                IntangibleProductConverter.toDTO(savedIntangibleProduct),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                    savedIntangibleProduct.getId(),
+                    null,
+                    IntangibleProductConverter.toDTO(savedIntangibleProduct),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
@@ -160,15 +163,17 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
-                intangibleProductId,
-                IntangibleProductConverter.toDTO(intangibleProductToUpdate),
-                intangibleProductDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                    intangibleProductId,
+                    IntangibleProductConverter.toDTO(intangibleProductToUpdate),
+                    intangibleProductDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(intangibleProductDTO);
         var oldContributorIds = clearCommonFields(intangibleProductToUpdate);

@@ -49,6 +49,9 @@ public class MigrationRun {
     @Field("modified_after")
     private String modifiedAfter;
 
+    @Field("backfill_only_created")
+    private boolean backfillOnlyCreated;
+
     @Field("records_read")
     private long recordsRead;
 

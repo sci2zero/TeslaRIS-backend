@@ -81,6 +81,12 @@ public class RevisionServiceImpl implements RevisionService {
             return;
         }
 
+        // Backstop for the guards at the publish sites: a migration records no revisions, they are
+        // backfilled in bulk once the run has finished.
+        if (event.duringMigration()) {
+            return;
+        }
+
         try {
             var newJson = canonicalize(
                 objectMapper.writeValueAsString(event.newObject()),

@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -129,15 +130,17 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
 
         var savedGeneticMaterial = geneticMaterialJPAService.save(newGeneticMaterial);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.GENETIC_MATERIAL.name(),
-                savedGeneticMaterial.getId(),
-                null,
-                GeneticMaterialConverter.toDTO(savedGeneticMaterial),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.GENETIC_MATERIAL.name(),
+                    savedGeneticMaterial.getId(),
+                    null,
+                    GeneticMaterialConverter.toDTO(savedGeneticMaterial),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexGeneticMaterial(savedGeneticMaterial, new DocumentPublicationIndex());
@@ -154,15 +157,17 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.GENETIC_MATERIAL.name(),
-                geneticMaterialId,
-                GeneticMaterialConverter.toDTO(geneticMaterialToUpdate),
-                geneticMaterialDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.GENETIC_MATERIAL.name(),
+                    geneticMaterialId,
+                    GeneticMaterialConverter.toDTO(geneticMaterialToUpdate),
+                    geneticMaterialDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(geneticMaterialDTO);
         var oldContributorIds = clearCommonFields(geneticMaterialToUpdate);

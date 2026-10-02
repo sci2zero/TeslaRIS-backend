@@ -43,6 +43,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -152,15 +153,17 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         var savedIntellectualProperty =
             intellectualPropertyJPAService.save(newIntellectualProperty);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
-                savedIntellectualProperty.getId(),
-                null,
-                IntellectualPropertyConverter.toDTO(savedIntellectualProperty),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
+                    savedIntellectualProperty.getId(),
+                    null,
+                    IntellectualPropertyConverter.toDTO(savedIntellectualProperty),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexIntellectualProperty(savedIntellectualProperty, new DocumentPublicationIndex());
@@ -178,15 +181,17 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         var intellectualPropertyToUpdate =
             intellectualPropertyJPAService.findOne(intellectualPropertyId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
-                intellectualPropertyId,
-                IntellectualPropertyConverter.toDTO(intellectualPropertyToUpdate),
-                intellectualPropertyDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
+                    intellectualPropertyId,
+                    IntellectualPropertyConverter.toDTO(intellectualPropertyToUpdate),
+                    intellectualPropertyDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(intellectualPropertyDTO);
         var oldContributorIds = clearCommonFields(intellectualPropertyToUpdate);

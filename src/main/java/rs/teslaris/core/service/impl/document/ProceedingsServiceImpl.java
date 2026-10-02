@@ -55,6 +55,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -197,15 +198,17 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PROCEEDINGS.name(),
-                savedProceedings.getId(),
-                null,
-                ProceedingsConverter.toDTO(savedProceedings),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PROCEEDINGS.name(),
+                    savedProceedings.getId(),
+                    null,
+                    ProceedingsConverter.toDTO(savedProceedings),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
@@ -219,15 +222,17 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PROCEEDINGS.name(),
-                proceedingsId,
-                ProceedingsConverter.toDTO(proceedingsToUpdate),
-                proceedingsDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PROCEEDINGS.name(),
+                    proceedingsId,
+                    ProceedingsConverter.toDTO(proceedingsToUpdate),
+                    proceedingsDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());

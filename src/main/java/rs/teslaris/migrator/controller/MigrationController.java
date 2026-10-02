@@ -41,10 +41,12 @@ public class MigrationController {
                            @RequestParam(value = "resume", defaultValue = "false") Boolean resume,
                            @RequestParam(value = "modifiedAfter", required = false)
                            String modifiedAfter,
+                           @RequestParam(value = "backfillOnlyCreated", defaultValue = "false")
+                           Boolean backfillOnlyCreated,
                            @RequestHeader("Authorization") String bearerToken) {
         return migrationService.startRun(new MigrationRequestDTO(
             source, entityType, batchSize, performIndex, resume, modifiedAfter,
-            tokenUtil.extractUserIdFromToken(bearerToken)));
+            backfillOnlyCreated, tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
     @GetMapping("/runs")

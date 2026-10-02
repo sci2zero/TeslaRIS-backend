@@ -37,6 +37,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.model.RevisionCreateEvent;
@@ -98,15 +99,17 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         setCommonFields(publisher, publisherDTO);
         var savedPublisher = this.save(publisher);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PUBLISHER.name(),
-                savedPublisher.getId(),
-                null,
-                PublisherConverter.toDTO(savedPublisher),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PUBLISHER.name(),
+                    savedPublisher.getId(),
+                    null,
+                    PublisherConverter.toDTO(savedPublisher),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexPublisher(savedPublisher, new PublisherIndex());
@@ -141,15 +144,17 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public void editPublisher(Integer publisherId, PublisherDTO publisherDTO) {
         var publisherToUpdate = findOne(publisherId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PUBLISHER.name(),
-                publisherId,
-                PublisherConverter.toDTO(publisherToUpdate),
-                publisherDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PUBLISHER.name(),
+                    publisherId,
+                    PublisherConverter.toDTO(publisherToUpdate),
+                    publisherDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         publisherToUpdate.setCountry(null);
         setCommonFields(publisherToUpdate, publisherDTO);

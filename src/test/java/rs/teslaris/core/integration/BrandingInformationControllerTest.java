@@ -44,8 +44,8 @@ public class BrandingInformationControllerTest extends BaseTest {
     @Test
     public void testReadBrandingInformation() throws Exception {
         mockMvc.perform(
-            MockMvcRequestBuilders.get("http://localhost:8081/api/branding")
-                .contentType(MediaType.APPLICATION_JSON))
+                MockMvcRequestBuilders.get("http://localhost:8081/api/branding")
+                    .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.title").exists())
             .andExpect(jsonPath("$.description").exists());

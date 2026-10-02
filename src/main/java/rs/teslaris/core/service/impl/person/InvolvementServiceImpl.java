@@ -56,6 +56,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
@@ -519,19 +520,27 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private PersonSnapshotDTO personSnapshot(Integer personId) {
+        // A migration records no revisions, so the snapshot it would be compared against is not
+        // worth reading and converting.
+        if (MigrationContext.isActive()) {
+            return null;
+        }
+
         return personService.readPersonSnapshot(personId);
     }
 
     private void publishPersonRevision(Integer personId, PersonSnapshotDTO personBeforeChange) {
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                personBeforeChange,
-                personSnapshot(personId),
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    personBeforeChange,
+                    personSnapshot(personId),
+                    RevisionType.UPDATE
+                )
+            );
+        }
     }
 
     /**

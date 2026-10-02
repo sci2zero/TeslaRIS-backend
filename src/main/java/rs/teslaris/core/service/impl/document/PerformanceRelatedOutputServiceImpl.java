@@ -40,6 +40,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -142,15 +143,17 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var savedPerformanceRelatedOutput =
             performanceRelatedOutputJPAService.save(newPerformanceRelatedOutput);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
-                savedPerformanceRelatedOutput.getId(),
-                null,
-                PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                    savedPerformanceRelatedOutput.getId(),
+                    null,
+                    PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexPerformanceRelatedOutput(savedPerformanceRelatedOutput,
@@ -169,15 +172,17 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToUpdate =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
-                performanceRelatedOutputId,
-                PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
-                performanceRelatedOutputDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                    performanceRelatedOutputId,
+                    PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
+                    performanceRelatedOutputDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(performanceRelatedOutputDTO);
         var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);

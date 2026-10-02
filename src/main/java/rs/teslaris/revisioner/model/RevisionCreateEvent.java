@@ -1,5 +1,6 @@
 package rs.teslaris.revisioner.model;
 
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 
 public record RevisionCreateEvent(
@@ -8,12 +9,13 @@ public record RevisionCreateEvent(
     Object oldObject,
     Object newObject,
     RevisionType revisionType,
-    boolean duringRestoration
+    boolean duringRestoration,
+    boolean duringMigration
 ) {
 
     public RevisionCreateEvent(String entityType, Integer entityId, Object oldObject,
                                Object newObject, RevisionType revisionType) {
         this(entityType, entityId, oldObject, newObject, revisionType,
-            RestorationContext.isActive());
+            RestorationContext.isActive(), MigrationContext.isActive());
     }
 }

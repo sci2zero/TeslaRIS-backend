@@ -7,12 +7,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.applicationevent.MigrationRunFinishedEvent;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.pipeline.MigrationPipelineRunner;
 import rs.teslaris.migrator.pipeline.ResolvedPipeline;
+import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 
 /**
@@ -26,6 +30,10 @@ public class MigrationRunExecutor {
     private final MigrationPipelineRunner pipelineRunner;
 
     private final MigrationRunRepository runRepository;
+
+    private final MigrationRecordLogRepository recordLogRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final Map<String, ReentrantLock> runLocks = new ConcurrentHashMap<>();
 
@@ -46,7 +54,7 @@ public class MigrationRunExecutor {
         }
 
         try {
-            pipelineRunner.run(resolved, run);
+            MigrationContext.runDuring(() -> pipelineRunner.run(resolved, run));
         } catch (Exception e) {
             log.error("Migration run {} failed unexpectedly.", run.getId(), e);
 
@@ -55,6 +63,34 @@ public class MigrationRunExecutor {
             runRepository.save(run);
         } finally {
             lock.unlock();
+        }
+
+        // Announced outside the migration context on purpose, so whatever the consumers do to make
+        // up for the skipped bookkeeping is not suppressed in turn. A failed run is announced too:
+        // it still created entities, and those need the same follow-up as a successful one.
+        announceFinishedRun(run);
+    }
+
+    private void announceFinishedRun(MigrationRun run) {
+        try {
+            var createdEntityTypes = recordLogRepository.findCreatedEntityTypes(run.getId());
+
+            if (createdEntityTypes.isEmpty()) {
+                return;
+            }
+
+            // Enumerating is only asked for when the run is small enough to be worth it, as the
+            // identifiers are proportional to what the run created.
+            var createdEntityIdsByType = run.isBackfillOnlyCreated()
+                ? recordLogRepository.findCreatedTargetIdsByType(run.getId())
+                : null;
+
+            applicationEventPublisher.publishEvent(new MigrationRunFinishedEvent(
+                run.getId(), run.getSource(), createdEntityTypes, createdEntityIdsByType));
+        } catch (Exception e) {
+            // The run itself is already finished and recorded, losing the follow-up must not
+            // change that.
+            log.error("Unable to announce the end of migration run {}.", run.getId(), e);
         }
     }
 
