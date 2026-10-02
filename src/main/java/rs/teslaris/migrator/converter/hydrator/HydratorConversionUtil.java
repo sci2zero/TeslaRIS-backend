@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -63,6 +67,11 @@ public class HydratorConversionUtil {
     private static final String RESEARCH_AREA_LEVEL_SEPARATOR = " - ";
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
+
+    // Leading surname particles that author lists drop or keep inconsistently ("da Rocha")
+    private static final Set<String> SURNAME_PARTICLES =
+        Set.of("da", "de", "do", "dos", "das", "e", "del", "della", "di", "du", "van", "von",
+            "der", "la", "le", "los");
 
     private final LanguageTagService languageTagService;
 
@@ -263,6 +272,82 @@ public class HydratorConversionUtil {
 
     public String normalise(String value) {
         return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+    }
+
+    /**
+     * Citation names come as {@code "Surname, Given"}; other single-string forms put the surname
+     * last.
+     */
+    public PersonNameDTO splitName(String value, PersonNameType type) {
+        if (Objects.isNull(value) || value.isBlank()) {
+            return null;
+        }
+
+        var trimmed = value.trim().replaceAll("\\s+", " ");
+        var comma = trimmed.indexOf(',');
+
+        if (comma > 0 && comma < trimmed.length() - 1) {
+            return personName(trimmed.substring(comma + 1).trim(),
+                trimmed.substring(0, comma).trim(), type);
+        }
+
+        var lastSpace = trimmed.lastIndexOf(' ');
+
+        if (lastSpace < 0) {
+            return personName(trimmed, trimmed, type);
+        }
+
+        return personName(trimmed.substring(0, lastSpace), trimmed.substring(lastSpace + 1),
+            type);
+    }
+
+    /**
+     * Loose identity of a person name across the forms a curriculum uses: the surname without
+     * diacritics, punctuation or leading particles, plus the initial of the given names. "Lemos,
+     * R.T." and "Ricardo Teixeira Lemos" share the key {@code lemos|r}, "da Rocha, R.P." and
+     * "Rosmeri Rocha" share {@code rocha|r}. Null when there is no surname.
+     */
+    public String authorMatchKey(PersonNameDTO name) {
+        if (Objects.isNull(name) || Objects.isNull(name.getLastname())) {
+            return null;
+        }
+
+        var surnameWords = new ArrayList<>(Arrays.stream(
+                foldCase(name.getLastname()).split("[\\s\\-]+"))
+            .map(word -> word.replaceAll("[^\\p{L}]", ""))
+            .filter(word -> !word.isEmpty())
+            .toList());
+
+        while (surnameWords.size() > 1 && SURNAME_PARTICLES.contains(surnameWords.getFirst())) {
+            surnameWords.removeFirst();
+        }
+
+        if (surnameWords.isEmpty()) {
+            return null;
+        }
+
+        var givenNames = foldCase(Objects.toString(name.getFirstname(), ""))
+            .replaceAll("[^\\p{L}]", "");
+
+        return String.join("", surnameWords) + "|" +
+            (givenNames.isEmpty() ? "" : givenNames.substring(0, 1));
+    }
+
+    private String foldCase(String value) {
+        return DIACRITICS.matcher(Normalizer.normalize(value, Normalizer.Form.NFKD))
+            .replaceAll("")
+            .toLowerCase(Locale.ROOT);
+    }
+
+    public PersonNameDTO personName(String firstname, String lastname, PersonNameType type) {
+        var name = new PersonNameDTO();
+        name.setFirstname(firstname);
+        // The source never splits out a middle name; core compares contributions on it unguarded
+        name.setOtherName("");
+        name.setLastname(lastname);
+        name.setPersonNameType(type);
+
+        return name;
     }
 
     private String resolveLanguageTagValue(String language) {
