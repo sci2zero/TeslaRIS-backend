@@ -29,6 +29,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
+import rs.teslaris.core.model.commontypes.BrandingTheme;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -95,7 +96,7 @@ public class BrandingInformationServiceTest {
         // given
         var brandingInformationDTO = new BrandingInformationDTO(
             List.of(new MultilingualContentDTO()), List.of(new MultilingualContentDTO()), null,
-            null, null
+            null, null, BrandingTheme.LIGHT, BrandingTheme.DARK
         );
 
         var existingBrandingInformation = new BrandingInformation();
@@ -113,6 +114,8 @@ public class BrandingInformationServiceTest {
         // then
         verify(brandingInformationRepository, times(1)).findAll();
         verify(multilingualContentService, times(2)).getMultilingualContent(any());
+        assertEquals(BrandingTheme.LIGHT, existingBrandingInformation.getChromeTheme());
+        assertEquals(BrandingTheme.DARK, existingBrandingInformation.getHeroTheme());
     }
 
     @Test
@@ -125,7 +128,7 @@ public class BrandingInformationServiceTest {
 
         var brandingInformationDTO = new BrandingInformationDTO(
             List.of(new MultilingualContentDTO()), List.of(new MultilingualContentDTO()),
-            new GeoLocationDTO(20.0, 45.0, null), postalAddress, "+381 21 000 000"
+            new GeoLocationDTO(20.0, 45.0, null), postalAddress, "+381 21 000 000", null, null
         );
 
         var existingBrandingInformation = new BrandingInformation();
@@ -154,7 +157,7 @@ public class BrandingInformationServiceTest {
         // given
         var brandingInformationDTO = new BrandingInformationDTO(
             List.of(new MultilingualContentDTO()), List.of(new MultilingualContentDTO()),
-            new GeoLocationDTO(20.0, 45.0, "Trg Dositeja Obradovica 6"), null, null
+            new GeoLocationDTO(20.0, 45.0, "Trg Dositeja Obradovica 6"), null, null, null, null
         );
 
         var existingBrandingInformation = new BrandingInformation();
@@ -185,7 +188,7 @@ public class BrandingInformationServiceTest {
 
         var brandingInformationDTO = new BrandingInformationDTO(
             List.of(new MultilingualContentDTO()), List.of(new MultilingualContentDTO()), null,
-            null, null
+            null, null, null, null
         );
 
         when(brandingInformationRepository.findAll()).thenReturn(
@@ -216,7 +219,7 @@ public class BrandingInformationServiceTest {
         // given
         var brandingInformationDTO = new BrandingInformationDTO(
             List.of(new MultilingualContentDTO()), List.of(new MultilingualContentDTO()), null,
-            null, null
+            null, null, null, null
         );
 
         when(brandingInformationRepository.findAll()).thenReturn(Collections.emptyList());

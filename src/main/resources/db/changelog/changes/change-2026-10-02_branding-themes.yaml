@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-10-02-branding-themes
+      author: teslaris
+      changes:
+        - addColumn:
+            tableName: branding_information
+            columns:
+              - column:
+                  name: chrome_theme
+                  type: VARCHAR(16)
+              - column:
+                  name: hero_theme
+                  type: VARCHAR(16)
