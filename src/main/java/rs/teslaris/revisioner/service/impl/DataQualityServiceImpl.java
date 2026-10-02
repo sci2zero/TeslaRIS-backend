@@ -116,6 +116,15 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private static final String ISSUE_INDEX_NAME = "data_quality_assessment";
 
+    private static final String FAILED_RULE_KEYS_FIELD = "failed_rule_keys";
+
+    // Everything the scan walks and the rendered row needs, and nothing else: an assessment
+    // document also carries three key arrays, the activity maps and 28 per-dimension fields.
+    private static final List<String> ISSUE_SCAN_FIELDS = List.of(
+        "entity_type", "entity_id", "entity_name_sr", "entity_name_other", "assessment_date",
+        "record_major_version", "record_minor_version", "profile_name", "profile_version",
+        FAILED_RULE_KEYS_FIELD);
+
     private final EntityRevisionRepository entityRevisionRepository;
 
     private final DataQualityAssessmentRepository dataQualityAssessmentRepository;
@@ -534,11 +543,18 @@ public class DataQualityServiceImpl implements DataQualityService {
                                               @Nullable String metric,
                                               String constraintKey, @Nullable String cursor,
                                               @Nullable Integer size) {
-        var window = collectIssueWindow(query, target, dimension, metric, severity, constraintKey,
+        var ruleKeys =
+            expandRuleKeys(profileName, target, dimension, severity, constraintKey, metric);
+
+        var window = collectIssueWindow(
+            narrowsRows(dimension, severity, metric, constraintKey)
+                ? withFailedRuleKeys(query, ruleKeys)
+                : query,
+            target, dimension, metric, severity, constraintKey,
             Objects.isNull(cursor) ? null : IssueCursor.decode(cursor), pageSize(size));
 
-        var totalIssues = countIssues(query, profileName, target, dimension, severity,
-            constraintKey, metric, window.issues().size());
+        var totalIssues = dataQualityAggregator.countIssues(query, ruleKeys)
+            .orElse(window.issues().size());
 
         return new DataQualityIssuePageDTO(window.issues(), totalIssues, window.nextCursor());
     }
@@ -578,7 +594,8 @@ public class DataQualityServiceImpl implements DataQualityService {
                 withWatermark(query, watermark),
                 PageRequest.of(0, ISSUE_SCAN_BATCH_SIZE, Sort.by(Sort.Direction.ASC, "entity_id")),
                 DataQualityAssessmentIndex.class,
-                ISSUE_INDEX_NAME
+                ISSUE_INDEX_NAME,
+                ISSUE_SCAN_FIELDS
             ).getContent();
 
             if (batch.isEmpty()) {
@@ -716,13 +733,26 @@ public class DataQualityServiceImpl implements DataQualityService {
         )._toQuery();
     }
 
-    private long countIssues(Query query, String profileName, String target,
-                             QualityDimension dimension, IssueSeverity severity,
-                             String constraintKey, @Nullable String metric, long fallback) {
-        return dataQualityAggregator
-            .countIssues(query,
-                expandRuleKeys(profileName, target, dimension, severity, constraintKey, metric))
-            .orElse(fallback);
+    private boolean narrowsRows(QualityDimension dimension, IssueSeverity severity,
+                                @Nullable String metric, String constraintKey) {
+        return Objects.nonNull(dimension) || Objects.nonNull(severity) ||
+            Objects.nonNull(metric) || Objects.nonNull(constraintKey);
+    }
+
+    /**
+     * A document carrying none of the requested rules cannot contribute a row, so it is kept out of
+     * the scan rather than fetched and discarded. Which rows each surviving document does
+     * contribute is still decided per profile version in {@link #expandIssues}.
+     */
+    private Query withFailedRuleKeys(Query query, Set<String> ruleKeys) {
+        return BoolQuery.of(b -> b
+            .must(query)
+            .must(TermsQuery.of(terms -> terms
+                .field(FAILED_RULE_KEYS_FIELD)
+                .terms(values -> values.value(
+                    ruleKeys.stream().map(FieldValue::of).toList()))
+            )._toQuery())
+        )._toQuery();
     }
 
     /**

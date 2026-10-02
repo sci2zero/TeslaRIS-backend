@@ -150,13 +150,18 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
         if (!currentUser.getAuthority().getName().equals(UserRole.ADMIN.name()) &&
             !currentUser.getId().equals(userId)) {
-            var currentUserOus = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                userService.getUserOrganisationUnitId(currentUser.getId()));
-            var currentTaskInstitution = Integer.parseInt(taskId.split("-")[1]);
+            var currentUserInstitution =
+                userService.findOrganisationUnitIdForUser(currentUser.getId());
 
-            boolean hasAccess = currentUserOus.contains(currentTaskInstitution);
-            if (!hasAccess) {
-                return false;
+            // A user who is not bound to an institution is not restricted to one.
+            if (Objects.nonNull(currentUserInstitution)) {
+                var currentUserOus = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    currentUserInstitution);
+                var currentTaskInstitution = Integer.parseInt(taskId.split("-")[1]);
+
+                if (!currentUserOus.contains(currentTaskInstitution)) {
+                    return false;
+                }
             }
         }
 
@@ -221,15 +226,17 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private List<ScheduledTaskResponseDTO> listScheduledTasks(Integer userId, String role,
                                                               Function<String, Boolean> taskFilter) {
-        boolean isAdmin = UserRole.ADMIN.name().equals(role);
+        // Admins, and users who are not bound to an institution, are not restricted to one.
+        boolean unrestricted = UserRole.ADMIN.name().equals(role) ||
+            Objects.isNull(userService.findOrganisationUnitIdForUser(userId));
 
-        List<Integer> subOUs = isAdmin
+        List<Integer> subOUs = unrestricted
             ? Collections.emptyList()
             : getUserSubOrganisationUnits(userId);
 
         return tasks.values().stream()
-            .filter(
-                task -> taskFilter.apply(task.id()) && (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .filter(task -> taskFilter.apply(task.id()) &&
+                (unrestricted || isTaskInSubOU(task.id, subOUs)))
             .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
                 task.recurrenceType))
             .collect(Collectors.toList());

@@ -58,7 +58,12 @@ public class ReportGenerationCheckAspect {
     }
 
     public boolean isAccessGranted(Integer userId, String[] commissionIdStrings) {
-        var topLevelInstitutionId = userService.getUserOrganisationUnitId(userId);
+        var topLevelInstitutionId = userService.findOrganisationUnitIdForUser(userId);
+
+        if (Objects.isNull(topLevelInstitutionId)) {
+            return true; // Not bound to an institution, so not restricted to one either.
+        }
+
         var possibleInstitutionsForGeneration =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(topLevelInstitutionId);
 

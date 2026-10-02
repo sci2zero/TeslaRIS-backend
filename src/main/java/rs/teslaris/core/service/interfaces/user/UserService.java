@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.user;
 
+import jakarta.annotation.Nullable;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +35,13 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     UserResponseDTO getUserProfile(Integer userId);
 
     int getUserOrganisationUnitId(Integer userId);
+
+    /**
+     * Returns the employment institution of a user, or null for users who are not bound to one.
+     * Such users are unrestricted, so callers must treat null as "no institution filter".
+     */
+    @Nullable
+    Integer findOrganisationUnitIdForUser(Integer userId);
 
     int getUserCommissionId(Integer userId);
 

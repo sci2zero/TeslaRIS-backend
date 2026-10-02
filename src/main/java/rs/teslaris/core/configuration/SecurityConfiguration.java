@@ -275,6 +275,11 @@ public class SecurityConfiguration {
 
                 // BRANDING INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/branding").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/branding/logo").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/branding/background").permitAll()
+
+                // PUBLIC CONFIGURATION
+                .requestMatchers(HttpMethod.GET, "/api/public-configuration").permitAll()
 
                 // CRIS CONTEXT INFORMATION
                 .requestMatchers(HttpMethod.GET, "/api/cris-context-information").permitAll()

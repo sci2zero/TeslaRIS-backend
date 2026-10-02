@@ -1,5 +1,6 @@
 package rs.teslaris.core.integration;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +45,10 @@ public class BrandingInformationControllerTest extends BaseTest {
     public void testReadBrandingInformation() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get("http://localhost:8081/api/branding")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.title").exists())
+            .andExpect(jsonPath("$.description").exists());
     }
 
     @Test

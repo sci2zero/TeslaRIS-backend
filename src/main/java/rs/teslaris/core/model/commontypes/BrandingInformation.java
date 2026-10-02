@@ -29,6 +29,12 @@ public class BrandingInformation extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
+    @Column(name = "logo_server_name")
+    private String logoServerName;
+
+    @Column(name = "background_server_name")
+    private String backgroundServerName;
+
     @Embedded
     private GeoLocation location;
 
