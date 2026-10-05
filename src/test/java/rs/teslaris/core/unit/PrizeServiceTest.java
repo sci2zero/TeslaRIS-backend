@@ -116,27 +116,6 @@ public class PrizeServiceTest {
     }
 
     @Test
-    public void shouldAddPrizeWithoutIndexing() {
-        // Given
-        var dto = new PrizeDTO();
-
-        var person = new Person();
-        person.setName(
-            new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
-
-        when(personService.findOne(1)).thenReturn(person);
-        when(prizeRepository.save(any(Prize.class))).thenReturn(new Prize());
-
-        // When
-        var responseDTO = prizeService.addPrize(1, dto, false);
-
-        // Then
-        assertNotNull(responseDTO);
-        verify(personService).save(person);
-        verify(prizeIndexRepository, never()).save(any());
-    }
-
-    @Test
     public void shouldUpdatePrize() {
         // Given
         PrizeDTO dto = new PrizeDTO();

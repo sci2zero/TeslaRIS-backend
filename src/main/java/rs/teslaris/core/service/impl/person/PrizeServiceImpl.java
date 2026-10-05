@@ -80,12 +80,6 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     @Override
     @Transactional
     public PrizeResponseDTO addPrize(Integer personId, PrizeDTO dto) {
-        return addPrize(personId, dto, true);
-    }
-
-    @Override
-    @Transactional
-    public PrizeResponseDTO addPrize(Integer personId, PrizeDTO dto, boolean performIndex) {
         var newPrize = new Prize();
         var person = personService.findOne(personId);
 
@@ -97,9 +91,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         person.addPrize(savedPrize);
         personService.save(person);
 
-        if (performIndex) {
-            indexPrize(savedPrize, new PrizeIndex());
-        }
+        indexPrize(savedPrize, new PrizeIndex());
 
         return PrizeConverter.toDTO(savedPrize);
     }

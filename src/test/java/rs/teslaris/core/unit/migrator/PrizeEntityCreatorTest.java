@@ -3,7 +3,6 @@ package rs.teslaris.core.unit.migrator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,7 +45,7 @@ public class PrizeEntityCreatorTest {
         response.setId(42);
         when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
             .thenReturn(Optional.of(5));
-        when(prizeService.addPrize(5, prize, false)).thenReturn(response);
+        when(prizeService.addPrize(5, prize)).thenReturn(response);
 
         var id = creator.create(new PrizeMigrationDTO("cv-1", "7", prize, null), false);
 
@@ -60,7 +59,7 @@ public class PrizeEntityCreatorTest {
 
         assertThrows(MigrationException.class,
             () -> creator.create(new PrizeMigrationDTO("cv-1", "7", new PrizeDTO(), null), true));
-        verify(prizeService, never()).addPrize(anyInt(), any(), anyBoolean());
+        verify(prizeService, never()).addPrize(anyInt(), any());
     }
 
     @Test
@@ -71,6 +70,6 @@ public class PrizeEntityCreatorTest {
             () -> creator.create(dto, false));
 
         assertEquals("invalid effective date 'x'", exception.getMessage());
-        verify(prizeService, never()).addPrize(anyInt(), any(), anyBoolean());
+        verify(prizeService, never()).addPrize(anyInt(), any());
     }
 }
