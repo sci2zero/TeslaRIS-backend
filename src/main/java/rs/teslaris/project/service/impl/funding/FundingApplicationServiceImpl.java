@@ -34,7 +34,7 @@ import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingApplicationIndex;
 import rs.teslaris.project.indexrepository.funding.FundingApplicationIndexRepository;
-import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;

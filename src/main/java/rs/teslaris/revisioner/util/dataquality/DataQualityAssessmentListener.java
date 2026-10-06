@@ -75,8 +75,13 @@ public class DataQualityAssessmentListener {
 
             event.entityRevision().addAssessment(assessment);
 
-            calculator.assessDataQuality(assessment, event.json(),
-                ObjectMapperProvider.provideObjectmapper(), repository, targetTypes);
+            // The assessment is attached first because the calculator reads its revision, and
+            // detached again when nothing assessed it - the cascade would persist it otherwise.
+            if (!calculator.assessDataQuality(assessment, event.json(),
+                ObjectMapperProvider.provideObjectmapper(), repository, targetTypes)) {
+                event.entityRevision().removeAssessment(assessment);
+                return;
+            }
 
             entityRevisionRepository.save(event.entityRevision());
         });

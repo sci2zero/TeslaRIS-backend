@@ -25,7 +25,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 
 @Getter
 @Setter

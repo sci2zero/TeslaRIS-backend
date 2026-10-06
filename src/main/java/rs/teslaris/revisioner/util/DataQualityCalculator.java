@@ -81,8 +81,6 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DimensionScore;
@@ -174,26 +172,26 @@ public class DataQualityCalculator {
             Map.entry(InvolvementDTO.class,
                 (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment)),
             Map.entry(PublisherDTO.class,
-                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment)),
-            Map.entry(ProjectDTO.class,
-                (dto, assessment) -> assessEntity((ProjectDTO) dto, assessment)),
-            Map.entry(FundingDTO.class,
-                (dto, assessment) -> assessEntity((FundingDTO) dto, assessment))
+                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment))
         );
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void assessDataQuality(DataQualityAssessment assessment, String json,
-                                  ObjectMapper objectMapper,
-                                  DataQualityAssessmentRepository repository,
-                                  List<String> targetTypes) {
+    public boolean assessDataQuality(DataQualityAssessment assessment, String json,
+                                     ObjectMapper objectMapper,
+                                     DataQualityAssessmentRepository repository,
+                                     List<String> targetTypes) {
         Class<?> dtoClass =
             revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment, targetTypes);
+            // An entity type with no assessor has nothing to score yet, and a half-built
+            // assessment would be persisted with no finishedAt and then fail to index.
+            if (!assessEntity(dto, assessment, targetTypes)) {
+                return false;
+            }
 
             repository.save(assessment);
 
@@ -208,6 +206,8 @@ public class DataQualityCalculator {
                 assessment.getQualityScore(),
                 assessment.getIssues().size()
             );
+
+            return true;
         } catch (JsonProcessingException e) {
             log.error(
                 "Failed to deserialize revision {} of type {} into DTO {}.",
@@ -225,24 +225,28 @@ public class DataQualityCalculator {
                 e
             );
         }
+
+        return false;
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment,
-                              List<String> targetTypes) {
+    private boolean assessEntity(Object dto, DataQualityAssessment assessment,
+                                 List<String> targetTypes) {
         BiConsumer<Object, DataQualityAssessment> assessor = resolveAssessor(dto.getClass());
 
         if (Objects.isNull(assessor)) {
-            log.warn(
-                "No data quality assessor registered for DTO class {} (entityType={}, revisionId={}).",
+            log.debug(
+                "No data quality assessor for DTO class {} (entityType={}, revisionId={}).",
                 dto.getClass().getName(),
                 assessment.getRevision().getEntityType(),
                 assessment.getRevision().getId()
             );
-            return;
+            return false;
         }
 
         assessor.accept(dto, assessment);
         finishUpAssessment(assessment, targetTypes);
+
+        return true;
     }
 
     @Nullable
@@ -616,14 +620,6 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(PublisherDTO dto, DataQualityAssessment assessment) {
-        // TODO: To be implemented
-    }
-
-    private void assessEntity(ProjectDTO dto, DataQualityAssessment assessment) {
-        // TODO: To be implemented
-    }
-
-    private void assessEntity(FundingDTO dto, DataQualityAssessment assessment) {
         // TODO: To be implemented
     }
 

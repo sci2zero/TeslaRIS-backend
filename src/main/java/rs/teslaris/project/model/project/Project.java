@@ -26,7 +26,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
-import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingApplication;
 

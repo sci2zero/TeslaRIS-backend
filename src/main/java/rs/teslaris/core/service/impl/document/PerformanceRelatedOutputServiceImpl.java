@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PerformanceRelatedOutputJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -46,8 +47,8 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @Traceable
@@ -83,6 +84,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
         DocumentLookupService documentLookupService,
         CountryService countryService,
+        AssessmentGroupResolver assessmentGroupResolver,
         PerformanceRelatedOutputJPAServiceImpl performanceRelatedOutputJPAService,
         LanguageTagService languageTagService,
         PerformanceRelatedOutputRepository performanceRelatedOutputRepository) {
@@ -91,7 +93,8 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.performanceRelatedOutputJPAService = performanceRelatedOutputJPAService;
         this.languageTagService = languageTagService;
         this.performanceRelatedOutputRepository = performanceRelatedOutputRepository;

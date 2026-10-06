@@ -1,0 +1,21 @@
+package rs.teslaris.core.applicationevent;
+
+import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.restoration.RestorationContext;
+
+public record RevisionCreateEvent(
+    String entityType,
+    Integer entityId,
+    Object oldObject,
+    Object newObject,
+    RevisionType revisionType,
+    boolean duringRestoration,
+    boolean duringMigration
+) {
+
+    public RevisionCreateEvent(String entityType, Integer entityId, Object oldObject,
+                               Object newObject, RevisionType revisionType) {
+        this(entityType, entityId, oldObject, newObject, revisionType,
+            RestorationContext.isActive(), MigrationContext.isActive());
+    }
+}

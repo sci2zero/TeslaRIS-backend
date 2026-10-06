@@ -10,8 +10,8 @@ import rs.teslaris.core.converter.commontypes.CurrencyConverter;
 import rs.teslaris.core.dto.commontypes.CurrencyDTO;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
-import rs.teslaris.project.model.common.Currency;
-import rs.teslaris.project.repository.common.CurrencyRepository;
+import rs.teslaris.core.model.commontypes.Currency;
+import rs.teslaris.core.repository.commontypes.CurrencyRepository;
 
 @Service
 @RequiredArgsConstructor

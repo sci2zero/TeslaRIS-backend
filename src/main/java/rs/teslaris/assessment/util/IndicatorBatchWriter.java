@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
+import rs.teslaris.core.util.seeding.BatchWriter;
 
 @Component
 @RequiredArgsConstructor

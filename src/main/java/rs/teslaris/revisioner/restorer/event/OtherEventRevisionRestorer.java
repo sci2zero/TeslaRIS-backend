@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
+import rs.teslaris.core.revision.RevisionRestorer;
 
 @Component
 @RequiredArgsConstructor

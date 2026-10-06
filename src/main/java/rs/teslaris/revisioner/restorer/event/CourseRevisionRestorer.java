@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.CourseService;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
+import rs.teslaris.core.revision.RevisionRestorer;
 
 @Component
 @RequiredArgsConstructor

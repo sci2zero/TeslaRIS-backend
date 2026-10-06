@@ -34,7 +34,7 @@ import rs.teslaris.project.converter.funding.FundingProgramConverter;
 import rs.teslaris.project.dto.funding.FundingProgramDTO;
 import rs.teslaris.project.indexmodel.funding.FundingProgramIndex;
 import rs.teslaris.project.indexrepository.funding.FundingProgramIndexRepository;
-import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingProgram;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;

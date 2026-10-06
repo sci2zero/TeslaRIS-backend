@@ -19,7 +19,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.restoration.DegradationOutcome;
 import rs.teslaris.core.util.restoration.RestorationContext;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
+import rs.teslaris.core.revision.RevisionRestorer;
 
 /**
  * Persons have no single edit method, so the restore replays the individual updates that produce a

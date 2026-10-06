@@ -3,9 +3,10 @@ package rs.teslaris.revisioner.restorer.publicationseries;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalDTO;
+import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
+import rs.teslaris.core.revision.RevisionRestorer;
 
 /**
  * {@code JournalResponseDTO} (what the hydrator reads) and {@code JournalDTO} (what the update
@@ -28,6 +29,11 @@ public class JournalRevisionRestorer implements RevisionRestorer<JournalDTO> {
     @Override
     public Class<JournalDTO> dtoClass() {
         return JournalDTO.class;
+    }
+
+    @Override
+    public Class<?> readDtoClass() {
+        return JournalResponseDTO.class;
     }
 
     @Override

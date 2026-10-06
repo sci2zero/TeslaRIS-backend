@@ -13,8 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import rs.teslaris.core.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.core.util.session.RestTemplateProvider;
-import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 
 @Component
 @Slf4j

@@ -28,7 +28,6 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
-import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter
 @Setter
@@ -83,10 +82,6 @@ public class OrganisationUnitContribution extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
-
-    @OneToMany(mappedBy = "organisationUnitContribution", cascade = CascadeType.ALL,
-        orphanRemoval = true)
-    private Set<FundingPart> fundingParts = new HashSet<>();
 
     public OrganisationUnitContribution(Set<MultiLingualContent> contributionDescription,
                                         Set<MultiLingualContent> displayOrganisationUnit,

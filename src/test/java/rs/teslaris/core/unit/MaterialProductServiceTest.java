@@ -47,6 +47,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MaterialProductServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MaterialProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -104,6 +105,11 @@ public class MaterialProductServiceTest {
 
     @Mock
     private CountryService countryService;
+
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
 
     @Mock
     private EventService eventService;

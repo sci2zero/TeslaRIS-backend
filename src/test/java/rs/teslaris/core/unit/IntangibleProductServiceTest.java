@@ -53,6 +53,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntangibleProductServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntangibleProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -105,6 +106,11 @@ public class IntangibleProductServiceTest {
 
     @Mock
     private CountryService countryService;
+
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
 
     @Mock
     private PublisherService publisherService;

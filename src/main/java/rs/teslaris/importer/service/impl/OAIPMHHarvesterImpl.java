@@ -35,7 +35,7 @@ import rs.teslaris.core.model.oaipmh.common.Metadata;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.ResumptionToken;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.deduplication.DeduplicationUtil;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;

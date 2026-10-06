@@ -43,6 +43,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.oaipmh.OAIPMHParseUtility;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.model.converter.load.event.EventConverter;
@@ -63,7 +64,6 @@ import rs.teslaris.importer.utility.CreatorMethod;
 import rs.teslaris.importer.utility.DataSet;
 import rs.teslaris.importer.utility.ProgressReportUtility;
 import rs.teslaris.importer.utility.RecordConverter;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Service
 @RequiredArgsConstructor

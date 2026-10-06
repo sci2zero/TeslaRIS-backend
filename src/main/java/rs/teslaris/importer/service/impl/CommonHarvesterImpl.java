@@ -29,7 +29,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
-import rs.teslaris.core.util.deduplication.DeduplicationUtil;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.StringUtil;

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import rs.teslaris.revisioner.dto.RevisionDTO;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 
 @Service
 public interface RevisionService {

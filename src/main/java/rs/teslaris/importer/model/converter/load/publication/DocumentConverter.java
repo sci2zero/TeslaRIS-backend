@@ -29,6 +29,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.oaipmh.OAIPMHParseUtility;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.importer.dto.DocumentLoadDTO;
 import rs.teslaris.importer.dto.OrganisationUnitLoadDTO;
@@ -37,7 +38,6 @@ import rs.teslaris.importer.dto.PersonLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @Primary

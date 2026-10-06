@@ -53,6 +53,7 @@ import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -129,6 +130,11 @@ public class MonographServiceTest {
 
     @Mock
     private CountryService countryService;
+
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
 
     @Mock
     private EventService eventService;

@@ -81,6 +81,7 @@ import rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -146,6 +147,11 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private CrisContextInformationService crisContextInformationService;
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
+
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;

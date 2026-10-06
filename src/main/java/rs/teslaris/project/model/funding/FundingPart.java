@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.OrganisationUnitContribution;
-import rs.teslaris.core.model.document.PersonContribution;
-import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectEvent;
 
@@ -65,10 +65,10 @@ public class FundingPart extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_contribution_id")
-    private PersonContribution personContribution;
+    private PersonProjectContribution personContribution;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_contribution_id")
-    private OrganisationUnitContribution organisationUnitContribution;
+    private OrganisationUnitProjectContribution organisationUnitContribution;
 
 }

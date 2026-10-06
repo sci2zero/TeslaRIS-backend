@@ -17,6 +17,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.PersonContribution;
+import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter
 @Setter
@@ -42,5 +43,9 @@ public class PersonProjectContribution extends PersonContribution {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayProject = new HashSet<>();
+
+    @OneToMany(mappedBy = "personContribution", cascade = CascadeType.ALL,
+        orphanRemoval = true)
+    private Set<FundingPart> fundingParts = new HashSet<>();
 
 }

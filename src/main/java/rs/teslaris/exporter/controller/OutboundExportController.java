@@ -21,7 +21,7 @@ import rs.teslaris.core.util.xmlutil.XMLUtil;
 import rs.teslaris.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.exporter.util.ExportDataFormat;
 import rs.teslaris.exporter.util.OAIErrorFactory;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
+import rs.teslaris.exporter.util.ResumptionTokenParser;
 
 @Slf4j
 @RestController
@@ -31,6 +31,8 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 public class OutboundExportController {
 
     private final OutboundExportService outboundExportService;
+
+    private final ResumptionTokenParser resumptionTokenParser;
 
     @Value("${export.base.url}")
     private String baseUrl;
@@ -109,14 +111,14 @@ public class OutboundExportController {
                         response::setListRecords;
 
                 if (Objects.nonNull(resumptionToken)) {
-                    if (!OAIPMHParseUtility.validateResumptionToken(resumptionToken)) {
+                    if (!resumptionTokenParser.validateResumptionToken(resumptionToken)) {
                         response.setError(OAIErrorFactory.constructBadResumptionTokenError());
                         break;
                     }
 
-                    OAIPMHParseUtility.ResumptionTokenData dataFromToken;
+                    ResumptionTokenParser.ResumptionTokenData dataFromToken;
                     try {
-                        dataFromToken = OAIPMHParseUtility.parseResumptionToken(resumptionToken);
+                        dataFromToken = resumptionTokenParser.parseResumptionToken(resumptionToken);
                     } catch (IllegalArgumentException e) {
                         response.setError(OAIErrorFactory.constructBadResumptionTokenError());
                         break;

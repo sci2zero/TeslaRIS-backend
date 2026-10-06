@@ -20,8 +20,8 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.oaipmh.OAIPMHParseUtility;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor

@@ -90,6 +90,7 @@ import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
@@ -174,6 +175,11 @@ public class ThesisServiceTest {
 
     @Mock
     private CountryService countryService;
+
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
 
     @Mock
     private LanguageService languageService;
