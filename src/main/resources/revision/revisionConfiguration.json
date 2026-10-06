@@ -74,7 +74,26 @@
     "COURSE": [],
     "EXHIBITION": [],
     "OTHER_EVENT": [],
-    "PUBLISHER": []
+    "PUBLISHER": [],
+    "PROJECT": [
+      "oldIds",
+      "mergedIds",
+      "persons",
+      "organisations",
+      "relations",
+      "funding"
+    ],
+    "FUNDING": [
+      "oldIds",
+      "mergedIds",
+      "agreements",
+      "fundingParts",
+      "displayCall",
+      "displayProgram",
+      "displayFunder",
+      "currencyCode",
+      "currencySymbol"
+    ]
   },
   "migrationMappings": {
     "DATASET": {

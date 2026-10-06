@@ -81,6 +81,8 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
+import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.DimensionScore;
@@ -172,7 +174,11 @@ public class DataQualityCalculator {
             Map.entry(InvolvementDTO.class,
                 (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment)),
             Map.entry(PublisherDTO.class,
-                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment))
+                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment)),
+            Map.entry(ProjectDTO.class,
+                (dto, assessment) -> assessEntity((ProjectDTO) dto, assessment)),
+            Map.entry(FundingDTO.class,
+                (dto, assessment) -> assessEntity((FundingDTO) dto, assessment))
         );
 
 
@@ -610,6 +616,14 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(PublisherDTO dto, DataQualityAssessment assessment) {
+        // TODO: To be implemented
+    }
+
+    private void assessEntity(ProjectDTO dto, DataQualityAssessment assessment) {
+        // TODO: To be implemented
+    }
+
+    private void assessEntity(FundingDTO dto, DataQualityAssessment assessment) {
         // TODO: To be implemented
     }
 
@@ -1316,30 +1330,32 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(GeoLocationDTO dto, DataQualityAssessment assessment) {
-        if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
-            reportIssue(assessment, "latitudeMissing");
-        } else {
-            var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
-            var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
-            if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
-                (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
-                reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin, latMax);
+        if ((Objects.nonNull(dto.getLatitude()) && dto.getLatitude() != 0.0) ||
+            (Objects.nonNull(dto.getLongitude()) && dto.getLongitude() != 0.0)) {
+            if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
+                reportIssue(assessment, "latitudeMissing");
+            } else {
+                var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
+                var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
+                if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
+                    (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
+                    reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin, latMax);
+                }
             }
-        }
 
-        if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
-            reportIssue(assessment, "longitudeMissing");
-        } else {
-            var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
-            var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
-            if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
-                (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
-                reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin, lonMax);
+            if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
+                reportIssue(assessment, "longitudeMissing");
+            } else {
+                var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
+                var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
+                if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
+                    (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
+                    reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin, lonMax);
+                }
             }
         }
 
         if (StringUtil.valueExists(dto.getAddress())) {
-
             var addressMaxLength = getIntConstraint(assessment, "addressTooLong", "maxLength");
             if (Objects.nonNull(addressMaxLength) &&
                 dto.getAddress().length() > addressMaxLength) {

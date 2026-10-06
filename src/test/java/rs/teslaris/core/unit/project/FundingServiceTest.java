@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,7 @@ import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
@@ -50,6 +53,9 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.exceptionhandling.exception.RevisionRestoreException;
+import rs.teslaris.core.util.restoration.DegradationOutcome;
+import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
@@ -65,9 +71,14 @@ import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Mock
     private FundingRepository fundingRepository;
@@ -432,6 +443,119 @@ public class FundingServiceTest extends BaseTest {
         assertEquals(1, result.getId());
         verify(currencyService, never()).findOne(anyInt());
         verify(fundingRepository).save(any(Funding.class));
+    }
+
+    @Test
+    public void shouldPublishRevisionEventWhenFundingIsUpdated() {
+        // given
+        var fundingId = 1;
+        var existingFunding = minimalFunding(fundingId);
+        var fundingDTO = minimalFundingDTO();
+
+        when(fundingRepository.findById(fundingId)).thenReturn(Optional.of(existingFunding));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
+            .thenReturn(Optional.empty());
+
+        // when
+        fundingService.updateFunding(fundingId, fundingDTO);
+
+        // then
+        var captor = ArgumentCaptor.forClass(RevisionCreateEvent.class);
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+
+        var event = captor.getValue();
+        assertEquals(EntityType.FUNDING.name(), event.entityType());
+        assertEquals(fundingId, event.entityId());
+        assertEquals(RevisionType.UPDATE, event.revisionType());
+        assertEquals(fundingDTO, event.newObject());
+    }
+
+    @Test
+    public void shouldRefuseRestorationWhenTheFundingsProjectNoLongerExists() {
+        // given (a funding detached from its project vanishes from that project's fundings)
+        var fundingId = 1;
+        var fundingDTO = minimalFundingDTO();
+        fundingDTO.setProjectId(42);
+
+        when(fundingRepository.findById(fundingId))
+            .thenReturn(Optional.of(minimalFunding(fundingId)));
+        when(projectService.exists(42)).thenReturn(false);
+
+        // when & then
+        assertThrows(RevisionRestoreException.class, () ->
+            RestorationContext.collectDuring(() -> {
+                fundingService.updateFunding(fundingId, fundingDTO);
+                return null;
+            }));
+
+        verify(projectService, never()).findOne(anyInt());
+    }
+
+    @Test
+    public void shouldKeepTheCallNameWhenTheFundingCallNoLongerExists() {
+        // given
+        var fundingId = 1;
+        var existingFunding = minimalFunding(fundingId);
+        var fundingDTO = minimalFundingDTO();
+        fundingDTO.setFundingCallId(9);
+
+        when(fundingRepository.findById(fundingId)).thenReturn(Optional.of(existingFunding));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
+            .thenReturn(Optional.empty());
+        when(fundingCallService.exists(9)).thenReturn(false);
+
+        // when
+        var degradedReferences = RestorationContext.collectDuring(() -> {
+            fundingService.updateFunding(fundingId, fundingDTO);
+            return null;
+        });
+
+        // then (displayCall survives, so the funding is degraded rather than refused)
+        assertNull(existingFunding.getFundingCall());
+        verify(fundingCallService, never()).findOne(anyInt());
+
+        assertEquals(1, degradedReferences.size());
+        assertEquals("restoreFundingCallMissingMessage",
+            degradedReferences.getFirst().getMessageKey());
+        assertEquals(DegradationOutcome.DEGRADED, degradedReferences.getFirst().getOutcome());
+    }
+
+    private Funding minimalFunding(Integer fundingId) {
+        var funding = new Funding();
+        funding.setId(fundingId);
+        funding.setName(new HashSet<>());
+        funding.setDescription(new HashSet<>());
+        funding.setNameAbbreviation(new HashSet<>());
+        funding.setKeywords(new HashSet<>());
+        funding.setDisplayCall(new HashSet<>());
+        funding.setDisplayProgram(new HashSet<>());
+        funding.setDisplayFunder(new HashSet<>());
+        funding.setResearchAreas(new HashSet<>());
+
+        return funding;
+    }
+
+    private FundingDTO minimalFundingDTO() {
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of());
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        return fundingDTO;
     }
 
     @Test

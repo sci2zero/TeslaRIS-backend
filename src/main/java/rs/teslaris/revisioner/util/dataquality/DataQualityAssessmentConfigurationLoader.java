@@ -466,6 +466,7 @@ public class DataQualityAssessmentConfigurationLoader {
             case PUBLISHER -> List.of("Publisher");
             case PRIZE -> List.of("Prize");
             case PROJECT -> List.of("Project");
+            case FUNDING -> List.of("Funding");
             default -> List.of();
         };
     }

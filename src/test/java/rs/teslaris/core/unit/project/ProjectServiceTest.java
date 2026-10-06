@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.project;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,15 +24,19 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
@@ -43,6 +48,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -65,9 +71,14 @@ import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @SpringBootTest
 public class ProjectServiceTest {
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Mock
     private ProjectRepository projectRepository;
@@ -643,6 +654,133 @@ public class ProjectServiceTest {
         verify(currencyService).findOne(1);
         verify(projectIndexRepository).findProjectIndexByDatabaseId(projectId);
         verify(projectIndexRepository).save(any(ProjectIndex.class));
+    }
+
+    @Test
+    public void shouldPublishRevisionEventWhenProjectIsUpdated() {
+        // given
+        var projectId = 1;
+        var existingProject = minimalProject(projectId);
+        var projectDTO = minimalProjectDTO();
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+            .thenReturn(Optional.empty());
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        var captor = ArgumentCaptor.forClass(RevisionCreateEvent.class);
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+
+        var event = captor.getValue();
+        assertEquals(EntityType.PROJECT.name(), event.entityType());
+        assertEquals(projectId, event.entityId());
+        assertEquals(RevisionType.UPDATE, event.revisionType());
+        assertEquals(projectDTO, event.newObject());
+        assertNotNull(event.oldObject());
+    }
+
+    @Test
+    public void shouldDropCostsWhenCurrencyNoLongerExistsDuringRestoration() {
+        // given
+        var projectId = 1;
+        var existingProject = minimalProject(projectId);
+        var projectDTO = minimalProjectDTO();
+
+        var costs = new MonetaryAmountDTO();
+        costs.setCurrencyId(7);
+        costs.setAmount(500000.0);
+        projectDTO.setCosts(costs);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+            .thenReturn(Optional.empty());
+        when(currencyService.exists(7)).thenReturn(false);
+
+        // when
+        var degradedReferences = RestorationContext.collectDuring(() -> {
+            projectService.updateProject(projectId, projectDTO);
+            return null;
+        });
+
+        // then (an amount without its currency is a number without a unit)
+        assertNull(existingProject.getCosts());
+        verify(currencyService, never()).findOne(anyInt());
+
+        assertEquals(1, degradedReferences.size());
+        assertEquals("restoreCurrencyMissingMessage",
+            degradedReferences.getFirst().getMessageKey());
+    }
+
+    @Test
+    public void shouldReportResearchAreasTheBulkLookupDidNotReturnDuringRestoration() {
+        // given
+        var projectId = 1;
+        var existingProject = minimalProject(projectId);
+        var projectDTO = minimalProjectDTO();
+        projectDTO.setResearchAreasId(Set.of(4, 5));
+
+        var survivingArea = new ResearchArea();
+        survivingArea.setId(4);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+            .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+            .thenReturn(List.of(survivingArea));
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+            .thenReturn(Optional.empty());
+
+        // when
+        var degradedReferences = RestorationContext.collectDuring(() -> {
+            projectService.updateProject(projectId, projectDTO);
+            return null;
+        });
+
+        // then (only the id the lookup silently omitted is reported)
+        assertEquals(1, degradedReferences.size());
+        assertEquals("restoreResearchAreaMissingMessage",
+            degradedReferences.getFirst().getMessageKey());
+        assertEquals(List.of("5"), degradedReferences.getFirst().getParameters());
+    }
+
+    private Project minimalProject(Integer projectId) {
+        var project = new Project();
+        project.setId(projectId);
+        project.setName(new HashSet<>());
+        project.setDescription(new HashSet<>());
+        project.setNameAbbreviation(new HashSet<>());
+        project.setKeywords(new HashSet<>());
+        project.setResearchAreas(new HashSet<>());
+        project.setStatus(ProjectStatus.ONGOING);
+        project.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        project.setResearchType(ProjectResearchType.INNOVATION);
+
+        return project;
+    }
+
+    private ProjectDTO minimalProjectDTO() {
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        return projectDTO;
     }
 
     @Test

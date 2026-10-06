@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.OrganisationUnitContribution;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -35,7 +38,9 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.OrganisationUnitProjectContributionConverter;
 import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
@@ -61,10 +66,14 @@ import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectCon
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
+import rs.teslaris.revisioner.model.RevisionCreateEvent;
+import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl extends JPAServiceImpl<Project> implements ProjectService {
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final ProjectRepository projectRepository;
 
@@ -213,6 +222,18 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         projectIndexRepository.save(
             indexCommonFields(savedProject, new ProjectIndex()));
 
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PROJECT.name(),
+                    savedProject.getId(),
+                    null,
+                    ProjectConverter.toDTO(savedProject),
+                    RevisionType.CREATE
+                )
+            );
+        }
+
         return savedProject;
     }
 
@@ -221,6 +242,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     public void updateProject(Integer projectId,
                               ProjectDTO projectDTO) {
         var projectToUpdate = findOne(projectId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PROJECT.name(),
+                projectId,
+                ProjectConverter.toDTO(projectToUpdate),
+                projectDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         clearCommonFields(projectToUpdate);
         setCommonFields(projectToUpdate, projectDTO);
@@ -366,8 +397,13 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setKeywords(
             multilingualContentService.getMultilingualContent(projectDTO.getKeywords()));
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            projectDTO.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = projectDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         project.setUris(projectDTO.getUris());
@@ -391,12 +427,18 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setNotFunded(projectDTO.getNotFunded());
         project.setInternalIdentifiers(projectDTO.getInternalIdentifiers());
 
-        if (Objects.nonNull(projectDTO.getCosts())) {
+        // An amount without its currency is a number without a unit, so the whole amount goes.
+        var currency = Objects.nonNull(projectDTO.getCosts())
+            ? RestorationSupport.resolveOptional(projectDTO.getCosts().getCurrencyId(),
+            currencyService, currencyService::findOne, "costs.currencyId",
+            "restoreCurrencyMissingMessage")
+            : null;
+
+        if (Objects.nonNull(projectDTO.getCosts()) && Objects.nonNull(currency)) {
             if (Objects.isNull(project.getCosts())) {
                 project.setCosts(new MonetaryAmount());
             }
-            project.getCosts().setCurrency(
-                currencyService.findOne(projectDTO.getCosts().getCurrencyId()));
+            project.getCosts().setCurrency(currency);
             project.getCosts().setAmount(projectDTO.getCosts().getAmount());
         } else {
             project.setCosts(null);

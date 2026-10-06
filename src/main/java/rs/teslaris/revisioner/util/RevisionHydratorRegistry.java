@@ -28,6 +28,8 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
@@ -67,7 +69,9 @@ public class RevisionHydratorRegistry {
                 Map.entry(EntityType.PUBLISHER.name(), PublisherDTO.class),
                 Map.entry(EntityType.BOOK_SERIES.name(), BookSeriesResponseDTO.class),
                 Map.entry(EntityType.ORGANISATION_UNIT.name(), OrganisationUnitDTO.class),
-                Map.entry(EntityType.PERSON.name(), PersonSnapshotDTO.class));
+                Map.entry(EntityType.PERSON.name(), PersonSnapshotDTO.class),
+                Map.entry(EntityType.PROJECT.name(), ProjectDTO.class),
+                Map.entry(EntityType.FUNDING.name(), FundingDTO.class));
     }
 
 

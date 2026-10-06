@@ -5185,7 +5185,7 @@
       "points": 3,
       "usedForFairCompliance": false,
       "constraints": {
-        "minLength": 12
+        "minLength": 14
       }
     },
     "cienciaIdTooLong": {
@@ -5209,7 +5209,7 @@
       "points": 3,
       "usedForFairCompliance": false,
       "constraints": {
-        "maxLength": 12
+        "maxLength": 14
       }
     }
   }
