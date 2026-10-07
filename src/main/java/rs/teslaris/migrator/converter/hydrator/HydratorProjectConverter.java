@@ -30,7 +30,7 @@ import rs.teslaris.project.model.project.ProjectStatus;
 public class HydratorProjectConverter implements
     RecordExtractor.RecordConverter<HydratorProjectModel.ProjectDocument, ProjectMigrationDTO> {
 
-    // Required in TeslaRIS but absent from SciPROJ (MAP-016/035) - provisional until the team decides
+    // Required but absent from SciPROJ (MAP-016/035): provisional until the team decides
     static final ProjectCollaborationType PROVISIONAL_COLLABORATION_TYPE =
         ProjectCollaborationType.NATIONAL;
 

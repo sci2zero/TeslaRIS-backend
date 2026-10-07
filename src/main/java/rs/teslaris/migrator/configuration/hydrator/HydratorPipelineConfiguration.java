@@ -13,7 +13,9 @@ import rs.teslaris.migrator.client.hydrator.HydratorCVClient;
 import rs.teslaris.migrator.client.hydrator.HydratorProjectClient;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
@@ -43,7 +45,7 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     <li>{@code PERSON} - each person is followed by its prizes and employments in the same
  *     traversal; a request for {@code PERSON_PRIZE} or {@code PERSON_EMPLOYMENT} alone runs this
  *     pipeline filtered to that type;</li>
- *     <li>{@code PROJECT} - SciPROJ projects, flat attributes only for now;</li>
+ *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
  * </ol>
  */
@@ -58,6 +60,10 @@ public class HydratorPipelineConfiguration {
     private final HydratorProjectConverter projectConverter;
 
     private final ProjectEntityCreator projectEntityCreator;
+
+    private final HydratorFundingExtractor fundingExtractor;
+
+    private final FundingEntityCreator fundingEntityCreator;
 
     private final MigrationSourceProperties properties;
 
@@ -113,12 +119,19 @@ public class HydratorPipelineConfiguration {
             HydratorProjectModel.ProjectDocument.class,
             new HttpPagedFetcher<>((page, size) -> projectClient.getProjects(
                 null, page, size, HydratorSource.PROJECTS_SORT)),
-            new SimpleMapping<>(
-                MigrationEntityType.PROJECT,
-                RecordExtractor.of(projectConverter),
-                projectEntityCreator,
-                FailureHandler.noOp(),
-                projectConverter::keyOf),
+            ItemRouter.ordered(List.of(
+                new SimpleMapping<>(
+                    MigrationEntityType.PROJECT,
+                    RecordExtractor.of(projectConverter),
+                    projectEntityCreator,
+                    FailureHandler.noOp(),
+                    projectConverter::keyOf),
+                new SimpleMapping<>(
+                    MigrationEntityType.PROJECT_FUNDING,
+                    fundingExtractor,
+                    fundingEntityCreator,
+                    FailureHandler.noOp(),
+                    fundingExtractor::keyOf))),
             sourceProperties.getRetry().toPolicy(),
             HydratorProjectModel.ProjectDocument::id,
             sourceProperties.batchSizeOrDefault(properties.getDefaultBatchSize()));

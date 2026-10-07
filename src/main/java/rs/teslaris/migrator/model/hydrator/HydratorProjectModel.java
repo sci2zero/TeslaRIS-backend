@@ -37,7 +37,9 @@ public class HydratorProjectModel {
         String endDate,
         List<Subject> subjects,
         List<LangValue> keywords,
-        List<LangValue> abstracts
+        List<LangValue> abstracts,
+        List<Funded> funded,
+        OAMandate oaMandate
     ) {
     }
 
@@ -60,6 +62,73 @@ public class HydratorProjectModel {
         String scheme,
         String language,
         String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Funded(
+        FundedBy fundedBy,
+        FundedAs fundedAs
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundedBy(
+        OrgUnit orgUnit
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record OrgUnit(
+        String id,
+        LangValue name,
+        String rorId,
+        List<TypedValue> identifiers
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundedAs(
+        Funding funding
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Funding(
+        String id,
+        String grantId,
+        TextValue type,
+        LangValue name,
+        Amount amount,
+        List<TypedValue> identifiers,
+        Duration duration
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TextValue(
+        String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Amount(
+        String currency,
+        String value
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Duration(
+        String startDate,
+        String endDate
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record OAMandate(
+        String mandated,
+        String uri
     ) {
     }
 }
