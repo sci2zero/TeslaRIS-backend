@@ -14,6 +14,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
@@ -41,8 +43,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @Traceable

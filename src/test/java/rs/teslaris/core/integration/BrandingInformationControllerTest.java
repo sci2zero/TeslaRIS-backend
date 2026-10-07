@@ -38,7 +38,8 @@ public class BrandingInformationControllerTest extends BaseTest {
         postalAddress.setPostalNumber("21000");
 
         return new BrandingInformationDTO(dummyMC, dummyMC,
-            new GeoLocationDTO(19.8335, 45.2671, null), postalAddress, "+381 21 000 000", null, null);
+            new GeoLocationDTO(19.8335, 45.2671, null), postalAddress, "+381 21 000 000", null,
+            null);
     }
 
     @Test

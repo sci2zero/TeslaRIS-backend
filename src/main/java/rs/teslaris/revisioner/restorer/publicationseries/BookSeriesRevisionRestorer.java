@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
-import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.revision.RevisionRestorer;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 
 @Component
 @RequiredArgsConstructor

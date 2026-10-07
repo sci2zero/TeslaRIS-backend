@@ -14,11 +14,11 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.service.impl.commontypes.CurrencyServiceImpl;
-import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.repository.commontypes.CurrencyRepository;
+import rs.teslaris.core.service.impl.commontypes.CurrencyServiceImpl;
 
 @SpringBootTest
 public class CurrencyServiceTest {

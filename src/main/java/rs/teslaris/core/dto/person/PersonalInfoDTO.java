@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.model.person.Sex;
 
 @Getter
@@ -69,9 +70,13 @@ public class PersonalInfoDTO implements PersonIdentifierable {
 
     private List<MultilingualContentDTO> displayTitle = new ArrayList<>();
 
+    private List<Integer> researchAreasId = new ArrayList<>();
+
     // used only for responses
 
     private Integer id;
+
+    private Set<ResearchAreaHierarchyDTO> researchAreas = new HashSet<>();
 
 
     public PersonalInfoDTO(PersonalInfoDTO other) {
@@ -102,6 +107,12 @@ public class PersonalInfoDTO implements PersonIdentifierable {
             ? other.displayTitle.stream().map(MultilingualContentDTO::new)
             .collect(Collectors.toList())
             : new ArrayList<>();
+        this.researchAreasId = other.researchAreasId != null
+            ? new ArrayList<>(other.researchAreasId)
+            : new ArrayList<>();
         this.id = other.id;
+        this.researchAreas = other.researchAreas != null
+            ? new HashSet<>(other.researchAreas)
+            : new HashSet<>();
     }
 }

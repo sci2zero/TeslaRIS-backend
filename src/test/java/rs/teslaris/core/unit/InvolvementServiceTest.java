@@ -30,6 +30,8 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
@@ -68,8 +70,6 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @SpringBootTest
 public class InvolvementServiceTest {

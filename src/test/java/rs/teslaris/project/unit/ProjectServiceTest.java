@@ -32,6 +32,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -71,8 +73,6 @@ import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @SpringBootTest
 public class ProjectServiceTest {

@@ -15,11 +15,11 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.revision.RevisionRestorer;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.restoration.DegradationOutcome;
 import rs.teslaris.core.util.restoration.RestorationContext;
-import rs.teslaris.core.revision.RevisionRestorer;
 
 /**
  * Persons have no single edit method, so the restore replays the individual updates that produce a

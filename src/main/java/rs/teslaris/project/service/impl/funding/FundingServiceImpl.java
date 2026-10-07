@@ -16,10 +16,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -40,7 +43,6 @@ import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
-import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
@@ -49,8 +51,6 @@ import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @RequiredArgsConstructor

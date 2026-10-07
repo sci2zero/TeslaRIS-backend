@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
-import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.core.revision.RevisionRestorer;
+import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
 @Component
 public class RevisionHydratorRegistry {

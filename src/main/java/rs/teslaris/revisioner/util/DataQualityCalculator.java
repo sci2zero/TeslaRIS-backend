@@ -1335,7 +1335,8 @@ public class DataQualityCalculator {
                 var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
                 if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
                     (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
-                    reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin, latMax);
+                    reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin,
+                        latMax);
                 }
             }
 
@@ -1346,7 +1347,8 @@ public class DataQualityCalculator {
                 var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
                 if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
                     (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
-                    reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin, lonMax);
+                    reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin,
+                        lonMax);
                 }
             }
         }

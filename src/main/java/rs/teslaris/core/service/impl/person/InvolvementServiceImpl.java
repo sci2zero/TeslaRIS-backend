@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
@@ -60,8 +62,6 @@ import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Slf4j
 @Service

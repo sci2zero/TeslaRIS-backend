@@ -7,11 +7,6 @@ public enum BrandingTheme {
     LIGHT,
     DARK;
 
-    @JsonValue
-    public String jsonValue() {
-        return name().toLowerCase();
-    }
-
     @JsonCreator
     public static BrandingTheme fromJson(String value) {
         if (value == null || value.isBlank()) {
@@ -23,5 +18,10 @@ public enum BrandingTheme {
             case "dark" -> DARK;
             default -> throw new IllegalArgumentException("invalidBrandingTheme");
         };
+    }
+
+    @JsonValue
+    public String jsonValue() {
+        return name().toLowerCase();
     }
 }

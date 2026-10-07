@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.indexmodel.EntityType;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.revision.RevisionRestorer;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 
 @Component
 @RequiredArgsConstructor
