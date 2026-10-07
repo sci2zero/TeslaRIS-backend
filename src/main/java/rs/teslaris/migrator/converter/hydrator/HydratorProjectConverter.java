@@ -18,6 +18,7 @@ import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -82,7 +83,44 @@ public class HydratorProjectConverter implements
             "required field without source, provisional value: status, collaborationType, " +
                 "researchType");
 
-        return new ProjectMigrationDTO(key, dto, rejection);
+        return new ProjectMigrationDTO(key, dto, consortium(key, project.consortium()), rejection);
+    }
+
+    // MAP-022…027: order Coordinator → Contractor → Partner, source order within a role
+    private List<ProjectMigrationDTO.ConsortiumEntry> consortium(
+        String key, HydratorProjectModel.Consortium consortium) {
+        var entries = new ArrayList<ProjectMigrationDTO.ConsortiumEntry>();
+
+        if (Objects.isNull(consortium)) {
+            return entries;
+        }
+
+        addMembers(key, entries, consortium.coordinator(),
+            OrganisationUnitProjectContributionType.COORDINATOR);
+        addMembers(key, entries, consortium.contractor(),
+            OrganisationUnitProjectContributionType.CONTRACTOR);
+        addMembers(key, entries, consortium.partner(),
+            OrganisationUnitProjectContributionType.PARTNER);
+
+        return entries;
+    }
+
+    private void addMembers(String key, List<ProjectMigrationDTO.ConsortiumEntry> entries,
+                            List<HydratorProjectModel.ConsortiumMember> members,
+                            OrganisationUnitProjectContributionType type) {
+        if (Objects.isNull(members)) {
+            return;
+        }
+
+        members.stream()
+            .filter(member -> Objects.nonNull(member) && Objects.nonNull(member.orgUnit()))
+            .forEach(member -> {
+                if (Objects.nonNull(member.orgUnit().amount())) {
+                    dropped(key, "MAP-022", type + " amount not mapped");
+                }
+                entries.add(new ProjectMigrationDTO.ConsortiumEntry(type,
+                    conversionUtil.institution(member.orgUnit()), entries.size() + 1));
+            });
     }
 
     public String keyOf(HydratorProjectModel.ProjectDocument record, ProjectMigrationDTO dto) {
@@ -173,12 +211,7 @@ public class HydratorProjectConverter implements
     }
 
     private String typeName(String type) {
-        if (isBlank(type)) {
-            return "";
-        }
-
-        var hash = type.lastIndexOf('#');
-        return hash >= 0 ? type.substring(hash + 1) : type.trim();
+        return conversionUtil.typeName(type);
     }
 
     private void dropped(String key, String rule, String reason) {

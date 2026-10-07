@@ -27,6 +27,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -173,5 +174,31 @@ public class HydratorProjectConverterTest {
             """)).project();
 
         assertEquals(Set.of(21), dto.getResearchAreasId());
+    }
+
+    @Test
+    void shouldOrderConsortiumByRole() throws Exception {
+        var result = converter.toDTO(document("""
+            {"projectId": "TEST006", "titles": [{"language": "en", "value": "Test"}],
+             "consortium": {
+               "partner": [{"orgUnit": {"name": {"value": "Test Partner"},
+                 "amount": {"currency": "EUR", "value": "10"}}}],
+               "coordinator": [{"orgUnit": {"name": {"value": "Test Coordinator"},
+                 "identifiers": [{"type": "https://w3id.org/cerif/vocab/IdentifierTypes#RingGold",
+                                  "value": "12345"}]}}],
+               "contractor": [{"orgUnit": {"name": {"value": "Test Contractor"}}}]}}
+            """));
+
+        var consortium = result.consortium();
+        assertEquals(3, consortium.size());
+        assertEquals(OrganisationUnitProjectContributionType.COORDINATOR, consortium.get(0).type());
+        assertEquals(1, consortium.get(0).orderNumber());
+        assertEquals("RingGold",
+            consortium.get(0).institution().otherIdentifiers().identifiers().getFirst().type());
+        assertEquals(OrganisationUnitProjectContributionType.CONTRACTOR, consortium.get(1).type());
+        assertEquals(OrganisationUnitProjectContributionType.PARTNER, consortium.get(2).type());
+        assertEquals(3, consortium.get(2).orderNumber());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST006"),
+            eq("MAP-022"), eq("PARTNER amount not mapped"));
     }
 }

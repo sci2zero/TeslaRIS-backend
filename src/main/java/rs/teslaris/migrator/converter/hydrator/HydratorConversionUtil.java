@@ -3,6 +3,7 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.text.Normalizer;
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
@@ -320,6 +322,38 @@ public class HydratorConversionUtil {
 
     private boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    // SciPROJ OrgUnit as an institution the resolver understands (Ringgold/ROR)
+    public HydratorCVModel.Institution institution(HydratorProjectModel.OrgUnit orgUnit) {
+        if (Objects.isNull(orgUnit)) {
+            return null;
+        }
+
+        var identifiers = new ArrayList<HydratorCVModel.InstitutionIdentifier>();
+        if (Objects.nonNull(orgUnit.identifiers())) {
+            orgUnit.identifiers().stream()
+                .filter(Objects::nonNull)
+                .forEach(identifier -> identifiers.add(new HydratorCVModel.InstitutionIdentifier(
+                    identifier.value(), typeName(identifier.type()))));
+        }
+        if (Objects.nonNull(orgUnit.rorId()) && !orgUnit.rorId().isBlank()) {
+            identifiers.add(new HydratorCVModel.InstitutionIdentifier(orgUnit.rorId(), "ROR"));
+        }
+
+        var name = Objects.isNull(orgUnit.name()) ? null : orgUnit.name().value();
+        return new HydratorCVModel.Institution(name, null, null,
+            new HydratorCVModel.OtherIdentifiers(identifiers.size(), identifiers));
+    }
+
+    // CERIF vocabulary URIs carry the term after '#'
+    public String typeName(String type) {
+        if (Objects.isNull(type) || type.isBlank()) {
+            return "";
+        }
+
+        var hash = type.lastIndexOf('#');
+        return hash >= 0 ? type.substring(hash + 1) : type.trim();
     }
 
     public Integer parseInteger(String value) {

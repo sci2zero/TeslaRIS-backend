@@ -39,7 +39,22 @@ public class HydratorProjectModel {
         List<LangValue> keywords,
         List<LangValue> abstracts,
         List<Funded> funded,
-        OAMandate oaMandate
+        OAMandate oaMandate,
+        Consortium consortium
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Consortium(
+        List<ConsortiumMember> coordinator,
+        List<ConsortiumMember> contractor,
+        List<ConsortiumMember> partner
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConsortiumMember(
+        OrgUnit orgUnit
     ) {
     }
 
@@ -83,7 +98,8 @@ public class HydratorProjectModel {
         String id,
         LangValue name,
         String rorId,
-        List<TypedValue> identifiers
+        List<TypedValue> identifiers,
+        Amount amount
     ) {
     }
 

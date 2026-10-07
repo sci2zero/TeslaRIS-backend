@@ -152,25 +152,7 @@ public class HydratorFundingExtractor
     }
 
     private HydratorCVModel.Institution funder(HydratorProjectModel.FundedBy fundedBy) {
-        var orgUnit = Objects.isNull(fundedBy) ? null : fundedBy.orgUnit();
-        if (Objects.isNull(orgUnit)) {
-            return null;
-        }
-
-        var identifiers = new ArrayList<HydratorCVModel.InstitutionIdentifier>();
-        if (Objects.nonNull(orgUnit.identifiers())) {
-            orgUnit.identifiers().stream()
-                .filter(Objects::nonNull)
-                .forEach(identifier -> identifiers.add(new HydratorCVModel.InstitutionIdentifier(
-                    identifier.value(), typeName(identifier.type()))));
-        }
-        if (!isBlank(orgUnit.rorId())) {
-            identifiers.add(new HydratorCVModel.InstitutionIdentifier(orgUnit.rorId(), "ROR"));
-        }
-
-        var name = Objects.isNull(orgUnit.name()) ? null : orgUnit.name().value();
-        return new HydratorCVModel.Institution(name, null, null,
-            new HydratorCVModel.OtherIdentifiers(identifiers.size(), identifiers));
+        return Objects.isNull(fundedBy) ? null : conversionUtil.institution(fundedBy.orgUnit());
     }
 
     private LocalDate date(String value) {
@@ -186,12 +168,7 @@ public class HydratorFundingExtractor
     }
 
     private String typeName(String type) {
-        if (isBlank(type)) {
-            return "";
-        }
-
-        var hash = type.lastIndexOf('#');
-        return hash >= 0 ? type.substring(hash + 1) : type.trim();
+        return conversionUtil.typeName(type);
     }
 
     private void dropped(String key, String rule, String reason) {
