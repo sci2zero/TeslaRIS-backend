@@ -40,7 +40,44 @@ public class HydratorProjectModel {
         List<LangValue> abstracts,
         List<Funded> funded,
         OAMandate oaMandate,
-        Consortium consortium
+        Consortium consortium,
+        Team team
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Team(
+        List<TeamMember> principalInvestigator,
+        TeamMember contact,
+        List<TeamMember> members
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TeamMember(
+        Person person
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Person(
+        String personName,
+        String orcid,
+        List<PersonIdentifier> identifier
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PersonIdentifier(
+        String type,
+        String value,
+        PersonIdentifierItem item
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PersonIdentifierItem(
+        String orcid
     ) {
     }
 

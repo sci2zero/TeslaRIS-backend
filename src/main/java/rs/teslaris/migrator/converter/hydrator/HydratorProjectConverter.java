@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -19,6 +21,7 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -40,6 +43,12 @@ public class HydratorProjectConverter implements
     private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of("ProjectReference", "QREN");
 
     private static final String ENGLISH = "en";
+
+    // Wikidata property used by SciPROJ for the Ciência ID
+    private static final String CIENCIA_ID_TYPE = "Q122584897";
+
+    private static final Pattern ORCID_URL_PREFIX =
+        Pattern.compile("^https?://(www\\.)?orcid\\.org/", Pattern.CASE_INSENSITIVE);
 
     private final HydratorConversionUtil conversionUtil;
 
@@ -83,7 +92,8 @@ public class HydratorProjectConverter implements
             "required field without source, provisional value: status, collaborationType, " +
                 "researchType");
 
-        return new ProjectMigrationDTO(key, dto, consortium(key, project.consortium()), rejection);
+        return new ProjectMigrationDTO(key, dto, consortium(key, project.consortium()),
+            team(key, project.team()), rejection);
     }
 
     // MAP-022…027: order Coordinator → Contractor → Partner, source order within a role
@@ -121,6 +131,79 @@ public class HydratorProjectConverter implements
                 entries.add(new ProjectMigrationDTO.ConsortiumEntry(type,
                     conversionUtil.institution(member.orgUnit()), entries.size() + 1));
             });
+    }
+
+    // MAP-028…031: order PI → Contact → Member, source order within a role
+    private List<ProjectMigrationDTO.TeamEntry> team(String key, HydratorProjectModel.Team team) {
+        var entries = new ArrayList<ProjectMigrationDTO.TeamEntry>();
+
+        if (Objects.isNull(team)) {
+            return entries;
+        }
+
+        addTeam(key, entries, team.principalInvestigator(),
+            PersonProjectContributionType.PRINCIPLE_INVESTIGATOR);
+        addTeam(key, entries, Objects.isNull(team.contact()) ? null : List.of(team.contact()),
+            PersonProjectContributionType.CONTACT);
+        addTeam(key, entries, team.members(), PersonProjectContributionType.TEAM_MEMBER);
+
+        return entries;
+    }
+
+    private void addTeam(String key, List<ProjectMigrationDTO.TeamEntry> entries,
+                         List<HydratorProjectModel.TeamMember> members,
+                         PersonProjectContributionType type) {
+        if (Objects.isNull(members)) {
+            return;
+        }
+
+        members.stream()
+            .filter(member -> Objects.nonNull(member) && Objects.nonNull(member.person()))
+            .forEach(member -> {
+                var person = member.person();
+                var cienciaId = cienciaId(person);
+                var orcid = orcid(person);
+                var name = isBlank(person.personName()) ? null : person.personName().trim();
+
+                if (Objects.isNull(name) && Objects.isNull(cienciaId) && Objects.isNull(orcid)) {
+                    dropped(key, "MAP-028", type + " without name and identifier");
+                    return;
+                }
+
+                entries.add(new ProjectMigrationDTO.TeamEntry(type, name, cienciaId, orcid,
+                    entries.size() + 1));
+            });
+    }
+
+    private String cienciaId(HydratorProjectModel.Person person) {
+        if (Objects.isNull(person.identifier())) {
+            return null;
+        }
+
+        return person.identifier().stream()
+            .filter(identifier -> Objects.nonNull(identifier) &&
+                Objects.nonNull(identifier.type()) &&
+                identifier.type().endsWith(CIENCIA_ID_TYPE) && !isBlank(identifier.value()))
+            .map(identifier -> identifier.value().trim())
+            .findFirst()
+            .orElse(null);
+    }
+
+    // ORCID sits on the person or nested in an identifier, depending on source element order
+    private String orcid(HydratorProjectModel.Person person) {
+        var orcid = person.orcid();
+
+        if (isBlank(orcid) && Objects.nonNull(person.identifier())) {
+            orcid = person.identifier().stream()
+                .filter(identifier -> Objects.nonNull(identifier) &&
+                    Objects.nonNull(identifier.item()) && !isBlank(identifier.item().orcid()))
+                .map(identifier -> identifier.item().orcid())
+                .findFirst()
+                .orElse(null);
+        }
+
+        return isBlank(orcid) ? null :
+            ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase(Locale.ROOT);
     }
 
     public String keyOf(HydratorProjectModel.ProjectDocument record, ProjectMigrationDTO dto) {

@@ -28,6 +28,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -200,5 +201,35 @@ public class HydratorProjectConverterTest {
         assertEquals(3, consortium.get(2).orderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST006"),
             eq("MAP-022"), eq("PARTNER amount not mapped"));
+    }
+
+    @Test
+    void shouldReadTeamInRoleOrderWithIdentifiers() throws Exception {
+        var result = converter.toDTO(document("""
+            {"projectId": "TEST007", "titles": [{"language": "en", "value": "Test"}],
+             "team": {
+               "members": [
+                 {"person": {"personName": "Jane Smith",
+                   "identifier": [{"item": {"orcid": "https://orcid.org/0000-0002-1825-0097"}}]}},
+                 {"person": {}}],
+               "principalInvestigator": [{"person": {"personName": "John Doe",
+                 "identifier": [{"type": "https://www.wikidata.org/wiki/Q122584897",
+                                 "value": "AAAA-BBBB-CCCC"}]}}],
+               "contact": {"person": {"personName": "John Doe",
+                 "orcid": "https://orcid.org/0000-0002-1825-009x"}}}}
+            """));
+
+        var team = result.team();
+        assertEquals(3, team.size());
+        assertEquals(PersonProjectContributionType.PRINCIPLE_INVESTIGATOR, team.get(0).type());
+        assertEquals("AAAA-BBBB-CCCC", team.get(0).cienciaId());
+        assertEquals(PersonProjectContributionType.CONTACT, team.get(1).type());
+        assertEquals("0000-0002-1825-009X", team.get(1).orcid());
+        assertEquals(PersonProjectContributionType.TEAM_MEMBER, team.get(2).type());
+        assertEquals("Jane Smith", team.get(2).name());
+        assertEquals("0000-0002-1825-0097", team.get(2).orcid());
+        assertEquals(3, team.get(2).orderNumber());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST007"),
+            eq("MAP-028"), eq("TEAM_MEMBER without name and identifier"));
     }
 }

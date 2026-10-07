@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
+import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
@@ -31,6 +32,8 @@ import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
@@ -51,6 +54,9 @@ public class ProjectEntityCreatorTest {
     private HydratorInstitutionResolver institutionResolver;
 
     @Mock
+    private HydratorPersonResolver personResolver;
+
+    @Mock
     private MigrationLog migrationLog;
 
     private ProjectEntityCreator creator;
@@ -58,7 +64,7 @@ public class ProjectEntityCreatorTest {
 
     @BeforeEach
     void setUp() {
-        creator = new ProjectEntityCreator(projectService, institutionResolver,
+        creator = new ProjectEntityCreator(projectService, institutionResolver, personResolver,
             new HydratorConversionUtil(mock(LanguageTagService.class), mock(LanguageService.class),
                 mock(ResearchAreaService.class)),
             migrationLog);
@@ -80,7 +86,8 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationDTO.ConsortiumEntry(
                 OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1),
             new ProjectMigrationDTO.ConsortiumEntry(
-                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2)), null), true);
+                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2)), List.of(), null),
+            true);
 
         assertEquals(42, id);
         var linked = dto.getOrganisations().get(0);
@@ -100,8 +107,36 @@ public class ProjectEntityCreatorTest {
     @Test
     void shouldFailItemWithInvalidSourceValue() {
         assertThrows(InvalidSourceValueException.class, () -> creator.create(
-            new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), "invalid date 'x'"),
+            new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
+                "invalid date 'x'"),
             true));
         verify(projectService, never()).createProject(any());
+    }
+
+    @Test
+    void shouldAddTeamContributions() {
+        var dto = new ProjectDTO();
+        when(personResolver.resolve("AAAA-BBBB-CCCC", null))
+            .thenReturn(new HydratorPersonResolver.Match(9, null));
+        when(personResolver.resolve(null, null))
+            .thenReturn(new HydratorPersonResolver.Match(null, "person has no identifier"));
+
+        creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(), List.of(
+            new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
+                "John Doe", "AAAA-BBBB-CCCC", null, 1),
+            new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
+                "Jane Smith", null, null, 2),
+            new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
+                "Test Member", null, null, 3)), null), true);
+
+        var linked = dto.getPersons().get(0);
+        assertEquals(9, linked.getPersonId());
+        assertEquals("John Doe", linked.getPersonName().getLastname());
+        assertEquals(PersonProjectInvestigationRole.OTHER, linked.getInvestigationRole());
+        assertNull(dto.getPersons().get(1).getPersonId());
+        assertEquals(3, dto.getPersons().get(2).getOrderNumber());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("MAP-028"), eq("2 team member(s) TEAM_MEMBER not linked, name only: " +
+                "person has no identifier"));
     }
 }
