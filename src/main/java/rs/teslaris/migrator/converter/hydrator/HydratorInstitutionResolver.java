@@ -9,9 +9,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
 /**
  * Matches an institution to an existing organisation unit by identifier (MAP-000046/047); without
@@ -53,6 +55,7 @@ public class HydratorInstitutionResolver {
         return Match.missing(NOT_FOUND);
     }
 
+    @EventListener(MigrationRunStartedEvent.class)
     public void clearCache() {
         organisationUnitIds.clear();
     }

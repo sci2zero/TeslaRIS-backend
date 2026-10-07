@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.migrator.client.MigrationCursor;
 import rs.teslaris.migrator.client.SourceBatch;
 import rs.teslaris.migrator.client.SourceRecordFetcher;
@@ -40,6 +41,7 @@ import rs.teslaris.migrator.pipeline.RetryPolicy;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 import rs.teslaris.migrator.util.MigrationEntityType;
+import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 import rs.teslaris.migrator.util.MigrationLog;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +58,9 @@ public class MigrationPipelineRunnerTest {
 
     @Mock
     private MigrationLog migrationLog;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private MigrationPipelineRunner runner;
@@ -117,6 +122,7 @@ public class MigrationPipelineRunnerTest {
         assertEquals(3, result.getItemsCreated());
         assertEquals(3, result.getRecordsRead());
         assertEquals(MigrationRunStatus.FINISHED, result.getStatus());
+        verify(eventPublisher).publishEvent(any(MigrationRunStartedEvent.class));
     }
 
     @Test

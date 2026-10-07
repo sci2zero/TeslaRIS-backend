@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import rs.teslaris.migrator.client.MigrationCursor;
 import rs.teslaris.migrator.client.SourceBatch;
@@ -14,6 +15,7 @@ import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 import rs.teslaris.migrator.util.MigrationLog;
+import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
 /**
  * The migration algorithm, in one place.
@@ -31,12 +33,16 @@ public class MigrationPipelineRunner {
 
     private final MigrationLog migrationLog;
 
+    private final ApplicationEventPublisher eventPublisher;
+
 
     public <S> MigrationRun run(ResolvedPipeline<S> resolved, MigrationRun run) {
         var pipeline = resolved.pipeline();
         var cursor = new MigrationCursor(run.getCurrentPage(), null);
 
         migrationLog.runStarted(run);
+        eventPublisher.publishEvent(
+            new MigrationRunStartedEvent(run.getId(), run.getSource(), run.getEntityType()));
 
         try {
             while (true) {

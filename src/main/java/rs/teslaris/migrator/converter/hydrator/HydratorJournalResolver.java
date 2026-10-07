@@ -5,9 +5,11 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
 /**
  * A journal publication needs a journal id, but the curriculum payload only carries the journal
@@ -47,6 +49,7 @@ public class HydratorJournalResolver {
         });
     }
 
+    @EventListener(MigrationRunStartedEvent.class)
     public void clearCache() {
         resolvedJournals.clear();
     }

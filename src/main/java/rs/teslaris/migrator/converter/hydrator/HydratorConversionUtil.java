@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
+import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
 /**
  * Shared conversion helpers for the hydrator source: language tags, dates, and the synthetic keys
@@ -67,7 +69,8 @@ public class HydratorConversionUtil {
         "exact sciences", "natural sciences"
     );
 
-    private static final String RESEARCH_AREA_LEVEL_SEPARATOR = " - ";
+    // CV labels use " - " between levels, SciPROJ subjects use "/"
+    private static final String RESEARCH_AREA_LEVEL_SEPARATOR = "\\s+-\\s+|\\s*/\\s*";
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
@@ -202,6 +205,7 @@ public class HydratorConversionUtil {
         return researchAreas;
     }
 
+    @EventListener(MigrationRunStartedEvent.class)
     public void clearResearchAreaCache() {
         researchAreaIdsByName = null;
         researchAreaMatches.clear();

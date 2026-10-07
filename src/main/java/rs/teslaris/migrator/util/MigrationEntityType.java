@@ -15,6 +15,7 @@ public enum MigrationEntityType {
     PERSON,
     PERSON_EMPLOYMENT,
     PERSON_PRIZE,
+    PROJECT,
 
     DOCUMENT,
     JOURNAL_PUBLICATION,

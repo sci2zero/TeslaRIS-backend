@@ -15,6 +15,9 @@ public final class HydratorSource {
      */
     public static final String CURRICULA_SORT = "id,asc";
 
+    // Hydrator's default project sort (harvest datestamp) is the same for every record
+    public static final String PROJECTS_SORT = "id,asc";
+
     private HydratorSource() {
     }
 }
