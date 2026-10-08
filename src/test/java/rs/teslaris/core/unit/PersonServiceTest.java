@@ -93,6 +93,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationSer
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
@@ -160,6 +161,9 @@ public class PersonServiceTest {
 
     @Mock
     private CrisContextInformationService crisContextInformationService;
+
+    @Mock
+    private ResearchAreaService researchAreaService;
 
     @InjectMocks
     private PersonServiceImpl personService;

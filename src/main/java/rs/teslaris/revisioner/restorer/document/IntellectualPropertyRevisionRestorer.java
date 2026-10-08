@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 import rs.teslaris.core.revision.RevisionRestorer;
+import rs.teslaris.core.service.interfaces.document.IntellectualPropertyService;
 
 @Component
 @RequiredArgsConstructor

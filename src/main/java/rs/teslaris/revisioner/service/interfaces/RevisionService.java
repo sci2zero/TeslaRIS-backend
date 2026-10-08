@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
-import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.revisioner.dto.RevisionDTO;
 
 @Service
 public interface RevisionService {

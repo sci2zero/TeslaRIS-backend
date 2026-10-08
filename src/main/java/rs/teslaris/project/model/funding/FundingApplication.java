@@ -21,10 +21,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
 
 @Getter

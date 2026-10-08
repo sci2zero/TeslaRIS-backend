@@ -69,4 +69,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private String authenticusId;
 
     private String lattesId;
+
+    private List<Integer> researchAreasId = new ArrayList<>();
 }

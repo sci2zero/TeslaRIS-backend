@@ -61,6 +61,10 @@ public class ModuleBoundaryTest {
             .map(other -> Arguments.of(module, other)));
     }
 
+    private static Stream<String> modulesCoreMustNotReachInto() {
+        return MODULES.stream().filter(module -> !MODULES_CORE_STILL_REACHES_INTO.contains(module));
+    }
+
     @ParameterizedTest(name = "{0} must not depend on {1}")
     @MethodSource("moduleAndForbiddenModule")
     public void moduleMustNotDependOnAnotherModule(String module, String forbiddenModule) {
@@ -71,10 +75,6 @@ public class ModuleBoundaryTest {
             .because(module + " may only depend on " + SHARED_MODULE +
                 ", so that it can be extracted into its own module")
             .check(classes);
-    }
-
-    private static Stream<String> modulesCoreMustNotReachInto() {
-        return MODULES.stream().filter(module -> !MODULES_CORE_STILL_REACHES_INTO.contains(module));
     }
 
     @ParameterizedTest(name = SHARED_MODULE + " must not depend on {0}")

@@ -34,6 +34,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -71,8 +73,6 @@ import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {

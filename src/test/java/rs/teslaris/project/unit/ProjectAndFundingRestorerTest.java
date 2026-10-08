@@ -11,10 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.service.interfaces.funding.FundingService;
-import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.revision.FundingRevisionRestorer;
 import rs.teslaris.project.revision.ProjectRevisionRestorer;
+import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @SpringBootTest
 public class ProjectAndFundingRestorerTest {

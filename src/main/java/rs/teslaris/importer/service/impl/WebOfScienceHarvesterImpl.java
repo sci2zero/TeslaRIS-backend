@@ -16,7 +16,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.WebOfScienceConverter;
@@ -24,6 +23,7 @@ import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfi
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 import rs.teslaris.importer.utility.webofscience.WebOfScienceImportUtility;
 

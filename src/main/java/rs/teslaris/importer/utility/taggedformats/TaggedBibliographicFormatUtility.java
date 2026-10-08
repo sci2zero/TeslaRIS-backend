@@ -16,7 +16,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
-import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
@@ -28,6 +27,7 @@ import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Component

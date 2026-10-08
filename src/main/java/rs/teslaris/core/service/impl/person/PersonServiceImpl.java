@@ -42,7 +42,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonResearchAreasChangedEvent;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -91,6 +94,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationSer
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -110,8 +114,6 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @RequiredArgsConstructor
@@ -151,6 +153,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final LanguageTagService languageTagService;
 
     private final PersonNameService personNameService;
+
+    private final ResearchAreaService researchAreaService;
 
     private final PersonContributionRepository personContributionRepository;
 
@@ -313,6 +317,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var saved = this.save(person);
         person.setId(saved.getId());
 
+        announceResearchAreasChanged(saved.getId(), personDTO.getResearchAreasId());
+
         if (status == ApproveStatus.APPROVED && index) {
             indexPerson(saved);
         }
@@ -334,6 +340,38 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         return person;
+    }
+
+    /**
+     * Replaces the person's research areas, mirroring how every other entity that owns research
+     * areas handles them. A null list leaves what is stored alone, an empty one clears it.
+     */
+    private void setResearchAreas(Person person, List<Integer> researchAreaIds) {
+        if (Objects.isNull(researchAreaIds)) {
+            return;
+        }
+
+        if (Objects.isNull(person.getResearchAreas())) {
+            person.setResearchAreas(new HashSet<>());
+        }
+
+        person.getResearchAreas().clear();
+        person.getResearchAreas()
+            .addAll(researchAreaService.getResearchAreasByIds(researchAreaIds));
+    }
+
+    /**
+     * Announced rather than applied directly: the assessment research area belongs to the
+     * assessment module, which this one does not depend on. The listener there decides whether the
+     * person has an assessment research area to mirror into at all.
+     */
+    private void announceResearchAreasChanged(Integer personId, List<Integer> researchAreaIds) {
+        if (Objects.isNull(researchAreaIds)) {
+            return;
+        }
+
+        applicationEventPublisher.publishEvent(
+            new PersonResearchAreasChangedEvent(personId, List.copyOf(researchAreaIds)));
     }
 
     private Person buildBasePerson(BasicPersonDTO personDTO, ApproveStatus status,
@@ -396,6 +434,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         setAllPersonIdentifiers(person, personDTO);
+        setResearchAreas(person, personDTO.getResearchAreasId());
 
         if (Objects.nonNull(personDTO.getOrganisationUnitId())) {
             var institution =
@@ -704,6 +743,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         setAllPersonIdentifiers(personToUpdate, personalInfo);
+        setResearchAreas(personToUpdate, personalInfo.getResearchAreasId());
 
         var personalInfoToUpdate = personToUpdate.getPersonalInfo();
         personalInfoToUpdate.setPlaceOfBrith(personalInfo.getPlaceOfBirth());
@@ -740,6 +780,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             defaultRegionCode);
 
         save(personToUpdate);
+
+        announceResearchAreasChanged(personId, personalInfo.getResearchAreasId());
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);

@@ -18,7 +18,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.ScopusConverter;
@@ -26,6 +25,7 @@ import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfi
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 
 @Slf4j

@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.revision.RevisionRestorer;
+import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 
 @Component
 @RequiredArgsConstructor

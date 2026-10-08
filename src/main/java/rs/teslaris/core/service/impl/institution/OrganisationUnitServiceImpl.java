@@ -37,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -97,8 +99,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @RequiredArgsConstructor
