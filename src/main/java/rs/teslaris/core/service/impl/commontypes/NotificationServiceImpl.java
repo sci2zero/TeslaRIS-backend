@@ -2,16 +2,18 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +25,7 @@ import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationReadStatus;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
@@ -76,24 +79,34 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationDTO> getUserNotifications(Integer userId) {
-        var notificationList = notificationRepository.getNotificationsForUser(userId);
-        var locale = getLocale(notificationList);
+    public Page<NotificationDTO> getUserNotifications(Integer userId,
+                                                     NotificationReadStatus readStatus,
+                                                     Pageable pageable) {
+        Boolean read = switch (readStatus) {
+            case UNREAD -> false;
+            case READ -> true;
+            case ALL -> null;
+        };
+        var notificationList =
+            notificationRepository.getNotificationsForUserByReadStatus(userId, read,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        var locale = getLocale(notificationList.getContent());
 
-        return notificationList.stream().map(
+        return notificationList.map(
                 notification -> {
                     var notificationText = notification.getNotificationText() + " " +
                         getNotificationActionIfExists(notification.getNotificationType(), locale);
 
                     return new NotificationDTO(notification.getId(),
                         notificationText.trim(), getDisplayValue(notification),
-                        NotificationConfiguration.allowedActions.get(
-                            notification.getNotificationType()),
+                        notification.getReadAt() == null ?
+                            NotificationConfiguration.allowedActions.get(
+                                notification.getNotificationType()) : Collections.emptyList(),
                         notification.getCreateDate()
-                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-                })
-            .collect(
-                Collectors.toList());
+                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+                        notification.getReadAt(), notification.getDetails(),
+                        notification.getSentiment());
+                });
     }
 
     private String getNotificationActionIfExists(NotificationType notificationType, Locale locale) {
@@ -134,6 +147,10 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 "Exception you are trying to approve does not belong to you.");
         }
 
+        if (notification.getReadAt() != null) {
+            throw new NotificationException("Notification has already been read or handled.");
+        }
+
         var result = new NotificationActionResult("");
         switch (notification.getNotificationType()) {
             case NEW_PAPER_HARVESTED:
@@ -167,7 +184,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 result = new NotificationActionResult(notification.getValues().get("entityUrl"));
         }
 
-        delete(notificationId);
+        markAsRead(notification);
         return result;
     }
 
@@ -181,13 +198,20 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 "Exception you are trying to approve does not belong to you.");
         }
 
-        delete(notificationId);
+        markAsRead(notification);
+    }
+
+    private void markAsRead(Notification notification) {
+        if (notification.getReadAt() == null) {
+            notification.setReadAt(LocalDateTime.now());
+            notificationRepository.save(notification);
+        }
     }
 
     @Override
     @Transactional
     public void dismissAll(Integer userId) {
-        notificationRepository.deleteAllForUser(userId);
+        notificationRepository.markAllAsReadForUser(userId, LocalDateTime.now());
     }
 
     @Override

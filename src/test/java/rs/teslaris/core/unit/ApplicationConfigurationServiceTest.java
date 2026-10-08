@@ -1,5 +1,8 @@
 package rs.teslaris.core.unit;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,7 +17,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,12 +61,12 @@ class ApplicationConfigurationServiceTest {
     @Test
     void shouldScheduleMaintenanceModeWithCorrectParameters() {
         // Given
-        var startTime = LocalDateTime.now().plusHours(1);
+        var startTime = Instant.now().plus(1, ChronoUnit.HOURS);
         var approximateEndMoment = "2 hours";
         var userId = 123;
         var expectedTaskId = "task-123";
 
-        when(taskManagerService.scheduleTask(anyString(), any(LocalDateTime.class),
+        when(taskManagerService.scheduleTask(anyString(), any(Instant.class),
             any(Runnable.class), eq(userId), eq(RecurrenceType.ONCE)))
             .thenReturn(expectedTaskId);
 
@@ -161,7 +163,7 @@ class ApplicationConfigurationServiceTest {
     @Test
     void shouldReturnNextScheduledMaintenanceWhenTasksExist() {
         // Given
-        var executionTime = LocalDateTime.now().plusHours(2);
+        var executionTime = Instant.now().plus(2, ChronoUnit.HOURS);
         var approximateEndMoment = "3 hours";
         var taskId = "maintenance-task-123";
 
@@ -201,7 +203,7 @@ class ApplicationConfigurationServiceTest {
     @Test
     void shouldReturnNullWhenTaskMetadataNotFound() {
         // Given
-        var executionTime = LocalDateTime.now().plusHours(2);
+        var executionTime = Instant.now().plus(2, ChronoUnit.HOURS);
         var taskId = "maintenance-task-123";
         var maintenanceTask =
             new ScheduledTaskResponseDTO(taskId, executionTime, RecurrenceType.ONCE);

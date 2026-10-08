@@ -1,8 +1,10 @@
 package rs.teslaris.core.integration;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -38,7 +40,7 @@ public class ApplicationConfigurationControllerTest extends BaseTest {
 
         mockMvc.perform(MockMvcRequestBuilders.post(
                     "http://localhost:8081/api/app-configuration/maintenance/schedule?approximateEndMoment=test&timestamp=" +
-                        LocalDateTime.now().plusMinutes(10))
+                        Instant.now().plus(10, ChronoUnit.MINUTES))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_MAINTENANCE"))
             .andExpect(status().isAccepted());

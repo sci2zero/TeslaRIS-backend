@@ -2,8 +2,8 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.applicationevent.ThesisUnarchivedEvent;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
@@ -114,8 +116,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
-import rs.teslaris.core.applicationevent.RevisionCreateEvent;
-import rs.teslaris.core.applicationevent.RevisionType;
 
 @Service
 @Slf4j
@@ -528,7 +528,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     @Transactional
-    public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+    public void schedulePublicReviewEndCheck(Instant timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
                                              RecurrenceType recurrence, Boolean shortened) {
         var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +

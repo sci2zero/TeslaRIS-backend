@@ -4,11 +4,14 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,6 +48,16 @@ public class Notification extends BaseEntity {
 
     @Column(name = "sent_by_email", nullable = false)
     private Boolean sentByEmail;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
+    @Column(name = "details", columnDefinition = "text")
+    private String details;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sentiment", nullable = false)
+    private NotificationSentiment sentiment = NotificationSentiment.INFO;
 
 
     public Notification(String notificationText, Map<String, String> values,

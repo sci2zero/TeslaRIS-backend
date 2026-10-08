@@ -1,5 +1,7 @@
 package rs.teslaris.thesislibrary.unit;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,7 +11,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +79,7 @@ public class ThesisLibraryBackupServiceTest {
         var putOnReview = false;
         var userId = 10;
 
-        var now = LocalDateTime.of(2025, 4, 24, 13, 45);
+        var now = Instant.parse("2025-04-24T13:45:00Z");
         when(taskManagerService.findNextFreeExecutionTime()).thenReturn(now);
 
         // When
@@ -88,7 +89,7 @@ public class ThesisLibraryBackupServiceTest {
                 RecurrenceType.DAILY);
 
         // Then
-        assertEquals(result, "13:45h");
+        assertEquals(result, now.toString());
         verify(taskManagerService).scheduleTask(
             argThat(name -> name.contains("Library_Backup-" + institutionId)),
             eq(now),

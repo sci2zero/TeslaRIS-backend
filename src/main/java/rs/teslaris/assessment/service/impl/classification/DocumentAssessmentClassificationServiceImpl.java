@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.json.JsonData;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -313,7 +314,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
     @Override
     @Transactional
-    public void schedulePublicationClassification(LocalDateTime timeToRun,
+    public void schedulePublicationClassification(Instant timeToRun,
                                                   Integer userId, LocalDate fromDate,
                                                   DocumentPublicationType documentPublicationType,
                                                   Integer commissionId,

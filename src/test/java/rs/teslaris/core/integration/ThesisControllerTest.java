@@ -1,11 +1,13 @@
 package rs.teslaris.core.integration;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
@@ -229,7 +231,7 @@ public class ThesisControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis/schedule-public-review-end-check?shortened=false&types=PHD&types=PHD_ART_PROJECT&publicReviewLengthDays=20&timestamp=" +
-                            LocalDateTime.now().plusMinutes(10) + "&recurrence=DAILY")
+                            Instant.now().plus(10, ChronoUnit.MINUTES) + "&recurrence=DAILY")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_THESIS_SCHEDULE"))

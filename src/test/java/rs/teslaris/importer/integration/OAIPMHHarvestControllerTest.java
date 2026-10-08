@@ -1,8 +1,10 @@
 package rs.teslaris.importer.integration;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +24,7 @@ public class OAIPMHHarvestControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/oai-harvest/schedule?sourceName=Scindeks&from=2024-01-01&until=2025-12-31&timestamp=" +
-                            LocalDateTime.now().plusMinutes(10) + "&recurrence=ONCE")
+                            Instant.now().plus(10, ChronoUnit.MINUTES) + "&recurrence=ONCE")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isAccepted());
@@ -36,7 +38,7 @@ public class OAIPMHHarvestControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/oai-harvest/schedule?sourceName=NON_EXISTANT&from=2024-01-01&until=2025-12-31&timestamp=" +
-                            LocalDateTime.now().plusMinutes(10) + "&recurrence=ONCE")
+                            Instant.now().plus(10, ChronoUnit.MINUTES) + "&recurrence=ONCE")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isUnauthorized());

@@ -1,6 +1,6 @@
 package rs.teslaris.core.service.impl.commontypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.UUID;
@@ -45,7 +45,7 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
 
     @Override
     @Transactional
-    public void scheduleMaintenanceMode(LocalDateTime startTime, String approximateEndMoment,
+    public void scheduleMaintenanceMode(Instant startTime, String approximateEndMoment,
                                         Integer userId) {
         var taskId = taskManagerService.scheduleTask(
             "Maintenance-" + startTime + "-" + approximateEndMoment + "-" + UUID.randomUUID(),

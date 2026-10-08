@@ -1,7 +1,7 @@
 package rs.teslaris.importer.service.interfaces;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public interface CommonHarvester {
 
     String performDocumentCentricHarvest(Integer documentId);
 
-    void scheduleMetadataEnrichmentForInstitution(LocalDateTime timeToRun,
+    void scheduleMetadataEnrichmentForInstitution(Instant timeToRun,
                                                   List<Integer> institutionIds, boolean autoload,
                                                   RecurrenceType recurrenceType, Integer userId);
 

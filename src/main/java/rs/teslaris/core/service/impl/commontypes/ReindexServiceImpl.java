@@ -184,43 +184,51 @@ public class ReindexServiceImpl implements ReindexService {
             }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing of core entities. Reason: ", e);
+            throw e;
         }
     }
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
+        var failures = new ArrayList<String>();
         safeReindex(documentPublicationService::deleteIndexes,
-            "Error deleting document publication indexes");
-        safeReindex(thesisService::reindexTheses, "Error reindexing theses");
-        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
+            "Error deleting document publication indexes", failures);
+        safeReindex(thesisService::reindexTheses, "Error reindexing theses", failures);
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings", failures);
         safeReindex(journalPublicationService::reindexJournalPublications,
-            "Error reindexing journal publications");
+            "Error reindexing journal publications", failures);
         safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
-            "Error reindexing proceedings publications");
+            "Error reindexing proceedings publications", failures);
         safeReindex(intellectualPropertyService::reindexIntellectualProperties,
-            "Error reindexing intellectual property");
+            "Error reindexing intellectual property", failures);
         safeReindex(intangibleProductService::reindexIntangibleProduct,
-            "Error reindexing intangible products");
-        safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
+            "Error reindexing intangible products", failures);
+        safeReindex(monographService::reindexMonographs, "Error reindexing monographs", failures);
         safeReindex(monographPublicationService::reindexMonographPublications,
-            "Error reindexing monograph publications");
+            "Error reindexing monograph publications", failures);
         safeReindex(materialProductService::reindexMaterialProducts,
-            "Error reindexing material products");
+            "Error reindexing material products", failures);
         safeReindex(geneticMaterialService::reindexGeneticMaterials,
-            "Error reindexing genetic materials");
+            "Error reindexing genetic materials", failures);
         safeReindex(performanceRelatedOutputService::reindexPerformanceRelatedOutputs,
-            "Error reindexing performance related outputs");
+            "Error reindexing performance related outputs", failures);
 
+        if (!failures.isEmpty()) {
+            return CompletableFuture.failedFuture(
+                new IllegalStateException(String.join("; ", failures)));
+        }
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
 
         return CompletableFuture.completedFuture(null);
     }
 
-    private void safeReindex(Runnable reindexOperation, String errorMessage) {
+    private void safeReindex(Runnable reindexOperation, String errorMessage,
+                            List<String> failures) {
         try {
             reindexOperation.run();
         } catch (Exception e) {
             log.error("Error during publication reindexing: {}", errorMessage, e);
+            failures.add(errorMessage + ": " + e.getMessage());
         }
     }
 

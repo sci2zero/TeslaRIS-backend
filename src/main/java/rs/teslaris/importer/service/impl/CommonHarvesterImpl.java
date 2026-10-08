@@ -1,7 +1,7 @@
 package rs.teslaris.importer.service.impl;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +29,6 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
-import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.StringUtil;
@@ -46,6 +45,7 @@ import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeduplicationUtil;
 import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Service
@@ -232,7 +232,7 @@ public class CommonHarvesterImpl implements CommonHarvester {
     }
 
     @Override
-    public void scheduleMetadataEnrichmentForInstitution(LocalDateTime timeToRun,
+    public void scheduleMetadataEnrichmentForInstitution(Instant timeToRun,
                                                          List<Integer> institutionIds,
                                                          boolean autoload,
                                                          RecurrenceType recurrenceType,

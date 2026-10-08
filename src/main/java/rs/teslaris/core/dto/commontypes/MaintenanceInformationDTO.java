@@ -1,9 +1,9 @@
 package rs.teslaris.core.dto.commontypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record MaintenanceInformationDTO(
-    LocalDateTime startTime,
+    Instant startTime,
     String approximateEndMoment
 ) {
 }

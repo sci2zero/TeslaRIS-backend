@@ -1,6 +1,6 @@
 package rs.teslaris.revisioner.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class QualityAssessmentBackfillController {
         @RequestParam("profileName") String profileName,
         @RequestParam(value = "rewriteExistingAssessments", defaultValue = "false")
         Boolean rewriteExistingAssessments,
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("timestamp") Instant timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
 

@@ -1,6 +1,6 @@
 package rs.teslaris.assessment.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -90,7 +90,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationComputation(
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("timestamp") Instant timestamp,
         @RequestParam("commissionId") Integer commissionId,
         @RequestParam("classificationYears") List<Integer> classificationYears,
         @RequestParam(value = "journalIds", required = false) List<Integer> journalIds,
@@ -105,7 +105,7 @@ public class PublicationSeriesAssessmentClassificationController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicationSeriesAssessmentClassificationLoad(
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("timestamp") Instant timestamp,
         @RequestParam("source") EntityClassificationSource source,
         @RequestParam("commissionId") Integer commissionId,
         @RequestHeader("Authorization") String bearerToken) {
