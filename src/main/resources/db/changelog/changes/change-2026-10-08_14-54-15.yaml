@@ -1,0 +1,48 @@
+databaseChangeLog:
+- changeSet:
+    id: 1791471265806-3
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisation_unit_contribution_id
+        baseTableName: funding_parts
+        constraintName: fk8o92yg1fikoskny3d0y50wd9q
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_unit_project_contributions
+        validate: true
+- changeSet:
+    id: 1791471265806-4
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_contribution_id
+        baseTableName: funding_parts
+        constraintName: fke75mv3yf7y0177t97539uj64f
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_project_contribution
+        validate: true
+- changeSet:
+    id: 1791471265806-1
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: sentiment
+        newDataType: varchar(255)
+        tableName: notification
+- changeSet:
+    id: 1791471265806-2
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: varchar(255)
+        columnName: sentiment
+        tableName: notification
+
