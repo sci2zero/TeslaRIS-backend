@@ -2,6 +2,7 @@ package rs.teslaris.project.revision;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.project.ProjectQualityViewDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.revision.RevisionRestorer;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -27,6 +28,15 @@ public class ProjectRevisionRestorer implements RevisionRestorer<ProjectDTO> {
     @Override
     public Class<ProjectDTO> dtoClass() {
         return ProjectDTO.class;
+    }
+
+    /**
+     * The calculator lives in {@code revisioner}, which may not depend on this module, so the
+     * assessment reads a core-owned projection of the snapshot rather than ProjectDTO itself.
+     */
+    @Override
+    public Class<?> assessmentDtoClass() {
+        return ProjectQualityViewDTO.class;
     }
 
     @Override

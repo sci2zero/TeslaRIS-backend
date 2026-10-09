@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,7 @@ import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
+import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
@@ -79,6 +81,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final CurrencyService currencyService;
 
     private final FundingIndexRepository fundingIndexRepository;
+
+    private final ProjectIndexRepository projectIndexRepository;
 
     private final DocumentFileService documentFileService;
 
@@ -374,6 +378,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             index.setProjectId(funding.getProject().getId());
         }
 
+        indexProjectScope(funding, index);
+
         if (Objects.nonNull(funding.getFundingCall())) {
             index.setFundingCallId(funding.getFundingCall().getId());
         } else {
@@ -385,6 +391,29 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         index.setDateTo(funding.getDateTo());
 
         return index;
+    }
+
+    /**
+     * A funding has no contributors of its own, so the institutions it belongs to are the funded
+     * project's. The project index already holds them expanded over the super hierarchy, so it is
+     * read rather than recomputed.
+     */
+    private void indexProjectScope(Funding funding, FundingIndex index) {
+        if (Objects.isNull(funding.getProject())) {
+            index.setPersonIds(new ArrayList<>());
+            index.setOrganisationUnitIds(new ArrayList<>());
+            return;
+        }
+
+        projectIndexRepository.findProjectIndexByDatabaseId(funding.getProject().getId())
+            .ifPresentOrElse(projectIndex -> {
+                index.setPersonIds(new ArrayList<>(projectIndex.getPersonIds()));
+                index.setOrganisationUnitIds(
+                    new ArrayList<>(projectIndex.getOrganisationUnitIds()));
+            }, () -> {
+                index.setPersonIds(new ArrayList<>());
+                index.setOrganisationUnitIds(new ArrayList<>());
+            });
     }
 
     private void indexFunderFields(Funding funding,

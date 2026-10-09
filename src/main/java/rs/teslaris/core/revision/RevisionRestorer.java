@@ -27,6 +27,20 @@ public interface RevisionRestorer<T> {
     }
 
     /**
+     * The class the data quality calculator assesses a stored revision as. It is
+     * {@link #readDtoClass()} wherever the whole snapshot is assessable, and is overridden where
+     * the snapshot DTO lives in a module the calculator may not depend on: the override then names
+     * a projection owned by {@code core} that carries only the fields the profile has rules for.
+     * <p>
+     * Keeping this apart from {@link #readDtoClass()} matters because the read DTO is also what
+     * {@code getRevisionAtTimestamp} hydrates and returns, so narrowing it would shrink the
+     * revision viewer.
+     */
+    default Class<?> assessmentDtoClass() {
+        return readDtoClass();
+    }
+
+    /**
      * Reads the entity back after a restore, so the recorded revision describes what the entity
      * actually became rather than what was asked for.
      * <p>

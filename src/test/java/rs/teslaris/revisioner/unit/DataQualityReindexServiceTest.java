@@ -100,7 +100,7 @@ public class DataQualityReindexServiceTest {
         var assessment = assessmentWithContent("{\"id\":1,\"title\":\"Title\"}");
         stubSinglePage(assessment);
 
-        doReturn(DummyDTO.class).when(revisionHydratorRegistry).getDtoClass(ENTITY_TYPE);
+        doReturn(DummyDTO.class).when(revisionHydratorRegistry).getAssessmentDtoClass(ENTITY_TYPE);
 
         try (var listener = mockStatic(DataQualityAssessmentListener.class)) {
             listener.when(() -> DataQualityAssessmentListener.resolveTargetTypes(ENTITY_TYPE))
@@ -130,7 +130,7 @@ public class DataQualityReindexServiceTest {
 
             // then
             verify(dataQualityAssessmentIndexer, never()).index(any(), any(), any());
-            verify(revisionHydratorRegistry, never()).getDtoClass(any());
+            verify(revisionHydratorRegistry, never()).getAssessmentDtoClass(any());
         }
     }
 
@@ -140,7 +140,7 @@ public class DataQualityReindexServiceTest {
         var assessment = assessmentWithContent("{\"id\":\"not-a-number\"}");
         stubSinglePage(assessment);
 
-        doReturn(DummyDTO.class).when(revisionHydratorRegistry).getDtoClass(ENTITY_TYPE);
+        doReturn(DummyDTO.class).when(revisionHydratorRegistry).getAssessmentDtoClass(ENTITY_TYPE);
 
         try (var listener = mockStatic(DataQualityAssessmentListener.class)) {
             listener.when(() -> DataQualityAssessmentListener.resolveTargetTypes(ENTITY_TYPE))

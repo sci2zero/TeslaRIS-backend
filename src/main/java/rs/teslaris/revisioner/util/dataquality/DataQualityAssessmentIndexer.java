@@ -8,9 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,8 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.revision.QualityScope;
+import rs.teslaris.core.revision.QualityScopeResolver;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.revisioner.indexmodel.DataQualityAssessmentIndex;
 import rs.teslaris.revisioner.indexrepository.DataQualityAssessmentIndexRepository;
@@ -32,7 +35,6 @@ import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class DataQualityAssessmentIndexer {
 
@@ -60,6 +62,28 @@ public class DataQualityAssessmentIndexer {
 
     private final PublicationSeriesLookupService publicationSeriesLookupService;
 
+    private final Map<String, QualityScopeResolver> scopeResolvers;
+
+
+    public DataQualityAssessmentIndexer(
+        DataQualityAssessmentIndexRepository indexRepository,
+        DocumentPublicationIndexRepository documentPublicationIndexRepository,
+        PersonIndexRepository personIndexRepository,
+        EventIndexRepository eventIndexRepository,
+        OrganisationUnitIndexRepository organisationUnitIndexRepository,
+        PublicationSeriesLookupService publicationSeriesLookupService,
+        List<QualityScopeResolver> scopeResolvers) {
+
+        this.indexRepository = indexRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.personIndexRepository = personIndexRepository;
+        this.eventIndexRepository = eventIndexRepository;
+        this.organisationUnitIndexRepository = organisationUnitIndexRepository;
+        this.publicationSeriesLookupService = publicationSeriesLookupService;
+        this.scopeResolvers = scopeResolvers.stream()
+            .collect(Collectors.toMap(QualityScopeResolver::entityType, Function.identity()));
+    }
+
 
     public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
         var target = targets.getFirst();
@@ -75,8 +99,14 @@ public class DataQualityAssessmentIndexer {
             index.setEntityType(entityType);
             index.setTarget(target);
             index.setEntityId(entityId);
-            index.setRelatedPersonIds(resolveRelatedPersonIds(target, entityId, dto));
-            index.setOrganisationUnitIds(resolveOrganisationUnitIds(target, entityId, dto));
+            // One lookup answers owners and display name for the entity types whose index the
+            // indexer cannot read itself.
+            var externalScope = resolveExternalScope(entityType, entityId);
+
+            index.setRelatedPersonIds(
+                resolveRelatedPersonIds(target, entityId, dto, externalScope));
+            index.setOrganisationUnitIds(
+                resolveOrganisationUnitIds(target, entityId, dto, externalScope));
             index.setAssessmentDate(assessmentDate);
             index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
             index.setLatest(true);
@@ -111,7 +141,7 @@ public class DataQualityAssessmentIndexer {
             supersedePreviousLatest(entityType, entityId, assessment.getProfileName(),
                 assessmentDate);
 
-            setEntityName(index);
+            setEntityName(index, externalScope);
 
             indexRepository.save(index);
         } catch (Exception e) {
@@ -134,7 +164,24 @@ public class DataQualityAssessmentIndexer {
             });
     }
 
-    private List<Integer> resolveRelatedPersonIds(String target, Integer entityId, Object dto) {
+    private Optional<QualityScope> resolveExternalScope(String entityType, Integer entityId) {
+        var resolver = scopeResolvers.get(entityType);
+
+        if (Objects.isNull(resolver)) {
+            return Optional.empty();
+        }
+
+        try {
+            return resolver.resolve(entityId);
+        } catch (RuntimeException e) {
+            // An unscoped assessment is a visibility problem; a failed one is a missing record.
+            log.warn("Failed to resolve quality scope for {} with ID {}.", entityType, entityId, e);
+            return Optional.empty();
+        }
+    }
+
+    private List<Integer> resolveRelatedPersonIds(String target, Integer entityId, Object dto,
+                                                  Optional<QualityScope> externalScope) {
         if (TARGET_PERSON.equals(target)) {
             return List.of(entityId);
         }
@@ -152,45 +199,38 @@ public class DataQualityAssessmentIndexer {
             return contributionPersonIds(dto);
         }
 
-        return List.of();
+        return externalScope.map(QualityScope::relatedPersonIds).orElseGet(List::of);
     }
 
-    private void setEntityName(DataQualityAssessmentIndex index) {
+    private void setEntityName(DataQualityAssessmentIndex index,
+                               Optional<QualityScope> externalScope) {
         if (TARGET_PERSON.equals(index.getTarget())) {
             personIndexRepository.findByDatabaseId(index.getEntityId())
                 .ifPresent(personIndex -> {
                     index.setEntityNameSr(personIndex.getName());
                     index.setEntityNameOther(personIndex.getName());
                 });
-        }
-
-        if (TARGET_DOCUMENT.equals(index.getTarget())) {
+        } else if (TARGET_DOCUMENT.equals(index.getTarget())) {
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                     index.getEntityId())
                 .ifPresent(documentIndex -> {
                     index.setEntityNameSr(documentIndex.getTitleSr());
                     index.setEntityNameOther(documentIndex.getTitleOther());
                 });
-        }
-
-        if (TARGET_EVENT.equals(index.getTarget())) {
+        } else if (TARGET_EVENT.equals(index.getTarget())) {
             eventIndexRepository.findByDatabaseId(index.getEntityId())
                 .ifPresent(eventIndex -> {
                     index.setEntityNameSr(eventIndex.getNameSr());
                     index.setEntityNameOther(eventIndex.getNameOther());
                 });
-        }
-
-        if (TARGET_ORGANISATION_UNIT.equals(index.getTarget())) {
+        } else if (TARGET_ORGANISATION_UNIT.equals(index.getTarget())) {
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
                     index.getEntityId())
                 .ifPresent(organisationUnitIndex -> {
                     index.setEntityNameSr(organisationUnitIndex.getNameSr());
                     index.setEntityNameOther(organisationUnitIndex.getNameOther());
                 });
-        }
-
-        if (TARGET_PUBLICATION_SERIES.equals(index.getTarget())) {
+        } else if (TARGET_PUBLICATION_SERIES.equals(index.getTarget())) {
             var publicationSeriesIndex =
                 publicationSeriesLookupService.getPublicationSeriesIndex(index.getEntityId());
 
@@ -198,6 +238,11 @@ public class DataQualityAssessmentIndexer {
                 index.setEntityNameSr(publicationSeriesIndex.getTitleSr());
                 index.setEntityNameOther(publicationSeriesIndex.getTitleOther());
             }
+        } else {
+            externalScope.ifPresent(scope -> {
+                index.setEntityNameSr(scope.entityNameSr());
+                index.setEntityNameOther(scope.entityNameOther());
+            });
         }
     }
 
@@ -225,7 +270,8 @@ public class DataQualityAssessmentIndexer {
             .toList();
     }
 
-    private List<Integer> resolveOrganisationUnitIds(String target, Integer entityId, Object dto) {
+    private List<Integer> resolveOrganisationUnitIds(String target, Integer entityId, Object dto,
+                                                     Optional<QualityScope> externalScope) {
         if (TARGET_ORGANISATION_UNIT.equals(target)) {
             return List.of(entityId);
         }
@@ -249,7 +295,7 @@ public class DataQualityAssessmentIndexer {
             return contributionInstitutionIds(dto);
         }
 
-        return List.of();
+        return externalScope.map(QualityScope::organisationUnitIds).orElseGet(List::of);
     }
 
     private List<Integer> contributionInstitutionIds(Object dto) {

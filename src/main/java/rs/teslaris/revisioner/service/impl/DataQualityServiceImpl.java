@@ -86,6 +86,10 @@ public class DataQualityServiceImpl implements DataQualityService {
 
     private static final String EVENT_TARGET = "Event";
 
+    private static final String PROJECT_TARGET = "Project";
+
+    private static final String FUNDING_TARGET = "Funding";
+
     private static final String PUBLICATION_SERIES_TARGET = "PublicationSeries";
 
     private static final String PERSON_INDEX = "person";
@@ -95,6 +99,10 @@ public class DataQualityServiceImpl implements DataQualityService {
     private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
 
     private static final String EVENT_INDEX = "events";
+
+    private static final String PROJECT_INDEX = "project";
+
+    private static final String FUNDING_INDEX = "funding";
 
     private static final List<String> PUBLICATION_SERIES_INDEXES =
         List.of("journal", "book_series");
@@ -330,11 +338,55 @@ public class DataQualityServiceImpl implements DataQualityService {
                 averageActivityScore(activityParents, assessedActivities),
                 true
             ),
-            // TODO: projects have no quality assessments yet.
-            RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
-            // TODO: fundings have no quality assessments yet.
-            RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
+            // A project links to a person through its contributors and to a unit through their
+            // institutions; a funding inherits both from the project it funds. Neither raises
+            // Activity rules, so no activity occurrences have to be netted out here.
+            relatedTargetRow(RelatedEntityType.PROJECTS, PROJECT_TARGET, PROJECT_INDEX,
+                isPerson, entityId, scopeIds, profileName),
+            relatedTargetRow(RelatedEntityType.FUNDINGS, FUNDING_TARGET, FUNDING_INDEX,
+                isPerson, entityId, scopeIds, profileName)
         );
+    }
+
+    /**
+     * One row for a target whose records carry the person and institution links themselves, so the
+     * record count and the assessed figures come from the same two id fields.
+     */
+    private RelatedQualityDTO relatedTargetRow(RelatedEntityType entityType, String target,
+                                               String indexName, boolean isPerson,
+                                               Integer entityId, List<Integer> scopeIds,
+                                               String profileName) {
+        var assessments = dataQualityAggregator
+            .aggregateAssessments(
+                targetAssessmentsQuery(target, isPerson, entityId, scopeIds, profileName),
+                Set.of())
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        var records = dataQualityAggregator.countRecords(indexName,
+            isPerson
+                ? TermQuery.of(t -> t.field("person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds));
+
+        return new RelatedQualityDTO(
+            entityType,
+            records,
+            assessments.affectedRecords(),
+            assessments.openIssues(),
+            assessments.averageScore(),
+            true
+        );
+    }
+
+    private Query targetAssessmentsQuery(String target, boolean isPerson, Integer entityId,
+                                         List<Integer> scopeIds, String profileName) {
+        return BoolQuery.of(b -> b
+            .must(m -> m.term(t -> t.field("target").value(target)))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(isPerson
+                ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds))
+        )._toQuery();
     }
 
     // A person has no related persons in the index; a unit has everyone employed below it.

@@ -78,8 +78,6 @@ public class RepositoryAnalyticsServiceTest {
                 anyString(), anyString(), any(), any(), any()))
             .thenReturn(new LinkedHashSet<>(List.of("activityEndDateMissing")));
 
-        // Without this the mocked static hands back null, and the version-taking stubs below stop
-        // matching, because anyString() does not match null.
         configurationLoader
             .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
                 anyString()))
@@ -130,10 +128,6 @@ public class RepositoryAnalyticsServiceTest {
                 new DataQualityAggregator.TopFailedRule(ruleKey, occurrences)));
     }
 
-    /**
-     * The same breakdown answers every scope pass - persons, organisation units and outputs - so a
-     * figure a row derives from more than one pass shows up multiplied in the assertions.
-     */
     private void stubIssueBreakdown(long errorIssues, long warningIssues, long infoIssues,
                                     long activityErrorIssues, long activityWarningIssues,
                                     long activityInfoIssues) {
@@ -163,7 +157,6 @@ public class RepositoryAnalyticsServiceTest {
             // then
             assertEquals(1278610, analysis.publicationCandidates());
 
-            // Everything assessed that is not a candidate.
             assertEquals(204671, analysis.notPublicationCandidates());
             assertEquals(86.2, analysis.candidateRate(), 0.05);
 
@@ -210,15 +203,11 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals("titleMissing", constraints.getFirst().ruleKey());
             assertEquals(986, constraints.getFirst().occurrences());
 
-            // Only blocking failures can keep a record from being a candidate, so the aggregation
-            // reads the blocking key field rather than every failed rule.
             var field = ArgumentCaptor.forClass(String.class);
-            verify(dataQualityAggregator, times(3))
+            verify(dataQualityAggregator, times(5))
                 .topFailedRule(any(), any(), field.capture());
             assertEquals("blocking_rule_keys", field.getValue());
 
-            // Activities are counted per activity, so that row sums the occurrence counters
-            // instead of aggregating a distinct-key list.
             verify(dataQualityAggregator).topRuleByActivityOccurrences(any(), any());
         }
     }
@@ -294,7 +283,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(18426, overview.openIssues());
             assertEquals(1483281, overview.recordsAssessed());
 
-            // 1278000 of 1483281 assessed records are publication candidates.
             assertEquals(86.2, overview.publicationCandidatePercentage(), 0.05);
         }
     }
@@ -308,7 +296,7 @@ public class RepositoryAnalyticsServiceTest {
             // when
             repositoryAnalyticsService.getOverview(PROFILE, null, null);
 
-            // then (the first aggregation is the summary, and it spans every kind of record)
+            // then
             var captor = ArgumentCaptor.forClass(Query.class);
             verify(dataQualityAggregator, atLeastOnce())
                 .aggregateAssessments(captor.capture(), any());
@@ -350,17 +338,11 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals("orcidNotResolvable", issues.getFirst().ruleKey());
             assertEquals(4281, issues.getFirst().occurrences());
 
-            // The rules of each family are what the aggregation is restricted to. Activities are
-            // not among them - that row counts occurrences rather than records.
-            verify(dataQualityAggregator, times(3)).topFailedRule(any(), any());
+            verify(dataQualityAggregator, times(5)).topFailedRule(any(), any());
             verify(dataQualityAggregator).topRuleByActivityOccurrences(any(), any());
         }
     }
 
-    /**
-     * A document raises one activity issue per offending contribution, so the row has to report the
-     * activities a rule affected rather than the records it failed on.
-     */
     @Test
     public void shouldReportActivityIssuesByOccurrenceRatherThanByRecord() {
         // given
@@ -385,7 +367,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldReportNoIssueForEntityTypesWithoutAssessments() {
-        // given (nothing has failed, or the type carries no assessments at all)
+        // given
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
 
         when(dataQualityAggregator.topFailedRule(any(), any())).thenReturn(Optional.empty());
@@ -402,7 +384,6 @@ public class RepositoryAnalyticsServiceTest {
                 assertTrue(issue.title().isEmpty());
             });
 
-            // Projects and fundings are never even queried.
             assertEquals(RepositoryEntityType.PROJECTS, issues.get(4).entityType());
             assertEquals(RepositoryEntityType.FUNDINGS, issues.get(5).entityType());
         }
@@ -453,23 +434,31 @@ public class RepositoryAnalyticsServiceTest {
     }
 
     @Test
-    public void shouldMarkProjectsAndFundingsUnsupported() {
+    public void shouldComputeProjectAndFundingRowsFromTheirOwnAssessments() {
         // given
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+        when(dataQualityAggregator.countRecords(eq("project"), any())).thenReturn(640L);
+        when(dataQualityAggregator.countRecords(eq("funding"), any())).thenReturn(910L);
 
         try (var ignored = mockConfigurationLoader()) {
             // when
             var result = repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null);
 
             // then
-            List.of(result.get(4), result.get(5)).forEach(row -> {
-                assertFalse(row.supported());
-                assertEquals(0, row.records());
-                assertEquals(0, row.affectedRecords());
-                assertEquals(0, row.openIssues());
-                assertNull(row.averageScore());
-                assertNull(row.publicationCandidatePercentage());
-            });
+            var projects = result.get(4);
+            assertEquals(RepositoryEntityType.PROJECTS, projects.entityType());
+            assertTrue(projects.supported());
+            assertEquals(640, projects.records());
+            assertEquals(50, projects.affectedRecords());
+            assertEquals(92.0, projects.averageScore());
+
+            var fundings = result.get(5);
+            assertEquals(RepositoryEntityType.FUNDINGS, fundings.entityType());
+            assertTrue(fundings.supported());
+            assertEquals(910, fundings.records());
+
+            assertEquals(112, projects.openIssues());
+            assertEquals(112, fundings.openIssues());
         }
     }
 
@@ -490,20 +479,13 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(48620, persons.records());
             assertEquals(50, persons.affectedRecords());
 
-            // Activity issues are reported on the Activities row, so they are left out here
-            // rather than counted twice in the same table: 120 - 8.
             assertEquals(112, persons.openIssues());
             assertEquals(92.0, persons.averageScore());
 
-            // 45 of the 50 assessed records are publication candidates.
             assertEquals(90.0, persons.publicationCandidatePercentage());
         }
     }
 
-    /**
-     * A person's involvements are activities held on the person record, so they are summed from the
-     * person index and added to the activities the outputs carry.
-     */
     @Test
     public void shouldAddInvolvementActivitiesToTheActivitiesRow() {
         // given
@@ -522,10 +504,6 @@ public class RepositoryAnalyticsServiceTest {
         }
     }
 
-    /**
-     * Event and publication series contributions are activities without a row of their own, so
-     * they are summed from those three indexes on top of the outputs and persons.
-     */
     @Test
     public void shouldAddEventAndPublicationSeriesActivitiesToTheActivitiesRow() {
         // given
@@ -567,8 +545,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(1284310, outputs.records());
             assertEquals(50, outputs.affectedRecords());
 
-            // Activities live on outputs, persons, events and publication series, so their totals
-            // are sums of the activity counters of all three passes.
             var activities = result.get(3);
             assertEquals(86204, activities.records());
             assertEquals(90, activities.affectedRecords());
@@ -579,14 +555,9 @@ public class RepositoryAnalyticsServiceTest {
         }
     }
 
-    /**
-     * An activity's score and candidacy are accumulated as sums when its record is assessed, so the
-     * row divides them by the number of activities assessed - not by the number of records, which
-     * would let a document holding one activity weigh as much as one holding thirty.
-     */
     @Test
     public void shouldScoreActivitiesPerActivityRatherThanPerRecord() {
-        // given (30 activities per pass, so 90 assessed across outputs, persons and the rest)
+        // given
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300, 12, 2400.0);
 
         try (var ignored = mockConfigurationLoader()) {
@@ -597,7 +568,6 @@ public class RepositoryAnalyticsServiceTest {
             // then
             assertEquals(90, activities.affectedRecords());
 
-            // 7200 points over 90 activities, and 36 of them are candidates.
             assertEquals(80.0, activities.averageScore());
             assertEquals(40.0, activities.publicationCandidatePercentage());
         }
@@ -621,26 +591,21 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldSumIssueSeveritiesOverEveryEntityType() {
-        // given (100/50/20 per scope, of which 10 per severity belong to activities)
+        // given
         stubIssueBreakdown(100, 50, 20, 10, 10, 10);
 
         try (var ignored = mockConfigurationLoader()) {
             // when
             var statistics = repositoryAnalyticsService.getIssueStatistics(PROFILE, null, null);
 
-            // then (three record rows of 90/40/10 plus an activities row of 30/30/30, the
-            // event and series pass adding activity issues only)
-            assertEquals(300, statistics.errorIssues());
-            assertEquals(150, statistics.warningIssues());
-            assertEquals(60, statistics.infoIssues());
-            assertEquals(510, statistics.openIssues());
+            // then
+            assertEquals(480, statistics.errorIssues());
+            assertEquals(230, statistics.warningIssues());
+            assertEquals(80, statistics.infoIssues());
+            assertEquals(790, statistics.openIssues());
         }
     }
 
-    /**
-     * The severity counters cover the whole record, so an activity issue would otherwise be counted
-     * both on the row of the record raising it and on the Activities row.
-     */
     @Test
     public void shouldReportActivityIssuesOnTheActivitiesRowOnly() {
         // given
@@ -660,8 +625,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(40, persons.warningIssues());
             assertEquals(10, persons.infoIssues());
 
-            // Documents, persons and the event/series pass all raise activities, so that row
-            // gathers three passes.
             var activities = rows.get(3);
             assertEquals(RepositoryEntityType.ACTIVITIES, activities.entityType());
             assertEquals(30, activities.errorIssues());
@@ -671,7 +634,7 @@ public class RepositoryAnalyticsServiceTest {
     }
 
     @Test
-    public void shouldMarkProjectsAndFundingsUnsupportedInTheIssueBreakdown() {
+    public void shouldBreakProjectAndFundingIssuesDownBySeverity() {
         // given
         stubIssueBreakdown(100, 50, 20, 0, 0, 0);
 
@@ -681,19 +644,18 @@ public class RepositoryAnalyticsServiceTest {
                 .issuesBySeverityAndEntityType();
 
             // then
+            assertEquals(RepositoryEntityType.PROJECTS, rows.get(4).entityType());
+            assertEquals(RepositoryEntityType.FUNDINGS, rows.get(5).entityType());
+
             List.of(rows.get(4), rows.get(5)).forEach(row -> {
-                assertFalse(row.supported());
-                assertEquals(0, row.errorIssues());
-                assertEquals(0, row.warningIssues());
-                assertEquals(0, row.infoIssues());
+                assertTrue(row.supported());
+                assertEquals(100, row.errorIssues());
+                assertEquals(50, row.warningIssues());
+                assertEquals(20, row.infoIssues());
             });
         }
     }
 
-    /**
-     * A recurring constraint stands for a rule across the whole repository rather than for one
-     * entity type, so the rows carry no entity type.
-     */
     @Test
     public void shouldListTheTopRecurringConstraintsMostFrequentFirst() {
         // given
@@ -741,7 +703,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldFallBackToZeroesWhenTheIssueBreakdownIsUnavailable() {
-        // given (the report degrades rather than failing)
+        // given
         when(dataQualityAggregator.aggregateIssueBreakdown(any()))
             .thenReturn(Optional.empty());
 
@@ -787,8 +749,7 @@ public class RepositoryAnalyticsServiceTest {
 
             assertTrue(rows.stream().anyMatch(row -> row.contains("Resolvable DOI")));
 
-            // Numeric cells stay numeric, so the error total is a number rather than text.
-            assertEquals(300.0,
+            assertEquals(480.0,
                 rowStartingWith(rows, "repositoryAnalytics.header.errorIssues").get(1));
         }
     }
@@ -812,7 +773,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldFallBackToEmptyFiguresWhenAggregationIsUnavailable() {
-        // given (the report degrades rather than failing)
+        // given
         when(dataQualityAggregator.aggregateAssessments(any(), any())).thenReturn(Optional.empty());
         when(dataQualityAggregator.aggregateLinkedDocuments(any())).thenReturn(Optional.empty());
 
@@ -848,7 +809,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldResolveRequestedDayToItsLastMoment() {
-        // given (the newest assessment of that day is the one that describes it)
+        // given
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
 
         try (var ignored = mockConfigurationLoader()) {
@@ -882,7 +843,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldScopeEveryFigureToTheOrganisationUnitSubHierarchy() {
-        // given (a unit is measured against its own records, not the whole repository)
+        // given
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(7))
             .thenReturn(List.of(7, 8, 9));
 
@@ -946,10 +907,6 @@ public class RepositoryAnalyticsServiceTest {
         assertEquals(6, monthly.series().size());
     }
 
-    /**
-     * The series length drives how many filters one aggregation carries, so an unbounded request
-     * would be an unbounded aggregation.
-     */
     @Test
     public void shouldClampTheRequestedPointCountToTheHardCap() {
         // given
@@ -975,7 +932,7 @@ public class RepositoryAnalyticsServiceTest {
         repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.DAILY, 4);
 
-        // then (one request for the series, one for the entity-type panel)
+        // then
         verify(dataQualityAggregator, times(2)).aggregateMetricByPeriod(any(), any(), any());
         assertEquals(4, capturedPeriodFilters(0).size());
     }
@@ -1049,9 +1006,6 @@ public class RepositoryAnalyticsServiceTest {
         assertNull(aggregation.matchingField());
     }
 
-    /**
-     * A rate is a share of the records in the bucket, not an average of a stored field.
-     */
     @Test
     public void shouldCountMatchingRecordsForThePublicationCandidateRate() {
         // given
@@ -1080,16 +1034,15 @@ public class RepositoryAnalyticsServiceTest {
         assertEquals(6, rows.size());
         assertEquals(RepositoryEntityType.PERSONS, rows.getFirst().entityType());
         assertEquals(RepositoryEntityType.ACTIVITIES, rows.get(3).entityType());
+        assertEquals(RepositoryEntityType.PROJECTS, rows.get(4).entityType());
+        assertEquals(RepositoryEntityType.FUNDINGS, rows.get(5).entityType());
 
-        List.of(rows.get(4), rows.get(5)).forEach(row -> {
-            assertFalse(row.supported());
+        rows.forEach(row -> {
+            assertTrue(row.supported());
             assertNull(row.current());
         });
     }
 
-    /**
-     * The panel compares the two newest points, so it needs one filter per entity type per period.
-     */
     @Test
     public void shouldCompareTheTwoNewestPointsPerEntityType() {
         // given
@@ -1102,19 +1055,15 @@ public class RepositoryAnalyticsServiceTest {
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().getFirst();
 
         // then
-        assertEquals(8, capturedPeriodFilters(1).size());
+        assertEquals(12, capturedPeriodFilters(1).size());
         assertEquals(92.0, persons.current());
         assertEquals(90.6, persons.previous());
         assertEquals(1.4, persons.change(), 0.0001);
     }
 
-    /**
-     * Activities are not records, so their figure is a sum over the activities assessed rather than
-     * an average over the records carrying them.
-     */
     @Test
     public void shouldMeasureActivitiesAsSumsOverActivitiesAssessed() {
-        // given (2400 points over 30 activities)
+        // given
         stubTrend(Map.of(
             "p1#ACTIVITIES", new DataQualityAggregator.PeriodMetric(10, 99.0, 0, 2400.0, 30)));
 
@@ -1122,7 +1071,7 @@ public class RepositoryAnalyticsServiceTest {
         var activities = repositoryAnalyticsService.getQualityTrend(PROFILE, null, null,
             TrendMetric.OVERALL_SCORE, TrendGranularity.WEEKLY, 5).trendByEntityType().get(3);
 
-        // then (the record average of the same bucket is ignored)
+        // then
         assertEquals(80.0, activities.current());
     }
 
@@ -1142,7 +1091,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldFallBackToAnEmptySeriesWhenAggregationIsUnavailable() {
-        // given (the report degrades rather than failing)
+        // given
         when(dataQualityAggregator.aggregateMetricByPeriod(any(), any(), any()))
             .thenReturn(Optional.empty());
 
@@ -1156,14 +1105,9 @@ public class RepositoryAnalyticsServiceTest {
         assertNull(trend.indicators().current());
     }
 
-    /**
-     * A period nothing was assessed in has no value, whatever the entity type. Record rows read an
-     * average and activity rows read a sum over the activities assessed, so without a shared notion
-     * of "empty" one of them would report a genuine 0% where the other reports nothing.
-     */
     @Test
     public void shouldReportNoValueForAPeriodWithNoAssessments() {
-        // given (only the newest period holds anything)
+        // given
         stubTrend(Map.of(
             "p1#PERSONS", periodMetric(10, 92.0),
             "p0#PERSONS", DataQualityAggregator.PeriodMetric.empty(),
@@ -1186,10 +1130,6 @@ public class RepositoryAnalyticsServiceTest {
         assertNull(activities.change());
     }
 
-    /**
-     * The requested day anchors the series, so the newest point is that day rather than today and
-     * the chart reads the repository as it stood then.
-     */
     @Test
     public void shouldAnchorTheSeriesToTheRequestedDay() {
         // given
@@ -1229,7 +1169,6 @@ public class RepositoryAnalyticsServiceTest {
                 "repositoryAnalytics.trendByEntityType")
             .forEach(panel -> assertTrue(rows.stream().anyMatch(row -> row.contains(panel))));
 
-        // Percentages are stored as fractions with a percent format, not as text.
         assertEquals(0.847,
             (double) rowStartingWith(rows, "repositoryAnalytics.header.currentValue").get(1),
             0.0001);
@@ -1302,7 +1241,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals("repositoryAnalytics.repositoryQualityOverview",
                 rows.getFirst().getFirst());
 
-            // The four cards, as numeric cells.
             assertEquals(0.847,
                 (double) rowStartingWith(rows, "repositoryAnalytics.header.averageScore").get(1),
                 0.0001);
@@ -1311,7 +1249,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(1483281.0,
                 rowStartingWith(rows, "repositoryAnalytics.header.recordsAssessed").get(1));
 
-            // Both panels follow, each behind its own heading.
             assertTrue(rows.stream().anyMatch(
                 row -> !row.isEmpty() &&
                     "repositoryAnalytics.qualityByEntityType".equals(row.getFirst())));
@@ -1343,7 +1280,7 @@ public class RepositoryAnalyticsServiceTest {
             var rows = exportedRows(repositoryAnalyticsService.exportOverview(
                 PROFILE, null, null, "en"));
 
-            // then (the issue rows carry the title, not the rule key)
+            // then
             var issueRow = rows.stream()
                 .filter(row -> row.size() == 3 && "4281.0".equals(String.valueOf(row.get(2))))
                 .findFirst()
@@ -1357,6 +1294,7 @@ public class RepositoryAnalyticsServiceTest {
     public void shouldExportEveryEntityTypeRowToASpreadsheet() {
         // given
         when(dataQualityAggregator.countRecords(eq("person"), any())).thenReturn(48620L);
+        when(dataQualityAggregator.countRecords(eq("project"), any())).thenReturn(640L);
         when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -1367,7 +1305,7 @@ public class RepositoryAnalyticsServiceTest {
             var rows = exportedRows(repositoryAnalyticsService.exportQualityByEntityType(
                 PROFILE, null, LocalDate.of(2026, 7, 18), "en"));
 
-            // then (the file has to say what it describes)
+            // then
             assertEquals("repositoryAnalytics.qualityByEntityType", rows.getFirst().getFirst());
             assertEquals(PROFILE, rowStartingWith(rows, "repositoryAnalytics.profile").get(1));
             assertEquals("2026-07-18",
@@ -1375,17 +1313,15 @@ public class RepositoryAnalyticsServiceTest {
 
             var persons = rowStartingWith(rows, "repositoryAnalytics.entityType.PERSONS");
 
-            // Counts and percentages are numbers, not text - percentages as Excel fractions.
             assertEquals(48620.0, persons.get(1));
             assertEquals(0.92, (double) persons.get(2), 0.0001);
             assertEquals(0.90, (double) persons.get(3), 0.0001);
             assertEquals(50.0, persons.get(4));
             assertEquals(112.0, persons.get(5));
 
-            // Unsupported rows carry no figures at all.
             var projects = rowStartingWith(rows, "repositoryAnalytics.entityType.PROJECTS");
-            assertEquals("-", projects.get(1));
-            assertEquals("-", projects.get(2));
+            assertEquals(640.0, projects.get(1));
+            assertEquals(0.92, (double) projects.get(2), 0.0001);
         }
     }
 
@@ -1407,7 +1343,6 @@ public class RepositoryAnalyticsServiceTest {
             // then
             assertEquals("repositoryAnalytics.qualityByDimension", rows.getFirst().getFirst());
 
-            // No date means the repository as it stands now.
             assertEquals("repositoryAnalytics.currentState",
                 rowStartingWith(rows, "repositoryAnalytics.assessmentDate").get(1));
 
@@ -1416,7 +1351,6 @@ public class RepositoryAnalyticsServiceTest {
             assertEquals(6428.0, accuracy.get(2));
             assertEquals(24190.0, accuracy.get(3));
 
-            // A dimension nothing was assessed against reports no score.
             var lineage = rowStartingWith(rows, "repositoryAnalytics.dimension.LINEAGE");
             assertEquals("-", lineage.get(1));
         }
@@ -1478,7 +1412,7 @@ public class RepositoryAnalyticsServiceTest {
 
     @Test
     public void shouldReturnEmptyFiguresForDimensionsNothingWasAssessedAgainst() {
-        // given (a dimension no rule of the profile touches)
+        // given
         stubDimensions(Map.of(
             QualityDimension.ACCURACY,
             new DataQualityAggregator.DimensionAggregates(82.4, 6428, 24190)));
@@ -1539,7 +1473,6 @@ public class RepositoryAnalyticsServiceTest {
             assertTrue(query.contains("8"));
             assertTrue(query.contains("2026-07-18T23:59:59.999"));
 
-            // Dimensions describe every kind of record, so nothing narrows the entity type.
             assertFalse(query.contains("entity_type"));
         }
     }
