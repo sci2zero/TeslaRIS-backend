@@ -74,6 +74,9 @@ public class HydratorConversionUtil {
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
+    // Bibliographic initials trailing a surname ("Nikolaev AR", "Watanabe MA.", "METZ K J")
+    private static final Pattern INITIALS = Pattern.compile("\\p{Lu}{1,3}");
+
     // Leading surname particles that author lists drop or keep inconsistently ("da Rocha")
     private static final Set<String> SURNAME_PARTICLES =
         Set.of("da", "de", "do", "dos", "das", "e", "del", "della", "di", "du", "van", "von",
@@ -356,8 +359,8 @@ public class HydratorConversionUtil {
     }
 
     /**
-     * Citation names come as {@code "Surname, Given"}; other single-string forms put the surname
-     * last.
+     * Citation names come as {@code "Surname, Given"} or, without a comma, as
+     * {@code "Surname INITIALS"}; other single-string forms put the surname last.
      */
     public PersonNameDTO splitName(String value, PersonNameType type) {
         if (Objects.isNull(value) || value.isBlank()) {
@@ -372,6 +375,15 @@ public class HydratorConversionUtil {
                 trimmed.substring(0, comma).trim(), type);
         }
 
+        var words = trimmed.split(" ");
+        var initialsStart = trailingInitialsStart(words, trimmed);
+
+        if (initialsStart > 0 && initialsStart < words.length) {
+            return personName(String.join(" ", Arrays.copyOfRange(words, initialsStart,
+                    words.length)),
+                String.join(" ", Arrays.copyOfRange(words, 0, initialsStart)), type);
+        }
+
         var lastSpace = trimmed.lastIndexOf(' ');
 
         if (lastSpace < 0) {
@@ -380,6 +392,28 @@ public class HydratorConversionUtil {
 
         return personName(trimmed.substring(0, lastSpace), trimmed.substring(lastSpace + 1),
             type);
+    }
+
+    /**
+     * Index of the first word in the run of initials ending the name, or {@code words.length}
+     * when there is none. In an all-uppercase name a short surname ("DE SÁ", "LAP HO") looks like
+     * initials, so there only single letters count.
+     */
+    private int trailingInitialsStart(String[] words, String name) {
+        var allUppercase = name.equals(name.toUpperCase(Locale.ROOT));
+        var start = words.length;
+
+        while (start > 0) {
+            var word = words[start - 1].replace(".", "");
+
+            if (!INITIALS.matcher(word).matches() || (allUppercase && word.length() > 1)) {
+                break;
+            }
+
+            start--;
+        }
+
+        return start;
     }
 
     /**
