@@ -2,8 +2,8 @@ package rs.teslaris.assessment.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +77,7 @@ public class DocumentAssessmentClassificationController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void performPublicationAssessmentForThePastYear(@RequestParam("timestamp")
-                                                           LocalDateTime timestamp,
+                                                           Instant timestamp,
                                                            @RequestParam("dateFrom")
                                                            LocalDate dateFrom,
                                                            @RequestBody

@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-10-08-notification-details
+      author: milospopovic
+      changes:
+        - addColumn:
+            tableName: notification
+            columns:
+              - column:
+                  name: details
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: sentiment
+                  type: varchar(16)
+                  defaultValue: INFO
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: notification
+            columnName: details
+        - dropColumn:
+            tableName: notification
+            columnName: sentiment

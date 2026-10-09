@@ -1,5 +1,7 @@
 package rs.teslaris.assessment.unit;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -117,7 +118,7 @@ public class DocumentAssessmentClassificationServiceTest {
     void shouldScheduleJournalPublicationClassificationTask(
         DocumentPublicationType documentPublicationType) {
         // Given
-        var timeToRun = LocalDateTime.of(2025, 1, 28, 10, 0);
+        var timeToRun = Instant.parse("2025-01-28T10:00:00Z");
         var userId = 123;
         var fromDate = LocalDate.of(2025, 1, 1);
 

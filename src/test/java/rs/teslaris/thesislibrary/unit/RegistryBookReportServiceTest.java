@@ -1,5 +1,7 @@
 package rs.teslaris.thesislibrary.unit;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -177,7 +178,7 @@ public class RegistryBookReportServiceTest {
         var lang = "en";
         var userId = 456;
 
-        var mockTime = LocalDateTime.of(2025, 4, 14, 10, 30);
+        var mockTime = Instant.parse("2025-04-14T10:30:00Z");
 
         when(taskManagerService.findNextFreeExecutionTime()).thenReturn(mockTime);
 
@@ -199,7 +200,7 @@ public class RegistryBookReportServiceTest {
         );
 
         assertTrue(idCaptor.getValue().startsWith("Registry_Book-" + institutionId));
-        assertEquals("10:30h", result);
+        assertEquals(mockTime.toString(), result);
     }
 
     @Test

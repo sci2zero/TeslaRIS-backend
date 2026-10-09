@@ -2,7 +2,7 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.util.SchedulingTime;
 
 @Component
 @RequiredArgsConstructor
@@ -70,7 +71,9 @@ public class ScheduledTasksRestorer {
         for (ScheduledTaskMetadata metadata : allMetadata) {
             try {
                 synchronized (lock) {
-                    restoreTaskFromMetadata(metadata);
+                    SchedulingTime.restoreInZone(
+                        SchedulingTime.zoneFromMetadata(metadata.getMetadata()), metadata.getTimeToRun(),
+                        () -> restoreTaskFromMetadata(metadata));
                 }
             } catch (Exception e) {
                 log.error("Failed to restore scheduled task: {}", metadata.getTaskId(), e);
@@ -133,7 +136,7 @@ public class ScheduledTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -175,7 +178,7 @@ public class ScheduledTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -204,7 +207,7 @@ public class ScheduledTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -218,7 +221,11 @@ public class ScheduledTasksRestorer {
         var userId = (Integer) data.get("userId");
         var approximateEndMoment = String.valueOf(data.get("approximateEndMoment"));
 
-        applicationConfigurationService.scheduleMaintenanceMode(metadata.getTimeToRun(),
+        var executionTime = metadata.getTimeToRun();
+        if (executionTime.isBefore(Instant.now())) {
+            executionTime = taskManagerService.findNextFreeExecutionTime();
+        }
+        applicationConfigurationService.scheduleMaintenanceMode(executionTime,
             approximateEndMoment, userId);
     }
 }

@@ -2,8 +2,8 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -528,7 +528,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     @Transactional
-    public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+    public void schedulePublicReviewEndCheck(Instant timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
                                              RecurrenceType recurrence, Boolean shortened) {
         var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +

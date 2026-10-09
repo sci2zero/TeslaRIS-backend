@@ -3,7 +3,7 @@ package rs.teslaris.importer.controller;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +97,7 @@ public class CommonHarvestController {
     public void scheduleHarvestPublicationsForAuthor(
         @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
         @RequestParam RelativeDateDTO dateTo, @RequestParam(required = false) Integer institutionId,
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("timestamp") Instant timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
@@ -144,7 +144,7 @@ public class CommonHarvestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleAuthorCentricHarvestForInstitution(
         @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
-        @RequestParam RelativeDateDTO dateTo, @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam RelativeDateDTO dateTo, @RequestParam("timestamp") Instant timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
@@ -238,7 +238,7 @@ public class CommonHarvestController {
     @PreAuthorize("hasAuthority('SCHEDULE_METADATA_ENRICHMENT')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleMetadataEnrichmentForInstitution(@RequestParam("timestamp")
-                                                         LocalDateTime timestamp,
+                                                         Instant timestamp,
                                                          @RequestParam List<Integer> institutionIds,
                                                          @RequestParam boolean autoload,
                                                          @RequestParam("recurrence")

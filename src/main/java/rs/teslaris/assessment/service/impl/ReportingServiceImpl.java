@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.service.impl;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,7 +59,7 @@ public class ReportingServiceImpl implements ReportingService {
 
 
     @Override
-    public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
+    public void scheduleReportGeneration(Instant timeToRun, ReportType reportType,
                                          Integer specifiedStartYear, Integer assessmentYear,
                                          List<Integer> commissionIds, String locale,
                                          Integer topLevelInstitutionId, Integer userId,

@@ -111,7 +111,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                 put("authorName", authorName);
             }}, recurrence));
 
-        return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
+        return reportGenerationTime.toString();
     }
 
     private void generateReport(LocalDate from, LocalDate to, String authorName,

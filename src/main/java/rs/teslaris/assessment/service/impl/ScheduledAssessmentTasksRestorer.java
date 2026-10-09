@@ -2,8 +2,8 @@ package rs.teslaris.assessment.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +26,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.util.SchedulingTime;
 
 @Component
 @RequiredArgsConstructor
@@ -64,7 +65,9 @@ public class ScheduledAssessmentTasksRestorer {
         for (ScheduledTaskMetadata metadata : allMetadata) {
             try {
                 synchronized (ScheduledTasksRestorer.lock) {
-                    restoreTaskFromMetadata(metadata);
+                    SchedulingTime.restoreInZone(
+                        SchedulingTime.zoneFromMetadata(metadata.getMetadata()), metadata.getTimeToRun(),
+                        () -> restoreTaskFromMetadata(metadata));
                 }
             } catch (Exception e) {
                 log.error("Failed to restore assessment scheduled task: {}", metadata.getTaskId(),
@@ -111,7 +114,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -140,7 +143,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -158,7 +161,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -193,7 +196,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -212,7 +215,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -232,7 +235,7 @@ public class ScheduledAssessmentTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 

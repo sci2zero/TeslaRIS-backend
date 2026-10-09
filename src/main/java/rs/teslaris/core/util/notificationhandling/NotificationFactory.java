@@ -1,5 +1,8 @@
 package rs.teslaris.core.util.notificationhandling;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +11,7 @@ import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
+import rs.teslaris.core.model.commontypes.NotificationSentiment;
 import rs.teslaris.core.model.user.User;
 
 @Component
@@ -267,68 +271,59 @@ public class NotificationFactory {
 
     public static Notification contructScheduledTaskCompletedNotification(
         Map<String, String> notificationValues, User user, boolean success) {
-        String message;
-        var args =
-            new Object[] {notificationValues.get("taskId"), notificationValues.get("duration")};
-
-        var messageCode =
-            success ? "notification.scheduleTaskCompleted" : "notification.scheduleTaskFailed";
-        try {
-            message = messageSource.getMessage(
-                messageCode,
-                args,
-                Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
-            );
-        } catch (NoSuchMessageException e) {
-            message = fallbackToDefaultLocale(args, messageCode);
-        }
-        return new Notification(message, notificationValues,
-            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+        return constructScheduledTaskNotification(notificationValues, user,
+            success ? "success" : "failed");
     }
 
     public static Notification contructScheduledReportGenerationCompletedNotification(
         Map<String, String> notificationValues, User user, boolean success) {
-        String message;
-        var args =
-            new Object[] {notificationValues.get("duration")};
-
-        var messageCode = success ? "notification.scheduleReportGenerationCompleted" :
-            "notification.scheduleReportGenerationFailed";
-        try {
-            message = messageSource.getMessage(
-                messageCode,
-                args,
-                Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
-            );
-        } catch (NoSuchMessageException e) {
-            message = fallbackToDefaultLocale(args, messageCode);
-        }
-        return new Notification(message, notificationValues,
-            NotificationType.SCHEDULED_TASK_COMPLETED, user);
+        return contructScheduledTaskCompletedNotification(notificationValues, user, success);
     }
 
     public static Notification contructScheduledBackupGenerationCompletedNotification(
         Map<String, String> notificationValues, User user, boolean success) {
-        String message;
-        var args =
-            new Object[] {notificationValues.get("duration")};
+        return contructScheduledTaskCompletedNotification(notificationValues, user, success);
+    }
 
-        var messageCode = success ? "notification.scheduleBackupGenerationCompleted" :
-            "notification.scheduleBackupGenerationFailed";
-        try {
-            message = messageSource.getMessage(
-                messageCode,
-                args,
-                Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
-            );
-        } catch (NoSuchMessageException e) {
-            message = fallbackToDefaultLocale(args, messageCode);
+    public static Notification constructScheduledTaskStartedNotification(
+        Map<String, String> notificationValues, User user) {
+        return constructScheduledTaskNotification(notificationValues, user, "started");
+    }
+
+    private static Notification constructScheduledTaskNotification(
+        Map<String, String> values, User user, String status) {
+        var locale = user.getPreferredUILanguage() == null ? DEFAULT_LOCALE :
+            Locale.forLanguageTag(user.getPreferredUILanguage().getLanguageTag().toLowerCase());
+        var taskId = values.getOrDefault("taskId", "Task");
+        var taskType = taskId.split("-", 2)[0];
+        var taskName = messageSource.getMessage("notification.taskName." + taskType, null,
+            taskType.replace('_', ' '), locale);
+        var message = messageSource.getMessage("notification.task." + status,
+            new Object[] {taskName}, locale);
+        var details = new ArrayList<String>();
+        details.add(messageSource.getMessage("notification.detail.status", null, locale) + ": " +
+            messageSource.getMessage("notification.status." + status, null, locale));
+
+        for (var key : List.of("duration", "startedAt", "finishedAt", "indexesToRepopulate",
+            "concretePublicationType", "reharvestCitationIndicators", "institutionId", "from",
+            "to", "types", "documentFileSections", "thesisFileSections", "metadataFormat",
+            "defended", "putOnReview", "error", "taskId")) {
+            var value = values.get(key);
+            if (value != null && !value.isBlank()) {
+                var label = messageSource.getMessage("notification.detail." + key, null, locale);
+                details.add(label + ": " + value);
+            }
         }
-        return new Notification(message, notificationValues,
+        // Task metadata belongs in the text details, not the 255-character action-value columns.
+        var notification = new Notification(message, new HashMap<>(),
             NotificationType.SCHEDULED_TASK_COMPLETED, user);
+        notification.setDetails(String.join("\n", details));
+        notification.setSentiment(switch (status) {
+            case "success" -> NotificationSentiment.SUCCESS;
+            case "failed" -> NotificationSentiment.ERROR;
+            default -> NotificationSentiment.INFO;
+        });
+        return notification;
     }
 
     public static Notification contructNewDocumentsForValidationNotification(

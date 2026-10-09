@@ -2,8 +2,8 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,6 +29,8 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.SchedulingTime;
+import rs.teslaris.core.util.notificationhandling.NotificationDurationFormatter;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.session.SessionUtil;
 
@@ -57,22 +59,55 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     @Override
     @Nullable
-    public String scheduleTask(String taskId, LocalDateTime dateTime, Runnable task,
+    public String scheduleTask(String taskId, Instant dateTime, Runnable task,
                                Integer userId, RecurrenceType recurrence) {
         if (Objects.isNull(task)) {
             log.error("Trying to schedule null as task -> {}", taskId);
             return null;
         }
 
-        if (dateTime.isBefore(LocalDateTime.now())) {
+        if (dateTime.isBefore(Instant.now())) {
             throw new SchedulingException("cantScheduleInPastMessage");
         }
 
-        var executionTime = dateTime.atZone(ZoneId.systemDefault()).toInstant();
+        var executionTime = dateTime;
+        var existingMetadata = scheduledTaskMetadataRepository.findTaskByTaskId(taskId);
+        var schedulingZone = existingMetadata
+            .map(metadata -> SchedulingTime.zoneFromMetadata(metadata.getMetadata()))
+            .orElseGet(SchedulingTime::requestZone);
+        // Persist legacy timestamps as instants before they are restored or rescheduled.
+        existingMetadata.ifPresent(metadata -> {
+            metadata.setTimeToRun(dateTime);
+            metadata.setMetadata(new HashMap<>(metadata.getMetadata()));
+            metadata.getMetadata().put(SchedulingTime.TIMEZONE_KEY, schedulingZone.getId());
+            scheduledTaskMetadataRepository.save(metadata);
+        });
 
         Runnable wrappedTask = () -> {
             var notificationValues = new HashMap<String, String>();
             notificationValues.put("taskId", taskId);
+            notificationValues.put("startedAt", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+            scheduledTaskMetadataRepository.findTaskByTaskId(taskId).ifPresent(metadata -> {
+                for (var key : List.of("indexesToRepopulate", "concretePublicationType",
+                    "reharvestCitationIndicators", "institutionId", "from", "to", "types",
+                    "documentFileSections", "thesisFileSections", "metadataFormat", "defended",
+                    "putOnReview")) {
+                    var value = metadata.getMetadata().get(key);
+                    if (value != null) {
+                        notificationValues.put(key, value.toString());
+                    }
+                }
+            });
+
+            if (taskId.startsWith("DatabaseReindex-") || taskId.contains("Backup")) {
+                try {
+                    notificationService.createNotification(
+                        NotificationFactory.constructScheduledTaskStartedNotification(
+                            new HashMap<>(notificationValues), userService.findOne(userId)));
+                } catch (Exception e) {
+                    log.error("Could not send task-start notification for {}", taskId, e);
+                }
+            }
 
             boolean taskSucceeded = false;
             long startTime = System.nanoTime();
@@ -82,9 +117,12 @@ public class TaskManagerServiceImpl implements TaskManagerService {
                 taskSucceeded = true;
             } catch (Exception e) {
                 log.error("Task {} failed. Reason: {}", taskId, e.getMessage(), e);
+                notificationValues.put("error", e.getMessage() == null ?
+                    e.getClass().getSimpleName() : e.getMessage());
             } finally {
-                double duration = (System.nanoTime() - startTime) / 1_000_000_000.0;
-                notificationValues.put("duration", String.valueOf(duration));
+                notificationValues.put("duration", NotificationDurationFormatter.format(
+                    Duration.ofNanos(System.nanoTime() - startTime)));
+                notificationValues.put("finishedAt", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
                 var user = userService.findOne(userId);
                 if (taskId.startsWith("Registry_Book")) {
@@ -106,14 +144,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
                 if (Objects.nonNull(recurrence) && !recurrence.equals(RecurrenceType.ONCE)) {
                     // Reschedule if needed
-                    LocalDateTime nextExecutionTime = switch (recurrence) {
-                        case DAILY -> dateTime.plusDays(1);
-                        case WEEKLY -> dateTime.plusWeeks(1);
-                        case MONTHLY -> dateTime.plusMonths(1);
-                        case THREE_MONTHLY -> dateTime.plusMonths(3);
-                        case YEARLY -> dateTime.plusYears(1);
-                        default -> null;
-                    };
+                    var nextExecutionTime = SchedulingTime.nextExecution(
+                        dateTime, recurrence, schedulingZone);
 
                     if (Objects.nonNull(nextExecutionTime)) {
                         log.info("Rescheduling task {} for {}", taskId, nextExecutionTime);
@@ -243,15 +275,19 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     }
 
     @Override
-    public LocalDateTime findNextFreeExecutionTime() {
-        var now = LocalDateTime.now().withSecond(0).withNano(0);
+    public Instant findNextFreeExecutionTime() {
+        var restoredTime = SchedulingTime.restoredExecutionTime();
+        if (restoredTime != null) {
+            return restoredTime;
+        }
+        var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
         var candidate = now.plus(STEP);
 
         var scheduledTimes = tasks.values().stream()
             .map(ScheduledTask::executionTime)
             .collect(Collectors.toSet());
 
-        var earliestValidTime = now.plusMinutes(1);
+        var earliestValidTime = now.plus(Duration.ofMinutes(1));
 
         if (scheduledTimes.isEmpty()) {
             return earliestValidTime;
@@ -266,6 +302,9 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     @Override
     public void saveTaskMetadata(ScheduledTaskMetadata scheduledTask) {
+        scheduledTask.setMetadata(new HashMap<>(scheduledTask.getMetadata()));
+        scheduledTask.getMetadata().putIfAbsent(SchedulingTime.TIMEZONE_KEY,
+            SchedulingTime.requestZone().getId());
         scheduledTaskMetadataRepository.save(scheduledTask);
     }
 
@@ -317,7 +356,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     private record ScheduledTask(
         String id,
         ScheduledFuture<?> task,
-        LocalDateTime executionTime,
+        Instant executionTime,
         RecurrenceType recurrenceType
     ) {
     }

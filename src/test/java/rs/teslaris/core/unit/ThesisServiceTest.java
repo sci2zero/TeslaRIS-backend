@@ -1,5 +1,8 @@
 package rs.teslaris.core.unit;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +27,6 @@ import static org.mockito.Mockito.when;
 import jakarta.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -886,7 +888,7 @@ public class ThesisServiceTest {
     @Test
     void shouldSchedulePublicReviewEndCheckAndSaveMetadata() {
         // Given
-        var timestamp = LocalDateTime.now().plusDays(1);
+        var timestamp = Instant.now().plus(1, ChronoUnit.DAYS);
         var types = List.of(ThesisType.MASTER, ThesisType.PHD);
         var publicReviewLengthDays = 30;
         var userId = 42;
@@ -895,7 +897,7 @@ public class ThesisServiceTest {
         var fakeTaskId = "task-123";
         when(taskManagerService.scheduleTask(
             anyString(),
-            any(LocalDateTime.class),
+            any(Instant.class),
             any(Runnable.class),
             anyInt(),
             any(RecurrenceType.class)
@@ -933,7 +935,7 @@ public class ThesisServiceTest {
     @Test
     void shouldGenerateUniqueTaskIdsEachCallWhenScheduling() {
         // Given
-        var timestamp = LocalDateTime.now().plusDays(2);
+        var timestamp = Instant.now().plus(2, ChronoUnit.DAYS);
         var types = List.of(ThesisType.MASTER);
         var publicReviewLengthDays = 15;
         var userId = 7;
@@ -941,7 +943,7 @@ public class ThesisServiceTest {
 
         when(taskManagerService.scheduleTask(
             anyString(),
-            any(LocalDateTime.class),
+            any(Instant.class),
             any(Runnable.class),
             anyInt(),
             any(RecurrenceType.class)

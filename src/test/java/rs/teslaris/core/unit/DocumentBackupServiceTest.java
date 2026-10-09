@@ -1,5 +1,7 @@
 package rs.teslaris.core.unit;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ class DocumentBackupServiceTest {
         var userId = 5;
         var language = "en";
 
-        var now = LocalDateTime.of(2025, 4, 26, 14, 30);
+        var now = Instant.parse("2025-04-26T14:30:00Z");
         when(taskManagerService.findNextFreeExecutionTime()).thenReturn(now);
 
         // When
@@ -90,7 +91,7 @@ class DocumentBackupServiceTest {
         );
 
         // Then
-        assertEquals("14:30h", result);
+        assertEquals(now.toString(), result);
         verify(taskManagerService).scheduleTask(
             argThat(name -> name.contains("Document_Backup-" + institutionId)),
             eq(now),

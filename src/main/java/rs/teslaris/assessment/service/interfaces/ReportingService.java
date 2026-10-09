@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.service.interfaces;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.ReportDTO;
@@ -17,7 +17,7 @@ public interface ReportingService {
                         List<Integer> commissionIds, String locale,
                         Integer topLevelInstitutionId);
 
-    void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
+    void scheduleReportGeneration(Instant timeToRun, ReportType reportType,
                                   Integer specifiedStartYear, Integer assessmentYear,
                                   List<Integer> commissionIds, String locale,
                                   Integer topLevelInstitutionId, Integer userId,

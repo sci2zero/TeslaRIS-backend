@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -55,7 +55,7 @@ public class PublicationSeriesIndicatorController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleLoadingOfPublicationSeriesIndicators(@RequestParam("timestamp")
-                                                             LocalDateTime timestamp,
+                                                             Instant timestamp,
                                                              @RequestParam("source")
                                                              EntityIndicatorSource source,
                                                              @RequestHeader("Authorization")
@@ -69,7 +69,7 @@ public class PublicationSeriesIndicatorController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleIF5AndJCIRankCompute(@RequestParam("timestamp")
-                                             LocalDateTime timestamp,
+                                             Instant timestamp,
                                              @RequestParam("classificationYears")
                                              List<Integer> classificationYears,
                                              @RequestParam boolean calculateIF5Rank,

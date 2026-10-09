@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.Test;
@@ -24,6 +24,8 @@ import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest
@@ -38,6 +40,12 @@ class TaskManagerServiceTest {
     @Mock
     private OrganisationUnitService organisationUnitService;
 
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private ScheduledTaskMetadataRepository scheduledTaskMetadataRepository;
+
     @InjectMocks
     private TaskManagerServiceImpl taskManagerService;
 
@@ -46,7 +54,7 @@ class TaskManagerServiceTest {
     public void shouldScheduleTaskSuccessfully() {
         // Given
         var taskId = "task1";
-        var executionTime = LocalDateTime.now().plusMinutes(10);
+        var executionTime = Instant.now().plus(10, ChronoUnit.MINUTES);
         Runnable task = mock(Runnable.class);
 
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(
@@ -65,8 +73,8 @@ class TaskManagerServiceTest {
         // Given
         var taskId1 = "task1";
         var taskId2 = "task2";
-        var executionTime1 = LocalDateTime.now().plusMinutes(10);
-        var executionTime2 = LocalDateTime.now().plusHours(1);
+        var executionTime1 = Instant.now().plus(10, ChronoUnit.MINUTES);
+        var executionTime2 = Instant.now().plus(1, ChronoUnit.HOURS);
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
 
@@ -93,8 +101,8 @@ class TaskManagerServiceTest {
         // Given
         var taskId1 = "ReportGeneration-1-.....";
         var taskId2 = "ReportGeneration-2-.....";
-        var executionTime1 = LocalDateTime.now().plusMinutes(10);
-        var executionTime2 = LocalDateTime.now().plusHours(1);
+        var executionTime1 = Instant.now().plus(10, ChronoUnit.MINUTES);
+        var executionTime2 = Instant.now().plus(1, ChronoUnit.HOURS);
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
 
@@ -138,8 +146,8 @@ class TaskManagerServiceTest {
         var taskId2 = "Harvest-2-....";
         var nonHarvestTaskId = "SomeOtherTaskType-999";
 
-        var executionTime1 = LocalDateTime.now().plusDays(1);
-        var executionTime2 = LocalDateTime.now().plusDays(2);
+        var executionTime1 = Instant.now().plus(1, ChronoUnit.DAYS);
+        var executionTime2 = Instant.now().plus(2, ChronoUnit.DAYS);
 
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
@@ -192,8 +200,8 @@ class TaskManagerServiceTest {
         // Given
         var taskId1 = "Document_Backup-1-...";
         var taskId2 = "Document_Backup-2-...";
-        var executionTime1 = LocalDateTime.now().plusMinutes(15);
-        var executionTime2 = LocalDateTime.now().plusHours(2);
+        var executionTime1 = Instant.now().plus(15, ChronoUnit.MINUTES);
+        var executionTime2 = Instant.now().plus(2, ChronoUnit.HOURS);
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
 
@@ -235,8 +243,8 @@ class TaskManagerServiceTest {
         // Given
         var taskId1 = "Library_Backup-1-...";
         var taskId2 = "Library_Backup-2-...";
-        var executionTime1 = LocalDateTime.now().plusMinutes(30);
-        var executionTime2 = LocalDateTime.now().plusHours(3);
+        var executionTime1 = Instant.now().plus(30, ChronoUnit.MINUTES);
+        var executionTime2 = Instant.now().plus(3, ChronoUnit.HOURS);
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
 
@@ -278,8 +286,8 @@ class TaskManagerServiceTest {
         // Given
         var taskId1 = "Registry_Book-1-...";
         var taskId2 = "Registry_Book-2-...";
-        var executionTime1 = LocalDateTime.now().plusMinutes(30);
-        var executionTime2 = LocalDateTime.now().plusHours(3);
+        var executionTime1 = Instant.now().plus(30, ChronoUnit.MINUTES);
+        var executionTime2 = Instant.now().plus(3, ChronoUnit.HOURS);
         var task1 = mock(Runnable.class);
         var task2 = mock(Runnable.class);
 

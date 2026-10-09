@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-10-08-scheduled-task-instants
+      author: teslaris
+      changes:
+        - addColumn:
+            tableName: scheduled_tasks
+            columns:
+              - column:
+                  name: execution_time
+                  type: TIMESTAMP WITH TIME ZONE
+      rollback:
+        - dropColumn:
+            tableName: scheduled_tasks
+            columnName: execution_time

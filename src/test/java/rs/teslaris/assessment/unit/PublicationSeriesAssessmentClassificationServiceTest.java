@@ -1,5 +1,8 @@
 package rs.teslaris.assessment.unit;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,7 +13,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -191,7 +193,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
     @Test
     void shouldScheduleClassification() {
         // Given
-        var timeToRun = LocalDateTime.now().plusDays(1);
+        var timeToRun = Instant.now().plus(1, ChronoUnit.DAYS);
         var commissionId = 1;
         var userId = 42;
         var classificationYears = List.of(2023, 2024);

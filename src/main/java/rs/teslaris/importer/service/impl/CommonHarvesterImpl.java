@@ -1,7 +1,7 @@
 package rs.teslaris.importer.service.impl;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -232,7 +232,7 @@ public class CommonHarvesterImpl implements CommonHarvester {
     }
 
     @Override
-    public void scheduleMetadataEnrichmentForInstitution(LocalDateTime timeToRun,
+    public void scheduleMetadataEnrichmentForInstitution(Instant timeToRun,
                                                          List<Integer> institutionIds,
                                                          boolean autoload,
                                                          RecurrenceType recurrenceType,

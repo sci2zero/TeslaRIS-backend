@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.applicationevent.DataQualityAssessmentReindexEvent;
 import rs.teslaris.core.util.functional.FunctionalUtil;
@@ -79,10 +78,11 @@ public class DataQualityReindexServiceImpl implements DataQualityReindexService 
             log.warn(
                 "Failed to deserialize revision for assessment {} (entityType={}): {}",
                 assessment.getId(), entityType, e.getMessage());
+            throw new IllegalStateException(
+                "Failed to deserialize revision for assessment " + assessment.getId(), e);
         }
     }
 
-    @Async("taskExecutor")
     @EventListener
     @Override
     public void handleDataQualityAssessmentReindexEvent(DataQualityAssessmentReindexEvent event) {

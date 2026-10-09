@@ -2,7 +2,7 @@ package rs.teslaris.importer.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +22,7 @@ import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.SchedulingTime;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.service.interfaces.CommonHarvester;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
@@ -61,7 +62,9 @@ public class ScheduledImportTasksRestorer {
         for (ScheduledTaskMetadata metadata : allMetadata) {
             try {
                 synchronized (ScheduledTasksRestorer.lock) {
-                    restoreTaskFromMetadata(metadata);
+                    SchedulingTime.restoreInZone(
+                        SchedulingTime.zoneFromMetadata(metadata.getMetadata()), metadata.getTimeToRun(),
+                        () -> restoreTaskFromMetadata(metadata));
                 }
             } catch (Exception e) {
                 log.error("Failed to restore scheduled import: {}", metadata.getTaskId(), e);
@@ -95,7 +98,7 @@ public class ScheduledImportTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -136,7 +139,7 @@ public class ScheduledImportTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -174,7 +177,7 @@ public class ScheduledImportTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -192,7 +195,7 @@ public class ScheduledImportTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
@@ -232,7 +235,7 @@ public class ScheduledImportTasksRestorer {
 
         var timeToRun = metadata.getTimeToRun();
 
-        if (timeToRun.isBefore(LocalDateTime.now())) {
+        if (timeToRun.isBefore(Instant.now())) {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
