@@ -168,7 +168,6 @@ public class HydratorOutputConverters {
         }
     }
 
-    // An impossible month or day ("2011-00") would break every later read of the document date
     private FlexibleDateDTO documentDate(HydratorCVModel.Curriculum record,
                                          HydratorCVModel.Output output,
                                          MigrationEntityType entityType,
@@ -362,9 +361,9 @@ public class HydratorOutputConverters {
     }
 
     /**
-     * Which author is the curriculum owner. The source marks them with {@code self} on only about
-     * a quarter of outputs, so the owner's Ciência ID and then their name forms are tried as well;
-     * a name only counts when exactly one author carries it.
+     * Which author is the curriculum owner. The source does not always mark them with
+     * {@code self}, so the owner's Ciência ID and then their name forms are tried as well; a name
+     * only counts when exactly one author carries it.
      *
      * @return the owner's position in {@code people}, or -1 when they cannot be told apart
      */
@@ -413,7 +412,7 @@ public class HydratorOutputConverters {
         return match;
     }
 
-    // Only the owner's role is known; it is missing on about three quarters of outputs
+    // Only the owner's role is known
     private DocumentContributionType ownerContributionType(HydratorCVModel.CodeValue role) {
         if (Objects.isNull(role) || isBlank(role.code())) {
             return DocumentContributionType.AUTHOR;

@@ -273,12 +273,7 @@ public class HydratorConversionUtil {
     public record ResearchAreaMatch(Integer id, String name, boolean broader) {
     }
 
-    /**
-     * A date without a year is treated as absent and yields {@code null}. Unlike
-     * {@link #localDate}, an impossible month or day does not fail the item: the year alone is
-     * still a usable date, so a month outside 1-12 drops the month and the day, and a day the month
-     * does not have drops the day. Callers compare the result with the input to log what was lost.
-     */
+    /** Drops a month or day that cannot exist; null without a year. */
     public FlexibleDateDTO flexibleDate(HydratorCVModel.DateInfo dateInfo) {
         if (Objects.isNull(dateInfo)) {
             return null;
