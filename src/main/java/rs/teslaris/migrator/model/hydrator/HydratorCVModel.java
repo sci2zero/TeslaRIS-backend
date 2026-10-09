@@ -414,13 +414,6 @@ public class HydratorCVModel {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ResearchClassifications(
-        Integer total,
-        List<ResearchClassification> researchClassification
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Dissertation(
         String title,
         DegreeType degreeType,
