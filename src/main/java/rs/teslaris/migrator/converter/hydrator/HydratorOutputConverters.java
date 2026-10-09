@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -108,9 +109,9 @@ public class HydratorOutputConverters {
         var language = languageOf(record);
         var dto = new JournalPublicationDTO();
 
-        applyCommonFields(dto, record, output, article.articleTitle(), language,
-            article.publicationDate(), article.url(), article.identifiers(), article.authors(),
-            article.authoringRole());
+        applyCommonFields(dto, record, output, MigrationEntityType.JOURNAL_PUBLICATION,
+            article.articleTitle(), language, article.publicationDate(), article.url(),
+            article.identifiers(), article.authors(), article.authoringRole());
         applyPublicationFields(dto, record, output, MigrationEntityType.JOURNAL_PUBLICATION,
             language, article);
 
@@ -135,9 +136,9 @@ public class HydratorOutputConverters {
         var language = languageOf(record);
         var dto = new ThesisDTO();
 
-        applyCommonFields(dto, record, output, dissertation.title(), language,
-            dissertation.completionDate(), dissertation.url(), dissertation.identifiers(),
-            dissertation.authors(), null);
+        applyCommonFields(dto, record, output, MigrationEntityType.THESIS, dissertation.title(),
+            language, dissertation.completionDate(), dissertation.url(),
+            dissertation.identifiers(), dissertation.authors(), null);
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
 
@@ -145,9 +146,9 @@ public class HydratorOutputConverters {
     }
 
     private void applyCommonFields(DocumentDTO dto, HydratorCVModel.Curriculum record,
-                                   HydratorCVModel.Output output, String title, String language,
-                                   HydratorCVModel.DateInfo date, String url,
-                                   HydratorCVModel.OutputIdentifiers identifiers,
+                                   HydratorCVModel.Output output, MigrationEntityType entityType,
+                                   String title, String language, HydratorCVModel.DateInfo date,
+                                   String url, HydratorCVModel.OutputIdentifiers identifiers,
                                    HydratorCVModel.OutputAuthors authors,
                                    HydratorCVModel.CodeValue ownerRole) {
         dto.setTitle(conversionUtil.multilingualContent(title, language));
@@ -155,9 +156,9 @@ public class HydratorOutputConverters {
         dto.setDescription(List.of());
         dto.setKeywords(List.of());
         dto.setUris(new HashSet<>());
-        dto.setDocumentDate(conversionUtil.flexibleDate(date));
-        dto.setContributions(contributions(record, output, authors, ownerRole));
-        applyIdentifiers(dto, record, output, identifiers);
+        dto.setDocumentDate(documentDate(record, output, entityType, date));
+        dto.setContributions(contributions(record, output, entityType, authors, ownerRole));
+        applyIdentifiers(dto, record, output, entityType, identifiers);
 
         // MAP-000972 asks for a generated citation as the fallback description. The source's
         // output:citation is only the author list, so the description is left empty for now.
@@ -165,6 +166,25 @@ public class HydratorOutputConverters {
         if (!isBlank(url)) {
             dto.getUris().add(url.trim());
         }
+    }
+
+    // An impossible month or day ("2011-00") would break every later read of the document date
+    private FlexibleDateDTO documentDate(HydratorCVModel.Curriculum record,
+                                         HydratorCVModel.Output output,
+                                         MigrationEntityType entityType,
+                                         HydratorCVModel.DateInfo date) {
+        var documentDate = conversionUtil.flexibleDate(date);
+
+        if (Objects.nonNull(documentDate) &&
+            ((!isBlank(date.month()) && Objects.isNull(documentDate.month())) ||
+                (!isBlank(date.day()) && Objects.isNull(documentDate.day())))) {
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
+                outputKey(record, output), "date",
+                String.format("invalid date part (year='%s', month='%s', day='%s')",
+                    date.year(), date.month(), date.day()));
+        }
+
+        return documentDate;
     }
 
     /**
@@ -224,7 +244,7 @@ public class HydratorOutputConverters {
      * "Part of" identifiers belong to the container and are join keys, not attributes.
      */
     private void applyIdentifiers(DocumentDTO dto, HydratorCVModel.Curriculum record,
-                                  HydratorCVModel.Output output,
+                                  HydratorCVModel.Output output, MigrationEntityType entityType,
                                   HydratorCVModel.OutputIdentifiers identifiers) {
         if (Objects.isNull(identifiers) || Objects.isNull(identifiers.identifier())) {
             return;
@@ -243,7 +263,7 @@ public class HydratorOutputConverters {
             var target = IDENTIFIER_TARGETS.get(code);
 
             if (Objects.isNull(target)) {
-                migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.DOCUMENT.name(),
+                migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
                     outputKey(record, output), "MAP-000067",
                     "unsupported identifier type '" + code + "'");
                 continue;
@@ -252,7 +272,7 @@ public class HydratorOutputConverters {
             var value = identifier.identifier().trim();
 
             if (!target.pattern().matcher(value).matches()) {
-                migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.DOCUMENT.name(),
+                migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
                     outputKey(record, output), "MAP-000067",
                     "invalid " + code + " format: '" + value + "'");
                 continue;
@@ -294,6 +314,7 @@ public class HydratorOutputConverters {
 
     private List<PersonDocumentContributionDTO> contributions(HydratorCVModel.Curriculum record,
                                                               HydratorCVModel.Output output,
+                                                              MigrationEntityType entityType,
                                                               HydratorCVModel.OutputAuthors authors,
                                                               HydratorCVModel.CodeValue ownerRole) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
@@ -314,7 +335,7 @@ public class HydratorOutputConverters {
             }
         }
 
-        var ownerIndex = ownerIndex(record, output, people, names);
+        var ownerIndex = ownerIndex(record, output, entityType, people, names);
 
         for (int i = 0; i < people.size(); i++) {
             var isOwner = i == ownerIndex;
@@ -348,6 +369,7 @@ public class HydratorOutputConverters {
      * @return the owner's position in {@code people}, or -1 when they cannot be told apart
      */
     private int ownerIndex(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
+                           MigrationEntityType entityType,
                            List<HydratorCVModel.OutputAuthor> people, List<PersonNameDTO> names) {
         for (int i = 0; i < people.size(); i++) {
             if (Boolean.TRUE.equals(people.get(i).self())) {
@@ -381,7 +403,7 @@ public class HydratorOutputConverters {
         }
 
         if (match < 0 && !people.isEmpty()) {
-            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.DOCUMENT.name(),
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
                 outputKey(record, output), "owner-match",
                 (match == -2 ? "several authors match the owner's name" :
                     "owner not identified") + " among " + people.size() + " authors");
@@ -432,7 +454,7 @@ public class HydratorOutputConverters {
             return ThesisType.PHD;
         }
 
-        var value = Objects.toString(degreeType.value(), "").toLowerCase();
+        var value = Objects.toString(degreeType.value(), "").toLowerCase(Locale.ROOT);
 
         if (value.contains("master")) {
             return ThesisType.MASTER;
@@ -445,7 +467,12 @@ public class HydratorOutputConverters {
         return ThesisType.PHD;
     }
 
-    private String outputKey(HydratorCVModel.Curriculum record, HydratorCVModel.Output output) {
+    /**
+     * Output ids are unique within a curriculum only, so the key is composite. The same paper
+     * listed in several co-authors' curricula therefore produces different keys - cross-curriculum
+     * duplicates are caught by the duplicate failure handler, not by the record log.
+     */
+    String outputKey(HydratorCVModel.Curriculum record, HydratorCVModel.Output output) {
         return record.id() + "#output#" + Objects.toString(output.id(), "unknown");
     }
 

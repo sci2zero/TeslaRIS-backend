@@ -69,7 +69,7 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
 
             return Objects.isNull(dto) ? null : new MigrationItem<>(
                 MigrationEntityType.JOURNAL_PUBLICATION,
-                outputKey(record, output),
+                converters.outputKey(record, output),
                 dto,
                 EntityCreator.of(
                     journalPublicationService::createJournalPublication, JournalPublication::getId),
@@ -81,21 +81,12 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
 
             return Objects.isNull(dto) ? null : new MigrationItem<>(
                 MigrationEntityType.THESIS,
-                outputKey(record, output),
+                converters.outputKey(record, output),
                 dto,
                 EntityCreator.of(thesisService::createThesis, Thesis::getId),
                 FailureHandler.noOp());
         }
 
         return null;
-    }
-
-    /**
-     * Output ids are unique within a curriculum only, so the key is composite. The same paper listed
-     * in several co-authors' curricula therefore produces different keys - cross-curriculum
-     * duplicates are caught by the duplicate failure handler, not by the record log.
-     */
-    private String outputKey(HydratorCVModel.Curriculum record, HydratorCVModel.Output output) {
-        return record.id() + "#output#" + Objects.toString(output.id(), "unknown");
     }
 }
