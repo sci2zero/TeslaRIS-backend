@@ -7,5 +7,7 @@ public enum QualityAssessmentTarget {
     DOCUMENT,
     JOURNAL,
     BOOK_SERIES,
-    PUBLISHER
+    PUBLISHER,
+    PROJECT,
+    FUNDING
 }

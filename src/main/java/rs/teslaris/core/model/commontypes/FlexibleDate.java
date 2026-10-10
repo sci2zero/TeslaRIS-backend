@@ -57,17 +57,36 @@ public class FlexibleDate {
             flexibleDate.getYear() > 0;
     }
 
+    /**
+     * Whether a month or day is present but outside the range it could ever hold. Imports and
+     * migrations store a zero for "unknown" rather than leaving the column null, which is not a
+     * value any formatter can render.
+     */
+    public static boolean hasMalformedComponents(FlexibleDate flexibleDate) {
+        if (Objects.isNull(flexibleDate)) {
+            return false;
+        }
+
+        return !isInRange(flexibleDate.getMonth(), 12) || !isInRange(flexibleDate.getDay(), 31);
+    }
+
+    private static boolean isInRange(Integer component, int maximum) {
+        return Objects.isNull(component) || (component >= 1 && component <= maximum);
+    }
+
     @Nullable
     public static String toISOString(FlexibleDate flexibleDate) {
         if (Objects.isNull(flexibleDate) || Objects.isNull(flexibleDate.getYear())) {
             return null;
         }
 
-        if (Objects.isNull(flexibleDate.getMonth())) {
+        // An out-of-range component is dropped rather than rendered: a zero month would make
+        // "2011-00", which is not parseable and not valid ISO 8601 for the exporters either.
+        if (!isInRange(flexibleDate.getMonth(), 12)) {
             return String.format("%04d", flexibleDate.getYear());
         }
 
-        if (Objects.isNull(flexibleDate.getDay())) {
+        if (!isInRange(flexibleDate.getDay(), 31)) {
             return String.format("%04d-%02d", flexibleDate.getYear(), flexibleDate.getMonth());
         }
 

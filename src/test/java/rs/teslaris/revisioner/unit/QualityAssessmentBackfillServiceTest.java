@@ -33,6 +33,7 @@ import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 import rs.teslaris.revisioner.service.impl.QualityAssessmentBackfillServiceImpl;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 
 @SpringBootTest
 public class QualityAssessmentBackfillServiceTest {
@@ -69,15 +70,19 @@ public class QualityAssessmentBackfillServiceTest {
     @Mock
     private OrganisationUnitService organisationUnitService;
 
+    @Mock
+    private DataQualityAggregator dataQualityAggregator;
+
     private QualityAssessmentBackfillServiceImpl qualityAssessmentBackfillService;
 
 
     @BeforeEach
     public void setUp() {
         qualityAssessmentBackfillService = new QualityAssessmentBackfillServiceImpl(
-            revisionService, dataQualityService, organisationUnitService, personSearchService,
-            organisationUnitSearchService, eventSearchService, documentSearchService,
-            journalSearchService, bookSeriesSearchService, publisherSearchService);
+            revisionService, dataQualityService, organisationUnitService, dataQualityAggregator,
+            personSearchService, organisationUnitSearchService, eventSearchService,
+            documentSearchService, journalSearchService, bookSeriesSearchService,
+            publisherSearchService);
     }
 
     private PersonIndex person(Integer databaseId) {
@@ -101,6 +106,11 @@ public class QualityAssessmentBackfillServiceTest {
         index.setEventType(eventType);
 
         return index;
+    }
+
+    private void stubDatabaseIds(String indexName, Integer... databaseIds) {
+        when(dataQualityAggregator.scanDatabaseIds(eq(indexName), any(), anyInt()))
+            .thenReturn(List.of(databaseIds));
     }
 
     private void stubPersons(PersonIndex... persons) {
@@ -371,5 +381,72 @@ public class QualityAssessmentBackfillServiceTest {
 
         // then
         verify(dataQualityService).reassessLatestRevision(EntityType.PERSON.name(), 2, "PTCRIS");
+    }
+
+    @Test
+    public void shouldScanProjectsAndFundingsByDatabaseIdAlone() {
+        // given (their index models live in the project module, so only databaseId is read)
+        stubDatabaseIds("project", 1, 2);
+        stubDatabaseIds("funding", 7);
+
+        when(revisionService.createRevisionFromCurrentState(anyString(), anyInt(), anyString()))
+            .thenReturn(true);
+
+        // when
+        qualityAssessmentBackfillService.performBackfill(
+            List.of(QualityAssessmentTarget.PROJECT, QualityAssessmentTarget.FUNDING),
+            null, null, "PTCRIS", false);
+
+        // then
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PROJECT.name(), 1,
+            "PTCRIS");
+        verify(revisionService).createRevisionFromCurrentState(EntityType.PROJECT.name(), 2,
+            "PTCRIS");
+        verify(revisionService).createRevisionFromCurrentState(EntityType.FUNDING.name(), 7,
+            "PTCRIS");
+
+        // Every record of these indexes is of one entity type, so nothing is resolved per hit.
+        verifyNoInteractions(personSearchService);
+        verifyNoInteractions(documentSearchService);
+    }
+
+    @Test
+    public void shouldFetchAnotherBatchWhileTheProjectIndexKeepsDelivering() {
+        // given (a full batch means there may be more, an incomplete one ends the scan)
+        var fullBatch = new ArrayList<Integer>();
+        for (int databaseId = 1; databaseId <= PAGE_SIZE; databaseId++) {
+            fullBatch.add(databaseId);
+        }
+
+        when(dataQualityAggregator.scanDatabaseIds(eq("project"), any(), anyInt()))
+            .thenReturn(fullBatch)
+            .thenReturn(List.of(PAGE_SIZE + 1));
+
+        // when
+        qualityAssessmentBackfillService.performBackfill(
+            List.of(QualityAssessmentTarget.PROJECT), null, null, "PTCRIS", false);
+
+        // then
+        verify(dataQualityAggregator, times(2)).scanDatabaseIds(eq("project"), any(), anyInt());
+        verify(revisionService, times(PAGE_SIZE + 1))
+            .createRevisionFromCurrentState(anyString(), anyInt(), anyString());
+    }
+
+    @Test
+    public void shouldFinishQuietlyWhenTheProjectScanYieldsNothing() {
+        // given (an exhausted index and a failed query are indistinguishable by design - the scan
+        // logs and returns no ids either way, and the run is expected to complete)
+        when(dataQualityAggregator.scanDatabaseIds(eq("project"), any(), anyInt()))
+            .thenReturn(List.of());
+
+        // when
+        qualityAssessmentBackfillService.performBackfill(
+            List.of(QualityAssessmentTarget.PROJECT), null, null, "PTCRIS", true);
+
+        // then
+        verify(dataQualityAggregator).scanDatabaseIds(eq("project"), any(), anyInt());
+
+        verifyNoInteractions(revisionService);
+        verifyNoInteractions(dataQualityService);
     }
 }

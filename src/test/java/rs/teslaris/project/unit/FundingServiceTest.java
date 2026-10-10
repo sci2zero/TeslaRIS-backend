@@ -62,6 +62,7 @@ import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
+import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
@@ -116,11 +117,15 @@ public class FundingServiceTest extends BaseTest {
     @Mock
     private DocumentFileService documentFileService;
 
+    @Mock
+    private InvolvementService involvementService;
+
+    @Mock
+    private ProjectIndexRepository projectIndexRepository;
+
     @InjectMocks
     private FundingServiceImpl fundingService;
 
-    @Mock
-    private InvolvementService involvementService;
 
     @Test
     public void shouldReturnEmptyPageWhenNoFundingFound() {

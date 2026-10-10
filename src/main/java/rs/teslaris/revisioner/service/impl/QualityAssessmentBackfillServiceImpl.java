@@ -32,6 +32,7 @@ import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 import rs.teslaris.revisioner.service.interfaces.DataQualityService;
 import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillService;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAggregator;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,8 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
     private final DataQualityService dataQualityService;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final DataQualityAggregator dataQualityAggregator;
 
     private final SearchService<PersonIndex> personSearchService;
 
@@ -121,6 +124,18 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
                     personIds, organisationUnitIds,
                     index -> new Pair<>(EntityType.PUBLISHER.name(), index.getDatabaseId()),
                     profileName, rewriteExistingAssessments);
+                // Project and funding index models live in the project module, which this one may
+                // not depend on, so their records are walked by databaseId alone.
+                case PROJECT -> scanDatabaseIds("project", EntityType.PROJECT.name(),
+                    List.of("person_ids"), List.of("organisation_unit_ids"),
+                    personIds, organisationUnitIds,
+                    profileName, rewriteExistingAssessments);
+                // A funding index carries no person or institution of its own, so a person or
+                // organisation unit filter cannot narrow it and it is scanned in full.
+                case FUNDING -> scanDatabaseIds("funding", EntityType.FUNDING.name(),
+                    List.of(), List.of(),
+                    personIds, organisationUnitIds,
+                    profileName, rewriteExistingAssessments);
             }
         });
 
@@ -169,6 +184,39 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
             }
 
             if (content.size() < PAGE_SIZE || Objects.isNull(lastSeenId)) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * The same watermark walk as {@link #scan}, for an index whose index model this module may not
+     * import. Every record of such an index is of one entity type, so there is nothing to resolve
+     * per hit and {@code databaseId} is the only field needed.
+     */
+    private void scanDatabaseIds(String indexName, String entityType, List<String> personFields,
+                                 List<String> organisationUnitFields, List<Integer> personIds,
+                                 List<Integer> organisationUnitIds, String profileName,
+                                 boolean rewriteExistingAssessments) {
+        var organisationUnitScopeIds = resolveOrganisationUnitScope(organisationUnitIds);
+        Integer lastSeenId = null;
+
+        while (true) {
+            var query = buildQuery(personFields, organisationUnitFields, personIds,
+                organisationUnitScopeIds, lastSeenId);
+
+            var databaseIds = dataQualityAggregator.scanDatabaseIds(indexName, query, PAGE_SIZE);
+
+            if (databaseIds.isEmpty()) {
+                break;
+            }
+
+            for (var databaseId : databaseIds) {
+                lastSeenId = databaseId;
+                process(entityType, databaseId, profileName, rewriteExistingAssessments);
+            }
+
+            if (databaseIds.size() < PAGE_SIZE) {
                 break;
             }
         }

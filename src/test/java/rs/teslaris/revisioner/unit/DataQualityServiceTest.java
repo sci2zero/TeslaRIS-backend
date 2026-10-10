@@ -1181,7 +1181,7 @@ public class DataQualityServiceTest {
         assertEquals(80.0, outputs.averageScore());
 
         var queryCaptor = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(4))
+        verify(dataQualityAggregator, times(6))
             .aggregateAssessments(queryCaptor.capture(), any());
 
         assertTrue(queryCaptor.getAllValues().getFirst().toString()
@@ -1206,7 +1206,7 @@ public class DataQualityServiceTest {
 
         // then
         var assessmentQuery = ArgumentCaptor.forClass(Query.class);
-        verify(dataQualityAggregator, times(4))
+        verify(dataQualityAggregator, times(6))
             .aggregateAssessments(assessmentQuery.capture(), any());
 
         var documentQuery = ArgumentCaptor.forClass(Query.class);
@@ -1442,13 +1442,21 @@ public class DataQualityServiceTest {
     }
 
     @Test
-    public void shouldReturnUnsupportedRowsForProjectsAndFundings() {
+    public void shouldReportProjectAndFundingRowsForAPerson() {
         // given
         when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
             PERSON_ENTITY_TYPE, 1))
             .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
 
-        stubAggregates(1, 1, 0, 0, 90.0, 1, 0);
+        // Every pass answers the same, so the project and funding rows - the fourth and fifth
+        // calls - see figures of their own. stubAggregates would hand them empty().
+        when(dataQualityAggregator.aggregateAssessments(any(), any()))
+            .thenReturn(Optional.of(new DataQualityAggregator.AssessmentAggregates(
+                1, 1, 0, 0, 0, 0, 0.0, 0, 90.0)));
+        when(dataQualityAggregator.aggregateLinkedDocuments(any()))
+            .thenReturn(Optional.of(new DataQualityAggregator.LinkedDocumentAggregates(1, 0)));
+        when(dataQualityAggregator.countRecords(eq("project"), any())).thenReturn(4L);
+        when(dataQualityAggregator.countRecords(eq("funding"), any())).thenReturn(9L);
 
         // when
         var relatedQuality = dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1)
@@ -1462,14 +1470,40 @@ public class DataQualityServiceTest {
 
         assertTrue(row(relatedQuality, RelatedEntityType.ACTIVITIES).supported());
 
-        List.of(row(relatedQuality, RelatedEntityType.PROJECTS),
-            row(relatedQuality, RelatedEntityType.FUNDINGS)).forEach(row -> {
-            assertFalse(row.supported());
-            assertEquals(0, row.linkedRecords());
-            assertEquals(0, row.affectedRecords());
-            assertEquals(0, row.openIssues());
-            assertNull(row.averageScore());
-        });
+        var projects = row(relatedQuality, RelatedEntityType.PROJECTS);
+        assertTrue(projects.supported());
+        assertEquals(4, projects.linkedRecords());
+        assertEquals(1, projects.affectedRecords());
+        assertEquals(1, projects.openIssues());
+        assertEquals(90.0, projects.averageScore());
+
+        assertEquals(9, row(relatedQuality, RelatedEntityType.FUNDINGS).linkedRecords());
+    }
+
+    @Test
+    public void shouldCountProjectsOfAPersonByContributionAndOfAUnitByInstitution() {
+        // given
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            any(), any()))
+            .thenReturn(Optional.of(revisionWithProfiles(PERSON_ENTITY_TYPE, "PTCRIS")));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2));
+
+        stubAggregates(1, 1, 0, 0, 90.0, 1, 0);
+
+        var projectQuery = ArgumentCaptor.forClass(Query.class);
+
+        // when
+        dataQualityService.getRelatedQualityForEntity(PERSON_ENTITY_TYPE, 1);
+        dataQualityService.getRelatedQualityForEntity(ORGANISATION_UNIT_ENTITY_TYPE, 1);
+
+        // then
+        verify(dataQualityAggregator, times(2))
+            .countRecords(eq("project"), projectQuery.capture());
+
+        assertTrue(projectQuery.getAllValues().getFirst().toString().contains("person_ids"));
+        assertTrue(projectQuery.getAllValues().get(1).toString()
+            .contains("organisation_unit_ids"));
     }
 
     @Test

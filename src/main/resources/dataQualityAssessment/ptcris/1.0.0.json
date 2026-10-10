@@ -184,6 +184,48 @@
         "en": "Metadata includes license information under which data can be reused.",
         "pt": "Os metadados incluem informação sobre a licença ao abrigo da qual os dados podem ser reutilizados."
       }
+    },
+    "PTCRIS-F1-01DCURREN-01": {
+      "title": {
+        "sr": "Istekao period važenja",
+        "sr-cyr": "Истекао период важења",
+        "en": "Expired life period",
+        "pt": "Período de vigência expirado"
+      },
+      "description": {
+        "sr": "Vremenski podaci moraju opisivati period važenja zapisa koji je dosledan i koji se ne proteže izvan dozvoljenih granica.",
+        "sr-cyr": "Временски подаци морају описивати период важења записа који је доследан и који се не протеже изван дозвољених граница.",
+        "en": "Temporal data must describe a life period that is internally consistent and does not extend beyond the permitted bounds.",
+        "pt": "Os dados temporais devem descrever um período de vigência internamente coerente e que não exceda os limites permitidos."
+      }
+    },
+    "PTCRIS-F1-01DQUALIT-02": {
+      "title": {
+        "sr": "Usklađenost sa pravilima ugovora",
+        "sr-cyr": "Усклађеност са правилима уговора",
+        "en": "Compliance with contract rules",
+        "pt": "Conformidade com as regras contratuais"
+      },
+      "description": {
+        "sr": "Zapis mora poštovati obavezne veze koje proizlaze iz ugovornog odnosa koji opisuje.",
+        "sr-cyr": "Запис мора поштовати обавезне везе које произлазе из уговорног односа који описује.",
+        "en": "The record must respect the mandatory relationships implied by the contractual arrangement it describes.",
+        "pt": "O registo deve respeitar as relações obrigatórias decorrentes do vínculo contratual que descreve."
+      }
+    },
+    "PTCRIS-F1-01DSEMANT-06": {
+      "title": {
+        "sr": "Standardni termini podataka",
+        "sr-cyr": "Стандардни термини података",
+        "en": "Standard data terms",
+        "pt": "Termos de dados padronizados"
+      },
+      "description": {
+        "sr": "Vrednosti podataka moraju poticati iz standardizovanog skupa termina definisanog za dati element.",
+        "sr-cyr": "Вредности података морају потицати из стандардизованог скупа термина дефинисаног за дати елемент.",
+        "en": "Data values must be drawn from the standardised set of terms defined for the data element.",
+        "pt": "Os valores de dados devem provir do conjunto padronizado de termos definido para o elemento."
+      }
     }
   },
   "targetWeights": {
@@ -255,7 +297,23 @@
     "OrganisationUnit.openAlexId": 3.0,
     "OrganisationUnit.sector": 1.0,
     "Activity.involvementType": 3.0,
-    "Activity.education": 3.0
+    "Activity.education": 3.0,
+    "Project.name": 5,
+    "Project.description": 5,
+    "Project.doi": 3,
+    "Project.raid": 3,
+    "Project.nationalId": 5,
+    "Project.identifier": 5,
+    "Project.date": 5,
+    "Project.researchAreas": 5,
+    "Funding.name": 5,
+    "Funding.description": 5,
+    "Funding.doi": 3,
+    "Funding.identifier": 5,
+    "Funding.amount": 5,
+    "Funding.date": 5,
+    "Funding.researchAreas": 3,
+    "Funding.project": 5
   },
   "dataQualityRemarks": {
     "titleMissing": {
@@ -5211,6 +5269,1239 @@
       "constraints": {
         "maxLength": 14
       }
+    },
+    "projectNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv projekta",
+        "sr-cyr": "Недостаје назив пројекта",
+        "en": "Missing project name",
+        "pt": "Valor obrigatório em falta: Project.name"
+      },
+      "message": {
+        "sr": "Projekat mora imati unet naziv.",
+        "sr-cyr": "Пројекат мора имати унет назив.",
+        "en": "The project must have a name.",
+        "pt": "É obrigatório indicar um valor para Project.name."
+      },
+      "target": "Project.name",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectNameTooShort": {
+      "title": {
+        "sr": "Naziv projekta je prekratak",
+        "sr-cyr": "Назив пројекта је прекратак",
+        "en": "Project name too short",
+        "pt": "Valor demasiado curto: Project.name"
+      },
+      "message": {
+        "sr": "Naziv projekta \"{0}\" mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Назив пројекта \"{0}\" мора садржати најмање {1} карактера.",
+        "en": "The project name \"{0}\" must contain at least {1} characters.",
+        "pt": "O nome do projeto \"{0}\" deve conter pelo menos {1} caracteres."
+      },
+      "target": "Project.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 1
+      }
+    },
+    "projectNameTooLong": {
+      "title": {
+        "sr": "Naziv projekta je predugačak",
+        "sr-cyr": "Назив пројекта је предугачак",
+        "en": "Project name too long",
+        "pt": "Valor demasiado longo: Project.name"
+      },
+      "message": {
+        "sr": "Naziv projekta \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив пројекта \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The project name \"{0}\" exceeds the maximum allowed length of {1} characters.",
+        "pt": "O nome do projeto \"{0}\" excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Project.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidProjectNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva projekta",
+        "sr-cyr": "Неисправан формат назива пројекта",
+        "en": "Invalid project name format",
+        "pt": "Formato inválido: Project.name"
+      },
+      "message": {
+        "sr": "Naziv projekta \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив пројекта \"{0}\" није у исправном формату.",
+        "en": "The project name \"{0}\" is not in a valid format.",
+        "pt": "O nome do projeto \"{0}\" não está num formato válido."
+      },
+      "target": "Project.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}\\s\\-_.,:/()&+]{1,254}$"
+      }
+    },
+    "projectDescriptionMissing": {
+      "title": {
+        "sr": "Nedostaje opis projekta",
+        "sr-cyr": "Недостаје опис пројекта",
+        "en": "Missing project description",
+        "pt": "Valor obrigatório em falta: Project.description"
+      },
+      "message": {
+        "sr": "Projekat mora imati unet opis.",
+        "sr-cyr": "Пројекат мора имати унет опис.",
+        "en": "The project must have a description.",
+        "pt": "É obrigatório indicar um valor para Project.description."
+      },
+      "target": "Project.description",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-FsF-F2-01M",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": true
+    },
+    "projectDescriptionTooShort": {
+      "title": {
+        "sr": "Opis projekta je prekratak",
+        "sr-cyr": "Опис пројекта је прекратак",
+        "en": "Project description too short",
+        "pt": "Valor demasiado curto: Project.description"
+      },
+      "message": {
+        "sr": "Opis projekta mora sadržati najmanje {1} karaktera, a sadrži {0}.",
+        "sr-cyr": "Опис пројекта мора садржати најмање {1} карактера, а садржи {0}.",
+        "en": "The project description must contain at least {1} characters, but contains {0}.",
+        "pt": "A descrição do projeto deve conter pelo menos {1} caracteres, mas contém {0}."
+      },
+      "target": "Project.description",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-FsF-F2-01M",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 100
+      }
+    },
+    "projectDoiMissing": {
+      "title": {
+        "sr": "Nedostaje DOI projekta",
+        "sr-cyr": "Недостаје DOI пројекта",
+        "en": "Missing project DOI",
+        "pt": "Valor recomendado em falta: Project.doi"
+      },
+      "message": {
+        "sr": "DOI nedostaje u projektu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "DOI недостаје у пројекту. Иако није обавезан, препоручен је.",
+        "en": "The DOI field is missing in the project. Although the DOI field is not mandatory, it is recommended.",
+        "pt": "Recomenda-se o preenchimento de um valor para Project.doi."
+      },
+      "target": "Project.doi",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectDoiTooShort": {
+      "title": {
+        "sr": "DOI projekta je prekratak",
+        "sr-cyr": "DOI пројекта је прекратак",
+        "en": "Project DOI too short",
+        "pt": "Valor demasiado curto: Project.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u projektu mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у пројекту мора садржати најмање {1} карактера.",
+        "en": "The DOI \"{0}\" in the project must contain at least {1} characters.",
+        "pt": "O DOI \"{0}\" no projeto deve conter pelo menos {1} caracteres."
+      },
+      "target": "Project.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 9
+      }
+    },
+    "projectDoiTooLong": {
+      "title": {
+        "sr": "DOI projekta je predugačak",
+        "sr-cyr": "DOI пројекта је предугачак",
+        "en": "Project DOI too long",
+        "pt": "Valor demasiado longo: Project.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u projektu prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у пројекту прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The DOI \"{0}\" in the project exceeds the maximum allowed length of {1} characters.",
+        "pt": "O DOI \"{0}\" no projeto excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Project.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidProjectDoiFormat": {
+      "title": {
+        "sr": "Neispravan format DOI-ja projekta",
+        "sr-cyr": "Неисправан формат DOI-ја пројекта",
+        "en": "Invalid project DOI format",
+        "pt": "Formato inválido: Project.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u projektu nije u ispravnom formatu.",
+        "sr-cyr": "DOI \"{0}\" у пројекту није у исправном формату.",
+        "en": "The DOI \"{0}\" in the project is not in a valid format.",
+        "pt": "O DOI \"{0}\" no projeto não está num formato válido."
+      },
+      "target": "Project.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$"
+      }
+    },
+    "projectDoiNotResolvable": {
+      "title": {
+        "sr": "DOI projekta nije razrešiv",
+        "sr-cyr": "DOI пројекта није разрешив",
+        "en": "Project DOI not resolvable",
+        "pt": "Identificador não resolúvel: Project.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u projektu nije razrešiv putem DOI sistema.",
+        "sr-cyr": "DOI \"{0}\" у пројекту није разрешив путем DOI система.",
+        "en": "The DOI \"{0}\" in the project must be resolvable through DOI.org.",
+        "pt": "O DOI \"{0}\" no projeto deve ser resolúvel através do DOI.org."
+      },
+      "target": "Project.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1, A1",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectRaidMissing": {
+      "title": {
+        "sr": "Nedostaje RAID projekta",
+        "sr-cyr": "Недостаје RAID пројекта",
+        "en": "Missing project RAID",
+        "pt": "Valor recomendado em falta: Project.raid"
+      },
+      "message": {
+        "sr": "RAID nedostaje u projektu. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "RAID недостаје у пројекту. Иако није обавезан, препоручен је.",
+        "en": "The RAID field is missing in the project. Although the RAID field is not mandatory, it is recommended.",
+        "pt": "Recomenda-se o preenchimento de um valor para Project.raid."
+      },
+      "target": "Project.raid",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectRaidTooShort": {
+      "title": {
+        "sr": "RAID projekta je prekratak",
+        "sr-cyr": "RAID пројекта је прекратак",
+        "en": "Project RAID too short",
+        "pt": "Valor demasiado curto: Project.raid"
+      },
+      "message": {
+        "sr": "RAID \"{0}\" u projektu mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "RAID \"{0}\" у пројекту мора садржати најмање {1} карактера.",
+        "en": "The RAID \"{0}\" in the project must contain at least {1} characters.",
+        "pt": "O RAID \"{0}\" no projeto deve conter pelo menos {1} caracteres."
+      },
+      "target": "Project.raid",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 10
+      }
+    },
+    "projectRaidTooLong": {
+      "title": {
+        "sr": "RAID projekta je predugačak",
+        "sr-cyr": "RAID пројекта је предугачак",
+        "en": "Project RAID too long",
+        "pt": "Valor demasiado longo: Project.raid"
+      },
+      "message": {
+        "sr": "RAID \"{0}\" u projektu prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "RAID \"{0}\" у пројекту прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The RAID \"{0}\" in the project exceeds the maximum allowed length of {1} characters.",
+        "pt": "O RAID \"{0}\" no projeto excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Project.raid",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 45
+      }
+    },
+    "invalidProjectRaidFormat": {
+      "title": {
+        "sr": "Neispravan format RAID-a projekta",
+        "sr-cyr": "Неисправан формат RAID-а пројекта",
+        "en": "Invalid project RAID format",
+        "pt": "Formato inválido: Project.raid"
+      },
+      "message": {
+        "sr": "RAID \"{0}\" u projektu nije u ispravnom formatu.",
+        "sr-cyr": "RAID \"{0}\" у пројекту није у исправном формату.",
+        "en": "The RAID \"{0}\" in the project is not in a valid format.",
+        "pt": "O RAID \"{0}\" no projeto não está num formato válido."
+      },
+      "target": "Project.raid",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$"
+      }
+    },
+    "projectNationalIdMissing": {
+      "title": {
+        "sr": "Nedostaje nacionalni ID projekta",
+        "sr-cyr": "Недостаје национални ID пројекта",
+        "en": "Missing project national ID",
+        "pt": "Valor obrigatório em falta: Project.nationalId"
+      },
+      "message": {
+        "sr": "Nacionalna identifikaciona oznaka projekta mora biti uneta.",
+        "sr-cyr": "Национална идентификациона ознака пројекта мора бити унета.",
+        "en": "The national identifier of the project must be informed.",
+        "pt": "É obrigatório indicar um valor para Project.nationalId."
+      },
+      "target": "Project.nationalId",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectNationalIdTooShort": {
+      "title": {
+        "sr": "Nacionalni ID projekta je prekratak",
+        "sr-cyr": "Национални ID пројекта је прекратак",
+        "en": "Project national ID too short",
+        "pt": "Valor demasiado curto: Project.nationalId"
+      },
+      "message": {
+        "sr": "Nacionalna identifikaciona oznaka projekta \"{0}\" mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Национална идентификациона ознака пројекта \"{0}\" мора садржати најмање {1} карактера.",
+        "en": "The national identifier \"{0}\" of the project must contain at least {1} characters.",
+        "pt": "O identificador nacional \"{0}\" do projeto deve conter pelo menos {1} caracteres."
+      },
+      "target": "Project.nationalId",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 10
+      }
+    },
+    "projectNationalIdTooLong": {
+      "title": {
+        "sr": "Nacionalni ID projekta je predugačak",
+        "sr-cyr": "Национални ID пројекта је предугачак",
+        "en": "Project national ID too long",
+        "pt": "Valor demasiado longo: Project.nationalId"
+      },
+      "message": {
+        "sr": "Nacionalna identifikaciona oznaka projekta \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Национална идентификациона ознака пројекта \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The national identifier \"{0}\" of the project exceeds the maximum allowed length of {1} characters.",
+        "pt": "O identificador nacional \"{0}\" do projeto excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Project.nationalId",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 30
+      }
+    },
+    "noProjectIdentifierPresent": {
+      "title": {
+        "sr": "Nedostaje identifikator projekta",
+        "sr-cyr": "Недостаје идентификатор пројекта",
+        "en": "Missing project identifier",
+        "pt": "Valor obrigatório em falta: Project.doi, raid, nationalId, other identifiers"
+      },
+      "message": {
+        "sr": "Projekat mora sadržati najmanje jedan identifikator.",
+        "sr-cyr": "Пројекат мора садржати најмање један идентификатор.",
+        "en": "The project must contain at least one identifier.",
+        "pt": "É obrigatório indicar um valor para Project.doi, raid, nationalId, other identifiers."
+      },
+      "target": "Project.identifier",
+      "severity": "WARNING",
+      "dimension": "ACCURACY",
+      "metric": "PTCRIS-F1-01DACURR",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectDateFromMissing": {
+      "title": {
+        "sr": "Nedostaje datum početka projekta",
+        "sr-cyr": "Недостаје датум почетка пројекта",
+        "en": "Missing project start date",
+        "pt": "Valor obrigatório em falta: Project.fromDate"
+      },
+      "message": {
+        "sr": "Datum početka projekta mora biti unet.",
+        "sr-cyr": "Датум почетка пројекта мора бити унет.",
+        "en": "The project start date must be informed.",
+        "pt": "É obrigatório indicar um valor para Project.fromDate."
+      },
+      "target": "Project.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectDateFromBefore": {
+      "title": {
+        "sr": "Datum početka projekta pre konfigurisane godine",
+        "sr-cyr": "Датум почетка пројекта пре конфигурисане године",
+        "en": "Project start date before configured year",
+        "pt": "Data anterior ao permitido: Project.fromDate"
+      },
+      "message": {
+        "sr": "Datum početka projekta ({0}) ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум почетка пројекта ({0}) не може бити пре {1}. године.",
+        "en": "The project start date ({0}) cannot be before the year {1}.",
+        "pt": "A data de início do projeto ({0}) não pode ser anterior ao ano {1}."
+      },
+      "target": "Project.date",
+      "severity": "ERROR",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "projectDateFromTooFarInFuture": {
+      "title": {
+        "sr": "Datum početka projekta previše u budućnosti",
+        "sr-cyr": "Датум почетка пројекта превише у будућности",
+        "en": "Project start date too far in future",
+        "pt": "Data demasiado no futuro: Project.fromDate"
+      },
+      "message": {
+        "sr": "Datum početka projekta ({0}) ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум почетка пројекта ({0}) не може бити више од {1} година у будућности.",
+        "en": "The project start date ({0}) cannot be more than {1} years in the future.",
+        "pt": "A data de início do projeto ({0}) não pode exceder {1} anos no futuro."
+      },
+      "target": "Project.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "projectDateToMissing": {
+      "title": {
+        "sr": "Nedostaje datum završetka projekta",
+        "sr-cyr": "Недостаје датум завршетка пројекта",
+        "en": "Missing project end date",
+        "pt": "Valor obrigatório em falta: Project.toDate"
+      },
+      "message": {
+        "sr": "Datum završetka projekta mora biti unet.",
+        "sr-cyr": "Датум завршетка пројекта мора бити унет.",
+        "en": "The project end date must be informed.",
+        "pt": "É obrigatório indicar um valor para Project.toDate."
+      },
+      "target": "Project.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectDateToBeforeDateFrom": {
+      "title": {
+        "sr": "Datum završetka projekta pre datuma početka",
+        "sr-cyr": "Датум завршетка пројекта пре датума почетка",
+        "en": "Project end date before start date",
+        "pt": "Data anterior ao permitido: Project.toDate"
+      },
+      "message": {
+        "sr": "Datum završetka projekta ({0}) ne može biti pre datuma početka ({1}).",
+        "sr-cyr": "Датум завршетка пројекта ({0}) не може бити пре датума почетка ({1}).",
+        "en": "The project end date ({0}) cannot be before the start date ({1}).",
+        "pt": "A data de fim do projeto ({0}) não pode ser anterior à data de início ({1})."
+      },
+      "target": "Project.date",
+      "severity": "ERROR",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "projectDurationTooLong": {
+      "title": {
+        "sr": "Trajanje projekta je predugo",
+        "sr-cyr": "Трајање пројекта је предуго",
+        "en": "Project duration too long",
+        "pt": "Data demasiado no futuro: Project.toDate"
+      },
+      "message": {
+        "sr": "Datum završetka projekta ({0}) ne može biti više od {1} godina posle datuma početka.",
+        "sr-cyr": "Датум завршетка пројекта ({0}) не може бити више од {1} година после датума почетка.",
+        "en": "The project end date ({0}) cannot be more than {1} years after the start date.",
+        "pt": "A data de fim do projeto ({0}) não pode exceder {1} anos após a data de início."
+      },
+      "target": "Project.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxYears": 10
+      }
+    },
+    "projectResearchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju istraživačke oblasti projekta",
+        "sr-cyr": "Недостају истраживачке области пројекта",
+        "en": "Missing project research areas",
+        "pt": "Áreas de investigação do projeto em falta"
+      },
+      "message": {
+        "sr": "Za projekat nije povezana nijedna istraživačka oblast.",
+        "sr-cyr": "За пројекат није повезана ниједна истраживачка област.",
+        "en": "No research area is linked to the project.",
+        "pt": "Nenhuma área de investigação está associada ao projeto."
+      },
+      "target": "Project.researchAreas",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingNameMissing": {
+      "title": {
+        "sr": "Nedostaje naziv finansiranja",
+        "sr-cyr": "Недостаје назив финансирања",
+        "en": "Missing funding name",
+        "pt": "Valor obrigatório em falta: Funding.name"
+      },
+      "message": {
+        "sr": "Finansiranje mora imati unet naziv.",
+        "sr-cyr": "Финансирање мора имати унет назив.",
+        "en": "The funding must have a name.",
+        "pt": "É obrigatório indicar um valor para Funding.name."
+      },
+      "target": "Funding.name",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "fundingNameTooShort": {
+      "title": {
+        "sr": "Naziv finansiranja je prekratak",
+        "sr-cyr": "Назив финансирања је прекратак",
+        "en": "Funding name too short",
+        "pt": "Valor demasiado curto: Funding.name"
+      },
+      "message": {
+        "sr": "Naziv finansiranja \"{0}\" mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "Назив финансирања \"{0}\" мора садржати најмање {1} карактера.",
+        "en": "The funding name \"{0}\" must contain at least {1} characters.",
+        "pt": "O nome do financiamento \"{0}\" deve conter pelo menos {1} caracteres."
+      },
+      "target": "Funding.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 1
+      }
+    },
+    "fundingNameTooLong": {
+      "title": {
+        "sr": "Naziv finansiranja je predugačak",
+        "sr-cyr": "Назив финансирања је предугачак",
+        "en": "Funding name too long",
+        "pt": "Valor demasiado longo: Funding.name"
+      },
+      "message": {
+        "sr": "Naziv finansiranja \"{0}\" prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "Назив финансирања \"{0}\" прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The funding name \"{0}\" exceeds the maximum allowed length of {1} characters.",
+        "pt": "O nome do financiamento \"{0}\" excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Funding.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidFundingNameFormat": {
+      "title": {
+        "sr": "Neispravan format naziva finansiranja",
+        "sr-cyr": "Неисправан формат назива финансирања",
+        "en": "Invalid funding name format",
+        "pt": "Formato inválido: Funding.name"
+      },
+      "message": {
+        "sr": "Naziv finansiranja \"{0}\" nije u ispravnom formatu.",
+        "sr-cyr": "Назив финансирања \"{0}\" није у исправном формату.",
+        "en": "The funding name \"{0}\" is not in a valid format.",
+        "pt": "O nome do financiamento \"{0}\" não está num formato válido."
+      },
+      "target": "Funding.name",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}\\s\\-_.,:/()&+]{1,254}$"
+      }
+    },
+    "fundingDescriptionMissing": {
+      "title": {
+        "sr": "Nedostaje opis finansiranja",
+        "sr-cyr": "Недостаје опис финансирања",
+        "en": "Missing funding description",
+        "pt": "Valor obrigatório em falta: Funding.description"
+      },
+      "message": {
+        "sr": "Finansiranje mora imati unet opis.",
+        "sr-cyr": "Финансирање мора имати унет опис.",
+        "en": "The funding must have a description.",
+        "pt": "É obrigatório indicar um valor para Funding.description."
+      },
+      "target": "Funding.description",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-FsF-F2-01M",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": true
+    },
+    "fundingDescriptionTooShort": {
+      "title": {
+        "sr": "Opis finansiranja je prekratak",
+        "sr-cyr": "Опис финансирања је прекратак",
+        "en": "Funding description too short",
+        "pt": "Valor demasiado curto: Funding.description"
+      },
+      "message": {
+        "sr": "Opis finansiranja mora sadržati najmanje {1} karaktera, a sadrži {0}.",
+        "sr-cyr": "Опис финансирања мора садржати најмање {1} карактера, а садржи {0}.",
+        "en": "The funding description must contain at least {1} characters, but contains {0}.",
+        "pt": "A descrição do financiamento deve conter pelo menos {1} caracteres, mas contém {0}."
+      },
+      "target": "Funding.description",
+      "severity": "INFO",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-FsF-F2-01M",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 100
+      }
+    },
+    "fundingDoiMissing": {
+      "title": {
+        "sr": "Nedostaje DOI finansiranja",
+        "sr-cyr": "Недостаје DOI финансирања",
+        "en": "Missing funding DOI",
+        "pt": "Valor recomendado em falta: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI nedostaje u finansiranju. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "DOI недостаје у финансирању. Иако није обавезан, препоручен је.",
+        "en": "The DOI field is missing in the funding. Although the DOI field is not mandatory, it is recommended.",
+        "pt": "Recomenda-se o preenchimento de um valor para Funding.doi."
+      },
+      "target": "Funding.doi",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDoiTooShort": {
+      "title": {
+        "sr": "DOI finansiranja je prekratak",
+        "sr-cyr": "DOI финансирања је прекратак",
+        "en": "Funding DOI too short",
+        "pt": "Valor demasiado curto: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u finansiranju mora sadržati najmanje {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у финансирању мора садржати најмање {1} карактера.",
+        "en": "The DOI \"{0}\" in the funding must contain at least {1} characters.",
+        "pt": "O DOI \"{0}\" no financiamento deve conter pelo menos {1} caracteres."
+      },
+      "target": "Funding.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minLength": 9
+      }
+    },
+    "fundingDoiTooLong": {
+      "title": {
+        "sr": "DOI finansiranja je predugačak",
+        "sr-cyr": "DOI финансирања је предугачак",
+        "en": "Funding DOI too long",
+        "pt": "Valor demasiado longo: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u finansiranju prelazi maksimalnu dozvoljenu dužinu od {1} karaktera.",
+        "sr-cyr": "DOI \"{0}\" у финансирању прелази максималну дозвољену дужину од {1} карактера.",
+        "en": "The DOI \"{0}\" in the funding exceeds the maximum allowed length of {1} characters.",
+        "pt": "O DOI \"{0}\" no financiamento excede o comprimento máximo permitido de {1} caracteres."
+      },
+      "target": "Funding.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxLength": 255
+      }
+    },
+    "invalidFundingDoiFormat": {
+      "title": {
+        "sr": "Neispravan format DOI-ja finansiranja",
+        "sr-cyr": "Неисправан формат DOI-ја финансирања",
+        "en": "Invalid funding DOI format",
+        "pt": "Formato inválido: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u finansiranju nije u ispravnom formatu.",
+        "sr-cyr": "DOI \"{0}\" у финансирању није у исправном формату.",
+        "en": "The DOI \"{0}\" in the funding is not in a valid format.",
+        "pt": "O DOI \"{0}\" no financiamento não está num formato válido."
+      },
+      "target": "Funding.doi",
+      "severity": "ERROR",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "pattern": "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$"
+      }
+    },
+    "fundingDoiNotResolvable": {
+      "title": {
+        "sr": "DOI finansiranja nije razrešiv",
+        "sr-cyr": "DOI финансирања није разрешив",
+        "en": "Funding DOI not resolvable",
+        "pt": "Identificador não resolúvel: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u finansiranju nije razrešiv putem DOI sistema.",
+        "sr-cyr": "DOI \"{0}\" у финансирању није разрешив путем DOI система.",
+        "en": "The DOI \"{0}\" in the funding must be resolvable through DOI.org.",
+        "pt": "O DOI \"{0}\" no financiamento deve ser resolúvel através do DOI.org."
+      },
+      "target": "Funding.doi",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1, A1",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "noFundingIdentifierPresent": {
+      "title": {
+        "sr": "Nedostaje identifikator finansiranja",
+        "sr-cyr": "Недостаје идентификатор финансирања",
+        "en": "Missing funding identifier",
+        "pt": "Valor obrigatório em falta: Funding.doi, grantAgreementId, other identifiers"
+      },
+      "message": {
+        "sr": "Finansiranje mora sadržati najmanje jedan identifikator.",
+        "sr-cyr": "Финансирање мора садржати најмање један идентификатор.",
+        "en": "The funding must contain at least one identifier.",
+        "pt": "É obrigatório indicar um valor para Funding.doi, grantAgreementId, other identifiers."
+      },
+      "target": "Funding.identifier",
+      "severity": "WARNING",
+      "dimension": "STRUCTURAL_CONSISTENCY",
+      "metric": "PTCRIS-F1-01DSTRUCT-01",
+      "blocking": false,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "fundingAmountMissing": {
+      "title": {
+        "sr": "Nedostaje iznos finansiranja",
+        "sr-cyr": "Недостаје износ финансирања",
+        "en": "Missing funding amount",
+        "pt": "Valor obrigatório em falta: Funding.amount"
+      },
+      "message": {
+        "sr": "Iznos finansiranja mora biti unet.",
+        "sr-cyr": "Износ финансирања мора бити унет.",
+        "en": "The funding amount must be informed.",
+        "pt": "É obrigatório indicar um valor para Funding.amount."
+      },
+      "target": "Funding.amount",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateSubmittedBefore": {
+      "title": {
+        "sr": "Datum prijave finansiranja pre konfigurisane godine",
+        "sr-cyr": "Датум пријаве финансирања пре конфигурисане године",
+        "en": "Funding submission date before configured year",
+        "pt": "Data anterior ao permitido: Funding.dateSubmitted"
+      },
+      "message": {
+        "sr": "Datum prijave finansiranja ({0}) ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум пријаве финансирања ({0}) не може бити пре {1}. године.",
+        "en": "The funding submission date ({0}) cannot be before the year {1}.",
+        "pt": "A data de submissão do financiamento ({0}) não pode ser anterior ao ano {1}."
+      },
+      "target": "Funding.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-04",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "fundingDateSubmittedAfterDateAwarded": {
+      "title": {
+        "sr": "Datum prijave finansiranja posle datuma odobrenja",
+        "sr-cyr": "Датум пријаве финансирања после датума одобрења",
+        "en": "Funding submission date after award date",
+        "pt": "Data posterior ao permitido: Funding.dateSubmitted"
+      },
+      "message": {
+        "sr": "Datum prijave finansiranja ({0}) ne može biti posle datuma odobrenja ({1}).",
+        "sr-cyr": "Датум пријаве финансирања ({0}) не може бити после датума одобрења ({1}).",
+        "en": "The funding submission date ({0}) cannot be after the award date ({1}).",
+        "pt": "A data de submissão do financiamento ({0}) não pode ser posterior à data de concessão ({1})."
+      },
+      "target": "Funding.date",
+      "severity": "ERROR",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-04",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateAwardedMissing": {
+      "title": {
+        "sr": "Nedostaje datum odobrenja finansiranja",
+        "sr-cyr": "Недостаје датум одобрења финансирања",
+        "en": "Missing funding award date",
+        "pt": "Valor recomendado em falta: Funding.dateAwarded"
+      },
+      "message": {
+        "sr": "Datum odobrenja finansiranja nije unet. Iako nije obavezan, preporučen je.",
+        "sr-cyr": "Датум одобрења финансирања није унет. Иако није обавезан, препоручен је.",
+        "en": "The funding award date is missing. Although the field is not mandatory, it is recommended.",
+        "pt": "Recomenda-se o preenchimento de um valor para Funding.dateAwarded."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateAwardedBefore": {
+      "title": {
+        "sr": "Datum odobrenja finansiranja pre konfigurisane godine",
+        "sr-cyr": "Датум одобрења финансирања пре конфигурисане године",
+        "en": "Funding award date before configured year",
+        "pt": "Data anterior ao permitido: Funding.dateAwarded"
+      },
+      "message": {
+        "sr": "Datum odobrenja finansiranja ({0}) ne može biti pre {1}. godine.",
+        "sr-cyr": "Датум одобрења финансирања ({0}) не може бити пре {1}. године.",
+        "en": "The funding award date ({0}) cannot be before the year {1}.",
+        "pt": "A data de concessão do financiamento ({0}) não pode ser anterior ao ano {1}."
+      },
+      "target": "Funding.date",
+      "severity": "ERROR",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "minYear": 1950
+      }
+    },
+    "fundingDateAwardedTooFarInFuture": {
+      "title": {
+        "sr": "Datum odobrenja finansiranja previše u budućnosti",
+        "sr-cyr": "Датум одобрења финансирања превише у будућности",
+        "en": "Funding award date too far in future",
+        "pt": "Data demasiado no futuro: Funding.dateAwarded"
+      },
+      "message": {
+        "sr": "Datum odobrenja finansiranja ({0}) ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум одобрења финансирања ({0}) не може бити више од {1} година у будућности.",
+        "en": "The funding award date ({0}) cannot be more than {1} years in the future.",
+        "pt": "A data de concessão do financiamento ({0}) não pode exceder {1} anos no futuro."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "fundingDateAwardedAfterDateFrom": {
+      "title": {
+        "sr": "Datum odobrenja finansiranja posle datuma početka",
+        "sr-cyr": "Датум одобрења финансирања после датума почетка",
+        "en": "Funding award date after start date",
+        "pt": "Data posterior ao permitido: Funding.dateAwarded"
+      },
+      "message": {
+        "sr": "Datum odobrenja finansiranja ({0}) ne može biti posle datuma početka finansiranja ({1}).",
+        "sr-cyr": "Датум одобрења финансирања ({0}) не може бити после датума почетка финансирања ({1}).",
+        "en": "The funding award date ({0}) cannot be after the funding start date ({1}).",
+        "pt": "A data de concessão do financiamento ({0}) não pode ser posterior à data de início do financiamento ({1})."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateFromMissing": {
+      "title": {
+        "sr": "Nedostaje datum početka finansiranja",
+        "sr-cyr": "Недостаје датум почетка финансирања",
+        "en": "Missing funding start date",
+        "pt": "Valor obrigatório em falta: Funding.fromDate"
+      },
+      "message": {
+        "sr": "Datum početka finansiranja mora biti unet.",
+        "sr-cyr": "Датум почетка финансирања мора бити унет.",
+        "en": "The funding start date must be informed.",
+        "pt": "É obrigatório indicar um valor para Funding.fromDate."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateFromTooFarInFuture": {
+      "title": {
+        "sr": "Datum početka finansiranja previše u budućnosti",
+        "sr-cyr": "Датум почетка финансирања превише у будућности",
+        "en": "Funding start date too far in future",
+        "pt": "Data demasiado no futuro: Funding.fromDate"
+      },
+      "message": {
+        "sr": "Datum početka finansiranja ({0}) ne može biti više od {1} godina u budućnosti.",
+        "sr-cyr": "Датум почетка финансирања ({0}) не може бити више од {1} година у будућности.",
+        "en": "The funding start date ({0}) cannot be more than {1} years in the future.",
+        "pt": "A data de início do financiamento ({0}) não pode exceder {1} anos no futuro."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": false,
+      "points": 1,
+      "usedForFairCompliance": false,
+      "constraints": {
+        "maxFutureYears": 3
+      }
+    },
+    "fundingDateToMissing": {
+      "title": {
+        "sr": "Nedostaje datum završetka finansiranja",
+        "sr-cyr": "Недостаје датум завршетка финансирања",
+        "en": "Missing funding end date",
+        "pt": "Valor obrigatório em falta: Funding.toDate"
+      },
+      "message": {
+        "sr": "Datum završetka finansiranja mora biti unet.",
+        "sr-cyr": "Датум завршетка финансирања мора бити унет.",
+        "en": "The funding end date must be informed.",
+        "pt": "É obrigatório indicar um valor para Funding.toDate."
+      },
+      "target": "Funding.date",
+      "severity": "WARNING",
+      "dimension": "CONSISTENCY",
+      "metric": "PTCRIS-F1-01DCONSIST-03",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingDateToBeforeDateFrom": {
+      "title": {
+        "sr": "Datum završetka finansiranja pre datuma početka",
+        "sr-cyr": "Датум завршетка финансирања пре датума почетка",
+        "en": "Funding end date before start date",
+        "pt": "Data anterior ao permitido: Funding.toDate"
+      },
+      "message": {
+        "sr": "Datum završetka finansiranja ({0}) ne može biti pre datuma početka ({1}).",
+        "sr-cyr": "Датум завршетка финансирања ({0}) не може бити пре датума почетка ({1}).",
+        "en": "The funding end date ({0}) cannot be before the start date ({1}).",
+        "pt": "A data de fim do financiamento ({0}) não pode ser anterior à data de início ({1})."
+      },
+      "target": "Funding.date",
+      "severity": "ERROR",
+      "dimension": "CURRENCY",
+      "metric": "PTCRIS-F1-01DCURREN-01",
+      "blocking": true,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingResearchAreasMissing": {
+      "title": {
+        "sr": "Nedostaju istraživačke oblasti finansiranja",
+        "sr-cyr": "Недостају истраживачке области финансирања",
+        "en": "Missing funding research areas",
+        "pt": "Áreas de investigação do financiamento em falta"
+      },
+      "message": {
+        "sr": "Za finansiranje nije povezana nijedna istraživačka oblast. Iako polje nije obavezno, njegovo popunjavanje je preporučeno.",
+        "sr-cyr": "За финансирање није повезана ниједна истраживачка област. Иако поље није обавезно, његово попуњавање је препоручено.",
+        "en": "No research area is linked to the funding. Although the field is not mandatory, filling it in is recommended.",
+        "pt": "Nenhuma área de investigação está associada ao financiamento. Embora o campo não seja obrigatório, o seu preenchimento é recomendado."
+      },
+      "target": "Funding.researchAreas",
+      "severity": "WARNING",
+      "dimension": "SEMANTIC",
+      "metric": "PTCRIS-F1-01DSEMANT-06",
+      "blocking": false,
+      "points": 3,
+      "usedForFairCompliance": false
+    },
+    "fundingProjectOrInvolvementMissing": {
+      "title": {
+        "sr": "Finansiranje nije povezano sa projektom ni angažovanjem",
+        "sr-cyr": "Финансирање није повезано са пројектом ни ангажовањем",
+        "en": "Funding linked to neither a project nor an involvement",
+        "pt": "Valor obrigatório em falta: Funding.project, involvement"
+      },
+      "message": {
+        "sr": "Finansiranje mora biti povezano sa projektom ili sa angažovanjem osobe.",
+        "sr-cyr": "Финансирање мора бити повезано са пројектом или са ангажовањем особе.",
+        "en": "The funding must be linked either to a project or to a person's involvement.",
+        "pt": "O financiamento deve estar associado a um projeto ou a um vínculo de uma pessoa."
+      },
+      "target": "Funding.project",
+      "severity": "ERROR",
+      "dimension": "QUALITATIVE",
+      "metric": "PTCRIS-F1-01DQUALIT-02",
+      "blocking": true,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectDoiDuplicate": {
+      "title": {
+        "sr": "Dupliran DOI projekta",
+        "sr-cyr": "Дуплиран DOI пројекта",
+        "en": "Duplicate project DOI",
+        "pt": "Valor duplicado: Project.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u projektu već postoji u drugom zapisu.",
+        "sr-cyr": "DOI \"{0}\" у пројекту већ постоји у другом запису.",
+        "en": "The DOI \"{0}\" in the project must be unique.",
+        "pt": "O DOI \"{0}\" no projeto deve ser único."
+      },
+      "target": "Project.doi",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "metric": "PTCRIS-F1-01DACURR",
+      "blocking": true,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectRaidDuplicate": {
+      "title": {
+        "sr": "Dupliran RAID projekta",
+        "sr-cyr": "Дуплиран RAID пројекта",
+        "en": "Duplicate project RAID",
+        "pt": "Valor duplicado: Project.raid"
+      },
+      "message": {
+        "sr": "RAID \"{0}\" u projektu već postoji u drugom zapisu.",
+        "sr-cyr": "RAID \"{0}\" у пројекту већ постоји у другом запису.",
+        "en": "The RAID \"{0}\" in the project must be unique.",
+        "pt": "O RAID \"{0}\" no projeto deve ser único."
+      },
+      "target": "Project.raid",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "metric": "PTCRIS-F1-01DACURR",
+      "blocking": true,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "projectNationalIdDuplicate": {
+      "title": {
+        "sr": "Dupliran nacionalni ID projekta",
+        "sr-cyr": "Дуплиран национални ID пројекта",
+        "en": "Duplicate project national ID",
+        "pt": "Valor duplicado: Project.nationalId"
+      },
+      "message": {
+        "sr": "Nacionalna identifikaciona oznaka \"{0}\" u projektu već postoji u drugom zapisu.",
+        "sr-cyr": "Национална идентификациона ознака \"{0}\" у пројекту већ постоји у другом запису.",
+        "en": "The national identifier \"{0}\" in the project must be unique.",
+        "pt": "O identificador nacional \"{0}\" no projeto deve ser único."
+      },
+      "target": "Project.nationalId",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "metric": "PTCRIS-F1-01DACURR",
+      "blocking": true,
+      "points": 5,
+      "usedForFairCompliance": false
+    },
+    "fundingDoiDuplicate": {
+      "title": {
+        "sr": "Dupliran DOI finansiranja",
+        "sr-cyr": "Дуплиран DOI финансирања",
+        "en": "Duplicate funding DOI",
+        "pt": "Valor duplicado: Funding.doi"
+      },
+      "message": {
+        "sr": "DOI \"{0}\" u finansiranju već postoji u drugom zapisu.",
+        "sr-cyr": "DOI \"{0}\" у финансирању већ постоји у другом запису.",
+        "en": "The DOI \"{0}\" in the funding must be unique.",
+        "pt": "O DOI \"{0}\" no financiamento deve ser único."
+      },
+      "target": "Funding.doi",
+      "severity": "ERROR",
+      "dimension": "ACCURACY",
+      "metric": "PTCRIS-F1-01DACURR",
+      "blocking": true,
+      "points": 5,
+      "usedForFairCompliance": false
     }
   }
 }

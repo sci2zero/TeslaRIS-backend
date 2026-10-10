@@ -1,13 +1,17 @@
 package rs.teslaris.revisioner.util.dataquality;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.FiltersBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
@@ -506,6 +510,50 @@ public class DataQualityAggregator {
             log.warn("Unable to aggregate blocking constraints. Reason: {}", e.getMessage());
 
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Reads the {@code databaseId} of the records of any index the given query matches, ascending
+     * and at most {@code limit} of them.
+     * <p>
+     * Deserializing into an {@code ObjectNode} rather than the index model is what lets a caller
+     * walk an index whose model lives in a module the revisioner may not depend on - projects and
+     * fundings in the backfill. Only {@code databaseId} is fetched, so the shape of the document
+     * is irrelevant.
+     */
+    public List<Integer> scanDatabaseIds(String indexName, Query query, int limit) {
+        var request = new SearchRequest.Builder()
+            .index(indexName)
+            .size(limit)
+            .trackTotalHits(total -> total.enabled(false))
+            .query(query)
+            .sort(sort -> sort.field(field -> field.field("databaseId").order(SortOrder.Asc)))
+            .source(source -> source.filter(filter -> filter.includes("databaseId")))
+            .build();
+
+        try {
+            var response = elasticsearchClient.search(request, ObjectNode.class);
+
+            if (Objects.isNull(response)) {
+                return List.of();
+            }
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .map(source -> source.path("databaseId"))
+                .filter(JsonNode::isNumber)
+                .map(JsonNode::asInt)
+                .toList();
+        } catch (Exception e) {
+            // ERROR rather than the WARN the aggregations use, and with the stack trace: a chart
+            // that degrades to empty is cosmetic, whereas this ends a backfill scan early and the
+            // run still reports success, so the log is the only trace it left.
+            log.error("Unable to scan database ids of index {}. Reason: {}", indexName,
+                e.getMessage(), e);
+
+            return List.of();
         }
     }
 

@@ -16,6 +16,8 @@ public class RevisionHydratorRegistry {
 
     private final Map<String, Class<?>> dtoClasses;
 
+    private final Map<String, Class<?>> assessmentDtoClasses;
+
 
     public RevisionHydratorRegistry(List<RevisionHydrator<?>> hydratorList,
                                     List<RevisionRestorer<?>> restorerList) {
@@ -29,6 +31,11 @@ public class RevisionHydratorRegistry {
             restorerList.stream()
                 .collect(Collectors.toMap(RevisionRestorer::entityType,
                     RevisionRestorer::readDtoClass));
+
+        this.assessmentDtoClasses =
+            restorerList.stream()
+                .collect(Collectors.toMap(RevisionRestorer::entityType,
+                    RevisionRestorer::assessmentDtoClass));
     }
 
     public Optional<RevisionHydrator<?>> get(String entityType) {
@@ -37,5 +44,13 @@ public class RevisionHydratorRegistry {
 
     public Class<?> getDtoClass(String entityType) {
         return dtoClasses.get(entityType);
+    }
+
+    /**
+     * The class the calculator assesses a revision as. Differs from {@link #getDtoClass(String)}
+     * only for entity types whose snapshot DTO the calculator may not import.
+     */
+    public Class<?> getAssessmentDtoClass(String entityType) {
+        return assessmentDtoClasses.get(entityType);
     }
 }

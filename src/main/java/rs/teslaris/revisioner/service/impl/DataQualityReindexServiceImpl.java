@@ -66,7 +66,9 @@ public class DataQualityReindexServiceImpl implements DataQualityReindexService 
             return;
         }
 
-        var dtoClass = revisionHydratorRegistry.getDtoClass(entityType);
+        // The indexer is fed the same projection the assessment was computed from, so a
+        // reindex cannot resolve scope differently than the original run did.
+        var dtoClass = revisionHydratorRegistry.getAssessmentDtoClass(entityType);
         var json = CompressionUtil.decompress(revision.getCompressedContent());
 
         try {
