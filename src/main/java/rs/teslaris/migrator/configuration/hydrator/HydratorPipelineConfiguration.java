@@ -36,9 +36,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  * Passes, in order:
  * <ol>
  *     <li>{@code ORGANISATION_UNIT};</li>
- *     <li>{@code PERSON} - each person is followed by its prizes in the same traversal; a request
- *     for {@code PERSON_PRIZE} alone runs this pipeline filtered to prizes;</li>
- *     <li>{@code PERSON_EMPLOYMENT};</li>
+ *     <li>{@code PERSON} - each person is followed by its prizes and employments in the same
+ *     traversal; a request for {@code PERSON_PRIZE} or {@code PERSON_EMPLOYMENT} alone runs this
+ *     pipeline filtered to that type;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
  * </ol>
  */
@@ -77,7 +77,6 @@ public class HydratorPipelineConfiguration {
         return List.of(
             MigrationEntityType.ORGANISATION_UNIT,
             MigrationEntityType.PERSON,
-            MigrationEntityType.PERSON_EMPLOYMENT,
             MigrationEntityType.DOCUMENT
         );
     }
@@ -90,11 +89,6 @@ public class HydratorPipelineConfiguration {
     @Bean
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorPersonPipeline() {
         return pipeline(MigrationEntityType.PERSON, personRouter());
-    }
-
-    @Bean
-    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorEmploymentPipeline() {
-        return pipeline(MigrationEntityType.PERSON_EMPLOYMENT, employmentRouter());
     }
 
     /**
@@ -118,7 +112,7 @@ public class HydratorPipelineConfiguration {
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> personRouter() {
-        return ItemRouter.ordered(List.of(personMapping(), prizeRouter()));
+        return ItemRouter.ordered(List.of(personMapping(), prizeRouter(), employmentRouter()));
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> personMapping() {

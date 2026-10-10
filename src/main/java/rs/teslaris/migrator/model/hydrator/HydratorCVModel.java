@@ -349,7 +349,23 @@ public class HydratorCVModel {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Institution(
         String name,
-        String url
+        String url,
+        InstitutionIdentifier identifier,
+        OtherIdentifiers otherIdentifiers
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record InstitutionIdentifier(
+        String identifier,
+        String type
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record OtherIdentifiers(
+        Integer total,
+        List<InstitutionIdentifier> identifiers
     ) {
     }
 

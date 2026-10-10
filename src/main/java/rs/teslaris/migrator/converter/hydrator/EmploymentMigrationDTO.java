@@ -1,16 +1,16 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
+import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 
 /**
- * An employment cannot be created from a DTO alone - it is added to a person, and the institution it
- * points at was migrated under a synthetic key. Both references are carried here and resolved
- * against the record log at creation time. A non-null {@code rejection} means a source value was
- * invalid; the creator fails the item with it instead of creating the employment.
+ * Person and organisation unit are resolved at creation time; a non-null {@code rejection} fails
+ * the item.
  */
 public record EmploymentMigrationDTO(
     String personSourceKey,
-    String institutionSourceKey,
+    String sourceId,
+    HydratorCVModel.Institution institution,
     EmploymentDTO employment,
     String rejection
 ) {

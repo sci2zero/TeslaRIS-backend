@@ -12,7 +12,7 @@ import rs.teslaris.migrator.util.MigrationException;
 
 /**
  * Resolves the person migrated earlier in the pass, then delegates to the core service. Adding a
- * prize creates no person revision; indexing follows the run's {@code performIndex}.
+ * prize creates no person revision.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,7 +35,7 @@ public class PrizeEntityCreator implements EntityCreator<PrizeMigrationDTO> {
                 "Person '%s' has not been migrated yet - run the person pass first.",
                 dto.personSourceKey())));
 
-        var created = prizeService.addPrize(personId, dto.prize(), performIndex);
+        var created = prizeService.addPrize(personId, dto.prize());
 
         return Objects.isNull(created) ? null : created.getId();
     }
