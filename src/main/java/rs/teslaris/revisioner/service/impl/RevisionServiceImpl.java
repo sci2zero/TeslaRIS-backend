@@ -186,9 +186,9 @@ public class RevisionServiceImpl implements RevisionService {
     @Override
     public boolean createRevisionFromCurrentState(String entityType, Integer entityId,
                                                   String profileName) {
-        if (revisionRepository
-            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-            .isPresent()) {
+        // Only check existence here: loading a revision would read its PostgreSQL LOB outside
+        // a transaction, even though backfill does not need the stored snapshot.
+        if (revisionRepository.existsByEntityTypeAndEntityId(entityType, entityId)) {
             return false;
         }
 
@@ -243,9 +243,7 @@ public class RevisionServiceImpl implements RevisionService {
         var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
             revisionRepository.lockForRevisionWrite(entityType, entityId);
 
-            if (revisionRepository
-                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-                .isPresent()) {
+            if (revisionRepository.existsByEntityTypeAndEntityId(entityType, entityId)) {
                 return false;
             }
 

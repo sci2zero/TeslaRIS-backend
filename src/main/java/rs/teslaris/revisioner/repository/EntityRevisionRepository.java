@@ -11,6 +11,8 @@ import rs.teslaris.revisioner.model.EntityRevision;
 @Repository
 public interface EntityRevisionRepository extends JpaRepository<EntityRevision, Long> {
 
+    boolean existsByEntityTypeAndEntityId(String entityType, Integer entityId);
+
     List<EntityRevision>
     findByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(String entityType, Integer entityId);
 
