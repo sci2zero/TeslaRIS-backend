@@ -51,7 +51,7 @@ import rs.teslaris.revisioner.util.RevisionConfigurationLoader;
 import rs.teslaris.revisioner.util.RevisionHydratorRegistry;
 import rs.teslaris.revisioner.util.RevisionRestorerRegistry;
 
-@SpringBootTest
+@SpringBootTest(classes = RevisionServiceTest.class)
 public class RevisionServiceTest {
 
     private static final String ENTITY_TYPE = DocumentPublicationType.INTANGIBLE_PRODUCT.name();
@@ -285,8 +285,8 @@ public class RevisionServiceTest {
         // given
         stubRestorerReturning(new DummyDTO(1, "Title"));
 
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(false);
 
         try (var ignored = mockConfigurationLoader()) {
             // when
@@ -325,8 +325,8 @@ public class RevisionServiceTest {
         doThrow(new NotFoundException("Proceedings with given ID does not exist."))
             .when(restorer).readCurrentState(1);
 
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(false);
 
         // when
         var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
@@ -344,8 +344,8 @@ public class RevisionServiceTest {
     @Test
     public void shouldNotCaptureCurrentStateWhenEntityAlreadyHasRevisions() {
         // given
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 2, 3)));
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(true);
 
         // when
         var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
@@ -353,6 +353,9 @@ public class RevisionServiceTest {
         // then
         assertFalse(created);
 
+        verify(revisionRepository, never())
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
+        verifyNoInteractions(transactionManager, revisionRestorerRegistry);
         verify(revisionRepository, never()).save(any());
         verify(applicationEventPublisher, never()).publishEvent(any());
     }
@@ -362,10 +365,8 @@ public class RevisionServiceTest {
         // given (no revision at the fast check, one once the write transaction holds the lock)
         stubRestorerReturning(new DummyDTO(1, "Title"));
 
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1))
-            .thenReturn(Optional.empty())
-            .thenReturn(Optional.of(revisionWithContent("{}", 1, 0)));
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(false, true);
 
         try (var ignored = mockConfigurationLoader()) {
             // when
@@ -375,9 +376,10 @@ public class RevisionServiceTest {
             assertFalse(created);
 
             var order = inOrder(revisionRepository);
+            order.verify(revisionRepository).existsByEntityTypeAndEntityId(ENTITY_TYPE, 1);
             order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
             order.verify(revisionRepository)
-                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
+                .existsByEntityTypeAndEntityId(ENTITY_TYPE, 1);
 
             verify(revisionRepository, never()).save(any());
             verify(applicationEventPublisher, never()).publishEvent(any());
@@ -387,8 +389,8 @@ public class RevisionServiceTest {
     @Test
     public void shouldNotCaptureCurrentStateWhenEntityTypeHasNoRestorer() {
         // given
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(false);
         when(revisionRestorerRegistry.get(ENTITY_TYPE)).thenReturn(Optional.empty());
 
         // when
@@ -406,8 +408,8 @@ public class RevisionServiceTest {
         // given
         stubRestorerReturning(null);
 
-        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
-            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+        when(revisionRepository.existsByEntityTypeAndEntityId(ENTITY_TYPE, 1))
+            .thenReturn(false);
 
         // when
         var created = revisionService.createRevisionFromCurrentState(ENTITY_TYPE, 1, "PTCRIS");
