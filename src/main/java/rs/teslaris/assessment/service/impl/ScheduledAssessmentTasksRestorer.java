@@ -66,7 +66,8 @@ public class ScheduledAssessmentTasksRestorer {
             try {
                 synchronized (ScheduledTasksRestorer.lock) {
                     SchedulingTime.restoreInZone(
-                        SchedulingTime.zoneFromMetadata(metadata.getMetadata()), metadata.getTimeToRun(),
+                        SchedulingTime.zoneFromMetadata(metadata.getMetadata()),
+                        metadata.getTimeToRun(),
                         () -> restoreTaskFromMetadata(metadata));
                 }
             } catch (Exception e) {

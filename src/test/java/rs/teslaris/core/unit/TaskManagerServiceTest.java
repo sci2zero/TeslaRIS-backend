@@ -22,10 +22,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest

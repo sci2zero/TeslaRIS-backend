@@ -1088,7 +1088,9 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         var rows = new ArrayList<List<Object>>();
 
         rows.add(List.of(label(titleKey, language)));
-        rows.add(List.of(label("repositoryAnalytics.profile", language), profileName));
+        rows.add(List.of(label("repositoryAnalytics.profile", language),
+            DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(profileName,
+                language)));
         rows.add(List.of(
             label("repositoryAnalytics.assessmentDate", language),
             Objects.isNull(assessmentDate)

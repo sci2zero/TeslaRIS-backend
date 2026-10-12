@@ -34,6 +34,13 @@ public class ScheduledTaskMetadata extends BaseEntity {
 
     @Column(name = "execution_time")
     private Instant timeToRun;
+    @Column(name = "task_type")
+    private ScheduledTaskType type;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "metadata")
+    private Map<String, Object> metadata;
+    @Column(name = "recurrence_type")
+    private RecurrenceType recurrenceType;
 
     public ScheduledTaskMetadata(String taskId, Instant timeToRun, ScheduledTaskType type,
                                  Map<String, Object> metadata, RecurrenceType recurrenceType) {
@@ -56,14 +63,4 @@ public class ScheduledTaskMetadata extends BaseEntity {
         this.legacyTimeToRun = timeToRun == null ? null :
             timeToRun.atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
-
-    @Column(name = "task_type")
-    private ScheduledTaskType type;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", name = "metadata")
-    private Map<String, Object> metadata;
-
-    @Column(name = "recurrence_type")
-    private RecurrenceType recurrenceType;
 }

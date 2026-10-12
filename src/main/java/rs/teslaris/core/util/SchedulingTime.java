@@ -7,7 +7,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 
-/** UTC execution times with calendar recurrence in the scheduling user's timezone. */
+/**
+ * UTC execution times with calendar recurrence in the scheduling user's timezone.
+ */
 public final class SchedulingTime {
 
     public static final String TIMEZONE_KEY = "schedulingTimezone";
@@ -24,7 +26,8 @@ public final class SchedulingTime {
                 return ZoneId.of(zone);
             }
         }
-        return RESTORATION_ZONE.get() == null ? ZoneId.systemDefault() : RESTORATION_ZONE.get().zone();
+        return RESTORATION_ZONE.get() == null ? ZoneId.systemDefault() :
+            RESTORATION_ZONE.get().zone();
     }
 
     public static void restoreInZone(ZoneId zone, Instant executionTime, Runnable restore) {
@@ -47,9 +50,6 @@ public final class SchedulingTime {
             context.executionTime() : null;
     }
 
-    private record RestorationContext(ZoneId zone, Instant executionTime) {
-    }
-
     public static ZoneId zoneFromMetadata(Map<String, Object> metadata) {
         var zone = metadata.get(TIMEZONE_KEY);
         return zone == null ? ZoneId.systemDefault() : ZoneId.of(zone.toString());
@@ -67,5 +67,8 @@ public final class SchedulingTime {
             default -> null;
         };
         return next == null ? null : next.toInstant();
+    }
+
+    private record RestorationContext(ZoneId zone, Instant executionTime) {
     }
 }

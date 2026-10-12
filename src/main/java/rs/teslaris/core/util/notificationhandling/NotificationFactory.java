@@ -10,8 +10,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.Notification;
-import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.NotificationSentiment;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.user.User;
 
 @Component

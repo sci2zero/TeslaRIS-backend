@@ -39,6 +39,8 @@ public class DataQualityProfileConverter {
         });
 
         return new DataQualityProfileDTO(profileName, dataQualityProfile.version(),
+            StringUtil.buildMultilingualContentDTO(languageTagService,
+                dataQualityProfile.name()),
             dataQualityRemarks);
     }
 }

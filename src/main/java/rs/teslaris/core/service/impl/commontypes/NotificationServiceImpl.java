@@ -80,8 +80,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Override
     @Transactional(readOnly = true)
     public Page<NotificationDTO> getUserNotifications(Integer userId,
-                                                     NotificationReadStatus readStatus,
-                                                     Pageable pageable) {
+                                                      NotificationReadStatus readStatus,
+                                                      Pageable pageable) {
         Boolean read = switch (readStatus) {
             case UNREAD -> false;
             case READ -> true;
@@ -93,20 +93,20 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         var locale = getLocale(notificationList.getContent());
 
         return notificationList.map(
-                notification -> {
-                    var notificationText = notification.getNotificationText() + " " +
-                        getNotificationActionIfExists(notification.getNotificationType(), locale);
+            notification -> {
+                var notificationText = notification.getNotificationText() + " " +
+                    getNotificationActionIfExists(notification.getNotificationType(), locale);
 
-                    return new NotificationDTO(notification.getId(),
-                        notificationText.trim(), getDisplayValue(notification),
-                        notification.getReadAt() == null ?
-                            NotificationConfiguration.allowedActions.get(
-                                notification.getNotificationType()) : Collections.emptyList(),
-                        notification.getCreateDate()
-                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-                        notification.getReadAt(), notification.getDetails(),
-                        notification.getSentiment());
-                });
+                return new NotificationDTO(notification.getId(),
+                    notificationText.trim(), getDisplayValue(notification),
+                    notification.getReadAt() == null ?
+                        NotificationConfiguration.allowedActions.get(
+                            notification.getNotificationType()) : Collections.emptyList(),
+                    notification.getCreateDate()
+                        .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
+                    notification.getReadAt(), notification.getDetails(),
+                    notification.getSentiment());
+            });
     }
 
     private String getNotificationActionIfExists(NotificationType notificationType, Locale locale) {

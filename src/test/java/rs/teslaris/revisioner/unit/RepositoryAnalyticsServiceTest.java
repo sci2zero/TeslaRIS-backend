@@ -83,6 +83,12 @@ public class RepositoryAnalyticsServiceTest {
                 anyString()))
             .thenReturn("1.0.0");
 
+        // Stands in for the display name falling back to the raw profile name.
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(
+                anyString(), anyString()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
         return configurationLoader;
     }
 

@@ -15,7 +15,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationAction;
 public interface NotificationService extends JPAService<Notification> {
 
     Page<NotificationDTO> getUserNotifications(Integer userId, NotificationReadStatus readStatus,
-                                             Pageable pageable);
+                                               Pageable pageable);
 
     long getUserNotificationCount(Integer userId);
 

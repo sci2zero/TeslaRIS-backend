@@ -1016,13 +1016,17 @@ public class DataQualityServiceImpl implements DataQualityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DataQualityProfileSummaryDTO> listDataQualityProfileNames() {
-        // Answered from the loaded configuration alone - no rules are converted and no language tag
-        // is resolved, which is what makes the full listing expensive.
+        // Answered from the loaded configuration alone - no rules are converted, which is what
+        // makes the full listing expensive.
         return DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion()
             .stream()
             .map(profileAndVersion -> new DataQualityProfileSummaryDTO(
-                profileAndVersion.a, profileAndVersion.b))
+                profileAndVersion.a, profileAndVersion.b,
+                StringUtil.buildMultilingualContentDTO(languageTagService,
+                    DataQualityAssessmentConfigurationLoader.getProfileName(
+                        profileAndVersion.a, profileAndVersion.b))))
             .toList();
     }
 

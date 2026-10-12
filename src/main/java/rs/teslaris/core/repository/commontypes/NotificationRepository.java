@@ -21,7 +21,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
         "(:read IS NULL OR (:read = TRUE AND n.readAt IS NOT NULL) OR " +
         "(:read = FALSE AND n.readAt IS NULL)) ORDER BY n.createDate DESC, n.id DESC")
     Page<Notification> getNotificationsForUserByReadStatus(Integer userId, Boolean read,
-                                                         Pageable pageable);
+                                                           Pageable pageable);
 
     @Query("SELECT n FROM Notification n WHERE " +
         "n.user.id = :userId AND " +

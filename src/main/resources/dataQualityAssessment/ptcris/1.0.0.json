@@ -1,4 +1,10 @@
 {
+  "name": {
+    "sr": "PTCRIS upravljanje podacima",
+    "sr-cyr": "PTCRIS управљање подацима",
+    "en": "PTCRIS Data Governance",
+    "pt": "Governação de Dados PTCRIS"
+  },
   "minimumRequiredScore": 60.0,
   "dimensionDefinitions": {
     "ACCURACY": {

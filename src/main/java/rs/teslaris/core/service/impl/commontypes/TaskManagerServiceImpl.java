@@ -86,7 +86,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         Runnable wrappedTask = () -> {
             var notificationValues = new HashMap<String, String>();
             notificationValues.put("taskId", taskId);
-            notificationValues.put("startedAt", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+            notificationValues.put("startedAt",
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
             scheduledTaskMetadataRepository.findTaskByTaskId(taskId).ifPresent(metadata -> {
                 for (var key : List.of("indexesToRepopulate", "concretePublicationType",
                     "reharvestCitationIndicators", "institutionId", "from", "to", "types",
@@ -122,7 +123,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             } finally {
                 notificationValues.put("duration", NotificationDurationFormatter.format(
                     Duration.ofNanos(System.nanoTime() - startTime)));
-                notificationValues.put("finishedAt", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+                notificationValues.put("finishedAt",
+                    Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
                 var user = userService.findOne(userId);
                 if (taskId.startsWith("Registry_Book")) {

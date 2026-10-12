@@ -2123,7 +2123,7 @@ public class DataQualityServiceTest {
     }
 
     @Test
-    public void shouldListProfileNamesWithoutTouchingTheDatabase() {
+    public void shouldListProfileNamesWithoutConvertingRules() {
         // given (the full listing resolves a language tag per translated string of every rule,
         // which is exactly what the pickers must avoid)
         try (var configurationLoader = mockStatic(
@@ -2137,11 +2137,64 @@ public class DataQualityServiceTest {
             dataQualityService.listDataQualityProfileNames();
 
             // then
-            verifyNoInteractions(languageTagService);
-
             configurationLoader.verify(
                 () -> DataQualityAssessmentConfigurationLoader.getProfile(anyString(), anyString()),
                 never());
+        }
+    }
+
+    @Test
+    public void shouldTranslateConfiguredProfileDisplayName() {
+        // given
+        var languageTag = new LanguageTag();
+        languageTag.setId(1);
+        languageTag.setLanguageTag("EN");
+
+        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(languageTag);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(new Pair<>("ptcris", "1.0.0"))));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getProfileName("ptcris",
+                    "1.0.0"))
+                .thenReturn(Map.of("en", "PTCRIS Data Governance"));
+
+            // when
+            var result = dataQualityService.listDataQualityProfileNames();
+
+            // then
+            assertEquals("ptcris", result.getFirst().profileName());
+            assertEquals(1, result.getFirst().name().size());
+            assertEquals("PTCRIS Data Governance",
+                result.getFirst().name().getFirst().getContent());
+        }
+    }
+
+    @Test
+    public void shouldFallBackToEmptyNameWhenProfileConfiguresNone() {
+        // given
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+                .thenReturn(new LinkedHashSet<>(List.of(new Pair<>("ptcris", "1.0.0"))));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getProfileName("ptcris",
+                    "1.0.0"))
+                .thenReturn(Map.of());
+
+            // when
+            var result = dataQualityService.listDataQualityProfileNames();
+
+            // then
+            assertEquals("ptcris", result.getFirst().profileName());
+            assertTrue(result.getFirst().name().isEmpty());
+            verifyNoInteractions(languageTagService);
         }
     }
 
@@ -2155,8 +2208,8 @@ public class DataQualityServiceTest {
     private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileWith(
         Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.0.0", 60.0, Map.of(), Map.of(), Map.of("Document.title", 5.0), remarks, Map.of(),
-            Map.of(), Map.of());
+            "1.0.0", Map.of(), 60.0, Map.of(), Map.of(), Map.of("Document.title", 5.0), remarks,
+            Map.of(), Map.of(), Map.of());
     }
 
     private MockedStatic<DataQualityAssessmentConfigurationLoader> mockPolicyLoader(
@@ -2365,7 +2418,7 @@ public class DataQualityServiceTest {
     public void shouldReturnAllConfiguredDataQualityProfiles() {
         // given
         var profile = new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.3", 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+            "1.3", Map.of(), 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
             Map.of("DOCUMENT", new EnumMap<>(QualityDimension.class)));
 
         try (var configurationLoader = mockStatic(

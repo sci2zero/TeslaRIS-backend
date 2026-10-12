@@ -1,8 +1,5 @@
 package rs.teslaris.core.unit;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,7 +23,9 @@ import static org.mockito.Mockito.when;
 
 import jakarta.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -209,7 +208,7 @@ public class ThesisServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), false));
         ReflectionTestUtils.setField(thesisService, "documentApprovedByDefault", true);
         ReflectionTestUtils.setField(thesisService, "migrationModeEnabled", true);
     }

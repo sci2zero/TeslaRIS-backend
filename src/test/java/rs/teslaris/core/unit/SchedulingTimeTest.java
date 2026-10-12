@@ -24,9 +24,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import rs.teslaris.core.controller.utility.ApplicationConfigurationController;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.service.interfaces.commontypes.ApplicationConfigurationService;
 import rs.teslaris.core.util.SchedulingTime;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.service.interfaces.commontypes.ApplicationConfigurationService;
 
 class SchedulingTimeTest {
 
@@ -38,7 +38,7 @@ class SchedulingTimeTest {
         "America/New_York,2026-03-07T15:00:00,23"
     })
     void dailyRecurrenceKeepsLocalHourAcrossOffsetChanges(String zoneName, String local,
-                                                         long elapsedHours) {
+                                                          long elapsedHours) {
         var zone = ZoneId.of(zoneName);
         var start = LocalDateTime.parse(local).atZone(zone).toInstant();
         var next = SchedulingTime.nextExecution(start, RecurrenceType.DAILY, zone);

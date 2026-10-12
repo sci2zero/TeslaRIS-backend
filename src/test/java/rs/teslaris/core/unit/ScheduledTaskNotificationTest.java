@@ -42,11 +42,16 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledTaskNotificationTest {
-    @Mock private ThreadPoolTaskScheduler taskScheduler;
-    @Mock private UserService userService;
-    @Mock private NotificationService notificationService;
-    @Mock private ScheduledTaskMetadataRepository metadataRepository;
-    @InjectMocks private TaskManagerServiceImpl taskManager;
+    @Mock
+    private ThreadPoolTaskScheduler taskScheduler;
+    @Mock
+    private UserService userService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private ScheduledTaskMetadataRepository metadataRepository;
+    @InjectMocks
+    private TaskManagerServiceImpl taskManager;
 
     @BeforeEach
     void setUpMessages() {
@@ -71,7 +76,8 @@ class ScheduledTaskNotificationTest {
             "indexesToRepopulate", "[PUBLICATION, PERSON]", "duration", "1h 2m 3s"));
         var notification = NotificationFactory.contructScheduledTaskCompletedNotification(
             values, user("EN"), true);
-        assertEquals("Database reindex completed successfully.", notification.getNotificationText());
+        assertEquals("Database reindex completed successfully.",
+            notification.getNotificationText());
         assertFalse(notification.getNotificationText().contains("uuid"));
         assertTrue(notification.getDetails().contains("Indexes: [PUBLICATION, PERSON]"));
         assertTrue(notification.getDetails().contains("Duration: 1h 2m 3s"));
@@ -80,9 +86,10 @@ class ScheduledTaskNotificationTest {
 
     @Test
     void shouldLocaliseBackupAndPreserveFailureReasonInDetails() {
-        var notification = NotificationFactory.contructScheduledBackupGenerationCompletedNotification(
-            new HashMap<>(Map.of("taskId", "Document_Backup-1-2020_2026-uuid",
-                "duration", "0.44s", "error", "Storage unavailable")), user("SR"), false);
+        var notification =
+            NotificationFactory.contructScheduledBackupGenerationCompletedNotification(
+                new HashMap<>(Map.of("taskId", "Document_Backup-1-2020_2026-uuid",
+                    "duration", "0.44s", "error", "Storage unavailable")), user("SR"), false);
         assertEquals("Bekap dokumenata: neuspešno.", notification.getNotificationText());
         assertEquals(NotificationSentiment.ERROR, notification.getSentiment());
         assertTrue(notification.getDetails().contains("Trajanje: 0.44s"));

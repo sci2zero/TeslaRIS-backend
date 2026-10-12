@@ -194,7 +194,8 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(documentPublicationService::deleteIndexes,
             "Error deleting document publication indexes", failures);
         safeReindex(thesisService::reindexTheses, "Error reindexing theses", failures);
-        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings", failures);
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings",
+            failures);
         safeReindex(journalPublicationService::reindexJournalPublications,
             "Error reindexing journal publications", failures);
         safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
@@ -223,7 +224,7 @@ public class ReindexServiceImpl implements ReindexService {
     }
 
     private void safeReindex(Runnable reindexOperation, String errorMessage,
-                            List<String> failures) {
+                             List<String> failures) {
         try {
             reindexOperation.run();
         } catch (Exception e) {

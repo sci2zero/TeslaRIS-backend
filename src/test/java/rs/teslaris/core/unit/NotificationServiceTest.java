@@ -78,12 +78,14 @@ public class NotificationServiceTest {
                 user);
         notification2.setCreateDate(new Date());
         var notificationList = Arrays.asList(notification1, notification2);
-        when(notificationRepository.getNotificationsForUserByReadStatus(userId, false, PageRequest.of(0, 10)))
+        when(notificationRepository.getNotificationsForUserByReadStatus(userId, false,
+            PageRequest.of(0, 10)))
             .thenReturn(new PageImpl<>(notificationList, PageRequest.of(0, 10), 2));
         when(messageSource.getMessage(any(), any(), any())).thenReturn("action");
 
         // When
-        var result = notificationService.getUserNotifications(userId, NotificationReadStatus.UNREAD, PageRequest.of(0, 10));
+        var result = notificationService.getUserNotifications(userId, NotificationReadStatus.UNREAD,
+            PageRequest.of(0, 10));
 
         // Then
         assertEquals(2, result.getNumberOfElements());
@@ -193,17 +195,21 @@ public class NotificationServiceTest {
         notification.setReadAt(LocalDateTime.of(2026, 10, 8, 12, 0));
         notification.setDetails("Duration: 1m 2s");
         notification.setSentiment(NotificationSentiment.SUCCESS);
-        when(notificationRepository.getNotificationsForUserByReadStatus(1, true, PageRequest.of(1, 2)))
+        when(notificationRepository.getNotificationsForUserByReadStatus(1, true,
+            PageRequest.of(1, 2)))
             .thenReturn(new PageImpl<>(List.of(notification), PageRequest.of(1, 2), 3));
 
-        var result = notificationService.getUserNotifications(1, NotificationReadStatus.READ, PageRequest.of(1, 2));
+        var result = notificationService.getUserNotifications(1, NotificationReadStatus.READ,
+            PageRequest.of(1, 2));
 
         assertEquals(1, result.getNumber());
         assertEquals(2, result.getSize());
         assertEquals(3, result.getTotalElements());
         assertEquals(2, result.getTotalPages());
-        verify(notificationRepository).getNotificationsForUserByReadStatus(1, true, PageRequest.of(1, 2));
-        assertEquals(notification.getReadAt().atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime(),
+        verify(notificationRepository).getNotificationsForUserByReadStatus(1, true,
+            PageRequest.of(1, 2));
+        assertEquals(
+            notification.getReadAt().atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime(),
             result.getContent().getFirst().getReadAt());
         assertEquals("Duration: 1m 2s", result.getContent().getFirst().getDetails());
         assertEquals(NotificationSentiment.SUCCESS, result.getContent().getFirst().getSentiment());
@@ -212,12 +218,15 @@ public class NotificationServiceTest {
 
     @Test
     void shouldListAllNotificationsWithoutReadFilter() {
-        when(notificationRepository.getNotificationsForUserByReadStatus(1, null, PageRequest.of(0, 10)))
+        when(notificationRepository.getNotificationsForUserByReadStatus(1, null,
+            PageRequest.of(0, 10)))
             .thenReturn(Page.empty(PageRequest.of(0, 10)));
 
         assertEquals(List.of(),
-            notificationService.getUserNotifications(1, NotificationReadStatus.ALL, PageRequest.of(0, 10)).getContent());
-        verify(notificationRepository).getNotificationsForUserByReadStatus(1, null, PageRequest.of(0, 10));
+            notificationService.getUserNotifications(1, NotificationReadStatus.ALL,
+                PageRequest.of(0, 10)).getContent());
+        verify(notificationRepository).getNotificationsForUserByReadStatus(1, null,
+            PageRequest.of(0, 10));
     }
 
     @Test

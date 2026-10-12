@@ -44,28 +44,31 @@ class NotificationControllerReadStatusTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(
-            new NotificationController(notificationService, tokenUtil))
+                new NotificationController(notificationService, tokenUtil))
             .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver()).build();
     }
 
     @Test
     void shouldDefaultToUnreadNotifications() throws Exception {
         when(tokenUtil.extractUserIdFromToken("Bearer token")).thenReturn(42);
-        when(notificationService.getUserNotifications(42, NotificationReadStatus.UNREAD, PageRequest.of(0, 10)))
+        when(notificationService.getUserNotifications(42, NotificationReadStatus.UNREAD,
+            PageRequest.of(0, 10)))
             .thenReturn(Page.empty(PageRequest.of(0, 10)));
 
         mockMvc.perform(get("/api/notification").header("Authorization", "Bearer token"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isEmpty());
 
-        verify(notificationService).getUserNotifications(42, NotificationReadStatus.UNREAD, PageRequest.of(0, 10));
+        verify(notificationService).getUserNotifications(42, NotificationReadStatus.UNREAD,
+            PageRequest.of(0, 10));
     }
 
     @ParameterizedTest
     @EnumSource(NotificationReadStatus.class)
     void shouldAcceptReadStatusFilter(NotificationReadStatus readStatus) throws Exception {
         when(tokenUtil.extractUserIdFromToken("Bearer token")).thenReturn(42);
-        when(notificationService.getUserNotifications(42, readStatus, PageRequest.of(0, 10))).thenReturn(Page.empty(PageRequest.of(0, 10)));
+        when(notificationService.getUserNotifications(42, readStatus,
+            PageRequest.of(0, 10))).thenReturn(Page.empty(PageRequest.of(0, 10)));
 
         mockMvc.perform(get("/api/notification")
                 .header("Authorization", "Bearer token")
@@ -79,8 +82,10 @@ class NotificationControllerReadStatusTest {
     void shouldExposeReadTimestamp() throws Exception {
         when(tokenUtil.extractUserIdFromToken("Bearer token")).thenReturn(42);
         var notification = new NotificationDTO(1, "Notification", "", List.of(),
-            LocalDateTime.of(2026, 10, 8, 10, 0), LocalDateTime.of(2026, 10, 8, 12, 0), "Duration: 2s", NotificationSentiment.SUCCESS);
-        when(notificationService.getUserNotifications(42, NotificationReadStatus.READ, PageRequest.of(0, 10)))
+            LocalDateTime.of(2026, 10, 8, 10, 0), LocalDateTime.of(2026, 10, 8, 12, 0),
+            "Duration: 2s", NotificationSentiment.SUCCESS);
+        when(notificationService.getUserNotifications(42, NotificationReadStatus.READ,
+            PageRequest.of(0, 10)))
             .thenReturn(new PageImpl<>(List.of(notification), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/notification")
@@ -98,7 +103,8 @@ class NotificationControllerReadStatusTest {
         when(tokenUtil.extractUserIdFromToken("Bearer token")).thenReturn(42);
         var pageable = PageRequest.of(1, 2);
         var notification = new NotificationDTO(3, "Older notification", "", List.of(),
-            LocalDateTime.of(2026, 10, 7, 10, 0), LocalDateTime.of(2026, 10, 8, 12, 0), null, NotificationSentiment.INFO);
+            LocalDateTime.of(2026, 10, 7, 10, 0), LocalDateTime.of(2026, 10, 8, 12, 0), null,
+            NotificationSentiment.INFO);
         when(notificationService.getUserNotifications(42, NotificationReadStatus.READ, pageable))
             .thenReturn(new PageImpl<>(List.of(notification), pageable, 3));
 

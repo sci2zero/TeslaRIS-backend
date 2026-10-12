@@ -35,23 +35,40 @@ import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 
 @ExtendWith(MockitoExtension.class)
 class ReindexOutcomeTest {
-    @Mock private PersonService personService;
-    @Mock private DocumentPublicationService documentPublicationService;
-    @Mock private ThesisService thesisService;
-    @Mock private ProceedingsService proceedingsService;
-    @Mock private JournalPublicationService journalPublicationService;
-    @Mock private ProceedingsPublicationService proceedingsPublicationService;
-    @Mock private IntellectualPropertyService intellectualPropertyService;
-    @Mock private IntangibleProductService intangibleProductService;
-    @Mock private MonographService monographService;
-    @Mock private MonographPublicationService monographPublicationService;
-    @Mock private MaterialProductService materialProductService;
-    @Mock private GeneticMaterialService geneticMaterialService;
-    @Mock private PerformanceRelatedOutputService performanceRelatedOutputService;
-    @Mock private ApplicationEventPublisher applicationEventPublisher;
-    @Mock private FundingProgramService fundingProgramService;
-    @InjectMocks private ReindexServiceImpl reindexService;
-    @InjectMocks private ProjectReindexServiceImpl projectReindexService;
+    @Mock
+    private PersonService personService;
+    @Mock
+    private DocumentPublicationService documentPublicationService;
+    @Mock
+    private ThesisService thesisService;
+    @Mock
+    private ProceedingsService proceedingsService;
+    @Mock
+    private JournalPublicationService journalPublicationService;
+    @Mock
+    private ProceedingsPublicationService proceedingsPublicationService;
+    @Mock
+    private IntellectualPropertyService intellectualPropertyService;
+    @Mock
+    private IntangibleProductService intangibleProductService;
+    @Mock
+    private MonographService monographService;
+    @Mock
+    private MonographPublicationService monographPublicationService;
+    @Mock
+    private MaterialProductService materialProductService;
+    @Mock
+    private GeneticMaterialService geneticMaterialService;
+    @Mock
+    private PerformanceRelatedOutputService performanceRelatedOutputService;
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+    @Mock
+    private FundingProgramService fundingProgramService;
+    @InjectMocks
+    private ReindexServiceImpl reindexService;
+    @InjectMocks
+    private ProjectReindexServiceImpl projectReindexService;
 
     @Test
     void shouldPropagateAsynchronousCoreIndexFailure() {
