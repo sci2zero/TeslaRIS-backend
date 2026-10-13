@@ -37,6 +37,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
@@ -284,7 +285,16 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         }
 
         funding.setUris(fundingDTO.getUris());
-        funding.setDoi(fundingDTO.getDoi());
+        IdentifierUtil.validateAndSetIdentifier(
+            fundingDTO.getDoi(),
+            funding.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            fundingRepository::existsByDoi,
+            funding::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
         funding.setGrantAgreementId(fundingDTO.getGrantAgreementId());
         funding.setCompetitive(fundingDTO.getCompetitive());
         funding.setRenewable(fundingDTO.getRenewable());

@@ -56,7 +56,12 @@ public class CrisContextInformationServiceTest {
     private CrisContextInformation configuration(Integer id, boolean assessment,
                                                  boolean library, boolean repository) {
         var configuration = new CrisContextInformation(assessment, library, repository, false,
-            ".*", ".*", ".*", ".*", License.CC0, new HashMap<>(), new HashSet<>());
+            ".*", ".*",
+            ".*", ".*",
+            License.CC0, "", "",
+            "", "",
+            new HashMap<>(), new HashSet<>()
+        );
         configuration.setId(id);
         return configuration;
     }
@@ -118,7 +123,7 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), true);
+            Collections.emptyList(), "", "", "", "", true);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -192,7 +197,7 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(false, true, false, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), false);
+            Collections.emptyList(), "", "", "", "", false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -218,7 +223,7 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(true, false, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), false);
+            Collections.emptyList(), "", "", "", "", false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -246,7 +251,7 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(false, false, true, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), false);
+            Collections.emptyList(), "", "", "", "", false);
 
         // When
         service.saveConfiguration(dto);
@@ -269,12 +274,13 @@ public class CrisContextInformationServiceTest {
         var defaults =
             new LinkedHashMap<ApplicableEntityType, Map<String, IdentifierConfigurationDTO>>();
 
-        IdentifierConfigurationCatalogue.configurableIdentifiers()
-            .forEach((entityType, identifiers) -> {
-                var perIdentifier = new LinkedHashMap<String, IdentifierConfigurationDTO>();
-                identifiers.forEach(identifier -> perIdentifier.put(identifier,
-                    new IdentifierConfigurationDTO(true, false, true)));
-                defaults.put(entityType, perIdentifier);
+        IdentifierConfigurationCatalogue.defaults()
+            .forEach((entityType, perIdentifier) -> {
+                var converted = new LinkedHashMap<String, IdentifierConfigurationDTO>();
+                perIdentifier.forEach((identifier, policy) -> converted.put(identifier,
+                    new IdentifierConfigurationDTO(policy.getHideWhenNotSet(),
+                        policy.getFeatured(), policy.getCanBeUpdated())));
+                defaults.put(entityType, converted);
             });
 
         return defaults;
@@ -284,7 +290,7 @@ public class CrisContextInformationServiceTest {
         Map<ApplicableEntityType, Map<String, IdentifierConfigurationDTO>> configuration) {
         return new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, configuration,
-            Collections.emptyList(), false);
+            Collections.emptyList(), "", "", "", "", false);
     }
 
     private CrisContextInformation configurationWithStoredPolicy(ApplicableEntityType entityType,
@@ -319,9 +325,15 @@ public class CrisContextInformationServiceTest {
                     var policy = answered.get(identifier);
                     assertNotNull(policy);
                     assertTrue(policy.hideWhenNotSet());
-                    assertFalse(policy.featured());
                     assertTrue(policy.canBeUpdated());
                 });
+
+                // the catalogue decides which identifiers start out featured
+                assertEquals(
+                    IdentifierConfigurationCatalogue.defaults().get(entityType).values().stream()
+                        .filter(IdentifierConfiguration::getFeatured).count(),
+                    answered.values().stream().filter(IdentifierConfigurationDTO::featured)
+                        .count());
             });
     }
 
@@ -435,7 +447,7 @@ public class CrisContextInformationServiceTest {
 
         var orcid = result.identifierConfiguration().get(ApplicableEntityType.PERSON).get("orcid");
         assertTrue(orcid.hideWhenNotSet());
-        assertFalse(orcid.featured());
+        assertTrue(orcid.featured());
         assertTrue(orcid.canBeUpdated());
     }
 
@@ -474,7 +486,8 @@ public class CrisContextInformationServiceTest {
 
         var name = List.of(new MultilingualContentDTO(1, "EN", "National researcher number", 1));
         var dto = new CrisContextInformationDTO(true, true, true, true,
-            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(), name, false);
+            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(), name,
+            "", "", "", "", false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -486,5 +499,87 @@ public class CrisContextInformationServiceTest {
         assertEquals(1, result.nationalIdentifierName().size());
         assertEquals("National researcher number",
             result.nationalIdentifierName().getFirst().getContent());
+    }
+
+    private CrisContextInformationDTO dtoWithNationalIdUrls(String personUrl,
+                                                            String organisationUnitUrl,
+                                                            String projectUrl,
+                                                            String documentUrl) {
+        return new CrisContextInformationDTO(true, true, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
+            Collections.emptyList(), personUrl, organisationUnitUrl, projectUrl, documentUrl,
+            false);
+    }
+
+    @Test
+    public void shouldPersistNationalIdUrls() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        var result = service.saveConfiguration(dtoWithNationalIdUrls(
+            "https://example.org/researchers/{ID}",
+            "https://example.org/institutions/{ID}/profile",
+            "https://example.org/projects/{ID}",
+            "https://example.org/search?id={ID}&type=document"));
+
+        // Then
+        var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
+        verify(crisContextInformationRepository).save(savedCaptor.capture());
+        var saved = savedCaptor.getValue();
+
+        assertEquals("https://example.org/researchers/{ID}", saved.getPersonNationalIdUrl());
+        assertEquals("https://example.org/institutions/{ID}/profile",
+            saved.getOrganisationUnitNationalIdUrl());
+        assertEquals("https://example.org/search?id={ID}&type=document",
+            saved.getDocumentNationalIdUrl());
+        assertEquals("https://example.org/projects/{ID}", saved.getProjectNationalIdUrl());
+        assertEquals("https://example.org/researchers/{ID}", result.personNationalIdUrl());
+    }
+
+    @Test
+    public void shouldAcceptAbsentNationalIdUrls() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        var result = service.saveConfiguration(dtoWithNationalIdUrls(null, "", "", "   "));
+
+        // Then
+        assertEquals("", result.personNationalIdUrl());
+        assertEquals("", result.organisationUnitNationalIdUrl());
+        verify(crisContextInformationRepository).save(any(CrisContextInformation.class));
+    }
+
+    @Test
+    public void shouldRejectNationalIdUrlWithoutThePlaceholder() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+
+        // When / Then
+        assertThrows(IllegalArgumentException.class, () -> service.saveConfiguration(
+            dtoWithNationalIdUrls("https://example.org/researchers/", "", "", "")));
+        verify(crisContextInformationRepository, never()).save(any(CrisContextInformation.class));
+    }
+
+    @Test
+    public void shouldRejectNationalIdUrlThatIsNotAnUrl() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+
+        // When / Then
+        assertThrows(IllegalArgumentException.class,
+            () -> service.saveConfiguration(dtoWithNationalIdUrls("", "example.org/{ID}", "", "")));
+        assertThrows(IllegalArgumentException.class,
+            () -> service.saveConfiguration(dtoWithNationalIdUrls("", "", "", "{ID}")));
+        verify(crisContextInformationRepository, never()).save(any(CrisContextInformation.class));
     }
 }

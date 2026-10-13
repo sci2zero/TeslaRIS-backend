@@ -33,6 +33,7 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
 
     private final LanguageTagRepository languageTagRepository;
 
+
     @Override
     protected JpaRepository<LanguageTag, Integer> getEntityRepository() {
         return languageTagRepository;

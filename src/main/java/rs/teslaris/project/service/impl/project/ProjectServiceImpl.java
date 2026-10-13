@@ -407,8 +407,26 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         project.setUris(projectDTO.getUris());
-        project.setDoi(projectDTO.getDoi());
-        project.setRaid(projectDTO.getRaid());
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getDoi(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByDoi,
+            project::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getRaid(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByRaid,
+            project::setRaid,
+            "raidFormatError",
+            "raidExistsError"
+        );
+
         IdentifierUtil.validateAndSetIdentifier(
             projectDTO.getNationalId(),
             project.getId(),

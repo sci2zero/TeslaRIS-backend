@@ -55,6 +55,18 @@ public class CrisContextInformation extends BaseEntity {
     @Column(name = "metadata_license")
     private License metadataLicense;
 
+    @Column(name = "person_national_id_url")
+    private String personNationalIdUrl;
+
+    @Column(name = "organisation_unit_national_id_url")
+    private String organisationUnitNationalIdUrl;
+
+    @Column(name = "project_national_id_url")
+    private String projectNationalIdUrl;
+
+    @Column(name = "document_national_id_url")
+    private String documentNationalIdUrl;
+
     /**
      * Assign a new map rather than mutating this one, as an in place change to a JSON column is
      * not reliably dirty checked.

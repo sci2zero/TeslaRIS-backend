@@ -138,7 +138,7 @@ public class IntangibleProductServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(intangibleProductService, "documentApprovedByDefault", true);
     }
 

@@ -49,7 +49,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(false, true, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), false);
+            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -69,7 +70,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(null, true, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), false);
+            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -86,7 +88,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateResearcherAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(false, false, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), false);
+            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -107,7 +110,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             Map.of(ApplicableEntityType.PERSON,
                 Map.of("orcid", new IdentifierConfigurationDTO(false, true, false))),
             List.of(new MultilingualContentDTO(1, "EN", "National researcher number", 1)),
-            false);
+            "https://example.org/researchers/{ID}", "", "", "", false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -122,7 +125,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
             .andExpect(jsonPath("$.identifierConfiguration.PERSON.apvnt.canBeUpdated")
                 .value("true"))
             .andExpect(jsonPath("$.nationalIdentifierName[0].content")
-                .value("National researcher number"));
+                .value("National researcher number"))
+            .andExpect(jsonPath("$.personNationalIdUrl")
+                .value("https://example.org/researchers/{ID}"));
     }
 
     @Test
@@ -134,7 +139,25 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0,
             Map.of(ApplicableEntityType.DOCUMENT,
                 Map.of("orcid", new IdentifierConfigurationDTO(true, false, true))),
-            Collections.emptyList(), false);
+            Collections.emptyList(), "", "", "", "", false);
+
+        String requestBody = objectMapper.writeValueAsString(configurationDTO);
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch("http://localhost:8081/api/cris-context-information")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSaveConfigurationRejectsNationalIdUrlWithoutPlaceholder() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var configurationDTO = new CrisContextInformationDTO(true, true, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(),
+            "https://example.org/researchers/", "", "", "", false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

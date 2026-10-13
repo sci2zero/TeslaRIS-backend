@@ -36,6 +36,11 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
 
     private static final String DEFAULT_NATIONAL_ID_PATTERN = ".*";
 
+    private static final String ID_PLACEHOLDER = "{ID}";
+
+    private static final Pattern URL_PATTERN =
+        Pattern.compile("^https?://\\S+$", Pattern.CASE_INSENSITIVE);
+
     private static final License DEFAULT_METADATA_LICENSE = License.CC0;
 
     // Mirrors the placeholder default in application.properties.
@@ -73,6 +78,10 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         validatePattern(dto.projectNationalIdRegularExpression(), "project");
         validatePattern(dto.organisationUnitNationalIdRegularExpression(), "organisation unit");
         validatePattern(dto.documentNationalIdRegularExpression(), "document");
+        validateNationalIdUrl(dto.personNationalIdUrl(), "person");
+        validateNationalIdUrl(dto.organisationUnitNationalIdUrl(), "organisation unit");
+        validateNationalIdUrl(dto.projectNationalIdUrl(), "project");
+        validateNationalIdUrl(dto.documentNationalIdUrl(), "document");
 
         var configuration = findConfiguration().orElseGet(CrisContextInformation::new);
 
@@ -93,6 +102,10 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
             toIdentifierConfiguration(dto.identifierConfiguration()));
         configuration.setNationalIdentifierName(
             multilingualContentService.getMultilingualContent(dto.nationalIdentifierName()));
+        configuration.setPersonNationalIdUrl(dto.personNationalIdUrl());
+        configuration.setOrganisationUnitNationalIdUrl(dto.organisationUnitNationalIdUrl());
+        configuration.setProjectNationalIdUrl(dto.projectNationalIdUrl());
+        configuration.setDocumentNationalIdUrl(dto.documentNationalIdUrl());
         save(configuration);
 
         return CrisContextInformationConverter.toDTO(configuration, isOrcidLoginConfigured(),
@@ -132,7 +145,7 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN,
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_METADATA_LICENSE,
             CrisContextInformationConverter.toIdentifierConfigurationDTO(null),
-            Collections.emptyList(), isOrcidLoginConfigured());
+            Collections.emptyList(), "", "", "", "", isOrcidLoginConfigured());
     }
 
     private Map<ApplicableEntityType, Map<String, IdentifierConfiguration>>
@@ -173,6 +186,23 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         });
 
         return configuration;
+    }
+
+    private void validateNationalIdUrl(String url, String entityName) {
+        if (Objects.isNull(url) || url.isBlank()) {
+            return;
+        }
+
+        if (!url.contains(ID_PLACEHOLDER)) {
+            throw new IllegalArgumentException(
+                "Invalid " + entityName + " national ID URL: it has to contain the " +
+                    ID_PLACEHOLDER + " placeholder.");
+        }
+
+        if (!URL_PATTERN.matcher(url.replace(ID_PLACEHOLDER, "1")).matches()) {
+            throw new IllegalArgumentException(
+                "Invalid " + entityName + " national ID URL: it has to be an HTTP or HTTPS URL.");
+        }
     }
 
     private void validatePattern(String pattern, String entityName) {

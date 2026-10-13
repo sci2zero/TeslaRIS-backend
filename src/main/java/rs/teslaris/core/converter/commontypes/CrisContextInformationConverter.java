@@ -35,6 +35,10 @@ public class CrisContextInformationConverter {
             toIdentifierConfigurationDTO(configuration.getIdentifierConfiguration()),
             MultilingualContentConverter.getMultilingualContentDTO(
                 configuration.getNationalIdentifierName()),
+            Objects.requireNonNullElse(configuration.getPersonNationalIdUrl(), ""),
+            Objects.requireNonNullElse(configuration.getOrganisationUnitNationalIdUrl(), ""),
+            Objects.requireNonNullElse(configuration.getProjectNationalIdUrl(), ""),
+            Objects.requireNonNullElse(configuration.getDocumentNationalIdUrl(), ""),
             isOrcidLoginConfigured);
     }
 
