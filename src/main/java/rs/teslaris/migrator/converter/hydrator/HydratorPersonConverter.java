@@ -171,26 +171,30 @@ public class HydratorPersonConverter
     private PersonNameDTO personName(HydratorCVModel.PersonInfo personInfo,
                                      String fullNameFallback) {
         if (!isBlank(personInfo.names()) && !isBlank(personInfo.surnames())) {
-            return name(personInfo.names().trim(), personInfo.surnames().trim(), null);
+            return conversionUtil.personName(personInfo.names().trim(),
+                personInfo.surnames().trim(), null);
         }
 
         var source = isBlank(personInfo.fullName()) ? fullNameFallback : personInfo.fullName();
 
-        return splitName(source, null);
+        return conversionUtil.splitName(source, null);
     }
 
     private List<PersonNameDTO> otherNames(HydratorCVModel.PersonInfo personInfo,
                                            HydratorCVModel.CitationNames citationNames,
                                            PersonNameDTO personName) {
         var candidates = new ArrayList<PersonNameDTO>();
-        candidates.add(splitName(personInfo.fullName(), PersonNameType.FULL_NAME));
-        candidates.add(splitName(personInfo.displayName(), PersonNameType.DISPLAY_NAME));
+        candidates.add(
+            conversionUtil.splitName(personInfo.fullName(), PersonNameType.FULL_NAME));
+        candidates.add(
+            conversionUtil.splitName(personInfo.displayName(), PersonNameType.DISPLAY_NAME));
 
         listOf(citationNames, HydratorCVModel.CitationNames::citationName).stream()
             .filter(citationName -> isPublic(citationName.privacyLevel()))
             .sorted(Comparator.comparing(
                 citationName -> !PREFERRED.equals(citationName.preferredCitationName())))
-            .map(citationName -> splitName(citationName.value(), PersonNameType.CITATION_NAME))
+            .map(citationName -> conversionUtil.splitName(citationName.value(),
+                PersonNameType.CITATION_NAME))
             .forEach(candidates::add);
 
         // A form identical to one already kept adds nothing, whatever its type
@@ -201,41 +205,6 @@ public class HydratorPersonConverter
             .filter(Objects::nonNull)
             .filter(name -> seen.add(nameKey(name)))
             .toList();
-    }
-
-    /**
-     * Citation names come as {@code "Surname, Given"}; other single-string forms put the surname
-     * last.
-     */
-    private PersonNameDTO splitName(String value, PersonNameType type) {
-        if (isBlank(value)) {
-            return null;
-        }
-
-        var trimmed = value.trim().replaceAll("\\s+", " ");
-        var comma = trimmed.indexOf(',');
-
-        if (comma > 0 && comma < trimmed.length() - 1) {
-            return name(trimmed.substring(comma + 1).trim(), trimmed.substring(0, comma).trim(),
-                type);
-        }
-
-        var lastSpace = trimmed.lastIndexOf(' ');
-
-        if (lastSpace < 0) {
-            return name(trimmed, trimmed, type);
-        }
-
-        return name(trimmed.substring(0, lastSpace), trimmed.substring(lastSpace + 1), type);
-    }
-
-    private PersonNameDTO name(String firstname, String lastname, PersonNameType type) {
-        var name = new PersonNameDTO();
-        name.setFirstname(firstname);
-        name.setLastname(lastname);
-        name.setPersonNameType(type);
-
-        return name;
     }
 
     private String nameKey(PersonNameDTO name) {

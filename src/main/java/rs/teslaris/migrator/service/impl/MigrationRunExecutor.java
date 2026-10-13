@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.service.impl;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +14,7 @@ import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.pipeline.MigrationPipelineRunner;
 import rs.teslaris.migrator.pipeline.ResolvedPipeline;
+import rs.teslaris.migrator.pipeline.RunScopedCache;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 
 /**
@@ -26,6 +28,8 @@ public class MigrationRunExecutor {
     private final MigrationPipelineRunner pipelineRunner;
 
     private final MigrationRunRepository runRepository;
+
+    private final List<RunScopedCache> runScopedCaches;
 
     private final Map<String, ReentrantLock> runLocks = new ConcurrentHashMap<>();
 
@@ -46,6 +50,7 @@ public class MigrationRunExecutor {
         }
 
         try {
+            runScopedCaches.forEach(RunScopedCache::clearCache);
             pipelineRunner.run(resolved, run);
         } catch (Exception e) {
             log.error("Migration run {} failed unexpectedly.", run.getId(), e);
