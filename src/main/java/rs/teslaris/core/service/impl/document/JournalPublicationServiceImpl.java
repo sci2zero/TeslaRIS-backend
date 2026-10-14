@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -29,6 +31,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -46,12 +49,11 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -88,6 +90,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                          DocumentLookupService documentLookupService,
                                          CountryService countryService,
+                                         AssessmentGroupResolver assessmentGroupResolver,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -97,7 +100,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -165,15 +169,17 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var savedPublication = journalPublicationJPAService.save(publication);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                savedPublication.getId(),
-                null,
-                JournalPublicationConverter.toDTO(savedPublication),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    savedPublication.getId(),
+                    null,
+                    JournalPublicationConverter.toDTO(savedPublication),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
@@ -181,9 +187,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         sendNotifications(savedPublication, Collections.emptySet());
 
-        applicationEventPublisher.publishEvent(
-            new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
-                savedPublication.getId()));
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                    savedPublication.getId()));
+        }
 
         return savedPublication;
     }
@@ -194,15 +202,17 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
-                publicationId,
-                JournalPublicationConverter.toDTO(publicationToUpdate),
-                publicationDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    publicationId,
+                    JournalPublicationConverter.toDTO(publicationToUpdate),
+                    publicationDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldContributorIds = clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
@@ -230,9 +240,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         }
 
         if (journalUpdated || yearUpdated) {
-            applicationEventPublisher.publishEvent(
-                new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
-                    publicationId));
+            if (!MigrationContext.isActive()) {
+                applicationEventPublisher.publishEvent(
+                    new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                        publicationId));
+            }
         }
     }
 

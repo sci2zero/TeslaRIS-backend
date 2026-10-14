@@ -19,8 +19,6 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
-import rs.teslaris.project.dto.funding.PersonFundingCallContributionDTO;
-import rs.teslaris.project.model.funding.PersonFundingCallContribution;
 
 public class PersonContributionConverter {
 
@@ -108,8 +106,8 @@ public class PersonContributionConverter {
         return contributionDTOs;
     }
 
-    private static void setCommonFields(PersonContributionDTO contributionDTO,
-                                        PersonContribution contribution) {
+    public static void setCommonFields(PersonContributionDTO contributionDTO,
+                                       PersonContribution contribution) {
         contributionDTO.setId(contribution.getId());
 
         contributionDTO.setContributionDescription(
@@ -169,20 +167,5 @@ public class PersonContributionConverter {
                         .append("\n");
                 }
             );
-    }
-
-    public static ArrayList<PersonFundingCallContributionDTO> fundingCallContributionToDTO(
-        Set<PersonFundingCallContribution> contributions) {
-        var contributionDTOs = new ArrayList<PersonFundingCallContributionDTO>();
-        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
-            .forEach((c) -> {
-                var contribution = new PersonFundingCallContributionDTO();
-                setCommonFields(contribution, c);
-
-                contribution.setContributionType(c.getContributionType());
-
-                contributionDTOs.add(contribution);
-            });
-        return contributionDTOs;
     }
 }

@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -34,6 +36,7 @@ import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -57,14 +60,13 @@ import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConst
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -114,6 +116,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                 DocumentLookupService documentLookupService,
                                 CountryService countryService,
+                                AssessmentGroupResolver assessmentGroupResolver,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageService languageService, JournalService journalService,
                                 BookSeriesService bookSeriesService,
@@ -127,7 +130,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;
@@ -232,15 +236,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         var savedMonograph = monographJPAService.save(newMonograph);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH.name(),
-                savedMonograph.getId(),
-                null,
-                MonographConverter.toDTO(savedMonograph),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH.name(),
+                    savedMonograph.getId(),
+                    null,
+                    MonographConverter.toDTO(savedMonograph),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
@@ -256,15 +262,17 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MONOGRAPH.name(),
-                monographId,
-                MonographConverter.toDTO(monographToUpdate),
-                monographDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MONOGRAPH.name(),
+                    monographId,
+                    MonographConverter.toDTO(monographToUpdate),
+                    monographDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());

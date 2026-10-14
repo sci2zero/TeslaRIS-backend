@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-10-08-notification-read-at
+      author: milospopovic
+      changes:
+        - addColumn:
+            tableName: notification
+            columns:
+              - column:
+                  name: read_at
+                  type: timestamp
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: notification
+            columnName: read_at

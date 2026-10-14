@@ -38,14 +38,16 @@ public class PublicConfigurationServiceImpl implements PublicConfigurationServic
 
     private PublicBrandingDTO toPublicBranding(BrandingInformation branding, String version) {
         if (branding == null) {
-            return new PublicBrandingDTO(List.of(), List.of(), null, null);
+            return new PublicBrandingDTO(List.of(), List.of(), null, null, null, null);
         }
 
         return new PublicBrandingDTO(
             MultilingualContentConverter.getMultilingualContentDTO(branding.getTitle()),
             MultilingualContentConverter.getMultilingualContentDTO(branding.getDescription()),
             toAssetUrl(branding.getLogoServerName(), "branding/logo", version),
-            toAssetUrl(branding.getBackgroundServerName(), "branding/background", version)
+            toAssetUrl(branding.getBackgroundServerName(), "branding/background", version),
+            branding.getChromeTheme(),
+            branding.getHeroTheme()
         );
     }
 

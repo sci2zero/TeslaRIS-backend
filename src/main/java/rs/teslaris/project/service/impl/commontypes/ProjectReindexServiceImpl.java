@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.applicationevent.ProjectEventReindexingEvent;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -63,10 +62,10 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
             futures.clear();
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing of project entities. Reason: ", e);
+            throw e;
         }
     }
 
-    @Async("taskExecutor")
     @EventListener
     public void handleProjectEventReindexingEvent(ProjectEventReindexingEvent event) {
         reindexDatabase(event.indexesToRepopulate());

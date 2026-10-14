@@ -37,7 +37,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
@@ -77,6 +76,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -156,6 +156,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final DocumentLookupService documentLookupService;
 
     private final CountryService countryService;
+
+    private final AssessmentGroupResolver assessmentGroupResolver;
 
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
@@ -816,7 +818,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.getCommissionAssessmentGroups().add(
                 new Triple<>(
                     assessment.commissionId(),
-                    ClassificationPriorityMapping.getGroupCode(assessment.assessmentCode()),
+                    assessmentGroupResolver.resolveGroupCode(assessment.assessmentCode()),
                     assessment.manual()
                 )
             );

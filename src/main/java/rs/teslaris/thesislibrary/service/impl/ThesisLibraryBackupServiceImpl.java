@@ -125,7 +125,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                 put("metadataFormat", metadataFormat);
             }}, recurrence));
 
-        return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
+        return reportGenerationTime.toString();
     }
 
     private void generateBackupForPeriodAndInstitution(Integer institutionId,

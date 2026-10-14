@@ -1,0 +1,264 @@
+databaseChangeLog:
+- changeSet:
+    id: 1790938204986-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_city_pkey
+            name: branding_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_city_pkey
+            name: city_id
+            type: INTEGER
+        tableName: branding_information_city
+- changeSet:
+    id: 1790938204986-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_state_pkey
+            name: branding_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_state_pkey
+            name: state_id
+            type: INTEGER
+        tableName: branding_information_state
+- changeSet:
+    id: 1790938204986-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_street_and_number_pkey
+            name: branding_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: branding_information_street_and_number_pkey
+            name: street_and_number_id
+            type: INTEGER
+        tableName: branding_information_street_and_number
+- changeSet:
+    id: 1790938204986-4
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: city_id
+        constraintName: branding_information_city_city_id_key
+        tableName: branding_information_city
+- changeSet:
+    id: 1790938204986-5
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: state_id
+        constraintName: branding_information_state_state_id_key
+        tableName: branding_information_state
+- changeSet:
+    id: 1790938204986-6
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: street_and_number_id
+        constraintName: branding_information_street_and_number_street_and_number_id_key
+        tableName: branding_information_street_and_number
+- changeSet:
+    id: 1790938204986-7
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-8
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: latitude
+            type: FLOAT8
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-9
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: longitude
+            type: FLOAT8
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: toggle_registration
+            type: BOOLEAN
+        tableName: cris_context_information
+- changeSet:
+    id: 1790938204986-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: address
+            type: VARCHAR(255)
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: phone_number
+            type: VARCHAR(255)
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-13
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: postal_number
+            type: VARCHAR(255)
+        tableName: branding_information
+- changeSet:
+    id: 1790938204986-14
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: state_id
+        baseTableName: branding_information_state
+        constraintName: fk10ile65ptp8jvvk4yt15sfvop
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1790938204986-15
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: branding_information
+        constraintName: fk58mwt3afo61js19ln0lhd4ur1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1790938204986-16
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: branding_information_id
+        baseTableName: branding_information_state
+        constraintName: fk5fh08306mynlkvjreiwk1jfw3
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: branding_information
+        validate: true
+- changeSet:
+    id: 1790938204986-17
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: branding_information_id
+        baseTableName: branding_information_street_and_number
+        constraintName: fkbt8pjnn99bjo6vwceoyp8wu7w
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: branding_information
+        validate: true
+- changeSet:
+    id: 1790938204986-18
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: city_id
+        baseTableName: branding_information_city
+        constraintName: fkg5ih3buhi1j06wdwhqfbcdw80
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1790938204986-19
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: branding_information_id
+        baseTableName: branding_information_city
+        constraintName: fkmdvrvwxgsfeoqd95gsntqi99e
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: branding_information
+        validate: true
+- changeSet:
+    id: 1790938204986-20
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: street_and_number_id
+        baseTableName: branding_information_street_and_number
+        constraintName: fksjgc3h00eyx7jhbxal5j9l8op
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+

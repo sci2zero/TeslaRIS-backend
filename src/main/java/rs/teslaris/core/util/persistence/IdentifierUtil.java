@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.functional.BiPredicate;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 @Component
@@ -33,6 +34,13 @@ public class IdentifierUtil {
         if (Objects.nonNull(identifier)) {
             if (identifier.isBlank() || identifier.equals("NONE")) {
                 setter.accept("");
+                return;
+            }
+
+            // Migrated records are known to be dirty, and refusing them over a malformed or
+            // duplicated identifier would lose the record entirely. The value is kept as it came.
+            if (MigrationContext.isActive()) {
+                setter.accept(identifier);
                 return;
             }
 

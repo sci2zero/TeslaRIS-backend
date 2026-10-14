@@ -89,6 +89,7 @@ public class MigrationServiceImpl implements MigrationService {
             previousRun.isPerformIndex(),
             false,
             previousRun.getModifiedAfter(),
+            previousRun.isBackfillOnlyCreated(),
             triggeredByUserId));
     }
 
@@ -112,6 +113,7 @@ public class MigrationServiceImpl implements MigrationService {
             .batchSize(batchSize)
             .performIndex(request.shouldPerformIndex())
             .modifiedAfter(request.modifiedAfter())
+            .backfillOnlyCreated(request.shouldBackfillOnlyCreated())
             .triggeredByUserId(request.triggeredByUserId())
             .build());
     }

@@ -1,13 +1,18 @@
 package rs.teslaris.project.converter.funding;
 
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Set;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
+import rs.teslaris.project.dto.funding.PersonFundingCallContributionDTO;
 import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.PersonFundingCallContribution;
 
 public class FundingCallConverter {
 
@@ -64,10 +69,23 @@ public class FundingCallConverter {
         fundingCall.getCallDocuments().forEach(
             fileItem -> dto.getFileItems().add(DocumentFileConverter.toDTO(fileItem)));
 
-        dto.setContributors(
-            PersonContributionConverter.fundingCallContributionToDTO(
-                fundingCall.getContributors()));
+        dto.setContributors(fundingCallContributionToDTO(fundingCall.getContributors()));
 
         return dto;
+    }
+
+    public static ArrayList<PersonFundingCallContributionDTO> fundingCallContributionToDTO(
+        Set<PersonFundingCallContribution> contributions) {
+        var contributionDTOs = new ArrayList<PersonFundingCallContributionDTO>();
+        contributions.stream().filter(c -> c.getApproveStatus().equals(ApproveStatus.APPROVED))
+            .forEach((c) -> {
+                var contribution = new PersonFundingCallContributionDTO();
+                PersonContributionConverter.setCommonFields(contribution, c);
+
+                contribution.setContributionType(c.getContributionType());
+
+                contributionDTOs.add(contribution);
+            });
+        return contributionDTOs;
     }
 }

@@ -19,7 +19,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 
 @Component

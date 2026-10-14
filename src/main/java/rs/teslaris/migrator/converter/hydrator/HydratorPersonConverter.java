@@ -156,7 +156,7 @@ public class HydratorPersonConverter
 
         // MAP-000034, MAP-000035
         dto.setLanguageKnowledges(languageKnowledges(record, info.languageCompetencies()));
-        dto.setResearchAreasId(researchAreas(record, info.domainActivities()));
+        dto.setResearchAreasId(new ArrayList<>(researchAreas(record, info.domainActivities())));
 
         // MAP-000037
         setIdentifiers(record, dto);

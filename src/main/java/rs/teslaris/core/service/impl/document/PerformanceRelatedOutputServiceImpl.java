@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.PerformanceRelatedOutputConverter;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -23,6 +25,7 @@ import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PerformanceRelatedOutputJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -40,13 +43,12 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -82,6 +84,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
         DocumentLookupService documentLookupService,
         CountryService countryService,
+        AssessmentGroupResolver assessmentGroupResolver,
         PerformanceRelatedOutputJPAServiceImpl performanceRelatedOutputJPAService,
         LanguageTagService languageTagService,
         PerformanceRelatedOutputRepository performanceRelatedOutputRepository) {
@@ -90,7 +93,8 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.performanceRelatedOutputJPAService = performanceRelatedOutputJPAService;
         this.languageTagService = languageTagService;
         this.performanceRelatedOutputRepository = performanceRelatedOutputRepository;
@@ -142,15 +146,17 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var savedPerformanceRelatedOutput =
             performanceRelatedOutputJPAService.save(newPerformanceRelatedOutput);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
-                savedPerformanceRelatedOutput.getId(),
-                null,
-                PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                    savedPerformanceRelatedOutput.getId(),
+                    null,
+                    PerformanceRelatedOutputConverter.toDTO(savedPerformanceRelatedOutput),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexPerformanceRelatedOutput(savedPerformanceRelatedOutput,
@@ -169,15 +175,17 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutputToUpdate =
             performanceRelatedOutputJPAService.findOne(performanceRelatedOutputId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
-                performanceRelatedOutputId,
-                PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
-                performanceRelatedOutputDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name(),
+                    performanceRelatedOutputId,
+                    PerformanceRelatedOutputConverter.toDTO(performanceRelatedOutputToUpdate),
+                    performanceRelatedOutputDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(performanceRelatedOutputDTO);
         var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);

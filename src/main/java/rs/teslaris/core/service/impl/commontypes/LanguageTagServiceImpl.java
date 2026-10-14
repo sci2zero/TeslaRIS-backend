@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.CachingConfiguration;
 import rs.teslaris.core.dto.commontypes.LanguageTagDTO;
 import rs.teslaris.core.dto.commontypes.LanguageTagResponseDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -53,13 +56,21 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
             .orElseThrow(() -> new NotFoundException("Language tag with given ID does not exist."));
     }
 
+    /**
+     * A cached tag is detached, which is safe only while nothing mutates a resolved tag and
+     * {@code MultiLingualContent.language} declares no cascade.
+     */
     @Override
+    @Cacheable(cacheNames = CachingConfiguration.LANGUAGE_TAGS_CACHE, key = "#languageTag",
+        condition = "#languageTag != null",
+        unless = "#result == null || #result.languageTag == null")
     public LanguageTag findLanguageTagByValue(String languageTag) {
         return languageTagRepository.findLanguageTagByLanguageTag(languageTag)
             .orElse(new LanguageTag());
     }
 
     @Override
+    @CacheEvict(cacheNames = CachingConfiguration.LANGUAGE_TAGS_CACHE, allEntries = true)
     public LanguageTag createLanguageTag(LanguageTagDTO languageTagDTO) {
         var newLanguageTag = new LanguageTag();
         setCommonFields(newLanguageTag, languageTagDTO);
@@ -67,6 +78,7 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
     }
 
     @Override
+    @CacheEvict(cacheNames = CachingConfiguration.LANGUAGE_TAGS_CACHE, allEntries = true)
     public void updateLanguageTag(Integer languageTagId, LanguageTagDTO languageTagDTO) {
         var languageTagToUpdate = findOne(languageTagId);
         setCommonFields(languageTagToUpdate, languageTagDTO);
@@ -74,6 +86,7 @@ public class LanguageTagServiceImpl extends JPAServiceImpl<LanguageTag>
     }
 
     @Override
+    @CacheEvict(cacheNames = CachingConfiguration.LANGUAGE_TAGS_CACHE, allEntries = true)
     public void deleteLanguageTag(Integer languageTagId) {
         if (languageTagRepository.isUsedInContent(languageTagId)) {
             throw new LanguageTagReferenceConstraintException("languageTagInUse");

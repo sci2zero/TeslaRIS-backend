@@ -60,6 +60,4 @@ public class ImportPersonDTO extends BasicPersonDTO {
     private String importSource;
 
     private List<LanguageKnowledgeDTO> languageKnowledges = new ArrayList<>();
-
-    private Set<Integer> researchAreasId = new HashSet<>();
 }

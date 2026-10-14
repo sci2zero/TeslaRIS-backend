@@ -1,6 +1,6 @@
 package rs.teslaris.assessment.service.interfaces.classification;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
@@ -21,10 +21,10 @@ public interface PublicationSeriesAssessmentClassificationService {
         Integer publicationSeriesAssessmentClassificationId,
         PublicationSeriesAssessmentClassificationDTO publicationSeriesAssessmentClassificationDTO);
 
-    void scheduleClassification(LocalDateTime timeToRun, Integer commissionId, Integer userId,
+    void scheduleClassification(Instant timeToRun, Integer commissionId, Integer userId,
                                 List<Integer> classificationYears, List<Integer> journalIds);
 
-    void scheduleClassificationLoading(LocalDateTime timeToRun,
+    void scheduleClassificationLoading(Instant timeToRun,
                                        EntityClassificationSource source,
                                        Integer userId, Integer commissionId);
 }

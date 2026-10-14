@@ -1,7 +1,7 @@
 package rs.teslaris.core.controller.document;
 
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -204,7 +204,7 @@ public class ThesisController {
     @Idempotent
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void schedulePublicReviewEndCheck(@RequestParam("timestamp")
-                                             LocalDateTime timestamp,
+                                             Instant timestamp,
                                              @RequestParam("types")
                                              List<ThesisType> types,
                                              @RequestParam(defaultValue = "ONCE")

@@ -1218,7 +1218,7 @@ public class TestingDataInitializer {
             List.of(pageContent1, pageContent2, pageContent3));
 
         scheduledTaskMetadataRepository.save(
-            new ScheduledTaskMetadata("ID", LocalDateTime.now(),
+            new ScheduledTaskMetadata("ID", java.time.Instant.now(),
                 ScheduledTaskType.THESIS_LIBRARY_BACKUP, Map.of(
                 "institutionId", 1,
                 "from", LocalDate.of(2000, 1, 1).toString(),

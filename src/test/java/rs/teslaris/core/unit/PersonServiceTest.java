@@ -173,7 +173,6 @@ public class PersonServiceTest {
 
     @Mock
     private CrisContextInformationService crisContextInformationService;
-
     @InjectMocks
     private PersonServiceImpl personService;
 
@@ -192,7 +191,7 @@ public class PersonServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), false));
         ReflectionTestUtils.setField(personService, "approvedByDefault", true);
 
         personConverter = mockStatic(PersonConverter.class);

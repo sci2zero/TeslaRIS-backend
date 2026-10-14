@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.document.IntellectualPropertyConverter;
 import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
@@ -26,6 +28,7 @@ import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntellectualPropertyJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -43,12 +46,11 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -83,6 +85,7 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
                                            OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                            DocumentLookupService documentLookupService,
                                            CountryService countryService,
+                                           AssessmentGroupResolver assessmentGroupResolver,
                                            IntellectualPropertyJPAServiceImpl intellectualPropertyJPAService,
                                            PublisherService publisherService,
                                            IntellectualPropertyRepository intellectualPropertyRepository) {
@@ -91,7 +94,8 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.intellectualPropertyJPAService = intellectualPropertyJPAService;
         this.publisherService = publisherService;
         this.intellectualPropertyRepository = intellectualPropertyRepository;
@@ -152,15 +156,17 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         var savedIntellectualProperty =
             intellectualPropertyJPAService.save(newIntellectualProperty);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
-                savedIntellectualProperty.getId(),
-                null,
-                IntellectualPropertyConverter.toDTO(savedIntellectualProperty),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
+                    savedIntellectualProperty.getId(),
+                    null,
+                    IntellectualPropertyConverter.toDTO(savedIntellectualProperty),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexIntellectualProperty(savedIntellectualProperty, new DocumentPublicationIndex());
@@ -178,15 +184,17 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         var intellectualPropertyToUpdate =
             intellectualPropertyJPAService.findOne(intellectualPropertyId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
-                intellectualPropertyId,
-                IntellectualPropertyConverter.toDTO(intellectualPropertyToUpdate),
-                intellectualPropertyDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTELLECTUAL_PROPERTY.name(),
+                    intellectualPropertyId,
+                    IntellectualPropertyConverter.toDTO(intellectualPropertyToUpdate),
+                    intellectualPropertyDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(intellectualPropertyDTO);
         var oldContributorIds = clearCommonFields(intellectualPropertyToUpdate);

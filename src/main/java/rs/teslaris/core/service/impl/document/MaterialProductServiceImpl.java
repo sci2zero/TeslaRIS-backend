@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.MaterialProductConverter;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -23,6 +25,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MaterialProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -41,12 +44,11 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -81,6 +83,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                                       OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                       DocumentLookupService documentLookupService,
                                       CountryService countryService,
+                                      AssessmentGroupResolver assessmentGroupResolver,
                                       MaterialProductJPAServiceImpl materialProductJPAService,
                                       PublisherService publisherService,
                                       ResearchAreaService researchAreaService) {
@@ -89,7 +92,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
@@ -135,15 +139,17 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
         var savedProduct = materialProductJPAService.save(newProduct);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MATERIAL_PRODUCT.name(),
-                savedProduct.getId(),
-                null,
-                MaterialProductConverter.toDTO(savedProduct),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                    savedProduct.getId(),
+                    null,
+                    MaterialProductConverter.toDTO(savedProduct),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
@@ -160,15 +166,17 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                                     MaterialProductDTO materialProductDTO) {
         var materialProductToUpdate = materialProductJPAService.findOne(materialProductId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.MATERIAL_PRODUCT.name(),
-                materialProductId,
-                MaterialProductConverter.toDTO(materialProductToUpdate),
-                materialProductDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                    materialProductId,
+                    MaterialProductConverter.toDTO(materialProductToUpdate),
+                    materialProductDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(materialProductDTO);
         var oldContributorIds = clearCommonFields(materialProductToUpdate);

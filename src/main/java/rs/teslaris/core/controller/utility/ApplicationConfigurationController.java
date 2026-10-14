@@ -1,6 +1,6 @@
 package rs.teslaris.core.controller.utility;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +41,7 @@ public class ApplicationConfigurationController {
     @Idempotent
     @PreAuthorize("hasAuthority('CONFIGURE_APP_SETTINGS')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void scheduleMaintenance(@RequestParam("timestamp") LocalDateTime timestamp,
+    public void scheduleMaintenance(@RequestParam("timestamp") Instant timestamp,
                                     @RequestParam("approximateEndMoment")
                                     String approximateEndMoment,
                                     @RequestHeader("Authorization") String bearerToken) {

@@ -1,6 +1,6 @@
 package rs.teslaris.assessment.service.interfaces.indicator;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.IFTableResponseDTO;
@@ -23,13 +23,13 @@ public interface PublicationSeriesIndicatorService {
 
     void loadPublicationSeriesIndicatorsFromSlavistCSVFiles();
 
-    void scheduleIndicatorLoading(LocalDateTime dateTime,
+    void scheduleIndicatorLoading(Instant dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
 
     void computeFiveYearIFAndJciRank(List<Integer> classificationYears, boolean calculateIF5,
                                      boolean calculateJci);
 
-    void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
+    void scheduleIF5AndJCIRankComputation(Instant timeToRun,
                                           List<Integer> classificationYears,
                                           boolean calculateIF5,
                                           boolean calculateJci,

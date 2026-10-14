@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
@@ -56,11 +58,10 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Slf4j
 @Service
@@ -521,19 +522,27 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private PersonSnapshotDTO personSnapshot(Integer personId) {
+        // A migration records no revisions, so the snapshot it would be compared against is not
+        // worth reading and converting.
+        if (MigrationContext.isActive()) {
+            return null;
+        }
+
         return personService.readPersonSnapshot(personId);
     }
 
     private void publishPersonRevision(Integer personId, PersonSnapshotDTO personBeforeChange) {
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.PERSON.name(),
-                personId,
-                personBeforeChange,
-                personSnapshot(personId),
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PERSON.name(),
+                    personId,
+                    personBeforeChange,
+                    personSnapshot(personId),
+                    RevisionType.UPDATE
+                )
+            );
+        }
     }
 
     /**
