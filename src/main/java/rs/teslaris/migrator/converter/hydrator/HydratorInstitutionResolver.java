@@ -2,7 +2,6 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -85,7 +84,7 @@ public class HydratorInstitutionResolver implements RunScopedCache {
         return identifiers.stream()
             .filter(identifier -> Objects.nonNull(identifier) &&
                 Objects.nonNull(identifier.type()) &&
-                IDENTIFIER_TYPES.contains(identifier.type().trim().toUpperCase(Locale.ROOT)) &&
+                IDENTIFIER_TYPES.contains(identifier.type().trim().toUpperCase()) &&
                 Objects.nonNull(identifier.identifier()) && !identifier.identifier().isBlank())
             .map(identifier -> identifier.identifier().trim())
             .distinct()

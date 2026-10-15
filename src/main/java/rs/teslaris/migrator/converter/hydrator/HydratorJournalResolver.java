@@ -1,6 +1,5 @@
 package rs.teslaris.migrator.converter.hydrator;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,7 +50,7 @@ public class HydratorJournalResolver implements RunScopedCache {
         var title = isBlank(journalName) ? NOT_INFORMED : journalName;
 
         if (!isBlank(issn)) {
-            var normalisedIssn = issn.trim().toUpperCase(Locale.ROOT);
+            var normalisedIssn = issn.trim().toUpperCase();
 
             return resolvedJournals.computeIfAbsent("issn:" + normalisedIssn,
                 key -> findByIssn(normalisedIssn)

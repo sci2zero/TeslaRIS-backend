@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -238,7 +237,7 @@ public class HydratorPersonConverter
             return null;
         }
 
-        var sex = SEX_BY_CODE.get(gender.code().trim().toUpperCase(Locale.ROOT));
+        var sex = SEX_BY_CODE.get(gender.code().trim().toUpperCase());
 
         if (Objects.isNull(sex)) {
             dropped(record, HydratorMappingRule.cv(21),
@@ -464,7 +463,7 @@ public class HydratorPersonConverter
         }
 
         try {
-            return LanguageLevel.valueOf(level.code().trim().toUpperCase(Locale.ROOT));
+            return LanguageLevel.valueOf(level.code().trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             dropped(record, HydratorMappingRule.cv(34),
                 "unmapped language level '" + level.code() + "'");
@@ -498,7 +497,7 @@ public class HydratorPersonConverter
         dto.setScholarId(
             identifier(record, GOOGLE_SCHOLAR_CODE, this::scholarId, SCHOLAR_PATTERN));
         dto.setWebOfScienceResearcherId(identifier(record, WEB_OF_SCIENCE_CODE,
-            value -> value.toUpperCase(Locale.ROOT), WEB_OF_SCIENCE_PATTERN));
+            value -> value.toUpperCase(), WEB_OF_SCIENCE_PATTERN));
     }
 
     /**

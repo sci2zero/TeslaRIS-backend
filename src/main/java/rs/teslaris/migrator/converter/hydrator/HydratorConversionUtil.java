@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -146,7 +145,7 @@ public class HydratorConversionUtil implements RunScopedCache {
         }
 
         return Arrays.stream(sourceCode.split("/"))
-            .map(code -> LANGUAGE_CODES.get(code.trim().toUpperCase(Locale.ROOT)))
+            .map(code -> LANGUAGE_CODES.get(code.trim().toUpperCase()))
             .filter(Objects::nonNull)
             .map(code -> languageIds.computeIfAbsent(code, this::findLanguageId))
             .flatMap(Optional::stream)
@@ -270,7 +269,7 @@ public class HydratorConversionUtil implements RunScopedCache {
     private String researchAreaKey(String name) {
         var key = DIACRITICS.matcher(Normalizer.normalize(name, Normalizer.Form.NFKD))
             .replaceAll("")
-            .toLowerCase(Locale.ROOT)
+            .toLowerCase()
             .replace("&", "and")
             .replaceAll("\\s+", " ")
             .trim();
@@ -425,7 +424,7 @@ public class HydratorConversionUtil implements RunScopedCache {
     }
 
     public String normalise(String value) {
-        return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+        return value.trim().toLowerCase().replaceAll("\\s+", " ");
     }
 
     // Bare ORCID iD from either the iD or its URL form; the checksum X is upper case
@@ -434,7 +433,7 @@ public class HydratorConversionUtil implements RunScopedCache {
             return null;
         }
 
-        return ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase(Locale.ROOT);
+        return ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase();
     }
 
     /**
@@ -479,7 +478,7 @@ public class HydratorConversionUtil implements RunScopedCache {
      * initials, so there only single letters count.
      */
     private int trailingInitialsStart(String[] words, String name) {
-        var allUppercase = name.equals(name.toUpperCase(Locale.ROOT));
+        var allUppercase = name.equals(name.toUpperCase());
         var start = words.length;
 
         while (start > 0) {
@@ -530,7 +529,7 @@ public class HydratorConversionUtil implements RunScopedCache {
     private String foldCase(String value) {
         return DIACRITICS.matcher(Normalizer.normalize(value, Normalizer.Form.NFKD))
             .replaceAll("")
-            .toLowerCase(Locale.ROOT);
+            .toLowerCase();
     }
 
     public PersonNameDTO personName(String firstname, String lastname, PersonNameType type) {
@@ -550,6 +549,6 @@ public class HydratorConversionUtil implements RunScopedCache {
         }
 
         // Curricula carry locales such as "pt_PT" / "en_GB"; tags are the bare language code
-        return language.trim().split("[_-]")[0].toUpperCase(Locale.ROOT);
+        return language.trim().split("[_-]")[0].toUpperCase();
     }
 }

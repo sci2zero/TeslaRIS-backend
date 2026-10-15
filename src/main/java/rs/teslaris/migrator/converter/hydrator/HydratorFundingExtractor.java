@@ -3,7 +3,6 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -136,7 +135,7 @@ public class HydratorFundingExtractor
             throw new InvalidSourceValueException("invalid amount '" + amount.value() + "'");
         }
         dto.setCurrencyCode(isBlank(amount.currency()) ? null :
-            amount.currency().trim().toUpperCase(Locale.ROOT));
+            amount.currency().trim().toUpperCase());
 
         return dto;
     }

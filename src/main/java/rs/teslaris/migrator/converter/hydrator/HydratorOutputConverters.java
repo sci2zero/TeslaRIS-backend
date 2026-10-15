@@ -3,7 +3,6 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -318,7 +317,7 @@ public class HydratorOutputConverters {
             return null;
         }
 
-        return identifier.identifierType().code().trim().toLowerCase(Locale.ROOT);
+        return identifier.identifierType().code().trim().toLowerCase();
     }
 
     private List<PersonDocumentContributionDTO> contributions(HydratorCVModel.Curriculum record,
@@ -429,7 +428,7 @@ public class HydratorOutputConverters {
             return DocumentContributionType.AUTHOR;
         }
 
-        return OWNER_ROLES.getOrDefault(role.code().trim().toUpperCase(Locale.ROOT),
+        return OWNER_ROLES.getOrDefault(role.code().trim().toUpperCase(),
             DocumentContributionType.AUTHOR);
     }
 
@@ -443,7 +442,7 @@ public class HydratorOutputConverters {
             return null;
         }
 
-        return PUBLICATION_STATUSES.get(status.code().trim().toUpperCase(Locale.ROOT));
+        return PUBLICATION_STATUSES.get(status.code().trim().toUpperCase());
     }
 
     // CW-001-MAP-000070: one keyword per line, as everywhere else in TeslaRIS
@@ -464,7 +463,7 @@ public class HydratorOutputConverters {
             return ThesisType.PHD;
         }
 
-        var value = Objects.toString(degreeType.value(), "").toLowerCase(Locale.ROOT);
+        var value = Objects.toString(degreeType.value(), "").toLowerCase();
 
         if (value.contains("master")) {
             return ThesisType.MASTER;
