@@ -28,6 +28,8 @@ public class FundingDTO {
 
     private Set<String> oldIds = new HashSet<>();
 
+    private String importSource;
+
     private Set<Integer> mergedIds = new HashSet<>();
 
     private String doi;

@@ -108,6 +108,8 @@ public class HydratorFundingExtractorTest {
         assertEquals(Boolean.TRUE, dto.getOaMandated());
         assertEquals("https://example.com/oa-policy", dto.getOaMandateUrl());
         assertTrue(dto.getFundingTypes().isEmpty());
+        assertEquals(Set.of("F1"), dto.getOldIds());
+        assertEquals("SCIPROJ", dto.getImportSource());
     }
 
     @Test

@@ -108,6 +108,9 @@ public class HydratorProjectConverterTest {
         assertEquals(Set.of(20), dto.getResearchAreasId());
         assertTrue(dto.getPersons().isEmpty());
         assertTrue(dto.getOrganisations().isEmpty());
+        assertEquals(Set.of("TEST001"), dto.getOldIds());
+        assertEquals("TEST/0001/2020", dto.getNationalId());
+        assertEquals("SCIPROJ", dto.getImportSource());
     }
 
     @Test

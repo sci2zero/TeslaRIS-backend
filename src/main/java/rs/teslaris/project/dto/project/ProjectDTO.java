@@ -31,6 +31,8 @@ public class ProjectDTO {
 
     private Set<String> oldIds = new HashSet<>();
 
+    private String importSource;
+
     private Set<String> mergedIds = new HashSet<>();
 
     private String doi;

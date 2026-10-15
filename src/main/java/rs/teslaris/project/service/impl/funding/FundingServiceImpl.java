@@ -115,6 +115,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var newFunding = new Funding();
 
         setCommonFields(newFunding, fundingDTO);
+        setProvenance(newFunding, fundingDTO);
 
         var savedFunding = save(newFunding);
 
@@ -201,6 +202,15 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         documentFileService.delete(agreementFileId);
         save(fundingCall);
+    }
+
+    // Only on creation: updates do not carry provenance and must not erase it
+    private void setProvenance(Funding funding, FundingDTO fundingDTO) {
+        if (Objects.nonNull(fundingDTO.getOldIds())) {
+            funding.getOldIds().addAll(fundingDTO.getOldIds());
+        }
+
+        funding.setImportSource(fundingDTO.getImportSource());
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {

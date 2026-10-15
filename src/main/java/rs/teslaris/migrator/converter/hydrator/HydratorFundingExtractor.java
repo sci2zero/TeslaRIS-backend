@@ -59,6 +59,8 @@ public class HydratorFundingExtractor
 
             var key = FundingMigrationDTO.keyOf(project.projectId(), funding.id());
             var dto = new FundingDTO();
+            dto.getOldIds().add(funding.id().trim());
+            dto.setImportSource(HydratorSource.PROJECTS_IMPORT_SOURCE);
 
             if (Objects.nonNull(funding.name())) {
                 dto.setName(conversionUtil.multilingualContent(funding.name().value(),

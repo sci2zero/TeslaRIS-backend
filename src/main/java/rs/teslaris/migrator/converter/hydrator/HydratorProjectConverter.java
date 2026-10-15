@@ -29,7 +29,10 @@ import rs.teslaris.project.model.project.ProjectStatus;
 public class HydratorProjectConverter implements
     RecordExtractor.RecordConverter<HydratorProjectModel.ProjectDocument, ProjectMigrationDTO> {
 
-    private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of("ProjectReference", "QREN");
+    // FCT's reference of the project, Portugal's national project identifier
+    private static final String FCT_REFERENCE_TYPE = "ProjectReference";
+
+    private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of(FCT_REFERENCE_TYPE, "QREN");
 
     private static final String ENGLISH = "en";
 
@@ -50,6 +53,8 @@ public class HydratorProjectConverter implements
 
         var key = project.projectId();
         var dto = new ProjectDTO();
+        dto.getOldIds().add(key);
+        dto.setImportSource(HydratorSource.PROJECTS_IMPORT_SOURCE);
 
         dto.setName(multilingual(project.titles()));
         dto.setDescription(multilingual(project.abstracts()));
@@ -61,6 +66,7 @@ public class HydratorProjectConverter implements
         }
 
         dto.setInternalIdentifiers(identifiers(key, project.identifiers()));
+        dto.setNationalId(fctReference(project.identifiers()));
         dto.setResearchAreasId(new HashSet<>(researchAreas(key, project.subjects())));
 
         String rejection = null;
@@ -252,6 +258,19 @@ public class HydratorProjectConverter implements
             });
 
         return result;
+    }
+
+    private String fctReference(List<HydratorProjectModel.TypedValue> identifiers) {
+        if (Objects.isNull(identifiers)) {
+            return null;
+        }
+
+        return identifiers.stream()
+            .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()) &&
+                FCT_REFERENCE_TYPE.equals(typeName(identifier.type())))
+            .map(identifier -> identifier.value().trim())
+            .findFirst()
+            .orElse(null);
     }
 
     // CW-002-MAP-000032: the English label is matched; the Portuguese one is the same field

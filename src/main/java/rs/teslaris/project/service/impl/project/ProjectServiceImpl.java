@@ -214,6 +214,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var newProject = new Project();
 
         setCommonFields(newProject, projectDTO);
+        setProvenance(newProject, projectDTO);
 
         var savedProject = save(newProject);
 
@@ -378,6 +379,15 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 projectId
             )
         );
+    }
+
+    // Only on creation: updates do not carry provenance and must not erase it
+    private void setProvenance(Project project, ProjectDTO projectDTO) {
+        if (Objects.nonNull(projectDTO.getOldIds())) {
+            project.getOldIds().addAll(projectDTO.getOldIds());
+        }
+
+        project.setImportSource(projectDTO.getImportSource());
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
