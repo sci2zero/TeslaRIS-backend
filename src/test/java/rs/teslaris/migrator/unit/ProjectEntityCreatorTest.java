@@ -33,7 +33,6 @@ import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
@@ -133,7 +132,7 @@ public class ProjectEntityCreatorTest {
         var linked = dto.getPersons().get(0);
         assertEquals(9, linked.getPersonId());
         assertEquals("John Doe", linked.getPersonName().getLastname());
-        assertEquals(PersonProjectInvestigationRole.OTHER, linked.getInvestigationRole());
+        assertNull(linked.getInvestigationRole());
         assertNull(dto.getPersons().get(1).getPersonId());
         assertEquals(3, dto.getPersons().get(2).getOrderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),

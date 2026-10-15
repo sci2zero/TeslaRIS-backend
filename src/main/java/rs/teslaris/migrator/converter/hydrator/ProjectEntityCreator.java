@@ -12,7 +12,6 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @Component
@@ -45,11 +44,6 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
                 dto.sourceId(), HydratorMappingRule.sciproj(28),
                 count + " team member(s) " + reason));
-        if (!dto.team().isEmpty()) {
-            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
-                dto.sourceId(), HydratorMappingRule.sciproj(28),
-                "investigationRole without source, provisional value: OTHER");
-        }
 
         var created = projectService.createProject(dto.project());
 
@@ -83,7 +77,6 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
                                                       Map<String, Integer> unlinked) {
         var contribution = new PersonProjectContributionDTO();
         contribution.setContributionType(entry.type());
-        contribution.setInvestigationRole(PersonProjectInvestigationRole.OTHER);
         contribution.setOrderNumber(entry.orderNumber());
         contribution.setContributionDescription(new ArrayList<>());
         contribution.setDisplayAffiliationStatement(new ArrayList<>());
