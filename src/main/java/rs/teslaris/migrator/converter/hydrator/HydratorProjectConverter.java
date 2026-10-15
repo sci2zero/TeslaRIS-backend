@@ -1,7 +1,6 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -79,8 +78,8 @@ public class HydratorProjectConverter implements
 
         String rejection = null;
         try {
-            dto.setDateFrom(date(project.startDate()));
-            dto.setDateTo(date(project.endDate()));
+            dto.setDateFrom(conversionUtil.isoDate(project.startDate()));
+            dto.setDateTo(conversionUtil.isoDate(project.endDate()));
         } catch (InvalidSourceValueException e) {
             rejection = e.getMessage();
         }
@@ -275,18 +274,6 @@ public class HydratorProjectConverter implements
 
         return conversionUtil.researchAreaIds(classifications,
             reason -> dropped(key, HydratorMappingRule.sciproj(32), reason));
-    }
-
-    private LocalDate date(String value) {
-        if (isBlank(value)) {
-            return null;
-        }
-
-        try {
-            return LocalDate.parse(value.trim());
-        } catch (DateTimeParseException e) {
-            throw new InvalidSourceValueException("invalid date '" + value + "'");
-        }
     }
 
     private ProjectStatus provisionalStatus(LocalDate dateTo) {

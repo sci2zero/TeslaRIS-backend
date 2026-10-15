@@ -4,6 +4,7 @@ import java.text.Normalizer;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -340,6 +341,23 @@ public class HydratorConversionUtil implements RunScopedCache {
         return new InvalidSourceValueException(String.format(
             "invalid date (year='%s', month='%s', day='%s')",
             dateInfo.year(), dateInfo.month(), dateInfo.day()));
+    }
+
+    /**
+     * SciPROJ dates are ISO strings ({@code 2020-01-31}). A blank value yields {@code null}.
+     *
+     * @throws InvalidSourceValueException when the value is present but not an ISO date
+     */
+    public LocalDate isoDate(String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            throw new InvalidSourceValueException("invalid date '" + value + "'");
+        }
     }
 
     private boolean isBlank(String value) {

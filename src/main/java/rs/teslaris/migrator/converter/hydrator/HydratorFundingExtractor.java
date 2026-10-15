@@ -1,7 +1,5 @@
 package rs.teslaris.migrator.converter.hydrator;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,8 +74,8 @@ public class HydratorFundingExtractor
             String rejection = null;
             try {
                 if (Objects.nonNull(funding.duration())) {
-                    dto.setDateFrom(date(funding.duration().startDate()));
-                    dto.setDateTo(date(funding.duration().endDate()));
+                    dto.setDateFrom(conversionUtil.isoDate(funding.duration().startDate()));
+                    dto.setDateTo(conversionUtil.isoDate(funding.duration().endDate()));
                 }
                 dto.setAmount(amount(funding.amount()));
             } catch (InvalidSourceValueException e) {
@@ -153,18 +151,6 @@ public class HydratorFundingExtractor
 
     private HydratorCVModel.Institution funder(HydratorProjectModel.FundedBy fundedBy) {
         return Objects.isNull(fundedBy) ? null : conversionUtil.institution(fundedBy.orgUnit());
-    }
-
-    private LocalDate date(String value) {
-        if (isBlank(value)) {
-            return null;
-        }
-
-        try {
-            return LocalDate.parse(value.trim());
-        } catch (DateTimeParseException e) {
-            throw new InvalidSourceValueException("invalid date '" + value + "'");
-        }
     }
 
     private String typeName(String type) {
