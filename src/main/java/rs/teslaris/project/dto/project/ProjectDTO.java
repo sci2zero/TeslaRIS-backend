@@ -62,10 +62,8 @@ public class ProjectDTO {
     @NotNull(message = "You have to provide a project status.")
     private ProjectStatus status;
 
-    @NotNull(message = "You have to provide a collaboration type.")
     private ProjectCollaborationType collaborationType;
 
-    @NotNull(message = "You have to provide a research type.")
     private ProjectResearchType researchType;
 
     private Boolean notFunded;

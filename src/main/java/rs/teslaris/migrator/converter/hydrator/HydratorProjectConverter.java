@@ -19,8 +19,6 @@ import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
 
 /**
@@ -30,12 +28,6 @@ import rs.teslaris.project.model.project.ProjectStatus;
 @RequiredArgsConstructor
 public class HydratorProjectConverter implements
     RecordExtractor.RecordConverter<HydratorProjectModel.ProjectDocument, ProjectMigrationDTO> {
-
-    // Required but absent from SciPROJ (CW-002-MAP-000016/000035): provisional until team decides
-    static final ProjectCollaborationType PROVISIONAL_COLLABORATION_TYPE =
-        ProjectCollaborationType.NATIONAL;
-
-    static final ProjectResearchType PROVISIONAL_RESEARCH_TYPE = ProjectResearchType.OTHER;
 
     private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of("ProjectReference", "QREN");
 
@@ -79,12 +71,8 @@ public class HydratorProjectConverter implements
             rejection = e.getMessage();
         }
 
-        dto.setStatus(provisionalStatus(dto.getDateTo()));
-        dto.setCollaborationType(PROVISIONAL_COLLABORATION_TYPE);
-        dto.setResearchType(PROVISIONAL_RESEARCH_TYPE);
-        dropped(key, HydratorMappingRule.sciproj(16, 35),
-            "required field without source, provisional value: status, collaborationType, " +
-                "researchType");
+        // SciPROJ has no status nor project types; types stay empty until set in TeslaRIS
+        dto.setStatus(status(dto.getDateFrom(), dto.getDateTo()));
 
         return new ProjectMigrationDTO(key, dto, consortium(key, project.consortium()),
             team(key, project.team()), rejection);
@@ -266,9 +254,19 @@ public class HydratorProjectConverter implements
             reason -> dropped(key, HydratorMappingRule.sciproj(32), reason));
     }
 
-    private ProjectStatus provisionalStatus(LocalDate dateTo) {
-        return Objects.nonNull(dateTo) && dateTo.isBefore(LocalDate.now()) ?
-            ProjectStatus.CONCLUDED : ProjectStatus.ONGOING;
+    // Missing dateFrom counts as started, missing dateTo as open-ended
+    private ProjectStatus status(LocalDate dateFrom, LocalDate dateTo) {
+        var today = LocalDate.now();
+
+        if (Objects.nonNull(dateFrom) && dateFrom.isAfter(today)) {
+            return ProjectStatus.SUBMITTED;
+        }
+
+        if (Objects.nonNull(dateTo) && dateTo.isBefore(today)) {
+            return ProjectStatus.CONCLUDED;
+        }
+
+        return ProjectStatus.ONGOING;
     }
 
     private String typeName(String type) {

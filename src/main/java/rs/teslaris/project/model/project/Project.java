@@ -110,10 +110,10 @@ public class Project extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ProjectStatus status;
 
-    @Column(name = "collaboration_type", nullable = false)
+    @Column(name = "collaboration_type")
     private ProjectCollaborationType collaborationType;
 
-    @Column(name = "research_type", nullable = false)
+    @Column(name = "research_type")
     private ProjectResearchType researchType;
 
     @OneToMany(fetch = FetchType.LAZY)

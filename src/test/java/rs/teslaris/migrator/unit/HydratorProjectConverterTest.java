@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,8 +30,6 @@ import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,22 +120,49 @@ public class HydratorProjectConverterTest {
     }
 
     @Test
-    void shouldSetProvisionalRequiredFields() throws Exception {
+    void shouldLeaveProjectTypesEmpty() throws Exception {
+        var dto = converter.toDTO(document(FULL_PROJECT)).project();
+
+        assertNull(dto.getCollaborationType());
+        assertNull(dto.getResearchType());
+        verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000016/000035"), anyString());
+    }
+
+    @Test
+    void shouldConcludeProjectThatHasEnded() throws Exception {
         var dto = converter.toDTO(document(FULL_PROJECT)).project();
 
         assertEquals(ProjectStatus.CONCLUDED, dto.getStatus());
-        assertEquals(ProjectCollaborationType.NATIONAL, dto.getCollaborationType());
-        assertEquals(ProjectResearchType.OTHER, dto.getResearchType());
-        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("CW-002-MAP-000016/000035"), anyString());
     }
 
     @Test
     void shouldTreatFutureEndAsOngoing() throws Exception {
         var dto = converter.toDTO(document("""
             {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
-             "endDate": "%s"}
-            """.formatted(LocalDate.now().plusYears(1)))).project();
+             "startDate": "%s", "endDate": "%s"}
+            """.formatted(LocalDate.now().minusYears(1), LocalDate.now().plusYears(1))))
+            .project();
+
+        assertEquals(ProjectStatus.ONGOING, dto.getStatus());
+    }
+
+    @Test
+    void shouldTreatFutureStartAsSubmitted() throws Exception {
+        var dto = converter.toDTO(document("""
+            {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
+             "startDate": "%s", "endDate": "%s"}
+            """.formatted(LocalDate.now().plusMonths(1), LocalDate.now().plusYears(2))))
+            .project();
+
+        assertEquals(ProjectStatus.SUBMITTED, dto.getStatus());
+    }
+
+    @Test
+    void shouldTreatProjectWithoutDatesAsOngoing() throws Exception {
+        var dto = converter.toDTO(document("""
+            {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}]}
+            """)).project();
 
         assertEquals(ProjectStatus.ONGOING, dto.getStatus());
     }
