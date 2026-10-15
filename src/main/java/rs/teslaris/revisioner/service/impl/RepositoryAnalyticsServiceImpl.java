@@ -101,7 +101,8 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         List.of(EVENT_TARGET, PUBLICATION_SERIES_TARGET);
 
     private static final List<String> ACTIVITY_PARENT_TARGETS =
-        List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET);
+        List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET,
+            PROJECT_TARGET, FUNDING_TARGET);
 
     private final DataQualityAggregator dataQualityAggregator;
 
@@ -707,7 +708,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                     profileName, scopeOrganisationUnitIds, assessmentDate,
                     termQuery("target", PROJECT_TARGET)
                 ),
-                Set.of())
+                activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
         var fundings = dataQualityAggregator
@@ -716,7 +717,7 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                     profileName, scopeOrganisationUnitIds, assessmentDate,
                     termQuery("target", FUNDING_TARGET)
                 ),
-                Set.of())
+                activityRuleKeys)
             .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
 
         return List.of(
@@ -732,10 +733,13 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 documents.linkedRecords(), outputs),
             constructQualityByEntityTypeActivitiesRow(
                 documents.linkedActivities() + personActivities(scopeOrganisationUnitIds) +
-                    otherParentActivities(scopeOrganisationUnitIds),
-                List.of(outputs, persons, otherActivityParents)),
-            // Both indexes carry the institutions of the funded project's consortium and its
-            // contributors' employments, so a scoped count is exact rather than approximate.
+                    otherParentActivities(scopeOrganisationUnitIds) +
+                    projectActivities(scopeOrganisationUnitIds) +
+                    fundingActivities(scopeOrganisationUnitIds),
+                List.of(outputs, persons, otherActivityParents, projects, fundings)),
+            // Both indexes carry the institutions of the funded project's consortium, its
+            // contributors' employments and the funders, so a scoped count is exact rather than
+            // approximate.
             constructQualityByEntityTypeRowData(RepositoryEntityType.PROJECTS,
                 dataQualityAggregator.countRecords(PROJECT_INDEX,
                     scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds)),
@@ -1187,6 +1191,18 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 scopedQuery(RELATED_INSTITUTION_IDS_FIELD, scopeOrganisationUnitIds),
                 ACTIVITIES_COUNT_FIELD))
             .sum();
+    }
+
+    private long projectActivities(List<Integer> scopeOrganisationUnitIds) {
+        return dataQualityAggregator.sumField(PROJECT_INDEX,
+            scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds),
+            ACTIVITIES_COUNT_FIELD);
+    }
+
+    private long fundingActivities(List<Integer> scopeOrganisationUnitIds) {
+        return dataQualityAggregator.sumField(FUNDING_INDEX,
+            scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds),
+            ACTIVITIES_COUNT_FIELD);
     }
 
     @Nullable

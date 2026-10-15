@@ -20,8 +20,11 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  * precise input for retrying failures.
  */
 @Document(collection = "migration_record_log")
+// Declaration only - the index is created by MongoIndexInitializer, since annotation driven index
+// creation is off.
 @CompoundIndex(name = "source_type_key_idx",
     def = "{'source': 1, 'entity_type': 1, 'source_key': 1}", unique = true)
+@CompoundIndex(name = "run_status_idx", def = "{'run_id': 1, 'status': 1}")
 @Getter
 @Setter
 @Builder

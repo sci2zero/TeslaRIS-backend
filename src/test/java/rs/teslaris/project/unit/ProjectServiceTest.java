@@ -40,8 +40,6 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.License;
-import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
@@ -73,6 +71,7 @@ import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @SpringBootTest
 public class ProjectServiceTest {
@@ -116,6 +115,9 @@ public class ProjectServiceTest {
     @Mock
     private CrisContextInformationService crisContextInformationService;
 
+    @Mock
+    private ProjectScopeCalculator projectScopeCalculator;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
 
@@ -148,7 +150,7 @@ public class ProjectServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
     }
 
     @Test
@@ -263,26 +265,14 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void shouldIndexOnlySystemContributorsWhenProjectIsIndexed() {
+    public void shouldIndexTheScopeTheCalculatorAnswersWith() {
         // given
-        var projectId = 1;
         var project = new Project();
-        project.setId(projectId);
+        project.setId(1);
         project.setStatus(ProjectStatus.ONGOING);
 
-        var person = new Person();
-        person.setId(11);
-        var linkedContribution = new PersonProjectContribution();
-        linkedContribution.setPerson(person);
-        var externalContribution = new PersonProjectContribution();
-        project.getPersons().addAll(List.of(linkedContribution, externalContribution));
-
-        var organisationUnit = new OrganisationUnit();
-        organisationUnit.setId(22);
-        var linkedOrganisation = new OrganisationUnitProjectContribution();
-        linkedOrganisation.setOrganisationUnit(organisationUnit);
-        linkedOrganisation.setContributionType(OrganisationUnitProjectContributionType.PARTNER);
-        project.getOrganisations().add(linkedOrganisation);
+        when(projectScopeCalculator.personIds(project)).thenReturn(List.of(11));
+        when(projectScopeCalculator.organisationUnitIds(project)).thenReturn(List.of(22));
 
         var index = new ProjectIndex();
 

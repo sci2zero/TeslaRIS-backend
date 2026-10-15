@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -77,6 +82,8 @@ import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 @RequiredArgsConstructor
 @Slf4j
 public class DataQualityServiceImpl implements DataQualityService {
+
+    private static final String EMPTY_VALUE = "-";
 
     private static final String DOCUMENT_TARGET = "Document";
 
@@ -150,6 +157,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private final OrganisationUnitService organisationUnitService;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final MessageSource messageSource;
 
 
     @Override
@@ -255,6 +264,186 @@ public class DataQualityServiceImpl implements DataQualityService {
                 assessment.getFinishedAt(),
                 relatedQuality(entityType, entityId, assessment.getProfileName())))
             .toList()).orElseGet(List::of);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportFullReport(String entityType, Integer entityId,
+                                                String profileName, Integer majorVersion,
+                                                Integer minorVersion, String language) {
+        var assessment = findAssessmentsForEntityVersion(entityType, entityId, majorVersion,
+            minorVersion).stream()
+            .filter(candidate -> candidate.profileName().equalsIgnoreCase(profileName))
+            .findFirst()
+            .orElseThrow(() -> new NotFoundException(
+                String.format("Revision %d.%d of %s with ID %d has no %s assessment.",
+                    majorVersion, minorVersion, entityType, entityId, profileName)));
+
+        var rows = new ArrayList<List<Object>>();
+        rows.add(List.of(label("repositoryAnalytics.fullAssessmentReport", language)));
+        rows.add(List.of());
+
+        appendAssessmentSection(rows, assessment, profileName, majorVersion, minorVersion,
+            language);
+
+        // The related quality tab is shown for exactly these two types, so the report carries the
+        // section only when the screen does. Every other type reads as unsupported rows.
+        if (EntityType.PERSON.name().equals(entityType) ||
+            EntityType.ORGANISATION_UNIT.name().equals(entityType)) {
+            appendRelatedQualitySection(rows, entityType, entityId, profileName, language);
+        }
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    private void appendAssessmentSection(List<List<Object>> rows,
+                                         DataQualityAssessmentDTO assessment, String profileName,
+                                         Integer majorVersion, Integer minorVersion,
+                                         String language) {
+        rows.add(List.of(label("repositoryAnalytics.assessment", language)));
+        rows.add(List.of(label("repositoryAnalytics.profile", language),
+            DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(profileName,
+                language)));
+        rows.add(List.of(label("repositoryAnalytics.profileVersion", language),
+            Objects.requireNonNullElse(assessment.profileVersion(), EMPTY_VALUE)));
+        rows.add(List.of(label("repositoryAnalytics.assessmentDate", language),
+            localDate(assessment.finishedAt(), language)));
+        rows.add(List.of(label("repositoryAnalytics.header.recordVersion", language),
+            majorVersion + "." + minorVersion));
+        rows.add(List.of());
+
+        var failedRules = assessment.failedRulesList();
+        var totalRules = assessment.passedRules() + failedRules.size();
+
+        rows.add(List.of(label("repositoryAnalytics.header.overallScore", language),
+            percentage(assessment.qualityScore())));
+        rows.add(List.of(label("repositoryAnalytics.header.fairCompliance", language),
+            percentage(assessment.qualityScoreFair())));
+        rows.add(List.of(label("repositoryAnalytics.header.passedConstraints", language),
+            assessment.passedRules()));
+        rows.add(List.of(label("repositoryAnalytics.header.failedConstraints", language),
+            failedRules.size()));
+        rows.add(List.of(label("repositoryAnalytics.header.totalConstraints", language),
+            totalRules));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.failedConstraints", language)));
+
+        if (failedRules.isEmpty()) {
+            rows.add(List.of(label("repositoryAnalytics.noFailedConstraints", language)));
+            return;
+        }
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.constraint", language),
+            label("repositoryAnalytics.header.dimension", language),
+            label("repositoryAnalytics.header.metric", language),
+            label("repositoryAnalytics.header.severity", language),
+            label("repositoryAnalytics.header.message", language),
+            label("repositoryAnalytics.header.actualValue", language)
+        ));
+
+        // The screen resolves a rule's metric key to its configured title, so the column has to be
+        // resolved the same way rather than left as the raw key.
+        var metricTitles = listProfileMetrics(profileName).stream()
+            .collect(Collectors.toMap(MetricSummaryDTO::key,
+                metric -> content(metric.title(), language, metric.key())));
+
+        failedRules.forEach(rule -> rows.add(List.of(
+            content(rule.title(), language, rule.key()),
+            label("repositoryAnalytics.dimension." + rule.dimension().name(), language),
+            Objects.requireNonNullElse(metricTitles.get(rule.metric()),
+                Objects.requireNonNullElse(rule.metric(), EMPTY_VALUE)),
+            label("repositoryAnalytics.severity." + rule.severity().name(), language),
+            content(rule.message(), language, EMPTY_VALUE),
+            Objects.requireNonNullElse(rule.actualValue(), EMPTY_VALUE)
+        )));
+    }
+
+    private void appendRelatedQualitySection(List<List<Object>> rows, String entityType,
+                                             Integer entityId, String profileName,
+                                             String language) {
+        var relatedQuality = getRelatedQualityForEntity(entityType, entityId).stream()
+            .filter(candidate -> candidate.profileName().equalsIgnoreCase(profileName))
+            .findFirst();
+
+        if (relatedQuality.isEmpty()) {
+            return;
+        }
+
+        rows.add(List.of());
+        rows.add(List.of(label("repositoryAnalytics.relatedQuality", language)));
+        rows.add(List.of(label("repositoryAnalytics.profileVersion", language),
+            Objects.requireNonNullElse(relatedQuality.get().profileVersion(), EMPTY_VALUE)));
+        rows.add(List.of(label("repositoryAnalytics.assessmentDate", language),
+            localDate(relatedQuality.get().assessmentDate(), language)));
+
+        // Related quality is always read off the latest revision, whichever version the
+        // assessment section was asked for.
+        rows.add(List.of(label("repositoryAnalytics.header.recordVersion", language),
+            latestRecordVersion(entityType, entityId)));
+        rows.add(List.of());
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.linkedRecords", language),
+            label("repositoryAnalytics.header.affectedRecords", language),
+            label("repositoryAnalytics.header.openIssues", language),
+            label("repositoryAnalytics.header.averageScore", language)
+        ));
+
+        relatedQuality.get().relatedQuality().forEach(row -> rows.add(List.of(
+            label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+            count(row.supported(), row.linkedRecords()),
+            count(row.supported(), row.affectedRecords()),
+            count(row.supported(), row.openIssues()),
+            percentage(row.averageScore())
+        )));
+    }
+
+    private String latestRecordVersion(String entityType, Integer entityId) {
+        return entityRevisionRepository
+            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .map(revision -> revision.getMajorVersion() + "." + revision.getMinorVersion())
+            .orElse(EMPTY_VALUE);
+    }
+
+    private String label(String key, String language) {
+        try {
+            return Objects.requireNonNullElse(
+                messageSource.getMessage(key, null, Locale.forLanguageTag(language)), key);
+        } catch (Exception e) {
+            return key;
+        }
+    }
+
+    private String localDate(@Nullable Instant instant, String language) {
+        return Objects.isNull(instant)
+            ? label("repositoryAnalytics.currentState", language)
+            : LocalDate.ofInstant(instant, ZoneId.systemDefault()).toString();
+    }
+
+    private String content(List<MultilingualContentDTO> content, String language,
+                           String fallback) {
+        if (Objects.isNull(content) || content.isEmpty()) {
+            return fallback;
+        }
+
+        return Objects.requireNonNullElse(content.stream()
+            .filter(candidate -> language.equalsIgnoreCase(candidate.getLanguageTag()))
+            .findFirst()
+            .map(MultilingualContentDTO::getContent)
+            .orElseGet(() -> content.getFirst().getContent()), fallback);
+    }
+
+    private Object percentage(@Nullable Double value) {
+        return Objects.isNull(value)
+            ? EMPTY_VALUE
+            : new TableExportHelper.PercentageValue(value);
+    }
+
+    private Object count(boolean supported, long value) {
+        return supported ? value : EMPTY_VALUE;
     }
 
     private List<RelatedQualityDTO> relatedQuality(String entityType, Integer entityId,
@@ -622,7 +811,8 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return ACTIVITY_TARGET.equals(target)
-            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET)
+            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET,
+            PROJECT_TARGET, FUNDING_TARGET)
             : List.of(target);
     }
 

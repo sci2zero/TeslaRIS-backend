@@ -46,6 +46,14 @@ public record CrisContextInformationDTO(
     @Valid
     List<MultilingualContentDTO> nationalIdentifierName,
 
+    String personNationalIdUrl,
+
+    String organisationUnitNationalIdUrl,
+
+    String projectNationalIdUrl,
+
+    String documentNationalIdUrl,
+
     // Derived from the ORCID OAuth2 configuration, never persisted, ignored when saving.
     Boolean orcidLoginToggle
 ) {

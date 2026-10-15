@@ -6,6 +6,7 @@ import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
@@ -44,15 +46,16 @@ import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
-import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingPart;
+import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @Service
 @RequiredArgsConstructor
@@ -82,7 +85,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
     private final FundingIndexRepository fundingIndexRepository;
 
-    private final ProjectIndexRepository projectIndexRepository;
+    private final ProjectScopeCalculator projectScopeCalculator;
 
     private final DocumentFileService documentFileService;
 
@@ -124,6 +127,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         fundingIndexRepository.save(
             indexCommonFields(savedFunding, new FundingIndex()));
 
+        refreshFundedProjectIndex(savedFunding.getProject());
+
         if (!MigrationContext.isActive()) {
             applicationEventPublisher.publishEvent(
                 new RevisionCreateEvent(
@@ -155,6 +160,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             )
         );
 
+        var previousProject = fundingToUpdate.getProject();
+
         clearCommonFields(fundingToUpdate);
         setCommonFields(fundingToUpdate, fundingDTO);
 
@@ -163,12 +170,33 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                 indexCommonFields(fundingToUpdate, index);
                 fundingIndexRepository.save(index);
             });
+
+        // A funding moved between projects leaves one scope and enters another.
+        refreshFundedProjectIndex(previousProject);
+
+        if (!Objects.equals(previousProject, fundingToUpdate.getProject())) {
+            refreshFundedProjectIndex(fundingToUpdate.getProject());
+        }
     }
 
     @Override
     @Transactional
     public void deleteFunding(Integer fundingId) {
+        var fundedProject = findOne(fundingId).getProject();
+
         delete(fundingId);
+
+        refreshFundedProjectIndex(fundedProject);
+    }
+
+    /**
+     * A funding carries its funder into the funded project's scope, so the project index is
+     * rebuilt whenever a funding is written.
+     */
+    private void refreshFundedProjectIndex(Project project) {
+        if (Objects.nonNull(project)) {
+            projectService.refreshProjectIndex(project.getId());
+        }
     }
 
     @Override
@@ -225,8 +253,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         RestorationSupport.requireExists(fundingDTO.getProjectId(), projectService, "projectId");
 
         if (Objects.nonNull(fundingDTO.getProjectId())) {
-            var project = projectService.findOne(fundingDTO.getProjectId());
-            funding.setProject(project);
+            projectService.findOne(fundingDTO.getProjectId()).addFunding(funding);
         } else {
             funding.setProject(null);
         }
@@ -294,7 +321,16 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         }
 
         funding.setUris(fundingDTO.getUris());
-        funding.setDoi(fundingDTO.getDoi());
+        IdentifierUtil.validateAndSetIdentifier(
+            fundingDTO.getDoi(),
+            funding.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            fundingRepository::existsByDoi,
+            funding::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
         funding.setGrantAgreementId(fundingDTO.getGrantAgreementId());
         funding.setCompetitive(fundingDTO.getCompetitive());
         funding.setRenewable(fundingDTO.getRenewable());
@@ -399,31 +435,49 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         index.setDatabaseId(funding.getId());
         index.setDateFrom(funding.getDateFrom());
         index.setDateTo(funding.getDateTo());
+        index.setActivitiesCount(countActivities(funding));
 
         return index;
     }
 
     /**
-     * A funding has no contributors of its own, so the institutions it belongs to are the funded
-     * project's. The project index already holds them expanded over the super hierarchy, so it is
-     * read rather than recomputed.
+     * A funding has no contributors of its own, so its involvement is the only thing that can be
+     * an activity, and it is one once it says when it happened or what it was about.
      */
-    private void indexProjectScope(Funding funding, FundingIndex index) {
-        if (Objects.isNull(funding.getProject())) {
-            index.setPersonIds(new ArrayList<>());
-            index.setOrganisationUnitIds(new ArrayList<>());
-            return;
+    private Integer countActivities(Funding funding) {
+        var involvement = funding.getInvolvement();
+
+        if (Objects.isNull(involvement)) {
+            return 0;
         }
 
-        projectIndexRepository.findProjectIndexByDatabaseId(funding.getProject().getId())
-            .ifPresentOrElse(projectIndex -> {
-                index.setPersonIds(new ArrayList<>(projectIndex.getPersonIds()));
-                index.setOrganisationUnitIds(
-                    new ArrayList<>(projectIndex.getOrganisationUnitIds()));
-            }, () -> {
-                index.setPersonIds(new ArrayList<>());
-                index.setOrganisationUnitIds(new ArrayList<>());
-            });
+        return (Objects.nonNull(involvement.getDateFrom()) ||
+            Objects.nonNull(involvement.getDateTo()) ||
+            (Objects.nonNull(involvement.getResearchAreas()) &&
+                !involvement.getResearchAreas().isEmpty())) ? 1 : 0;
+    }
+
+    /**
+     * A funding has no contributors of its own, so the persons and institutions it belongs to are
+     * the funded project's, with its own funder added.
+     */
+    private void indexProjectScope(Funding funding, FundingIndex index) {
+        var institutionIds = new LinkedHashSet<Integer>();
+
+        if (Objects.nonNull(funding.getProject())) {
+            index.setPersonIds(projectScopeCalculator.personIds(funding.getProject()));
+            institutionIds.addAll(
+                projectScopeCalculator.organisationUnitIds(funding.getProject()));
+        } else {
+            index.setPersonIds(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(funding.getFunder())) {
+            projectScopeCalculator.addWithSuperHierarchy(institutionIds,
+                funding.getFunder().getId());
+        }
+
+        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
     }
 
     private void indexFunderFields(Funding funding,

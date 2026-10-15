@@ -17,12 +17,13 @@ import rs.teslaris.core.util.persistence.IdentifierConfigurationCatalogue;
 public class IdentifierConfigurationCatalogueTest {
 
     @Test
-    void shouldCoverPersonOrganisationUnitAndDocument() {
+    void shouldCoverEveryEntityTypeWithConfigurableIdentifiers() {
         var catalogue = IdentifierConfigurationCatalogue.configurableIdentifiers();
 
-        assertEquals(3, catalogue.size());
+        assertEquals(4, catalogue.size());
         assertEquals(11, catalogue.get(ApplicableEntityType.PERSON).size());
         assertEquals(11, catalogue.get(ApplicableEntityType.ORGANISATION_UNIT).size());
+        assertEquals(3, catalogue.get(ApplicableEntityType.PROJECT).size());
         assertEquals(9, catalogue.get(ApplicableEntityType.DOCUMENT).size());
     }
 
@@ -40,6 +41,14 @@ public class IdentifierConfigurationCatalogueTest {
         assertFalse(IdentifierConfigurationCatalogue.isConfigurable(ApplicableEntityType.PERSON,
             "madeUpIdentifier"));
 
+        // a national identifier of each entity type that has one
+        assertTrue(IdentifierConfigurationCatalogue.isConfigurable(ApplicableEntityType.PROJECT,
+            "nationalId"));
+        assertTrue(IdentifierConfigurationCatalogue.isConfigurable(
+            ApplicableEntityType.ORGANISATION_UNIT, "nationalId"));
+        assertTrue(IdentifierConfigurationCatalogue.isConfigurable(ApplicableEntityType.PERSON,
+            "nationalScienceId"));
+
         assertFalse(IdentifierConfigurationCatalogue.isConfigurable(ApplicableEntityType.EVENT,
             "openAlexId"));
     }
@@ -48,20 +57,38 @@ public class IdentifierConfigurationCatalogueTest {
     void shouldShareNoDefaultPolicyInstanceBetweenIdentifiers() {
         var defaults = IdentifierConfigurationCatalogue.defaults();
 
-        defaults.get(ApplicableEntityType.PERSON).get("orcid").setFeatured(true);
+        defaults.get(ApplicableEntityType.PERSON).get("apvnt").setFeatured(true);
 
-        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("apvnt").getFeatured());
-        assertFalse(defaults.get(ApplicableEntityType.DOCUMENT).get("doi").getFeatured());
+        assertFalse(IdentifierConfigurationCatalogue.defaults()
+            .get(ApplicableEntityType.PERSON).get("apvnt").getFeatured());
+        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("eCrisId").getFeatured());
     }
 
     @Test
     void shouldDefaultToTodaysBehaviour() {
         var policy = IdentifierConfigurationCatalogue.defaults()
-            .get(ApplicableEntityType.PERSON).get("orcid");
+            .get(ApplicableEntityType.PERSON).get("apvnt");
 
         assertTrue(policy.getHideWhenNotSet());
         assertFalse(policy.getFeatured());
         assertTrue(policy.getCanBeUpdated());
+    }
+
+    @Test
+    void shouldFeatureTheIdentifiersLandingHeadersUsedToHardcode() {
+        var defaults = IdentifierConfigurationCatalogue.defaults();
+
+        List.of("orcid", "scopusAuthorId", "openAlexId", "webOfScienceResearcherId").forEach(
+            identifier -> assertTrue(
+                defaults.get(ApplicableEntityType.PERSON).get(identifier).getFeatured(),
+                identifier));
+        assertTrue(defaults.get(ApplicableEntityType.DOCUMENT).get("doi").getFeatured());
+        assertTrue(defaults.get(ApplicableEntityType.PROJECT).get("raid").getFeatured());
+
+        // nothing an organisation unit header showed, so nothing is featured there
+        defaults.get(ApplicableEntityType.ORGANISATION_UNIT).forEach(
+            (identifier, policy) -> assertFalse(policy.getFeatured(), identifier));
+        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("apvnt").getFeatured());
     }
 
     @Test
@@ -92,7 +119,7 @@ public class IdentifierConfigurationCatalogueTest {
 
         var completed = IdentifierConfigurationCatalogue.withDefaults(stored);
 
-        assertEquals(3, completed.size());
+        assertEquals(4, completed.size());
         assertFalse(completed.containsKey(ApplicableEntityType.JOURNAL));
         assertFalse(completed.get(ApplicableEntityType.PERSON)
             .containsKey("identifierThatLeftTheCatalogue"));
@@ -102,8 +129,9 @@ public class IdentifierConfigurationCatalogueTest {
     void shouldAnswerFullDefaultsForAnAbsentConfiguration() {
         var completed = IdentifierConfigurationCatalogue.withDefaults(null);
 
-        assertEquals(3, completed.size());
+        assertEquals(4, completed.size());
         assertNotNull(completed.get(ApplicableEntityType.ORGANISATION_UNIT).get("ror"));
+        assertNotNull(completed.get(ApplicableEntityType.PROJECT).get("raid"));
     }
 
     @Test

@@ -27,7 +27,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -784,9 +783,6 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         mongoTemplate.save(
             new ResumptionTokenStash(null, newToken.getValue(), newToken.getExpirationDate()));
-        mongoTemplate.indexOps(ResumptionTokenStash.class)
-            .ensureIndex(new Index().on("expirationTimestamp", Sort.Direction.ASC)
-                .expire(0L));
         return newToken;
     }
 

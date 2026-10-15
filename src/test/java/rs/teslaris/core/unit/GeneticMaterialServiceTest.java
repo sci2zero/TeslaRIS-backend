@@ -152,7 +152,7 @@ public class GeneticMaterialServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(geneticMaterialService, "documentApprovedByDefault", true);
     }
 

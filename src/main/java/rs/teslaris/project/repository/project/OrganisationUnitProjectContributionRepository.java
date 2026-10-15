@@ -13,4 +13,8 @@ public interface OrganisationUnitProjectContributionRepository
     @Query("SELECT oupc.organisationUnit.id FROM OrganisationUnitProjectContribution oupc " +
         "WHERE oupc.project.id = :projectId AND oupc.organisationUnit IS NOT NULL")
     List<Integer> findOrganisationUnitIdsByProjectId(Integer projectId);
+
+    @Query("SELECT oupc FROM OrganisationUnitProjectContribution oupc " +
+        "WHERE oupc.project.id = :projectId")
+    List<OrganisationUnitProjectContribution> findByProjectId(Integer projectId);
 }

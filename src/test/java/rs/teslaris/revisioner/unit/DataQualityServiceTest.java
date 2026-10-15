@@ -28,11 +28,14 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -40,6 +43,8 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.PageImpl;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -79,37 +84,30 @@ public class DataQualityServiceTest {
 
     private static final String ORGANISATION_UNIT_ENTITY_TYPE =
         EntityType.ORGANISATION_UNIT.name();
-
+    private static final String FULL_REPORT_RULE_KEY = "missingAbstract";
+    private static final String FULL_REPORT_METRIC_KEY = "PTCRIS-F1-01DSTRUCT-01";
     @Mock
     private EntityRevisionRepository entityRevisionRepository;
-
     @Mock
     private LanguageTagService languageTagService;
-
     @Mock
     private SearchService<DataQualityAssessmentIndex> searchService;
-
     @Mock
     private DataQualityAssessmentIndexRepository dataQualityAssessmentIndexRepository;
-
     @Mock
     private DataQualityAssessmentRepository dataQualityAssessmentRepository;
-
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
-
     @Mock
     private DataQualityAggregator dataQualityAggregator;
-
     @Mock
     private OrganisationUnitService organisationUnitService;
-
     @Mock
     private PersonIndexRepository personIndexRepository;
-
+    @Mock
+    private MessageSource messageSource;
     @InjectMocks
     private DataQualityServiceImpl dataQualityService;
-
 
     private MultiLingualContent multilingualContent(String content) {
         var languageTag = new LanguageTag();
@@ -229,6 +227,315 @@ public class DataQualityServiceTest {
         // then (NotFoundException should be thrown)
         verify(entityRevisionRepository)
             .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
+    }
+
+    private List<List<Object>> exportedRows(InputStreamResource report) {
+        try (var workbook = new XSSFWorkbook(report.getInputStream())) {
+            var rows = new ArrayList<List<Object>>();
+
+            workbook.getSheetAt(0).forEach(row -> {
+                var values = new ArrayList<Object>();
+
+                row.forEach(cell -> values.add(
+                    cell.getCellType() == CellType.NUMERIC
+                        ? cell.getNumericCellValue()
+                        : cell.getStringCellValue()));
+
+                rows.add(values);
+            });
+
+            return rows;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private List<Object> rowStartingWith(List<List<Object>> rows, String firstCell) {
+        return rows.stream()
+            .filter(row -> !row.isEmpty() && firstCell.equals(row.getFirst()))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    private boolean hasRowStartingWith(List<List<Object>> rows, String firstCell) {
+        return rows.stream().anyMatch(row -> !row.isEmpty() && firstCell.equals(row.getFirst()));
+    }
+
+    private DataQualityAssessment reportAssessment(String entityType, boolean withFailedRule) {
+        var revision = EntityRevision.builder()
+            .entityType(entityType)
+            .entityId(1)
+            .majorVersion(4)
+            .minorVersion(2)
+            .revisionTimestamp(Instant.now())
+            .build();
+
+        var issue = ConstraintEvaluationResult.builder()
+            .key(FULL_REPORT_RULE_KEY)
+            .parameters(List.of("abstract"))
+            .severity(IssueSeverity.ERROR)
+            .dimension(QualityDimension.CONSISTENCY)
+            .build();
+
+        var assessment = DataQualityAssessment.builder()
+            .revision(revision)
+            .profileName("PTCRIS")
+            .profileVersion("1.3")
+            .engineVersion("1.0.0")
+            .valid(true)
+            .publicationCandidate(true)
+            .passedRules(42)
+            .warningFailedRules(0)
+            .errorFailedRules(withFailedRule ? 1 : 0)
+            .totalPoints(100.0)
+            .achievedPointsNormalised(91.3)
+            .qualityScore(91.3)
+            .totalPointsFair(50.0)
+            .achievedFairPointsNormalised(43.5)
+            .qualityScoreFair(87.0)
+            .startedAt(Instant.now())
+            .finishedAt(Instant.now())
+            .issues(withFailedRule ? List.of(issue) : List.of())
+            .build();
+
+        revision.getAssessments().add(assessment);
+
+        return assessment;
+    }
+
+    private void stubFullReportConfiguration(
+        MockedStatic<DataQualityAssessmentConfigurationLoader> configurationLoader) {
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getTargetTypesFromDocumentType(
+                any()))
+            .thenReturn(List.of("Document"));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getTargetTypesFromEntityType(
+                any()))
+            .thenReturn(List.of("Document"));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getRulesForTarget(
+                anyString(), anyString(), any()))
+            .thenReturn(List.of(Map.entry(FULL_REPORT_RULE_KEY,
+                remark(IssueSeverity.ERROR, QualityDimension.CONSISTENCY))));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                anyString(), anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("Abstract is missing")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityRemark(
+                anyString(), anyString(), anyString(), any()))
+            .thenReturn(Set.of(multilingualContent("The abstract has to be provided")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                anyString()))
+            .thenReturn("1.3");
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.listMetrics(anyString(),
+                anyString()))
+            .thenReturn(Map.of(FULL_REPORT_METRIC_KEY, Set.of(QualityDimension.CONSISTENCY)));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getMetricTitle(anyString(),
+                anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("Structural completeness")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getMetricDefinition(anyString(),
+                anyString(), anyString()))
+            .thenReturn(Set.of(multilingualContent("How complete the record is")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(
+                anyString(), anyString()))
+            .thenReturn("PTCRIS profile");
+        configurationLoader
+            .when(DataQualityAssessmentConfigurationLoader::listAvailableProfilesWithVersion)
+            .thenReturn(Set.of(Pair.makePair("PTCRIS", "1.3")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(anyString(),
+                anyString(), anyString(), any(), any(), any()))
+            .thenReturn(Set.of(FULL_REPORT_RULE_KEY));
+    }
+
+    private void stubRequestedRevision(String entityType, DataQualityAssessment assessment) {
+        when(entityRevisionRepository
+            .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
+                entityType, 1, 4, 2)).thenReturn(Optional.of(assessment.getRevision()));
+    }
+
+    @Test
+    public void shouldExportOnlyTheAssessmentSectionForATypeWithoutRelatedQuality() {
+        // given
+        var assessment = reportAssessment(ENTITY_TYPE, true);
+
+        stubRequestedRevision(ENTITY_TYPE, assessment);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            var rows = exportedRows(dataQualityService.exportFullReport(ENTITY_TYPE, 1, "PTCRIS",
+                4, 2, "en"));
+
+            // then
+            assertEquals("repositoryAnalytics.fullAssessmentReport", rows.getFirst().getFirst());
+            assertTrue(hasRowStartingWith(rows, "repositoryAnalytics.assessment"));
+            assertFalse(hasRowStartingWith(rows, "repositoryAnalytics.relatedQuality"));
+            assertFalse(hasRowStartingWith(rows,
+                "repositoryAnalytics.entityType.ORGANISATION_UNITS"));
+
+            verifyNoInteractions(dataQualityAggregator);
+        }
+    }
+
+    @Test
+    public void shouldExportTheAssessmentContextAndScores() {
+        // given
+        var assessment = reportAssessment(ENTITY_TYPE, true);
+
+        stubRequestedRevision(ENTITY_TYPE, assessment);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            var rows = exportedRows(dataQualityService.exportFullReport(ENTITY_TYPE, 1, "PTCRIS",
+                4, 2, "en"));
+
+            // then
+            assertEquals("PTCRIS profile",
+                rowStartingWith(rows, "repositoryAnalytics.profile").get(1));
+            assertEquals("1.3", rowStartingWith(rows, "repositoryAnalytics.profileVersion").get(1));
+            assertEquals("4.2",
+                rowStartingWith(rows, "repositoryAnalytics.header.recordVersion").get(1));
+
+            assertEquals(0.913,
+                (double) rowStartingWith(rows, "repositoryAnalytics.header.overallScore").get(1),
+                0.0001);
+            assertEquals(0.87,
+                (double) rowStartingWith(rows, "repositoryAnalytics.header.fairCompliance").get(1),
+                0.0001);
+            assertEquals(42.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.passedConstraints").get(1));
+            assertEquals(1.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.failedConstraints").get(1));
+            assertEquals(43.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.totalConstraints").get(1));
+        }
+    }
+
+    @Test
+    public void shouldExportOneRowPerFailedConstraintWithItsResolvedMetricTitle() {
+        // given
+        var assessment = reportAssessment(ENTITY_TYPE, true);
+
+        stubRequestedRevision(ENTITY_TYPE, assessment);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            var rows = exportedRows(dataQualityService.exportFullReport(ENTITY_TYPE, 1, "PTCRIS",
+                4, 2, "en"));
+
+            // then
+            var constraint = rowStartingWith(rows, "Abstract is missing");
+
+            assertEquals("repositoryAnalytics.dimension.CONSISTENCY", constraint.get(1));
+            assertEquals("Structural completeness", constraint.get(2));
+            assertEquals("repositoryAnalytics.severity.ERROR", constraint.get(3));
+            assertEquals("The abstract has to be provided", constraint.get(4));
+            assertEquals("abstract", constraint.get(5));
+        }
+    }
+
+    @Test
+    public void shouldSayWhenNoConstraintFailed() {
+        // given
+        var assessment = reportAssessment(ENTITY_TYPE, false);
+
+        stubRequestedRevision(ENTITY_TYPE, assessment);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            var rows = exportedRows(dataQualityService.exportFullReport(ENTITY_TYPE, 1, "PTCRIS",
+                4, 2, "en"));
+
+            // then
+            assertTrue(hasRowStartingWith(rows, "repositoryAnalytics.noFailedConstraints"));
+            assertFalse(hasRowStartingWith(rows, "Abstract is missing"));
+            assertEquals(0.0,
+                rowStartingWith(rows, "repositoryAnalytics.header.failedConstraints").get(1));
+        }
+    }
+
+    @Test
+    public void shouldAppendTheRelatedQualitySectionForAPerson() {
+        // given
+        var assessment = reportAssessment(PERSON_ENTITY_TYPE, true);
+
+        stubRequestedRevision(PERSON_ENTITY_TYPE, assessment);
+
+        when(entityRevisionRepository.findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            PERSON_ENTITY_TYPE, 1)).thenReturn(Optional.of(assessment.getRevision()));
+
+        stubAggregates(2, 5, 4, 1, 92.0, 186, 5);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            var rows = exportedRows(dataQualityService.exportFullReport(PERSON_ENTITY_TYPE, 1,
+                "PTCRIS", 4, 2, "en"));
+
+            // then
+            assertTrue(hasRowStartingWith(rows, "repositoryAnalytics.assessment"));
+            assertTrue(hasRowStartingWith(rows, "repositoryAnalytics.relatedQuality"));
+
+            // Related quality is read off the latest revision, which is the same one here.
+            assertEquals("4.2", rows.stream()
+                .filter(row -> !row.isEmpty() &&
+                    "repositoryAnalytics.header.recordVersion".equals(row.getFirst()))
+                .toList().getLast().get(1));
+
+            // A person has no related persons, so that row stays unsupported.
+            var persons = rowStartingWith(rows, "repositoryAnalytics.entityType.PERSONS");
+            assertEquals("-", persons.get(1));
+
+            assertTrue(hasRowStartingWith(rows, "repositoryAnalytics.entityType.OUTPUTS"));
+        }
+    }
+
+    @Test
+    public void shouldThrowWhenTheRequestedProfileHasNoAssessmentOnThatVersion() {
+        // given
+        var assessment = reportAssessment(ENTITY_TYPE, true);
+
+        stubRequestedRevision(ENTITY_TYPE, assessment);
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            stubFullReportConfiguration(configurationLoader);
+
+            // when
+            // then
+            assertThrows(NotFoundException.class,
+                () -> dataQualityService.exportFullReport(ENTITY_TYPE, 1, "OPENAIRE", 4, 2, "en"));
+        }
     }
 
     private DataQualityAssessment fullyScoredAssessment(Integer majorVersion,

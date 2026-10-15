@@ -24,6 +24,8 @@ public class ResumptionTokenStash {
     private String tokenValue;
 
     @Field("expiration_timestamp")
+    // Declaration only - the TTL index is created by MongoIndexInitializer, since annotation driven
+    // index creation is off.
     @Indexed(name = "expiration_timestamp", expireAfterSeconds = 1)
     private Date expirationTimestamp;
 }

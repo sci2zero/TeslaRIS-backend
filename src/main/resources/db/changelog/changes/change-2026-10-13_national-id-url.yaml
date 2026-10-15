@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-10-13-national-id-url
+      author: teslaris
+      changes:
+        - addColumn:
+            tableName: cris_context_information
+            columns:
+              - column:
+                  name: person_national_id_url
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: organisation_unit_national_id_url
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: document_national_id_url
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: project_national_id_url
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: cris_context_information
+            columnName: person_national_id_url
+        - dropColumn:
+            tableName: cris_context_information
+            columnName: organisation_unit_national_id_url
+        - dropColumn:
+            tableName: cris_context_information
+            columnName: document_national_id_url
+        - dropColumn:
+            tableName: cris_context_information
+            columnName: project_national_id_url

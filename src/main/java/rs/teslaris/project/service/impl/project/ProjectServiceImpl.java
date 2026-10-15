@@ -7,10 +7,10 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,11 +25,7 @@ import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.ResearchArea;
-import rs.teslaris.core.model.document.OrganisationUnitContribution;
-import rs.teslaris.core.model.document.PersonContribution;
-import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
@@ -68,6 +64,7 @@ import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectCon
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @Service
 @RequiredArgsConstructor
@@ -110,6 +107,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final OrganisationUnitService organisationUnitService;
 
     private final InvolvementRepository involvementRepository;
+
+    private final ProjectScopeCalculator projectScopeCalculator;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -348,6 +347,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         projectIndexRepository.save(index);
     }
 
+    @Override
+    @Transactional
+    public void refreshProjectIndex(Integer projectId) {
+        projectRepository.findById(projectId).ifPresent(this::refreshProjectIndex);
+    }
+
     private void refreshProjectIndex(Project project) {
         var index = projectIndexRepository.findProjectIndexByDatabaseId(project.getId())
             .orElseGet(ProjectIndex::new);
@@ -417,8 +422,26 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         project.setUris(projectDTO.getUris());
-        project.setDoi(projectDTO.getDoi());
-        project.setRaid(projectDTO.getRaid());
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getDoi(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByDoi,
+            project::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getRaid(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByRaid,
+            project::setRaid,
+            "raidFormatError",
+            "raidExistsError"
+        );
+
         IdentifierUtil.validateAndSetIdentifier(
             projectDTO.getNationalId(),
             project.getId(),
@@ -596,44 +619,38 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         indexContributorIds(project, index);
         indexCoordinatorFields(project, index);
+        index.setActivitiesCount(countActivities(project));
 
         return index;
     }
 
-    private void indexContributorIds(Project project, ProjectIndex index) {
-        index.setPersonIds(project.getPersons().stream()
-            .map(PersonContribution::getPerson)
-            .filter(Objects::nonNull)
-            .map(Person::getId)
-            .toList());
+    /**
+     * A contribution counts as an activity once it says when it happened or what it was about,
+     * which is the same rule the document index and the quality assessment apply.
+     */
+    private Integer countActivities(Project project) {
+        var personActivities = project.getPersons().stream()
+            .filter(contribution -> isActivity(contribution.getDateFrom(),
+                contribution.getDateTo(), contribution.getResearchAreas()))
+            .count();
 
-        var institutionIds = new HashSet<Integer>();
+        var organisationActivities = project.getOrganisations().stream()
+            .filter(contribution -> isActivity(contribution.getDateFrom(),
+                contribution.getDateTo(), null))
+            .count();
 
-        project.getOrganisations().stream()
-            .map(OrganisationUnitContribution::getOrganisationUnit)
-            .filter(Objects::nonNull)
-            .map(OrganisationUnit::getId)
-            .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
-                organisationUnitId));
-
-        project.getPersons().stream()
-            .map(PersonContribution::getPerson)
-            .filter(Objects::nonNull)
-            .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
-                .stream()
-                .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
-                    employment.getInvolvementType()))
-                .forEach(employment -> addWithSuperHierarchy(institutionIds,
-                    employment.getOrganisationUnit().getId())));
-
-        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
+        return Math.toIntExact(personActivities + organisationActivities);
     }
 
-    private void addWithSuperHierarchy(HashSet<Integer> institutionIds,
-                                       Integer organisationUnitId) {
-        institutionIds.add(organisationUnitId);
-        institutionIds.addAll(
-            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
+    private boolean isActivity(LocalDate dateFrom, LocalDate dateTo,
+                               Set<ResearchArea> researchAreas) {
+        return Objects.nonNull(dateFrom) || Objects.nonNull(dateTo) ||
+            (Objects.nonNull(researchAreas) && !researchAreas.isEmpty());
+    }
+
+    private void indexContributorIds(Project project, ProjectIndex index) {
+        index.setPersonIds(projectScopeCalculator.personIds(project));
+        index.setOrganisationUnitIds(projectScopeCalculator.organisationUnitIds(project));
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {

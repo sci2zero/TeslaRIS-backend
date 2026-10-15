@@ -40,7 +40,7 @@ public class ModuleBoundaryTest {
     /**
      * {@code core} reaching back into a module is the worse direction: it makes that module
      * un-extractable and drags it into every other module through core. This set is empty, and
-     * must stay empty - a new entry here is a module that can no longer be extracted.
+     * must stay empty because a new entry here is a module that can no longer be extracted.
      */
     private static final Set<String> MODULES_CORE_STILL_REACHES_INTO = Set.of();
 
