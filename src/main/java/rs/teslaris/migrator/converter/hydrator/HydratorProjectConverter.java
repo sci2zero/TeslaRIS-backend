@@ -206,10 +206,6 @@ public class HydratorProjectConverter implements
             ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase(Locale.ROOT);
     }
 
-    public String keyOf(HydratorProjectModel.ProjectDocument record, ProjectMigrationDTO dto) {
-        return dto.sourceId();
-    }
-
     private HydratorProjectModel.Project projectOf(HydratorProjectModel.ProjectDocument record) {
         if (Objects.isNull(record) || Objects.isNull(record.record()) ||
             Objects.isNull(record.record().metadata())) {

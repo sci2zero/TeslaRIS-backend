@@ -53,7 +53,8 @@ public class HydratorEmploymentExtractor
             if (Objects.isNull(institution)) {
                 migrationLog.valueDropped(HydratorSource.NAME,
                     MigrationEntityType.PERSON_EMPLOYMENT.name(),
-                    record.id() + "#employment#" + employment.id(), HydratorMappingRule.cv(39),
+                    EmploymentMigrationDTO.keyOf(record.id(), employment.id()),
+                    HydratorMappingRule.cv(39),
                     "employment without institution");
                 return;
             }
@@ -81,13 +82,6 @@ public class HydratorEmploymentExtractor
         });
 
         return result;
-    }
-
-    /**
-     * Employment ids are unique only within a curriculum, hence the composite key.
-     */
-    public String keyOf(HydratorCVModel.Curriculum record, EmploymentMigrationDTO dto) {
-        return record.id() + "#employment#" + dto.sourceId();
     }
 
     private HydratorCVModel.Institution primaryInstitution(HydratorCVModel.Employment employment) {

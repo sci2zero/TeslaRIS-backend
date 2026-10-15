@@ -88,7 +88,7 @@ public class HydratorFundingExtractorTest {
 
         assertEquals(1, result.size());
         var item = result.getFirst();
-        assertEquals("TEST001#funding#F1", extractor.keyOf(record, item));
+        assertEquals("TEST001#funding#F1", item.sourceKey());
         assertNull(item.rejection());
         var dto = item.funding();
         assertEquals("Test Programme 2020", dto.getName().getFirst().getContent());

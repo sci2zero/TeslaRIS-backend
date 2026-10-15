@@ -75,7 +75,7 @@ public class HydratorPrizeExtractorTest {
         assertEquals(1, result.size());
         var item = result.getFirst();
         assertEquals("cv-1", item.personSourceKey());
-        assertEquals("cv-1#distinction#7", extractor.keyOf(record, item));
+        assertEquals("cv-1#distinction#7", item.sourceKey());
         assertEquals("Test Award", item.prize().getTitle().getFirst().getContent());
         assertEquals(LocalDate.of(2015, 1, 1), item.prize().getDate());
         assertEquals(PrizeType.AWARD, item.prize().getPrizeType());

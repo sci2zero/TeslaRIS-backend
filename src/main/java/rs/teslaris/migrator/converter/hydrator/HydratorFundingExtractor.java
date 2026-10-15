@@ -51,7 +51,7 @@ public class HydratorFundingExtractor
                 return;
             }
 
-            var key = keyOf(project.projectId(), funding.id());
+            var key = FundingMigrationDTO.keyOf(project.projectId(), funding.id());
             var dto = new FundingDTO();
 
             if (Objects.nonNull(funding.name())) {
@@ -87,14 +87,6 @@ public class HydratorFundingExtractor
         });
 
         return result;
-    }
-
-    public String keyOf(HydratorProjectModel.ProjectDocument record, FundingMigrationDTO dto) {
-        return keyOf(dto.projectSourceKey(), dto.sourceId());
-    }
-
-    private String keyOf(String projectId, String fundingId) {
-        return projectId + "#funding#" + fundingId;
     }
 
     // DOI is the funding's strong id; project references and QREN codes are internal ids

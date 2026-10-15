@@ -6,9 +6,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
-import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
-import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
@@ -29,15 +27,10 @@ public class EmploymentEntityCreator implements EntityCreator<EmploymentMigratio
 
     @Override
     public Integer create(EmploymentMigrationDTO dto, boolean performIndex) {
-        if (Objects.nonNull(dto.rejection())) {
-            throw new InvalidSourceValueException(dto.rejection());
-        }
+        dto.throwIfRejected();
 
-        var personId = idResolver
-            .resolve(HydratorSource.NAME, MigrationEntityType.PERSON, dto.personSourceKey())
-            .orElseThrow(() -> new MigrationException(String.format(
-                "Person '%s' has not been migrated yet - run the person pass first.",
-                dto.personSourceKey())));
+        var personId = idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON,
+            dto.personSourceKey());
 
         var institution = institutionResolver.resolve(dto.institution());
         if (institution.found()) {
@@ -45,7 +38,7 @@ public class EmploymentEntityCreator implements EntityCreator<EmploymentMigratio
         } else {
             migrationLog.valueDropped(HydratorSource.NAME,
                 MigrationEntityType.PERSON_EMPLOYMENT.name(),
-                dto.personSourceKey() + "#employment#" + dto.sourceId(), HydratorMappingRule.cv(39),
+                dto.sourceKey(), HydratorMappingRule.cv(39),
                 "organisation unit not linked, institution kept as display name: " +
                     institution.reason());
         }

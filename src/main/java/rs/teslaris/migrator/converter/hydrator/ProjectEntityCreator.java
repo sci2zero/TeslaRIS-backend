@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.migrator.pipeline.EntityCreator;
-import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
@@ -33,9 +32,7 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
 
     @Override
     public Integer create(ProjectMigrationDTO dto, boolean performIndex) {
-        if (Objects.nonNull(dto.rejection())) {
-            throw new InvalidSourceValueException(dto.rejection());
-        }
+        dto.throwIfRejected();
 
         dto.consortium().forEach(entry ->
             dto.project().getOrganisations().add(contribution(dto.sourceId(), entry)));

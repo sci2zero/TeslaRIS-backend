@@ -7,9 +7,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
-import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
-import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -36,18 +34,13 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
 
     @Override
     public Integer create(FundingMigrationDTO dto, boolean performIndex) {
-        if (Objects.nonNull(dto.rejection())) {
-            throw new InvalidSourceValueException(dto.rejection());
-        }
+        dto.throwIfRejected();
 
-        var key = dto.projectSourceKey() + "#funding#" + dto.sourceId();
+        var key = dto.sourceKey();
         var funding = dto.funding();
 
-        funding.setProjectId(idResolver
-            .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, dto.projectSourceKey())
-            .orElseThrow(() -> new MigrationException(String.format(
-                "Project '%s' has not been migrated yet - run the project pass first.",
-                dto.projectSourceKey()))));
+        funding.setProjectId(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT,
+            dto.projectSourceKey()));
 
         setFunder(key, dto);
         setCurrency(key, funding);

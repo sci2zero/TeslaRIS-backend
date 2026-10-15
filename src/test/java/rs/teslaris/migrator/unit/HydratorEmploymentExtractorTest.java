@@ -70,7 +70,7 @@ public class HydratorEmploymentExtractorTest {
 
         assertEquals(1, result.size());
         var item = result.getFirst();
-        assertEquals("cv-1#employment#42", extractor.keyOf(record, item));
+        assertEquals("cv-1#employment#42", item.sourceKey());
         assertEquals("cv-1", item.personSourceKey());
         assertEquals("Test University", item.institution().name());
         assertNull(item.rejection());

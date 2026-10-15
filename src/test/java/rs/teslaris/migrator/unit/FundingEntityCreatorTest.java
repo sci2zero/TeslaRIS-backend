@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,8 +78,8 @@ public class FundingEntityCreatorTest {
         var created = new Funding();
         created.setId(42);
         when(fundingService.createFunding(any())).thenReturn(created);
-        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
-            .thenReturn(Optional.of(5));
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
+            .thenReturn(5);
     }
 
     private static FundingDTO fundingWithAmount() {
@@ -141,8 +140,8 @@ public class FundingEntityCreatorTest {
 
     @Test
     void shouldFailWhenProjectIsNotMigrated() {
-        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST999"))
-            .thenReturn(Optional.empty());
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST999"))
+            .thenThrow(new MigrationException("not migrated"));
 
         assertThrows(MigrationException.class, () -> creator.create(
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), null), true));

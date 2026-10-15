@@ -125,13 +125,13 @@ public class HydratorPipelineConfiguration {
                     RecordExtractor.of(projectConverter),
                     projectEntityCreator,
                     FailureHandler.noOp(),
-                    projectConverter::keyOf),
+                    (record, dto) -> dto.sourceKey()),
                 new SimpleMapping<>(
                     MigrationEntityType.PROJECT_FUNDING,
                     fundingExtractor,
                     fundingEntityCreator,
                     FailureHandler.noOp(),
-                    fundingExtractor::keyOf))),
+                    (record, dto) -> dto.sourceKey()))),
             sourceProperties.getRetry().toPolicy(),
             HydratorProjectModel.ProjectDocument::id,
             sourceProperties.batchSizeOrDefault(properties.getDefaultBatchSize()));
@@ -177,7 +177,7 @@ public class HydratorPipelineConfiguration {
             prizeExtractor,
             prizeEntityCreator,
             FailureHandler.noOp(),
-            prizeExtractor::keyOf);
+            (record, dto) -> dto.sourceKey());
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> employmentRouter() {
@@ -186,7 +186,7 @@ public class HydratorPipelineConfiguration {
             employmentExtractor,
             employmentEntityCreator,
             FailureHandler.noOp(),
-            employmentExtractor::keyOf);
+            (record, dto) -> dto.sourceKey());
     }
 
     private MigrationPipeline<HydratorCVModel.Curriculum> pipeline(

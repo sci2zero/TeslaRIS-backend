@@ -56,7 +56,7 @@ public class HydratorPrizeExtractor
                 return;
             }
 
-            var key = keyOf(record.id(), distinction.id());
+            var key = PrizeMigrationDTO.keyOf(record.id(), distinction.id());
 
             if (Objects.isNull(distinction.name()) || distinction.name().isBlank()) {
                 dropped(key, "distinction without name");
@@ -85,17 +85,6 @@ public class HydratorPrizeExtractor
         });
 
         return result;
-    }
-
-    /**
-     * Distinction ids are unique only within a curriculum, hence the composite key.
-     */
-    public String keyOf(HydratorCVModel.Curriculum record, PrizeMigrationDTO dto) {
-        return keyOf(record.id(), dto.sourceId());
-    }
-
-    private String keyOf(String curriculumId, String distinctionId) {
-        return curriculumId + "#distinction#" + distinctionId;
     }
 
     // One keyword per line, as for the person's keywords

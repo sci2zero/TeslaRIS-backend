@@ -9,7 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -57,8 +56,8 @@ public class EmploymentEntityCreatorTest {
         var employment = new EmploymentDTO();
         var created = new Employment();
         created.setId(42);
-        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
-            .thenReturn(Optional.of(5));
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
+            .thenReturn(5);
         when(institutionResolver.resolve(INSTITUTION))
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
@@ -72,8 +71,8 @@ public class EmploymentEntityCreatorTest {
 
     @Test
     void shouldFailWhenPersonIsNotMigrated() {
-        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
-            .thenReturn(Optional.empty());
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
+            .thenThrow(new MigrationException("not migrated"));
 
         assertThrows(MigrationException.class, () -> creator.create(
             new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, new EmploymentDTO(),
@@ -95,8 +94,8 @@ public class EmploymentEntityCreatorTest {
         var employment = new EmploymentDTO();
         var created = new Employment();
         created.setId(43);
-        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
-            .thenReturn(Optional.of(5));
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
+            .thenReturn(5);
         when(institutionResolver.resolve(INSTITUTION))
             .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
