@@ -225,8 +225,21 @@ public class HydratorProjectConverterTest {
         assertEquals(OrganisationUnitProjectContributionType.CONTRACTOR, consortium.get(1).type());
         assertEquals(OrganisationUnitProjectContributionType.PARTNER, consortium.get(2).type());
         assertEquals(3, consortium.get(2).orderNumber());
-        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST006"),
-            eq("CW-002-MAP-000022"), eq("PARTNER amount not mapped"));
+        assertNull(consortium.get(0).amount());
+        assertEquals("10", consortium.get(2).amount().value());
+    }
+
+    @Test
+    void shouldLeaveConsortiumAmountsToTheOnlyFunding() throws Exception {
+        var result = converter.toDTO(document("""
+            {"projectId": "TEST008", "titles": [{"language": "en", "value": "Test"}],
+             "funded": [{"fundedAs": {"funding": {"id": "F1"}}}],
+             "consortium": {
+               "partner": [{"orgUnit": {"name": {"value": "Test Partner"},
+                 "amount": {"currency": "EUR", "value": "10"}}}]}}
+            """));
+
+        assertNull(result.consortium().getFirst().amount());
     }
 
     @Test

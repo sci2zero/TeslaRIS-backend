@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.migrator.pipeline.EntityCreator;
+import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
@@ -26,6 +28,10 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
 
     private final HydratorConversionUtil conversionUtil;
 
+    private final HydratorFundingPartFactory fundingPartFactory;
+
+    private final MigrationIdResolver idResolver;
+
     private final MigrationLog migrationLog;
 
 
@@ -35,6 +41,15 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
 
         dto.consortium().forEach(entry ->
             dto.project().getOrganisations().add(contribution(dto.sourceId(), entry)));
+
+        var amounts = dto.consortium().stream()
+            .filter(entry -> Objects.nonNull(entry.amount()))
+            .count();
+        if (amounts > 0) {
+            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
+                dto.sourceId(), HydratorMappingRule.sciproj(22), amounts +
+                    " consortium amount(s) linked to contributions only: funding not determined");
+        }
 
         // One log line per reason and project instead of one per team member
         var unlinked = new TreeMap<String, Integer>();
@@ -46,8 +61,17 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
                 count + " team member(s) " + reason));
 
         var created = projectService.createProject(dto.project());
+        if (Objects.isNull(created)) {
+            return null;
+        }
 
-        return Objects.isNull(created) ? null : created.getId();
+        // Fundings of the project link their parts to these contributions
+        created.getOrganisations().forEach(contribution -> idResolver.remember(
+            HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
+            ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), contribution.getOrderNumber()),
+            contribution.getId()));
+
+        return created.getId();
     }
 
     // CW-002-MAP-000022: linked by identifier, otherwise kept as display name
@@ -67,6 +91,12 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(), key,
                 HydratorMappingRule.sciproj(22),
                 entry.type() + " not linked, kept as display name: " + match.reason());
+        }
+
+        // Several or no fundings: the part cannot be attributed to one of them
+        if (Objects.nonNull(entry.amount())) {
+            fundingPartFactory.fundingPart(MigrationEntityType.PROJECT, key, entry)
+                .ifPresent(part -> contribution.setFundingParts(new ArrayList<>(List.of(part))));
         }
 
         return contribution;

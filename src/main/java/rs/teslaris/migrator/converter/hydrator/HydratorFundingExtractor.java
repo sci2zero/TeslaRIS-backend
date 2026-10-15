@@ -25,6 +25,8 @@ public class HydratorFundingExtractor
 
     private final HydratorConversionUtil conversionUtil;
 
+    private final HydratorProjectConverter projectConverter;
+
     private final MigrationLog migrationLog;
 
 
@@ -40,6 +42,11 @@ public class HydratorFundingExtractor
         }
 
         var result = new ArrayList<FundingMigrationDTO>();
+        var consortiumAmounts = HydratorProjectConverter.fundingCount(project) == 1 ?
+            projectConverter.consortiumEntries(project.consortium()).stream()
+                .filter(entry -> Objects.nonNull(entry.amount()))
+                .toList() :
+            List.<ProjectMigrationDTO.ConsortiumEntry>of();
 
         project.funded().forEach(funded -> {
             var funding = Objects.isNull(funded) || Objects.isNull(funded.fundedAs()) ? null :
@@ -82,7 +89,7 @@ public class HydratorFundingExtractor
             }
 
             result.add(new FundingMigrationDTO(project.projectId(), funding.id(),
-                funder(funded.fundedBy()), dto, rejection));
+                funder(funded.fundedBy()), dto, consortiumAmounts, rejection));
         });
 
         return result;

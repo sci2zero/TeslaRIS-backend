@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
 
@@ -50,9 +51,10 @@ public class HydratorFundingExtractorTest {
 
     @BeforeEach
     void setUp() {
-        extractor = new HydratorFundingExtractor(
-            new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
-            migrationLog);
+        var conversionUtil =
+            new HydratorConversionUtil(languageTagService, languageService, researchAreaService);
+        extractor = new HydratorFundingExtractor(conversionUtil,
+            new HydratorProjectConverter(conversionUtil, migrationLog), migrationLog);
     }
 
     private HydratorProjectModel.ProjectDocument document(String funded) throws Exception {
@@ -60,6 +62,10 @@ public class HydratorFundingExtractorTest {
             {"id": "doc-1", "record": {"metadata": {"project": {
               "projectId": "TEST001",
               "oaMandate": {"mandated": "True", "uri": "https://example.com/oa-policy"},
+              "consortium": {
+                "coordinator": [{"orgUnit": {"name": {"value": "Test Coordinator"}}}],
+                "partner": [{"orgUnit": {"name": {"value": "Test Partner"},
+                  "amount": {"currency": "EUR", "value": "1000"}}}]},
               "funded": %s}}}}
             """.formatted(funded), HydratorProjectModel.ProjectDocument.class);
     }
@@ -139,5 +145,24 @@ public class HydratorFundingExtractorTest {
         var result = extractor.extract(document("[" + funding("F1", "2020-02-30") + "]"));
 
         assertEquals("invalid date '2020-02-30'", result.getFirst().rejection());
+    }
+
+    @Test
+    void shouldCarryConsortiumAmountsToTheOnlyFunding() throws Exception {
+        var result = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"));
+
+        var amounts = result.getFirst().consortiumAmounts();
+        assertEquals(1, amounts.size());
+        assertEquals(2, amounts.getFirst().orderNumber());
+        assertEquals("1000", amounts.getFirst().amount().value());
+    }
+
+    @Test
+    void shouldNotCarryConsortiumAmountsWhenThereAreSeveralFundings() throws Exception {
+        var result = extractor.extract(document(
+            "[" + funding("F1", "2020-01-01") + "," + funding("F2", "2020-01-01") + "]"));
+
+        assertEquals(2, result.size());
+        assertTrue(result.stream().allMatch(dto -> dto.consortiumAmounts().isEmpty()));
     }
 }

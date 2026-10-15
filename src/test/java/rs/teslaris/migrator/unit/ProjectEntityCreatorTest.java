@@ -19,18 +19,26 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.model.commontypes.Currency;
+import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
+import rs.teslaris.migrator.converter.hydrator.HydratorFundingPartFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
+import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
+import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
+import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.project.PersonProjectContributionType;
 import rs.teslaris.project.model.project.Project;
@@ -56,6 +64,12 @@ public class ProjectEntityCreatorTest {
     private HydratorPersonResolver personResolver;
 
     @Mock
+    private CurrencyService currencyService;
+
+    @Mock
+    private MigrationIdResolver idResolver;
+
+    @Mock
     private MigrationLog migrationLog;
 
     private ProjectEntityCreator creator;
@@ -63,10 +77,12 @@ public class ProjectEntityCreatorTest {
 
     @BeforeEach
     void setUp() {
+        var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
+            mock(LanguageService.class), mock(ResearchAreaService.class));
         creator = new ProjectEntityCreator(projectService, institutionResolver, personResolver,
-            new HydratorConversionUtil(mock(LanguageTagService.class), mock(LanguageService.class),
-                mock(ResearchAreaService.class)),
-            migrationLog);
+            conversionUtil,
+            new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
+            idResolver, migrationLog);
 
         var project = new Project();
         project.setId(42);
@@ -83,9 +99,10 @@ public class ProjectEntityCreatorTest {
 
         var id = creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(
             new ProjectMigrationDTO.ConsortiumEntry(
-                OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1),
+                OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1, null),
             new ProjectMigrationDTO.ConsortiumEntry(
-                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2)), List.of(), null),
+                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
+            null),
             true);
 
         assertEquals(42, id);
@@ -138,5 +155,52 @@ public class ProjectEntityCreatorTest {
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
             eq("CW-002-MAP-000028"), eq("2 team member(s) TEAM_MEMBER not linked, name only: " +
                 "person has no identifier"));
+    }
+
+    @Test
+    void shouldLinkAmountToContributionOnlyWhenFundingIsNotDetermined() {
+        var dto = new ProjectDTO();
+        var euro = new Currency();
+        euro.setId(3);
+        when(currencyService.findCurrencyByCode("EUR")).thenReturn(euro);
+        when(institutionResolver.resolve(PARTNER))
+            .thenReturn(new HydratorInstitutionResolver.Match(7, null));
+
+        creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(
+            new ProjectMigrationDTO.ConsortiumEntry(
+                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 1,
+                new HydratorProjectModel.Amount("EUR", "1000"))), List.of(), null), true);
+
+        var parts = dto.getOrganisations().getFirst().getFundingParts();
+        assertEquals(1, parts.size());
+        assertNull(parts.getFirst().getFundingId());
+        assertEquals(1000, parts.getFirst().getAmount().getAmount());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000022"),
+            eq("1 consortium amount(s) linked to contributions only: funding not determined"));
+    }
+
+    @Test
+    void shouldRememberConsortiumContributions() {
+        var project = new Project();
+        project.setId(42);
+        project.getOrganisations().add(contribution(101, 1));
+        project.getOrganisations().add(contribution(102, 2));
+        when(projectService.createProject(any())).thenReturn(project);
+
+        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
+            null), true);
+
+        verify(idResolver).remember(HydratorSource.NAME,
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101);
+        verify(idResolver).remember(HydratorSource.NAME,
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102);
+    }
+
+    private static OrganisationUnitProjectContribution contribution(int id, int orderNumber) {
+        var contribution = new OrganisationUnitProjectContribution();
+        contribution.setId(id);
+        contribution.setOrderNumber(orderNumber);
+        return contribution;
     }
 }

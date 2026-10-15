@@ -3,6 +3,7 @@ package rs.teslaris.migrator.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,9 +29,12 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.FundingMigrationDTO;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
+import rs.teslaris.migrator.converter.hydrator.HydratorFundingPartFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
@@ -37,6 +42,7 @@ import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,11 +74,11 @@ public class FundingEntityCreatorTest {
 
     @BeforeEach
     void setUp() {
+        var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
+            mock(LanguageService.class), mock(ResearchAreaService.class));
         creator = new FundingEntityCreator(fundingService, currencyService, idResolver,
-            institutionResolver,
-            new HydratorConversionUtil(mock(LanguageTagService.class),
-                mock(LanguageService.class),
-                mock(ResearchAreaService.class)),
+            institutionResolver, conversionUtil,
+            new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
             migrationLog);
 
         var created = new Funding();
@@ -100,8 +106,8 @@ public class FundingEntityCreatorTest {
         when(institutionResolver.resolve(FUNDER))
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
 
-        var id = creator.create(new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, null),
-            true);
+        var id = creator.create(
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
 
         assertEquals(42, id);
         assertEquals(5, dto.getProjectId());
@@ -116,7 +122,8 @@ public class FundingEntityCreatorTest {
         when(institutionResolver.resolve(FUNDER))
             .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
 
-        creator.create(new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, null), true);
+        creator.create(
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
 
         assertNull(dto.getFunderId());
         assertEquals("Test Agency", dto.getDisplayFunder().getFirst().getContent());
@@ -130,7 +137,8 @@ public class FundingEntityCreatorTest {
         when(institutionResolver.resolve(FUNDER))
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
 
-        creator.create(new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, null), true);
+        creator.create(
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
 
         assertNull(dto.getAmount());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
@@ -144,7 +152,52 @@ public class FundingEntityCreatorTest {
             .thenThrow(new MigrationException("not migrated"));
 
         assertThrows(MigrationException.class, () -> creator.create(
-            new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), null), true));
+            new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
+            true));
         verify(fundingService, never()).createFunding(any());
+    }
+
+    private static ProjectMigrationDTO.ConsortiumEntry partnerWithAmount() {
+        return new ProjectMigrationDTO.ConsortiumEntry(
+            OrganisationUnitProjectContributionType.PARTNER,
+            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
+            new HydratorProjectModel.Amount("EUR", "1000"));
+    }
+
+    @Test
+    void shouldAddConsortiumAmountsAsFundingParts() {
+        var dto = new FundingDTO();
+        var euro = new Currency();
+        euro.setId(3);
+        when(currencyService.findCurrencyByCode("EUR")).thenReturn(euro);
+        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2"))
+            .thenReturn(Optional.of(11));
+
+        creator.create(new FundingMigrationDTO("TEST001", "F1", null, dto,
+            List.of(partnerWithAmount()), null), true);
+
+        assertEquals(1, dto.getFundingParts().size());
+        var part = dto.getFundingParts().getFirst();
+        assertEquals(11, part.getOrganisationUnitProjectContributionId());
+        assertEquals(1000, part.getAmount().getAmount());
+        assertEquals(3, part.getAmount().getCurrencyId());
+        assertEquals("Test Partner", part.getDescription().getFirst().getContent());
+    }
+
+    @Test
+    void shouldDropAmountWhenContributionIsNotFound() {
+        var dto = new FundingDTO();
+        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2"))
+            .thenReturn(Optional.empty());
+
+        creator.create(new FundingMigrationDTO("TEST001", "F1", null, dto,
+            List.of(partnerWithAmount()), null), true);
+
+        assertTrue(dto.getFundingParts().isEmpty());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
+            eq("TEST001#funding#F1"), eq("CW-002-MAP-000022"),
+            eq("PARTNER #2 amount dropped: contribution not found"));
     }
 }

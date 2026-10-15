@@ -17,6 +17,7 @@ public enum MigrationEntityType {
     PERSON_PRIZE,
     PROJECT,
     PROJECT_FUNDING,
+    PROJECT_ORGANISATION,
 
     DOCUMENT,
     JOURNAL_PUBLICATION,
@@ -31,7 +32,7 @@ public enum MigrationEntityType {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, THESIS, MONOGRAPH,
                  MONOGRAPH_PUBLICATION -> DOCUMENT;
             case PERSON_EMPLOYMENT, PERSON_PRIZE -> PERSON;
-            case PROJECT_FUNDING -> PROJECT;
+            case PROJECT_FUNDING, PROJECT_ORGANISATION -> PROJECT;
             default -> null;
         };
     }

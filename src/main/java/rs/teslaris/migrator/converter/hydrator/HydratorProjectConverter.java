@@ -74,30 +74,50 @@ public class HydratorProjectConverter implements
         // SciPROJ has no status nor project types; types stay empty until set in TeslaRIS
         dto.setStatus(status(dto.getDateFrom(), dto.getDateTo()));
 
-        return new ProjectMigrationDTO(key, dto, consortium(key, project.consortium()),
-            team(key, project.team()), rejection);
+        // A single funding takes the consortium amounts as its parts, see HydratorFundingExtractor
+        var consortium = consortiumEntries(project.consortium());
+        if (fundingCount(project) == 1) {
+            consortium = consortium.stream().map(entry -> new ProjectMigrationDTO.ConsortiumEntry(
+                entry.type(), entry.institution(), entry.orderNumber(), null)).toList();
+        }
+
+        return new ProjectMigrationDTO(key, dto, consortium, team(key, project.team()),
+            rejection);
     }
 
     // CW-002-MAP-000022…000027: order Coordinator → Contractor → Partner, source order per role
-    private List<ProjectMigrationDTO.ConsortiumEntry> consortium(
-        String key, HydratorProjectModel.Consortium consortium) {
+    public List<ProjectMigrationDTO.ConsortiumEntry> consortiumEntries(
+        HydratorProjectModel.Consortium consortium) {
         var entries = new ArrayList<ProjectMigrationDTO.ConsortiumEntry>();
 
         if (Objects.isNull(consortium)) {
             return entries;
         }
 
-        addMembers(key, entries, consortium.coordinator(),
+        addMembers(entries, consortium.coordinator(),
             OrganisationUnitProjectContributionType.COORDINATOR);
-        addMembers(key, entries, consortium.contractor(),
+        addMembers(entries, consortium.contractor(),
             OrganisationUnitProjectContributionType.CONTRACTOR);
-        addMembers(key, entries, consortium.partner(),
+        addMembers(entries, consortium.partner(),
             OrganisationUnitProjectContributionType.PARTNER);
 
         return entries;
     }
 
-    private void addMembers(String key, List<ProjectMigrationDTO.ConsortiumEntry> entries,
+    // Fundings that are migrated, i.e. the ones carrying an id
+    public static long fundingCount(HydratorProjectModel.Project project) {
+        if (Objects.isNull(project.funded())) {
+            return 0;
+        }
+
+        return project.funded().stream()
+            .filter(funded -> Objects.nonNull(funded) && Objects.nonNull(funded.fundedAs()) &&
+                Objects.nonNull(funded.fundedAs().funding()) &&
+                !isBlank(funded.fundedAs().funding().id()))
+            .count();
+    }
+
+    private void addMembers(List<ProjectMigrationDTO.ConsortiumEntry> entries,
                             List<HydratorProjectModel.ConsortiumMember> members,
                             OrganisationUnitProjectContributionType type) {
         if (Objects.isNull(members)) {
@@ -106,13 +126,9 @@ public class HydratorProjectConverter implements
 
         members.stream()
             .filter(member -> Objects.nonNull(member) && Objects.nonNull(member.orgUnit()))
-            .forEach(member -> {
-                if (Objects.nonNull(member.orgUnit().amount())) {
-                    dropped(key, HydratorMappingRule.sciproj(22), type + " amount not mapped");
-                }
-                entries.add(new ProjectMigrationDTO.ConsortiumEntry(type,
-                    conversionUtil.institution(member.orgUnit()), entries.size() + 1));
-            });
+            .forEach(member -> entries.add(new ProjectMigrationDTO.ConsortiumEntry(type,
+                conversionUtil.institution(member.orgUnit()), entries.size() + 1,
+                member.orgUnit().amount())));
     }
 
     // CW-002-MAP-000028…000031: order PI → Contact → Member, source order within a role
@@ -278,7 +294,7 @@ public class HydratorProjectConverter implements
             rule, reason);
     }
 
-    private boolean isBlank(String value) {
+    private static boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
     }
 }

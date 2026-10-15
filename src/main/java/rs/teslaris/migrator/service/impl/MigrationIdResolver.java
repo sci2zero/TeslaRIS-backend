@@ -1,8 +1,11 @@
 package rs.teslaris.migrator.service.impl;
 
+import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.migrator.model.MigrationItemStatus;
+import rs.teslaris.migrator.model.MigrationRecordLog;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
@@ -40,5 +43,21 @@ public class MigrationIdResolver {
             .orElseThrow(() -> new MigrationException(String.format(
                 "%s '%s' has not been migrated yet - run the %s pass first.",
                 entityType, sourceKey, entityType)));
+    }
+
+    /**
+     * For entities created as part of another one (a project's consortium contributions), which
+     * have no item of their own in the record log.
+     */
+    public void remember(String source, MigrationEntityType entityType, String sourceKey,
+                         Integer targetId) {
+        recordLogRepository.record(MigrationRecordLog.builder()
+            .source(source)
+            .entityType(entityType)
+            .sourceKey(sourceKey)
+            .status(MigrationItemStatus.CREATED)
+            .targetEntityId(targetId)
+            .processedAt(Instant.now())
+            .build());
     }
 }
