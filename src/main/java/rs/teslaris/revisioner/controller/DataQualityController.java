@@ -4,8 +4,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.revisioner.annotation.DataQualityEditCheck;
 import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
@@ -85,6 +89,24 @@ public class DataQualityController {
     public List<ProfileRelatedQualityDTO> getRelatedQuality(@PathVariable String entityType,
                                                             @PathVariable Integer entityId) {
         return dataQualityService.getRelatedQualityForEntity(entityType, entityId);
+    }
+
+    @GetMapping("/full-report/{entityType}/{entityId}/download")
+    @PreAuthorize("hasAuthority('ASSESS_DATA_QUALITY')")
+    @DataQualityEditCheck
+    public ResponseEntity<InputStreamResource> downloadFullReport(
+        @PathVariable String entityType,
+        @PathVariable Integer entityId,
+        @RequestParam String profileName,
+        @RequestParam Integer majorVersion,
+        @RequestParam Integer minorVersion,
+        @RequestParam(defaultValue = "en") String language) {
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition("full-assessment-report.xlsx"))
+            .body(dataQualityService.exportFullReport(entityType, entityId, profileName,
+                majorVersion, minorVersion, language));
     }
 
     @GetMapping(value = "/issues", produces = MediaType.APPLICATION_JSON_VALUE)
