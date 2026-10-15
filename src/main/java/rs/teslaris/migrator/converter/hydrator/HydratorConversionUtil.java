@@ -87,6 +87,9 @@ public class HydratorConversionUtil implements RunScopedCache {
         Set.of("da", "de", "do", "dos", "das", "e", "del", "della", "di", "du", "van", "von",
             "der", "la", "le", "los");
 
+    private static final Pattern ORCID_URL_PREFIX =
+        Pattern.compile("^https?://(www\\.)?orcid\\.org/", Pattern.CASE_INSENSITIVE);
+
     private final LanguageTagService languageTagService;
 
     private final LanguageService languageService;
@@ -423,6 +426,15 @@ public class HydratorConversionUtil implements RunScopedCache {
 
     public String normalise(String value) {
         return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+    }
+
+    // Bare ORCID iD from either the iD or its URL form; the checksum X is upper case
+    public String normaliseOrcid(String orcid) {
+        if (isBlank(orcid)) {
+            return null;
+        }
+
+        return ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase(Locale.ROOT);
     }
 
     /**

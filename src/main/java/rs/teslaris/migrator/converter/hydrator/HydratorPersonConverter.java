@@ -492,9 +492,8 @@ public class HydratorPersonConverter
     private void setIdentifiers(HydratorCVModel.Curriculum record, ImportPersonDTO dto) {
         dto.setNationalScienceId(
             identifier(record, CIENCIA_ID_CODE, value -> value, null));
-        dto.setOrcid(identifier(record, ORCID_CODE,
-            value -> value.replaceFirst("(?i)^https?://(www\\.)?orcid\\.org/", "")
-                .toUpperCase(Locale.ROOT), ORCID_PATTERN));
+        dto.setOrcid(identifier(record, ORCID_CODE, conversionUtil::normaliseOrcid,
+            ORCID_PATTERN));
         dto.setScopusAuthorId(identifier(record, SCOPUS_CODE, value -> value, SCOPUS_PATTERN));
         dto.setScholarId(
             identifier(record, GOOGLE_SCHOLAR_CODE, this::scholarId, SCHOLAR_PATTERN));

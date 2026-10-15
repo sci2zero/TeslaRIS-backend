@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -45,9 +43,6 @@ public class HydratorProjectConverter implements
 
     // Wikidata property used by SciPROJ for the Ciência ID
     private static final String CIENCIA_ID_TYPE = "Q122584897";
-
-    private static final Pattern ORCID_URL_PREFIX =
-        Pattern.compile("^https?://(www\\.)?orcid\\.org/", Pattern.CASE_INSENSITIVE);
 
     private final HydratorConversionUtil conversionUtil;
 
@@ -202,8 +197,7 @@ public class HydratorProjectConverter implements
                 .orElse(null);
         }
 
-        return isBlank(orcid) ? null :
-            ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase(Locale.ROOT);
+        return conversionUtil.normaliseOrcid(orcid);
     }
 
     private HydratorProjectModel.Project projectOf(HydratorProjectModel.ProjectDocument record) {
