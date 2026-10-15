@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -33,8 +32,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
+import rs.teslaris.migrator.pipeline.RunScopedCache;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
-import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 
 /**
  * Shared conversion helpers for the hydrator source: language tags, dates, and the synthetic keys
@@ -43,7 +42,7 @@ import rs.teslaris.migrator.util.MigrationRunStartedEvent;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class HydratorConversionUtil {
+public class HydratorConversionUtil implements RunScopedCache {
 
     /**
      * ISO 639-2 codes used by curricula, mapped onto the ISO 639-1 codes of the language
@@ -93,7 +92,7 @@ public class HydratorConversionUtil {
 
     private final ResearchAreaService researchAreaService;
 
-    // The language registry is small and static, while every curriculum looks it up
+    // The language registry is small and static, so this outlives runs unlike the caches below
     private final Map<String, Optional<Integer>> languageIds = new ConcurrentHashMap<>();
 
     /**
@@ -218,8 +217,8 @@ public class HydratorConversionUtil {
         return researchAreas;
     }
 
-    @EventListener(MigrationRunStartedEvent.class)
-    public void clearResearchAreaCache() {
+    @Override
+    public void clearCache() {
         researchAreaIdsByName = null;
         researchAreaMatches.clear();
     }
