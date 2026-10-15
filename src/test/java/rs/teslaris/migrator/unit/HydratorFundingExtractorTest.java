@@ -121,7 +121,7 @@ public class HydratorFundingExtractorTest {
         extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"));
 
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
-            eq("TEST001#funding#F1"), eq("MAP-002"),
+            eq("TEST001#funding#F1"), eq("CW-002-MAP-000002"),
             eq("funding type 'FundingProgramme' has no vocabulary"));
     }
 

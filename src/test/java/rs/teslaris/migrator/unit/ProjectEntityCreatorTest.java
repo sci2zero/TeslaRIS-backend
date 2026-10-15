@@ -101,7 +101,8 @@ public class ProjectEntityCreatorTest {
         assertEquals("Test Partner", display.getDisplayOrganisationUnit().getFirst().getContent());
         assertEquals(2, display.getOrderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("MAP-022"), eq("PARTNER not linked, kept as display name: identifier not found"));
+            eq("CW-002-MAP-000022"),
+            eq("PARTNER not linked, kept as display name: identifier not found"));
     }
 
     @Test
@@ -136,7 +137,7 @@ public class ProjectEntityCreatorTest {
         assertNull(dto.getPersons().get(1).getPersonId());
         assertEquals(3, dto.getPersons().get(2).getOrderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("MAP-028"), eq("2 team member(s) TEAM_MEMBER not linked, name only: " +
+            eq("CW-002-MAP-000028"), eq("2 team member(s) TEAM_MEMBER not linked, name only: " +
                 "person has no identifier"));
     }
 }

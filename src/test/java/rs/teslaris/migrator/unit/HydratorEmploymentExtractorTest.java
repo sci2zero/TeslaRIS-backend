@@ -90,7 +90,7 @@ public class HydratorEmploymentExtractorTest {
 
         assertTrue(result.isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_EMPLOYMENT"), eq("cv-1"),
-            eq("MAP-000039"), eq("employment without id"));
+            eq("CW-001-MAP-000039"), eq("employment without id"));
     }
 
     @Test
@@ -101,7 +101,7 @@ public class HydratorEmploymentExtractorTest {
 
         assertTrue(result.isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_EMPLOYMENT"),
-            eq("cv-1#employment#1"), eq("MAP-000039"), eq("employment without institution"));
+            eq("cv-1#employment#1"), eq("CW-001-MAP-000039"), eq("employment without institution"));
     }
 
     @Test

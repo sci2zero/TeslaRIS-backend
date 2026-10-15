@@ -22,8 +22,8 @@ import rs.teslaris.migrator.util.MigrationLog;
  * <p>
  * The ISSN is the stronger key: an existing journal with it is reused, even one created by an
  * earlier run. Names are matched case-insensitively after normalisation only - no fuzzy matching.
- * An article with neither is linked to a shared "Not informed" journal (MAP-000053). Merging stubs
- * with real journals is left to the existing deduplication tooling.
+ * An article with neither is linked to a shared "Not informed" journal (CW-001-MAP-000053). Merging
+ * stubs with real journals is left to the existing deduplication tooling.
  * <p>
  * The cache holds only journals that exist, but deduplication between runs may merge or remove
  * them, so it is cleared per run like every other resolver cache.

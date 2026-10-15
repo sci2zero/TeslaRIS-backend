@@ -109,7 +109,7 @@ public class HydratorPrizeExtractorTest {
         assertNull(result.getFirst().prize().getPrizeType());
         assertNull(result.getFirst().rejection());
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_PRIZE"),
-            eq("cv-1#distinction#1"), eq("MAP-040"), eq("unknown distinction type 'X'"));
+            eq("cv-1#distinction#1"), eq("CW-001-MAP-000040"), eq("unknown distinction type 'X'"));
     }
 
     @Test
@@ -150,9 +150,9 @@ public class HydratorPrizeExtractorTest {
 
         assertTrue(result.isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_PRIZE"), eq("cv-1"),
-            eq("MAP-040"), eq("distinction without id"));
+            eq("CW-001-MAP-000040"), eq("distinction without id"));
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_PRIZE"),
-            eq("cv-1#distinction#2"), eq("MAP-040"), eq("distinction without name"));
+            eq("cv-1#distinction#2"), eq("CW-001-MAP-000040"), eq("distinction without name"));
     }
 
     @Test
@@ -201,11 +201,11 @@ public class HydratorPrizeExtractorTest {
 
         assertEquals(Set.of(11, 10), result.getFirst().prize().getResearchAreasId());
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_PRIZE"),
-            eq("cv-1#distinction#1"), eq("MAP-040"),
+            eq("cv-1#distinction#1"), eq("CW-001-MAP-000040"),
             eq("research classification 'Social Sciences - Unknown Field' mapped to " +
                 "broader area 'Social Sciences'"));
         verify(migrationLog).valueDropped(anyString(), eq("PERSON_PRIZE"),
-            eq("cv-1#distinction#1"), eq("MAP-040"),
+            eq("cv-1#distinction#1"), eq("CW-001-MAP-000040"),
             eq("research classification '999' (Imaginary Sciences) has no research area"));
     }
 }

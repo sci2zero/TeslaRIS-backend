@@ -19,7 +19,7 @@ import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.funding.FundingDTO;
 
 /**
- * Fundings of one SciPROJ project (CW-002 MAP-001…014, project MAP-036…039).
+ * Fundings of one SciPROJ project (CW-002-MAP-000001…000014 and CW-002-MAP-000036…000039).
  */
 @Component
 @RequiredArgsConstructor
@@ -49,7 +49,7 @@ public class HydratorFundingExtractor
                 funded.fundedAs().funding();
 
             if (Objects.isNull(funding) || isBlank(funding.id())) {
-                dropped(project.projectId(), "MAP-001", "funding without id");
+                dropped(project.projectId(), HydratorMappingRule.sciproj(1), "funding without id");
                 return;
             }
 
@@ -62,7 +62,7 @@ public class HydratorFundingExtractor
             }
 
             if (Objects.nonNull(funding.type()) && !isBlank(funding.type().value())) {
-                dropped(key, "MAP-002",
+                dropped(key, HydratorMappingRule.sciproj(2),
                     "funding type '" + typeName(funding.type().value()) + "' has no vocabulary");
             }
 
@@ -119,7 +119,7 @@ public class HydratorFundingExtractor
         dto.setInternalIdentifiers(internal);
     }
 
-    // MAP-036/037 swap the two fields; mapped by meaning
+    // CW-002-MAP-000036/000037 swap the two fields; mapped by meaning
     private void setOaMandate(FundingDTO dto, HydratorProjectModel.OAMandate oaMandate) {
         if (Objects.isNull(oaMandate)) {
             return;

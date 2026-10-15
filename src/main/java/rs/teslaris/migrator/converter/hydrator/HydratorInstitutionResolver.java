@@ -15,8 +15,8 @@ import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.RunScopedCache;
 
 /**
- * Matches an institution to an existing organisation unit by identifier (MAP-000046/047); without
- * a match the institution stays a display name.
+ * Matches an institution to an existing organisation unit by identifier (CW-001-MAP-000046/000047);
+ * without a match the institution stays a display name.
  */
 @Component
 @RequiredArgsConstructor

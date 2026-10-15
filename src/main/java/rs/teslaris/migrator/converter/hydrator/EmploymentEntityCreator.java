@@ -45,7 +45,7 @@ public class EmploymentEntityCreator implements EntityCreator<EmploymentMigratio
         } else {
             migrationLog.valueDropped(HydratorSource.NAME,
                 MigrationEntityType.PERSON_EMPLOYMENT.name(),
-                dto.personSourceKey() + "#employment#" + dto.sourceId(), "MAP-000039",
+                dto.personSourceKey() + "#employment#" + dto.sourceId(), HydratorMappingRule.cv(39),
                 "organisation unit not linked, institution kept as display name: " +
                     institution.reason());
         }

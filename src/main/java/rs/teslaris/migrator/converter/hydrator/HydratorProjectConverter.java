@@ -34,7 +34,7 @@ import rs.teslaris.project.model.project.ProjectStatus;
 public class HydratorProjectConverter implements
     RecordExtractor.RecordConverter<HydratorProjectModel.ProjectDocument, ProjectMigrationDTO> {
 
-    // Required but absent from SciPROJ (MAP-016/035): provisional until the team decides
+    // Required but absent from SciPROJ (CW-002-MAP-000016/000035): provisional until team decides
     static final ProjectCollaborationType PROVISIONAL_COLLABORATION_TYPE =
         ProjectCollaborationType.NATIONAL;
 
@@ -69,7 +69,7 @@ public class HydratorProjectConverter implements
         dto.setDescription(multilingual(project.abstracts()));
         dto.setKeywords(multilingual(project.keywords()));
 
-        // MAP-017
+        // CW-002-MAP-000017
         if (!isBlank(project.acronym())) {
             dto.setNameAbbreviation(conversionUtil.multilingualContent(project.acronym(), null));
         }
@@ -88,7 +88,7 @@ public class HydratorProjectConverter implements
         dto.setStatus(provisionalStatus(dto.getDateTo()));
         dto.setCollaborationType(PROVISIONAL_COLLABORATION_TYPE);
         dto.setResearchType(PROVISIONAL_RESEARCH_TYPE);
-        dropped(key, "MAP-016/035",
+        dropped(key, HydratorMappingRule.sciproj(16, 35),
             "required field without source, provisional value: status, collaborationType, " +
                 "researchType");
 
@@ -96,7 +96,7 @@ public class HydratorProjectConverter implements
             team(key, project.team()), rejection);
     }
 
-    // MAP-022…027: order Coordinator → Contractor → Partner, source order within a role
+    // CW-002-MAP-000022…000027: order Coordinator → Contractor → Partner, source order per role
     private List<ProjectMigrationDTO.ConsortiumEntry> consortium(
         String key, HydratorProjectModel.Consortium consortium) {
         var entries = new ArrayList<ProjectMigrationDTO.ConsortiumEntry>();
@@ -126,14 +126,14 @@ public class HydratorProjectConverter implements
             .filter(member -> Objects.nonNull(member) && Objects.nonNull(member.orgUnit()))
             .forEach(member -> {
                 if (Objects.nonNull(member.orgUnit().amount())) {
-                    dropped(key, "MAP-022", type + " amount not mapped");
+                    dropped(key, HydratorMappingRule.sciproj(22), type + " amount not mapped");
                 }
                 entries.add(new ProjectMigrationDTO.ConsortiumEntry(type,
                     conversionUtil.institution(member.orgUnit()), entries.size() + 1));
             });
     }
 
-    // MAP-028…031: order PI → Contact → Member, source order within a role
+    // CW-002-MAP-000028…000031: order PI → Contact → Member, source order within a role
     private List<ProjectMigrationDTO.TeamEntry> team(String key, HydratorProjectModel.Team team) {
         var entries = new ArrayList<ProjectMigrationDTO.TeamEntry>();
 
@@ -166,7 +166,8 @@ public class HydratorProjectConverter implements
                 var name = isBlank(person.personName()) ? null : person.personName().trim();
 
                 if (Objects.isNull(name) && Objects.isNull(cienciaId) && Objects.isNull(orcid)) {
-                    dropped(key, "MAP-028", type + " without name and identifier");
+                    dropped(key, HydratorMappingRule.sciproj(28),
+                        type + " without name and identifier");
                     return;
                 }
 
@@ -219,7 +220,7 @@ public class HydratorProjectConverter implements
         return record.record().metadata().project();
     }
 
-    // MAP-018/033/034: one entry per language, in source order
+    // CW-002-MAP-000018/000033/000034: one entry per language, in source order
     private List<MultilingualContentDTO> multilingual(List<HydratorProjectModel.LangValue> values) {
         var result = new ArrayList<MultilingualContentDTO>();
 
@@ -238,7 +239,7 @@ public class HydratorProjectConverter implements
         return result;
     }
 
-    // MAP-019; the FundingProgram identifier belongs to the funding
+    // CW-002-MAP-000019; the FundingProgram identifier belongs to the funding
     private Set<String> identifiers(String key, List<HydratorProjectModel.TypedValue> identifiers) {
         var result = new LinkedHashSet<String>();
 
@@ -252,7 +253,7 @@ public class HydratorProjectConverter implements
                 if (PROJECT_IDENTIFIER_TYPES.contains(typeName(identifier.type()))) {
                     result.add(identifier.value().trim());
                 } else {
-                    dropped(key, "MAP-019",
+                    dropped(key, HydratorMappingRule.sciproj(19),
                         "identifier type '" + typeName(identifier.type()) + "' not mapped");
                 }
             });
@@ -260,7 +261,7 @@ public class HydratorProjectConverter implements
         return result;
     }
 
-    // MAP-032: the English label is matched; the Portuguese one is the same classification
+    // CW-002-MAP-000032: the English label is matched; the Portuguese one is the same field
     private Set<Integer> researchAreas(String key, List<HydratorProjectModel.Subject> subjects) {
         if (Objects.isNull(subjects)) {
             return Set.of();
@@ -273,7 +274,7 @@ public class HydratorProjectConverter implements
             .toList();
 
         return conversionUtil.researchAreaIds(classifications,
-            reason -> dropped(key, "MAP-032", reason));
+            reason -> dropped(key, HydratorMappingRule.sciproj(32), reason));
     }
 
     private LocalDate date(String value) {

@@ -107,7 +107,7 @@ public class EmploymentEntityCreatorTest {
         assertEquals(43, id);
         assertNull(employment.getOrganisationUnitId());
         verify(migrationLog).valueDropped(HydratorSource.NAME, "PERSON_EMPLOYMENT",
-            "cv-1#employment#1", "MAP-000039",
+            "cv-1#employment#1", "CW-001-MAP-000039",
             "organisation unit not linked, institution kept as display name: " +
                 "identifier not found");
     }

@@ -209,7 +209,7 @@ public class HydratorPersonConverterTest {
         assertTrue(dto.getAddressLine().isEmpty());
         assertEquals(Set.of("https://www.example.com"), dto.getUris());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000033"), anyString());
+            eq("CW-001-MAP-000033"), anyString());
     }
 
     @Test
@@ -237,7 +237,7 @@ public class HydratorPersonConverterTest {
         assertEquals("AbCdEfGhIjKl", dto.getScholarId());
         assertEquals("A-1234-2010", dto.getWebOfScienceResearcherId());
         verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
-            eq("MAP-000037"), anyString());
+            eq("CW-001-MAP-000037"), anyString());
     }
 
     @Test
@@ -256,7 +256,7 @@ public class HydratorPersonConverterTest {
         // then
         assertEquals("0000-0002-1825-0097", dto.getOrcid());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000037"), anyString());
+            eq("CW-001-MAP-000037"), anyString());
     }
 
     @Test
@@ -309,11 +309,11 @@ public class HydratorPersonConverterTest {
         // more complete address wins
         assertEquals("Other City", dto.getAddressCity().getFirst().getContent());
         verify(migrationLog, times(2)).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000030"), anyString());
+            eq("CW-001-MAP-000030"), anyString());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000031"), anyString());
+            eq("CW-001-MAP-000031"), anyString());
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000032"), anyString());
+            eq("CW-001-MAP-000032"), anyString());
     }
 
     @Test
@@ -371,7 +371,7 @@ public class HydratorPersonConverterTest {
 
         // Catalan has no registry mapping, Russian is mapped but missing from the registry
         verify(migrationLog, times(2)).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000034"), anyString());
+            eq("CW-001-MAP-000034"), anyString());
     }
 
     @Test
@@ -399,7 +399,7 @@ public class HydratorPersonConverterTest {
         assertEquals(Set.of(11, 21, 30), new HashSet<>(researchAreas));
         // one broader fallback and one unknown field are logged
         verify(migrationLog, times(2)).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("MAP-000035"), anyString());
+            eq("CW-001-MAP-000035"), anyString());
     }
 
     @Test

@@ -57,7 +57,7 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
         return Objects.isNull(created) ? null : created.getId();
     }
 
-    // MAP-009/038: linked by identifier, otherwise kept as display name
+    // CW-002-MAP-000009/000038: linked by identifier, otherwise kept as display name
     private void setFunder(String key, FundingMigrationDTO dto) {
         if (Objects.isNull(dto.funder())) {
             return;
@@ -71,7 +71,7 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
 
         dto.funding().setDisplayFunder(List.copyOf(
             conversionUtil.multilingualContent(dto.funder().name(), null)));
-        dropped(key, "MAP-009",
+        dropped(key, HydratorMappingRule.sciproj(9),
             "funder not linked, kept as display name: " + match.reason());
     }
 
@@ -86,7 +86,7 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
 
         if (Objects.isNull(currency)) {
             funding.setAmount(null);
-            dropped(key, "MAP-008", "currency '" + amount.getCurrencyCode() +
+            dropped(key, HydratorMappingRule.sciproj(8), "currency '" + amount.getCurrencyCode() +
                 "' not in registry, amount dropped");
             return;
         }

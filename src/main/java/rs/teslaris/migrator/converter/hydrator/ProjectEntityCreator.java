@@ -46,10 +46,11 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             dto.project().getPersons().add(contribution(entry, unlinked)));
         unlinked.forEach((reason, count) ->
             migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
-                dto.sourceId(), "MAP-028", count + " team member(s) " + reason));
+                dto.sourceId(), HydratorMappingRule.sciproj(28),
+                count + " team member(s) " + reason));
         if (!dto.team().isEmpty()) {
             migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
-                dto.sourceId(), "MAP-028",
+                dto.sourceId(), HydratorMappingRule.sciproj(28),
                 "investigationRole without source, provisional value: OTHER");
         }
 
@@ -58,7 +59,7 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
         return Objects.isNull(created) ? null : created.getId();
     }
 
-    // MAP-022: linked by identifier, otherwise kept as display name
+    // CW-002-MAP-000022: linked by identifier, otherwise kept as display name
     private OrganisationUnitProjectContributionDTO contribution(
         String key, ProjectMigrationDTO.ConsortiumEntry entry) {
         var contribution = new OrganisationUnitProjectContributionDTO();
@@ -73,13 +74,14 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             contribution.setDisplayOrganisationUnit(
                 new ArrayList<>(conversionUtil.multilingualContent(name, null)));
             migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(), key,
-                "MAP-022", entry.type() + " not linked, kept as display name: " + match.reason());
+                HydratorMappingRule.sciproj(22),
+                entry.type() + " not linked, kept as display name: " + match.reason());
         }
 
         return contribution;
     }
 
-    // MAP-028: linked by Ciência ID / ORCID, otherwise name only
+    // CW-002-MAP-000028: linked by Ciência ID / ORCID, otherwise name only
     private PersonProjectContributionDTO contribution(ProjectMigrationDTO.TeamEntry entry,
                                                       Map<String, Integer> unlinked) {
         var contribution = new PersonProjectContributionDTO();

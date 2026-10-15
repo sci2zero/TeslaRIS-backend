@@ -19,9 +19,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * Distinctions of one curriculum (MAP-040), each carrying the source key of the person it belongs
- * to. Country and awarding institutions have no target field in {@code Prize} and are not carried
- * over.
+ * Distinctions of one curriculum (CW-001-MAP-000040), each carrying the source key of the person it
+ * belongs to. Country and awarding institutions have no target field in {@code Prize} and are not
+ * carried over.
  */
 @Component
 @RequiredArgsConstructor
@@ -156,6 +156,6 @@ public class HydratorPrizeExtractor
 
     private void dropped(String key, String reason) {
         migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PERSON_PRIZE.name(),
-            key, "MAP-040", reason);
+            key, HydratorMappingRule.cv(40), reason);
     }
 }

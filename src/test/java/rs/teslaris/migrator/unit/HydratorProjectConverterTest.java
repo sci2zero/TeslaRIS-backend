@@ -117,7 +117,7 @@ public class HydratorProjectConverterTest {
 
         assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("MAP-019"), eq("identifier type 'FundingProgram' not mapped"));
+            eq("CW-002-MAP-000019"), eq("identifier type 'FundingProgram' not mapped"));
     }
 
     @Test
@@ -128,7 +128,7 @@ public class HydratorProjectConverterTest {
         assertEquals(ProjectCollaborationType.NATIONAL, dto.getCollaborationType());
         assertEquals(ProjectResearchType.OTHER, dto.getResearchType());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("MAP-016/035"), anyString());
+            eq("CW-002-MAP-000016/000035"), anyString());
     }
 
     @Test
@@ -200,7 +200,7 @@ public class HydratorProjectConverterTest {
         assertEquals(OrganisationUnitProjectContributionType.PARTNER, consortium.get(2).type());
         assertEquals(3, consortium.get(2).orderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST006"),
-            eq("MAP-022"), eq("PARTNER amount not mapped"));
+            eq("CW-002-MAP-000022"), eq("PARTNER amount not mapped"));
     }
 
     @Test
@@ -230,6 +230,6 @@ public class HydratorProjectConverterTest {
         assertEquals("0000-0002-1825-0097", team.get(2).orcid());
         assertEquals(3, team.get(2).orderNumber());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST007"),
-            eq("MAP-028"), eq("TEAM_MEMBER without name and identifier"));
+            eq("CW-002-MAP-000028"), eq("TEAM_MEMBER without name and identifier"));
     }
 }

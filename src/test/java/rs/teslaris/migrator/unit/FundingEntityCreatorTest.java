@@ -122,7 +122,7 @@ public class FundingEntityCreatorTest {
         assertNull(dto.getFunderId());
         assertEquals("Test Agency", dto.getDisplayFunder().getFirst().getContent());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
-            eq("TEST001#funding#F1"), eq("MAP-009"), anyString());
+            eq("TEST001#funding#F1"), eq("CW-002-MAP-000009"), anyString());
     }
 
     @Test
@@ -135,7 +135,7 @@ public class FundingEntityCreatorTest {
 
         assertNull(dto.getAmount());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
-            eq("TEST001#funding#F1"), eq("MAP-008"),
+            eq("TEST001#funding#F1"), eq("CW-002-MAP-000008"),
             eq("currency 'EUR' not in registry, amount dropped"));
     }
 

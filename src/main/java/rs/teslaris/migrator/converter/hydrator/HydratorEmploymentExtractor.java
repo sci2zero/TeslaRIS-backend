@@ -14,8 +14,8 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * Employments of one curriculum (MAP-000039), each carrying the source key of the person it belongs
- * to and the institution it points at. The institution name is always set as the display
+ * Employments of one curriculum (CW-001-MAP-000039), each carrying the source key of the person it
+ * belongs to and the institution it points at. The institution name is always set as the display
  * organisation unit; it is replaced by the organisation unit when the creator matches one.
  */
 @Component
@@ -42,7 +42,8 @@ public class HydratorEmploymentExtractor
         record.curriculum().employments().employment().forEach(employment -> {
             if (Objects.isNull(employment.id()) || employment.id().isBlank()) {
                 migrationLog.valueDropped(HydratorSource.NAME,
-                    MigrationEntityType.PERSON_EMPLOYMENT.name(), record.id(), "MAP-000039",
+                    MigrationEntityType.PERSON_EMPLOYMENT.name(), record.id(),
+                    HydratorMappingRule.cv(39),
                     "employment without id");
                 return;
             }
@@ -52,7 +53,7 @@ public class HydratorEmploymentExtractor
             if (Objects.isNull(institution)) {
                 migrationLog.valueDropped(HydratorSource.NAME,
                     MigrationEntityType.PERSON_EMPLOYMENT.name(),
-                    record.id() + "#employment#" + employment.id(), "MAP-000039",
+                    record.id() + "#employment#" + employment.id(), HydratorMappingRule.cv(39),
                     "employment without institution");
                 return;
             }

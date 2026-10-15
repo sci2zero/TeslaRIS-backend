@@ -49,7 +49,8 @@ public class HydratorPersonResolver implements RunScopedCache {
 
 
     /**
-     * Matches a project team member to an existing person by Ciência ID, then ORCID (MAP-028).
+     * Matches a project team member to an existing person by Ciência ID, then ORCID
+     * (CW-002-MAP-000028).
      */
     public Match resolve(String cienciaId, String orcid) {
         if (isBlank(cienciaId) && isBlank(orcid)) {
