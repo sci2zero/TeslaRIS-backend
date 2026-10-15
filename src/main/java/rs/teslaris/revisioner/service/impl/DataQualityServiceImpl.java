@@ -622,7 +622,8 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return ACTIVITY_TARGET.equals(target)
-            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET)
+            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET,
+            PROJECT_TARGET, FUNDING_TARGET)
             : List.of(target);
     }
 

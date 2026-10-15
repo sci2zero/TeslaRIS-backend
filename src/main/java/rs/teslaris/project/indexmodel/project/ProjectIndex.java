@@ -75,4 +75,7 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Integer, name = "organisation_unit_ids")
     private List<Integer> organisationUnitIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

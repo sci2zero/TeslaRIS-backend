@@ -194,6 +194,7 @@ public class FundingControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var geneticMaterialDTO = getTestPayload();
+        geneticMaterialDTO.setDoi("10.1234/test.funding.update");
 
         String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
         mockMvc.perform(MockMvcRequestBuilders.put(

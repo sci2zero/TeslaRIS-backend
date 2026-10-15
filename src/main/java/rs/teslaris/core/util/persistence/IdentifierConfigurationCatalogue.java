@@ -63,6 +63,9 @@ public class IdentifierConfigurationCatalogue {
             }});
 
 
+    private IdentifierConfigurationCatalogue() {
+    }
+
     private static IdentifierConfiguration standard() {
         return new IdentifierConfiguration(true, false, true);
     }
@@ -73,10 +76,6 @@ public class IdentifierConfigurationCatalogue {
      */
     private static IdentifierConfiguration featured() {
         return new IdentifierConfiguration(true, true, true);
-    }
-
-
-    private IdentifierConfigurationCatalogue() {
     }
 
     public static Map<ApplicableEntityType, List<String>> configurableIdentifiers() {

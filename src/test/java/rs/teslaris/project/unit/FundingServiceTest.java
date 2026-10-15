@@ -74,6 +74,7 @@ import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {
@@ -122,6 +123,9 @@ public class FundingServiceTest extends BaseTest {
 
     @Mock
     private ProjectIndexRepository projectIndexRepository;
+
+    @Mock
+    private ProjectScopeCalculator projectScopeCalculator;
 
     @InjectMocks
     private FundingServiceImpl fundingService;

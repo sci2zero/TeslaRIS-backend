@@ -71,4 +71,10 @@ public interface ProjectService extends JPAService<Project> {
     CompletableFuture<Void> reindexProject();
 
     void indexProject(Project project, ProjectIndex index);
+
+    /**
+     * Rebuilds the index of a project whose scope changed through a record of its own, such as a
+     * funding that brings in a funder.
+     */
+    void refreshProjectIndex(Integer projectId);
 }

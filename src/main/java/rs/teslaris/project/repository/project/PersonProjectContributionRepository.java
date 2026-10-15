@@ -13,4 +13,8 @@ public interface PersonProjectContributionRepository
     @Query("SELECT ppc.person.id FROM PersonProjectContribution ppc " +
         "WHERE ppc.project.id = :projectId AND ppc.person IS NOT NULL")
     List<Integer> findPersonIdsByProjectId(Integer projectId);
+
+    @Query("SELECT ppc FROM PersonProjectContribution ppc " +
+        "LEFT JOIN FETCH ppc.researchAreas WHERE ppc.project.id = :projectId")
+    List<PersonProjectContribution> findByProjectId(Integer projectId);
 }

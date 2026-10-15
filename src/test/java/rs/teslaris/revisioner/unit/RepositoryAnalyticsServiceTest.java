@@ -511,6 +511,29 @@ public class RepositoryAnalyticsServiceTest {
     }
 
     @Test
+    public void shouldAddProjectAndFundingActivitiesToTheActivitiesRow() {
+        // given
+        stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
+
+        when(dataQualityAggregator.sumField(eq("project"), any(), eq("activities_count")))
+            .thenReturn(17L);
+        when(dataQualityAggregator.sumField(eq("funding"), any(), eq("activities_count")))
+            .thenReturn(3L);
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var activities =
+                repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
+
+            // then
+            assertEquals(320, activities.records()); // 300 on outputs + 17 + 3
+
+            verify(dataQualityAggregator).sumField(eq("project"), any(), eq("activities_count"));
+            verify(dataQualityAggregator).sumField(eq("funding"), any(), eq("activities_count"));
+        }
+    }
+
+    @Test
     public void shouldAddEventAndPublicationSeriesActivitiesToTheActivitiesRow() {
         // given
         stubAggregates(50, 120, 30, 8, 45, 92.0, 1000, 300);
@@ -553,8 +576,8 @@ public class RepositoryAnalyticsServiceTest {
 
             var activities = result.get(3);
             assertEquals(86204, activities.records());
-            assertEquals(90, activities.affectedRecords());
-            assertEquals(24, activities.openIssues());
+            assertEquals(150, activities.affectedRecords());
+            assertEquals(40, activities.openIssues());
             assertTrue(activities.supported());
 
             verify(dataQualityAggregator).aggregateLinkedDocuments(any());
@@ -572,7 +595,7 @@ public class RepositoryAnalyticsServiceTest {
                 repositoryAnalyticsService.getQualityByEntityType(PROFILE, null, null).get(3);
 
             // then
-            assertEquals(90, activities.affectedRecords());
+            assertEquals(150, activities.affectedRecords());
 
             assertEquals(80.0, activities.averageScore());
             assertEquals(40.0, activities.publicationCandidatePercentage());

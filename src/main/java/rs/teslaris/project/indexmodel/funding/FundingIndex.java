@@ -69,15 +69,15 @@ public class FundingIndex {
 
     /**
      * The funded project's contributors and their institutions, copied from the project index so a
-     * funding can be counted under an institution it belongs to - a funding carries no contributor
-     * of its own. Empty for a funding attached to an involvement rather than a project.
-     * <p>
-     * Written when the funding is indexed, so a change to the project's consortium only reaches
-     * its fundings once they are reindexed.
+     * funding can be counted under an institution it belongs to, because a funding carries no
+     * contributor of its own. Empty for a funding attached to an involvement rather than a project.
      */
     @Field(type = FieldType.Integer, name = "person_ids")
     private List<Integer> personIds = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "organisation_unit_ids")
     private List<Integer> organisationUnitIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

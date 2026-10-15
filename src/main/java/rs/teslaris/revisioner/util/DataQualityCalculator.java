@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
@@ -43,6 +44,7 @@ import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OrganisationUnitContributionDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
@@ -72,13 +74,16 @@ import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.OtherEventType;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.revision.QualityActivityProvider;
 import rs.teslaris.core.revision.QualityIdentifierField;
 import rs.teslaris.core.revision.QualityUniquenessChecker;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -137,6 +142,10 @@ public class DataQualityCalculator {
      * beans and at most three lookups per assessment.
      */
     private final List<QualityUniquenessChecker> uniquenessCheckers;
+
+    private final List<QualityActivityProvider> activityProviders;
+
+    private final InvolvementRepository involvementRepository;
 
     private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
         Map.ofEntries(
@@ -1457,12 +1466,12 @@ public class DataQualityCalculator {
         return name.isBlank() ? "-" : name;
     }
 
-    private String activityName(InvolvementDTO dto) {
+    private String organisationUnitName(Integer organisationUnitId) {
         AtomicReference<String> organisationUnit = new AtomicReference<>("");
 
-        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+        if (Objects.nonNull(organisationUnitId)) {
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                dto.getOrganisationUnitId()).ifPresent(index -> {
+                organisationUnitId).ifPresent(index -> {
                     if (index.getNameSr().equals(index.getNameOther())) {
                         organisationUnit.set(index.getNameSr());
                     } else {
@@ -1470,6 +1479,16 @@ public class DataQualityCalculator {
                     }
                 }
             );
+        }
+
+        return organisationUnit.get().isBlank() ? "-" : organisationUnit.get();
+    }
+
+    private String activityName(InvolvementDTO dto) {
+        AtomicReference<String> organisationUnit = new AtomicReference<>("");
+
+        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+            return organisationUnitName(dto.getOrganisationUnitId());
         } else {
             organisationUnit.set(StringUtil.getStringContent(dto.getDisplayOrganisationUnit(),
                 LanguageAbbreviations.PORTUGUESE));
@@ -1855,8 +1874,71 @@ public class DataQualityCalculator {
             reportIssue(assessment, "projectResearchAreasMissing");
         }
 
-        // TODO: the Project.fundings, Project.organisations and Project.team rules of the PTCRIS
-        //  2.0.0 profile are unreachable - those fields are excluded from the revision snapshot.
+        assessProjectActivities(dto, assessment);
+
+        // TODO: the Project.fundings rules of the PTCRIS 2.0.0 profile are unreachable - that
+        //  field is excluded from the revision snapshot.
+    }
+
+    private void assessProjectActivities(ProjectQualityViewDTO dto,
+                                         DataQualityAssessment assessment) {
+        var provider = activityProviders.stream()
+            .filter(candidate ->
+                candidate.entityType().equals(assessment.getRevision().getEntityType()))
+            .findFirst();
+
+        if (provider.isEmpty() || Objects.isNull(dto.getId())) {
+            return;
+        }
+
+        provider.get().personContributions(dto.getId())
+            .forEach(contribution -> assessEntity(contribution, assessment, null, null, null));
+
+        provider.get().organisationUnitContributions(dto.getId())
+            .forEach(contribution -> assessEntity(contribution, assessment));
+    }
+
+    private void assessEntity(OrganisationUnitContributionDTO dto,
+                              DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo())) {
+            return;
+        }
+
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
+
+        var activityType = "-";
+        var activityName = organisationUnitName(dto.getOrganisationUnitId());
+
+        if (Objects.isNull(dto.getDateFrom())) {
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
+        } else {
+            var startDateMinYear =
+                getIntConstraint(assessment, "activityStartDateBefore", "minYear");
+            if (Objects.nonNull(startDateMinYear) &&
+                dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
+                reportIssue(assessment, "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
+            }
+
+            var startDateMaxFutureYears =
+                getIntConstraint(assessment, "activityStartDateTooFarInFuture", "maxFutureYears");
+            if (Objects.nonNull(startDateMaxFutureYears) &&
+                dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
+                reportIssue(assessment, "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
+            }
+        }
+
+        if (Objects.isNull(dto.getDateTo())) {
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
+        } else if (Objects.nonNull(dto.getDateFrom()) &&
+            dto.getDateTo().isBefore(dto.getDateFrom())) {
+            reportIssue(assessment, "activityEndDateBeforeStartDate", dto.getDateTo(),
+                dto.getDateFrom(), activityType, activityName);
+        }
+
+        scoreActivity(assessment, issuesBeforeActivity);
     }
 
     private void assessEntity(FundingQualityViewDTO dto, DataQualityAssessment assessment) {
@@ -1918,11 +2000,22 @@ public class DataQualityCalculator {
         reportIfBefore(assessment, "fundingDateToBeforeDateFrom", dto.getDateTo(),
             dto.getDateFrom());
 
-        // 2.0.0 bounds this by the funded project's and the paid position's dates too; only the
-        // funding's own fields are on the snapshot, so the check is the narrower one and is
-        // reported as a warning rather than a blocking error.
         reportIfAfter(assessment, "fundingDateAwardedAfterDateFrom", dto.getDateAwarded(),
             dto.getDateFrom());
+
+        assessFundingActivity(dto, assessment);
+    }
+
+    private void assessFundingActivity(FundingQualityViewDTO dto,
+                                       DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getInvolvementId())) {
+            return;
+        }
+
+        involvementRepository.findById(dto.getInvolvementId())
+            .ifPresent(involvement -> assessEntity(
+                InvolvementConverter.<InvolvementDTO, Involvement>toSnapshotDTO(involvement),
+                assessment));
     }
 
     private boolean isResolvableDoi(String doi) {
