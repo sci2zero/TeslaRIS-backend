@@ -343,7 +343,7 @@ public class HydratorOutputConverters {
             var contribution = new PersonDocumentContributionDTO();
             contribution.setContributionType(
                 isOwner ? ownerContributionType(ownerRole) : DocumentContributionType.AUTHOR);
-            contribution.setIsMainContributor(orderNumber == 1);
+            contribution.setIsMainContributor(false);
             contribution.setIsCorrespondingContributor(false);
             contribution.setIsBoardPresident(false);
             contribution.setOrderNumber(orderNumber);
