@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.util.signposting.LinksetFormat;
@@ -55,9 +56,23 @@ public class PersonControllerTest extends BaseTest {
     public void testDeletePerson() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
+        var personDTO = new BasicPersonDTO();
+        personDTO.setPersonName(
+            new PersonNameDTO(null, "Delete", null, "Me", null, null, PersonNameType.FULL_NAME));
+
+        var response = mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/person/basic")
+                    .content(objectMapper.writeValueAsString(personDTO))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_PERSON_DELETE"))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        var personId = objectMapper.readTree(response).get("id").asInt();
+
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/person/{personId}",
-                        4).contentType(MediaType.APPLICATION_JSON)
+                        personId).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
