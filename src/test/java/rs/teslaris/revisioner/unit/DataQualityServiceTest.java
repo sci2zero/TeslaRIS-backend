@@ -534,7 +534,11 @@ public class DataQualityServiceTest {
             // when
             // then
             assertThrows(NotFoundException.class,
-                () -> dataQualityService.exportFullReport(ENTITY_TYPE, 1, "OPENAIRE", 4, 2, "en"));
+                () -> dataQualityService.exportFullReport(
+                    ENTITY_TYPE, 1, "OPENAIRE",
+                    4, 2, "en"
+                )
+            );
         }
     }
 
