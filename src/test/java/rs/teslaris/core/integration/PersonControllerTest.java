@@ -72,7 +72,7 @@ public class PersonControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.delete("http://localhost:8081/api/person/{personId}",
-                        personId).contentType(MediaType.APPLICATION_JSON)
+                        5).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
