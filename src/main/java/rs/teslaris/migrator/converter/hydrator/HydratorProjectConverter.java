@@ -10,16 +10,16 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.RecordExtractor;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.ProjectStatus;
 
 /**
  * SciPROJ project to {@link ProjectDTO}: flat attributes only (CW-002); relations come later.

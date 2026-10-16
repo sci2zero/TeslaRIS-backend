@@ -20,6 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -28,9 +31,6 @@ import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.ProjectStatus;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

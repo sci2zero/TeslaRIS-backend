@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.model.funding.Funding;
 

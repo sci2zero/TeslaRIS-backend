@@ -5,10 +5,10 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
 
 /**
  * Funding part for a consortium member's amount (CW-002-MAP-000022), described by the member's

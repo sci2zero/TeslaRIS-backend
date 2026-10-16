@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.project.ProjectDocumentType;
 
 @Getter

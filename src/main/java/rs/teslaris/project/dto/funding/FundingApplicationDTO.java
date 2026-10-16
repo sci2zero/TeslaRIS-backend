@@ -10,6 +10,7 @@ import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.funding.FundingApplicationResult;
 
 @Getter
