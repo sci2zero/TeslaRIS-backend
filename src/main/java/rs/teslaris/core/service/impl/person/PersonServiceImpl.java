@@ -53,6 +53,7 @@ import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
@@ -67,6 +68,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -74,6 +76,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -92,6 +95,7 @@ import rs.teslaris.core.service.impl.person.worker.PersonEmploymentWorker;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -110,6 +114,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -152,9 +157,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final LanguageTagService languageTagService;
 
-    private final PersonNameService personNameService;
+    private final LanguageService languageService;
 
     private final ResearchAreaService researchAreaService;
+
+    private final PersonNameService personNameService;
 
     private final PersonContributionRepository personContributionRepository;
 
@@ -374,6 +381,40 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             new PersonResearchAreasChangedEvent(personId, List.copyOf(researchAreaIds)));
     }
 
+    private LanguageKnowledge toLanguageKnowledge(LanguageKnowledgeDTO dto, Person person) {
+        var language = languageService.findLanguageById(dto.getLanguageId());
+
+        var languageKnowledge = new LanguageKnowledge();
+        languageKnowledge.setLanguage(language);
+        languageKnowledge.setMotherTongue(dto.getMotherTongue());
+        languageKnowledge.setReading(dto.getRead());
+        languageKnowledge.setWriting(dto.getWrite());
+        languageKnowledge.setSpeaking(dto.getSpeak());
+        languageKnowledge.setListening(dto.getUnderstandSpoken());
+        languageKnowledge.setAcademicReview(dto.getPeerReview());
+        // Expertises are listed by name, so the language names stand in for one
+        language.getName().stream()
+            .map(MultiLingualContent::new)
+            .forEach(languageKnowledge.getName()::add);
+        languageKnowledge.setPerson(person);
+
+        return languageKnowledge;
+    }
+
+    private Country countryByCode(String code) {
+        if (Objects.isNull(code)) {
+            return null;
+        }
+
+        var country = countryService.findCountryByCode(code);
+
+        if (country.isEmpty()) {
+            log.warn("Unknown country code '{}', leaving the address without a country.", code);
+        }
+
+        return country.orElse(null);
+    }
+
     private Person buildBasePerson(BasicPersonDTO personDTO, ApproveStatus status,
                                    boolean isImport) {
         var personNameDTO = personDTO.getPersonName();
@@ -389,17 +430,34 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getFaxNumber(), personDTO.getMobilePhoneNumber());
 
         PostalAddress address;
+        var privateAddress = new PostalAddress();
+        var privateContact = new Contact();
+        var uris = new HashSet<String>();
         if (isImport) {
+            var importDTO = (ImportPersonDTO) personDTO;
             address = new PostalAddress(
                 null,
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressLine()),
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressCity()),
-                multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressState()),
-                ((ImportPersonDTO) personDTO).getPostalNumber()
+                multilingualContentService.getMultilingualContent(importDTO.getAddressLine()),
+                multilingualContentService.getMultilingualContent(importDTO.getAddressCity()),
+                multilingualContentService.getMultilingualContent(importDTO.getAddressState()),
+                importDTO.getPostalNumber()
             );
+            address.setCountry(countryByCode(importDTO.getCountryCode()));
+            privateAddress = new PostalAddress(
+                null,
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressLine()),
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressCity()),
+                multilingualContentService.getMultilingualContent(
+                    importDTO.getPrivateAddressState()),
+                importDTO.getPrivatePostalNumber()
+            );
+            privateAddress.setCountry(countryByCode(importDTO.getPrivateCountryCode()));
+            privateContact = new Contact(importDTO.getPrivateContactEmail(),
+                importDTO.getPrivatePhoneNumber(), importDTO.getPrivateFaxNumber(),
+                importDTO.getPrivateMobilePhoneNumber());
+            IdentifierUtil.setUris(uris, importDTO.getUris());
         } else {
             address =
                 new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null);
@@ -409,9 +467,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getLocalBirthDate(),
             isImport ? ((ImportPersonDTO) personDTO).getPlaceOfBirth() : null,
             personDTO.getSex(),
-            address, new PostalAddress(),
-            contact, new Contact(),
-            new HashSet<>(),
+            address, privateAddress,
+            contact, privateContact,
+            uris,
             multilingualContentService.getMultilingualContent(personDTO.getDisplayTitle())
         );
 
@@ -431,6 +489,21 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 multilingualContentService.getMultilingualContent(importDTO.getBiography()));
             person.setKeyword(
                 multilingualContentService.getMultilingualContent(importDTO.getKeywords()));
+            person.setImportSource(importDTO.getImportSource());
+
+            if (Objects.nonNull(importDTO.getLanguageKnowledges())) {
+                importDTO.getLanguageKnowledges().forEach(languageKnowledge ->
+                    person.getExpertisesAndSkills()
+                        .add(toLanguageKnowledge(languageKnowledge, person)));
+            }
+
+            if (Objects.nonNull(importDTO.getOtherNames())) {
+                importDTO.getOtherNames().forEach(otherName ->
+                    person.getOtherNames().add(new PersonName(otherName.getFirstname(),
+                        otherName.getOtherName(), otherName.getLastname(),
+                        otherName.getDateFrom(), otherName.getDateTo(),
+                        otherName.getPersonNameType())));
+            }
         }
 
         setAllPersonIdentifiers(person, personDTO);

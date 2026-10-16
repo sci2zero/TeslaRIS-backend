@@ -216,6 +216,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Transactional
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findOne(personId);
+        // TODO: import shouldn't bump minor version per added employment
         var personBeforeChange = personSnapshot(personId);
 
         var newEmployment = new Employment();
@@ -230,6 +231,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         var savedEmployment = involvementRepository.save(newEmployment);
 
+        // TODO: import shouldn't bump minor version per added employment
         publishPersonRevision(personId, personBeforeChange);
 
         applicationEventPublisher.publishEvent(

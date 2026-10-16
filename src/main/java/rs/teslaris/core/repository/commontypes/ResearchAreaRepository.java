@@ -25,6 +25,10 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("SELECT ra FROM ResearchArea ra WHERE ra.superResearchArea IS NULL")
     List<ResearchArea> getTopLevelResearchAreas();
 
+    @Query("SELECT ra.id, n.content FROM ResearchArea ra JOIN ra.name n " +
+        "WHERE n.language.languageTag = :languageTag")
+    List<Object[]> getResearchAreaNames(String languageTag);
+
     @Query("SELECT COUNT(ra) > 0 FROM ResearchArea ra JOIN ra.superResearchArea ras WHERE ra.superResearchArea.id = :researchAreaId")
     boolean isSuperArea(Integer researchAreaId);
 

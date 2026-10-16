@@ -31,6 +31,8 @@ public class ProjectDTO {
 
     private Set<String> oldIds = new HashSet<>();
 
+    private String importSource;
+
     private Set<String> mergedIds = new HashSet<>();
 
     private String doi;
@@ -62,10 +64,8 @@ public class ProjectDTO {
     @NotNull(message = "You have to provide a project status.")
     private ProjectStatus status;
 
-    @NotNull(message = "You have to provide a collaboration type.")
     private ProjectCollaborationType collaborationType;
 
-    @NotNull(message = "You have to provide a research type.")
     private ProjectResearchType researchType;
 
     private Boolean notFunded;

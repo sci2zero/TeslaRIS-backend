@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
@@ -29,6 +30,12 @@ public interface ResearchAreaService extends JPAService<ResearchArea> {
     void deleteResearchArea(Integer researchAreaId);
 
     List<ResearchArea> getResearchAreasByIds(List<Integer> id);
+
+    /**
+     * Ids and names of all research areas in one language, read in a single query - meant for
+     * bulk name lookups, where loading the entities would be needlessly expensive.
+     */
+    List<Pair<Integer, String>> getResearchAreaNames(String languageTag);
 
     Page<ResearchAreaResponseDTO> searchResearchAreas(Pageable pageable, String searchExpression,
                                                       String languageTag);

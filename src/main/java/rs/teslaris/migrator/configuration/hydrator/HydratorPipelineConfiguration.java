@@ -10,14 +10,22 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.migrator.client.fetcher.HttpPagedFetcher;
 import rs.teslaris.migrator.client.hydrator.HydratorCVClient;
+import rs.teslaris.migrator.client.hydrator.HydratorProjectClient;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
+import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.pipeline.FailureHandler;
 import rs.teslaris.migrator.pipeline.ItemRouter;
@@ -33,8 +41,11 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  * <p>
  * Passes, in order:
  * <ol>
- *     <li>{@code ORGANISATION_UNIT}, {@code PERSON}, {@code PERSON_EMPLOYMENT} - can also be run as
- *     one traversal through the combined entities pipeline;</li>
+ *     <li>{@code ORGANISATION_UNIT};</li>
+ *     <li>{@code PERSON} - each person is followed by its prizes and employments in the same
+ *     traversal; a request for {@code PERSON_PRIZE} or {@code PERSON_EMPLOYMENT} alone runs this
+ *     pipeline filtered to that type;</li>
+ *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
  * </ol>
  */
@@ -44,6 +55,16 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorCVClient cvClient;
 
+    private final HydratorProjectClient projectClient;
+
+    private final HydratorProjectConverter projectConverter;
+
+    private final ProjectEntityCreator projectEntityCreator;
+
+    private final HydratorFundingExtractor fundingExtractor;
+
+    private final FundingEntityCreator fundingEntityCreator;
+
     private final MigrationSourceProperties properties;
 
     private final HydratorOrganisationUnitExtractor organisationUnitExtractor;
@@ -52,9 +73,13 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorEmploymentExtractor employmentExtractor;
 
+    private final HydratorPrizeExtractor prizeExtractor;
+
     private final HydratorOutputRouter outputRouter;
 
     private final EmploymentEntityCreator employmentEntityCreator;
+
+    private final PrizeEntityCreator prizeEntityCreator;
 
     private final PersonMergeFailureHandler personMergeFailureHandler;
 
@@ -69,7 +94,7 @@ public class HydratorPipelineConfiguration {
         return List.of(
             MigrationEntityType.ORGANISATION_UNIT,
             MigrationEntityType.PERSON,
-            MigrationEntityType.PERSON_EMPLOYMENT,
+            MigrationEntityType.PROJECT,
             MigrationEntityType.DOCUMENT
         );
     }
@@ -85,8 +110,31 @@ public class HydratorPipelineConfiguration {
     }
 
     @Bean
-    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorEmploymentPipeline() {
-        return pipeline(MigrationEntityType.PERSON_EMPLOYMENT, employmentRouter());
+    public MigrationPipeline<HydratorProjectModel.ProjectDocument> hydratorProjectPipeline() {
+        var sourceProperties = properties.forSource(HydratorSource.NAME);
+
+        return new MigrationPipeline<>(
+            HydratorSource.NAME,
+            MigrationEntityType.PROJECT,
+            HydratorProjectModel.ProjectDocument.class,
+            new HttpPagedFetcher<>((page, size) -> projectClient.getProjects(
+                null, page, size, HydratorSource.PROJECTS_SORT)),
+            ItemRouter.ordered(List.of(
+                new SimpleMapping<>(
+                    MigrationEntityType.PROJECT,
+                    RecordExtractor.of(projectConverter),
+                    projectEntityCreator,
+                    FailureHandler.noOp(),
+                    (record, dto) -> dto.sourceKey()),
+                new SimpleMapping<>(
+                    MigrationEntityType.PROJECT_FUNDING,
+                    fundingExtractor,
+                    fundingEntityCreator,
+                    FailureHandler.noOp(),
+                    (record, dto) -> dto.sourceKey()))),
+            sourceProperties.getRetry().toPolicy(),
+            HydratorProjectModel.ProjectDocument::id,
+            sourceProperties.batchSizeOrDefault(properties.getDefaultBatchSize()));
     }
 
     /**
@@ -110,6 +158,10 @@ public class HydratorPipelineConfiguration {
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> personRouter() {
+        return ItemRouter.ordered(List.of(personMapping(), prizeRouter(), employmentRouter()));
+    }
+
+    private ItemRouter<HydratorCVModel.Curriculum> personMapping() {
         return new SimpleMapping<>(
             MigrationEntityType.PERSON,
             RecordExtractor.of(personConverter),
@@ -119,13 +171,22 @@ public class HydratorPipelineConfiguration {
             (record, dto) -> record.id());
     }
 
+    private ItemRouter<HydratorCVModel.Curriculum> prizeRouter() {
+        return new SimpleMapping<>(
+            MigrationEntityType.PERSON_PRIZE,
+            prizeExtractor,
+            prizeEntityCreator,
+            FailureHandler.noOp(),
+            (record, dto) -> dto.sourceKey());
+    }
+
     private ItemRouter<HydratorCVModel.Curriculum> employmentRouter() {
         return new SimpleMapping<>(
             MigrationEntityType.PERSON_EMPLOYMENT,
             employmentExtractor,
             employmentEntityCreator,
             FailureHandler.noOp(),
-            employmentExtractor::keyOf);
+            (record, dto) -> dto.sourceKey());
     }
 
     private MigrationPipeline<HydratorCVModel.Curriculum> pipeline(

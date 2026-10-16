@@ -61,7 +61,9 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "p.eNaukaId = :identifier OR " +
         "p.openAlexId = :identifier OR " +
         "p.orcid = :identifier OR " +
-        "p.webOfScienceResearcherId = :identifier)")
+        "p.webOfScienceResearcherId = :identifier OR " +
+        "p.nationalScienceId = :identifier OR " +
+        "p.scholarId = :identifier)")
     Optional<Person> findPersonForIdentifier(String identifier);
 
     @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")

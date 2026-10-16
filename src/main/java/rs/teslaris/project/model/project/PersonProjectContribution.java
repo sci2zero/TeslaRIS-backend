@@ -31,7 +31,7 @@ public class PersonProjectContribution extends PersonContribution {
     @Column(name = "contribution_type", nullable = false)
     private PersonProjectContributionType contributionType;
 
-    @Column(name = "investigation_role", nullable = false)
+    @Column(name = "investigation_role")
     private PersonProjectInvestigationRole investigationRole;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

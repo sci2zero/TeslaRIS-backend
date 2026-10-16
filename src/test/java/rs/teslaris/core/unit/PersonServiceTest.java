@@ -56,6 +56,7 @@ import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
@@ -66,15 +67,19 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
+import rs.teslaris.core.model.person.LanguageLevel;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -91,6 +96,7 @@ import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -122,6 +128,12 @@ public class PersonServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private LanguageService languageService;
+
+    @Mock
+    private ResearchAreaService researchAreaService;
 
     @Mock
     private PersonIndexRepository personIndexRepository;
@@ -161,10 +173,6 @@ public class PersonServiceTest {
 
     @Mock
     private CrisContextInformationService crisContextInformationService;
-
-    @Mock
-    private ResearchAreaService researchAreaService;
-
     @InjectMocks
     private PersonServiceImpl personService;
 
