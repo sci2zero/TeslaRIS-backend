@@ -373,6 +373,7 @@ public class HydratorCVModel {
         String id,
         OutputType outputType,
         JournalArticle journalArticle,
+        ConferencePaper conferencePaper,
         Dissertation dissertation
     ) {
     }
@@ -401,6 +402,29 @@ public class HydratorCVModel {
         PublicationLocation publicationLocation,
         String refereed,
         String openAccess,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConferencePaper(
+        String paperTitle,
+        String conferenceName,
+        DateInfo conferenceDate,
+        PublicationLocation conferenceLocation,
+        String proceedingsTitle,
+        String proceedingsPublisher,
+        OutputAuthors proceedingsEditors,
+        DateInfo presentationDate,
+        OutputAuthors presenters,
+        String pageFrom,
+        String pageTo,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        CodeValue publicationStatus,
+        PublicationLocation publicationLocation,
         ResearchClassifications researchClassifications,
         Keywords keywords
     ) {
