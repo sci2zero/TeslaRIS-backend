@@ -130,7 +130,7 @@ public class HydratorConversionUtil {
     }
 
     /**
-     * Id of the registry language for a curriculum language code, or {@code null} when the code
+     * Id of the registry language for a language competency code, or {@code null} when the code
      * has no mapping or the registry lacks that language.
      */
     public Integer languageId(String sourceCode) {
@@ -144,6 +144,16 @@ public class HydratorConversionUtil {
             .map(code -> languageIds.computeIfAbsent(code, this::findLanguageId))
             .flatMap(Optional::stream)
             .findFirst()
+            .orElse(null);
+    }
+
+    // Id of the registry language for a curriculum locale such as "pt_PT"
+    public Integer localeLanguageId(String locale) {
+        if (Objects.isNull(locale) || locale.isBlank()) {
+            return null;
+        }
+
+        return languageIds.computeIfAbsent(resolveLanguageTagValue(locale), this::findLanguageId)
             .orElse(null);
     }
 
@@ -459,6 +469,20 @@ public class HydratorConversionUtil {
 
         return String.join("", surnameWords) + "|" +
             (givenNames.isEmpty() ? "" : givenNames.substring(0, 1));
+    }
+
+    // First given name, case and diacritics folded ("José Manuel" -> "jose")
+    public String firstGivenName(PersonNameDTO name) {
+        var givenNames = foldCase(Objects.toString(name.getFirstname(), "")).trim();
+
+        return givenNames.isEmpty() ? "" : givenNames.split("[\\s\\-]+")[0]
+            .replaceAll("[^\\p{L}]", "");
+    }
+
+    // The whole name folded to letters only, so one author entered twice compares equal
+    public String fullNameKey(PersonNameDTO name) {
+        return foldCase(Objects.toString(name.getFirstname(), "") + "|" +
+            Objects.toString(name.getLastname(), "")).replaceAll("[^\\p{L}|]", "");
     }
 
     private String foldCase(String value) {
