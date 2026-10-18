@@ -21,13 +21,18 @@ public enum MigrationEntityType {
     PROCEEDINGS_PUBLICATION,
     THESIS,
     MONOGRAPH,
-    MONOGRAPH_PUBLICATION;
+    MONOGRAPH_PUBLICATION,
+    PERFORMANCE_RELATED_OUTPUT,
+
+    // Stubs created while resolving documents, kept so a restarted run reuses them
+    CONFERENCE,
+    PROCEEDINGS;
 
 
     public MigrationEntityType parent() {
         return switch (this) {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, THESIS, MONOGRAPH,
-                 MONOGRAPH_PUBLICATION -> DOCUMENT;
+                 MONOGRAPH_PUBLICATION, PERFORMANCE_RELATED_OUTPUT -> DOCUMENT;
             case PERSON_PRIZE -> PERSON;
             default -> null;
         };
