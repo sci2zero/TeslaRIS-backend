@@ -12,13 +12,14 @@ import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
@@ -95,13 +96,8 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                 return Collections.emptyList();
             }
 
-            var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
-            topOUIds.forEach(organisationUnitId -> {
-                organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                    organisationUnitId.intValue()).ifPresent(index ->
-                    organisationUnitMap.put(organisationUnitId.intValue(), index)
-                );
-            });
+            var organisationUnitMap = fetchOrganisationUnitIndexes(
+                topOUIds.stream().map(Long::intValue).toList());
 
             return publicationResponse.aggregations()
                 .get("by_org_unit")
@@ -127,6 +123,11 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
         Integer institutionId, Integer fromYear, Integer toYear) {
 
         if (Objects.isNull(institutionId)) {
+            return Collections.emptyList();
+        }
+
+        var yearRange = QueryUtil.constructYearRange(fromYear, toYear);
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
 
@@ -160,7 +161,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                                     .toList()
                                 ))));
 
-                    for (int year = fromYear; year <= toYear; year++) {
+                    for (int year = yearRange.a; year <= yearRange.b; year++) {
                         var currentYear = year;
                         agg.aggregations("year_" + year, sum -> sum
                             .sum(v -> v.field("citations_by_year." + currentYear)));
@@ -179,27 +180,11 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
             .buckets()
             .array();
 
-        var topOUIds = buckets.stream()
-            .map(LongTermsBucket::key)
-            .map(Long::intValue)
-            .collect(Collectors.toSet());
-
-        if (topOUIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
-        topOUIds.forEach(id ->
-            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(id)
-                .ifPresent(organisationUnit ->
-                    organisationUnitMap.put(id, organisationUnit)
-                )
-        );
-
-        return buckets.stream()
+        // Ranking before resolving index documents avoids one lookup per sub unit.
+        var topOUPoints = buckets.stream()
             .map(bucket -> {
                 long periodSum = 0L;
-                for (int year = fromYear; year <= toYear; year++) {
+                for (int year = yearRange.a; year <= yearRange.b; year++) {
                     var agg = bucket.aggregations().get("year_" + year).sum();
                     if (Objects.nonNull(agg) && agg.value() > 0) {
                         periodSum += (long) agg.value();
@@ -210,6 +195,16 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
             .limit(10)
+            .toList();
+
+        if (topOUPoints.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        var organisationUnitMap =
+            fetchOrganisationUnitIndexes(topOUPoints.stream().map(pair -> pair.a).toList());
+
+        return topOUPoints.stream()
             .map(pair -> {
                 var ou = organisationUnitMap.get(pair.a);
                 return Objects.nonNull(ou) ? new Pair<>(ou, pair.b) : null;
@@ -308,13 +303,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                     .map(pair -> pair.a)
                     .toList();
 
-                var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
-                topOUIds.forEach(organisationUnitId -> {
-                    organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                        organisationUnitId).ifPresent(index ->
-                        organisationUnitMap.put(organisationUnitId, index)
-                    );
-                });
+                var organisationUnitMap = fetchOrganisationUnitIndexes(topOUIds);
 
                 var leaderboardData = ouPoints.stream()
                     .map(pair -> {
@@ -335,6 +324,22 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
         });
 
         return retVal;
+    }
+
+    private Map<Integer, OrganisationUnitIndex> fetchOrganisationUnitIndexes(
+        List<Integer> organisationUnitIds) {
+        if (organisationUnitIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // Explicit page size so the request does not rely on the derived query default.
+        return organisationUnitIndexRepository.findByDatabaseIdIn(organisationUnitIds,
+                PageRequest.of(0, organisationUnitIds.size()))
+            .getContent()
+            .stream()
+            .filter(index -> Objects.nonNull(index.getDatabaseId()))
+            .collect(Collectors.toMap(OrganisationUnitIndex::getDatabaseId, index -> index,
+                (first, second) -> first));
     }
 
     private List<Integer> getEligibleOrganisationUnitIds(Integer institutionId) {

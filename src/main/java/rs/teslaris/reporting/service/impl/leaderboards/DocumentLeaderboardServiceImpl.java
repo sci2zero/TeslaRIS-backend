@@ -223,11 +223,15 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                 QueryUtil.getAllMergedOrganisationUnitIds(institutionId));
         }
 
+        var resultCap = onlyTheses ? 5000 : 50000;
+
         SearchResponse<DocumentPublicationIndex> documentIdResponse;
         try {
             documentIdResponse = elasticsearchClient.search(s -> s
                     .index("document_publication")
-                    .size(onlyTheses ? 5000 : 50000)
+                    .size(resultCap)
+                    // Sorted on a stable key so the capped result truncates deterministically.
+                    .sort(so -> so.field(f -> f.field("databaseId").order(SortOrder.Asc)))
                     .query(q -> q
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
@@ -254,12 +258,21 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                 DocumentPublicationIndex.class
             );
 
-            return documentIdResponse.hits().hits().stream()
+            var eligibleDocumentIds = documentIdResponse.hits().hits().stream()
                 .map(Hit::source)
                 .filter(Objects::nonNull)
                 .map(DocumentPublicationIndex::getDatabaseId)
                 .filter(id -> id > 0)
                 .toList();
+
+            if (documentIdResponse.hits().hits().size() >= resultCap) {
+                log.warn(
+                    "Eligible document ID cap ({}) reached for institution ({}); downstream " +
+                        "statistics are computed over a truncated document set.", resultCap,
+                    institutionId);
+            }
+
+            return eligibleDocumentIds;
         } catch (IOException e) {
             log.error("Error while fetching eligible document IDs for institution ({}). Reason: {}",
                 institutionId, e.getMessage());

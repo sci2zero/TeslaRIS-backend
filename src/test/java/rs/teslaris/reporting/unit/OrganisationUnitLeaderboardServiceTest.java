@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -89,10 +89,8 @@ public class OrganisationUnitLeaderboardServiceTest {
             ou1.setDatabaseId(1);
             var ou2 = new OrganisationUnitIndex();
             ou2.setDatabaseId(2);
-            when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(1))
-                .thenReturn(Optional.of(ou1));
-            when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(2))
-                .thenReturn(Optional.of(ou2));
+            when(organisationUnitIndexRepository.findByDatabaseIdIn(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(ou1, ou2)));
 
             // When
             var result = organisationUnitLeaderboardService.getTopSubUnitsByPublicationCount(
@@ -113,6 +111,9 @@ public class OrganisationUnitLeaderboardServiceTest {
             var institutionId = 123;
             var fromYear = 2020;
             var toYear = 2021;
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
 
             var ouResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
             var hit = mock(Hit.class);
@@ -161,10 +162,8 @@ public class OrganisationUnitLeaderboardServiceTest {
             ou1.setDatabaseId(1);
             var ou2 = new OrganisationUnitIndex();
             ou2.setDatabaseId(2);
-            when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(1))
-                .thenReturn(Optional.of(ou1));
-            when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(2))
-                .thenReturn(Optional.of(ou2));
+            when(organisationUnitIndexRepository.findByDatabaseIdIn(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(ou1, ou2)));
 
             // When
             var result = organisationUnitLeaderboardService.getSubUnitsWithMostCitations(
@@ -221,8 +220,8 @@ public class OrganisationUnitLeaderboardServiceTest {
 
             var ou1 = new OrganisationUnitIndex();
             ou1.setDatabaseId(1);
-            when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(1))
-                .thenReturn(Optional.of(ou1));
+            when(organisationUnitIndexRepository.findByDatabaseIdIn(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(ou1)));
 
             // When
             var result = organisationUnitLeaderboardService.getSubUnitsWithMostAssessmentPoints(

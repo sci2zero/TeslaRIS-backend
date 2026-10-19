@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
+import rs.teslaris.core.util.functional.Pair;
 
 public class NetworkStructure {
 
@@ -19,6 +20,8 @@ public class NetworkStructure {
 
     @Getter
     private final List<Connection> connections = new ArrayList<>();
+
+    private final Set<Pair<Integer, Integer>> connectionKeys = new HashSet<>();
 
     @Getter
     private final Integer rootAuthorId;
@@ -44,18 +47,20 @@ public class NetworkStructure {
         }
 
         connections.add(new Connection(sourceAuthorId, targetAuthorId, publicationCount));
+        connectionKeys.add(connectionKey(sourceAuthorId, targetAuthorId));
 
         authorDegrees.merge(sourceAuthorId, 1, Integer::sum);
         authorDegrees.merge(targetAuthorId, 1, Integer::sum);
     }
 
     private boolean connectionExists(Integer sourceAuthorId, Integer targetAuthorId) {
-        return connections.stream().anyMatch(conn ->
-            (conn.getSourceAuthorId().equals(sourceAuthorId) &&
-                conn.getTargetAuthorId().equals(targetAuthorId)) ||
-                (conn.getSourceAuthorId().equals(targetAuthorId) &&
-                    conn.getTargetAuthorId().equals(sourceAuthorId))
-        );
+        return connectionKeys.contains(connectionKey(sourceAuthorId, targetAuthorId));
+    }
+
+    private Pair<Integer, Integer> connectionKey(Integer sourceAuthorId, Integer targetAuthorId) {
+        return sourceAuthorId <= targetAuthorId
+            ? new Pair<>(sourceAuthorId, targetAuthorId)
+            : new Pair<>(targetAuthorId, sourceAuthorId);
     }
 
     public int getDepth(Integer authorId) {
