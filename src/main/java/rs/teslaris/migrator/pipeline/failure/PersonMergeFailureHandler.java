@@ -27,7 +27,6 @@ public class PersonMergeFailureHandler implements FailureHandler<ImportPersonDTO
         Map.of(
             "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
             "orcidIdExistsError", ImportPersonDTO::getOrcid,
-            "apvntExistsError", ImportPersonDTO::getApvnt,
             "nationalScienceIdExistsError", ImportPersonDTO::getNationalScienceId,
             "scholarIdExistsError", ImportPersonDTO::getScholarId,
             "webOfScienceIdExistsError", ImportPersonDTO::getWebOfScienceResearcherId

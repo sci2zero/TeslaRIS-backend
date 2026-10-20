@@ -19,11 +19,13 @@ import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEmployment;
+import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
@@ -59,9 +61,10 @@ public class ExportPersonConverter extends ExportConverterBase {
         commonExportPerson.setName(
             new ExportPersonName(person.getName().getFirstname(), person.getName().getOtherName(),
                 person.getName().getLastname()));
-        commonExportPerson.setApvnt(person.getApvnt());
-        commonExportPerson.setECrisId(person.getECrisId());
-        commonExportPerson.setENaukaId(person.getENaukaId());
+        PublicPersonIdentifiers.openIdentifiers(person.getId()).forEach(personIdentifier ->
+            commonExportPerson.getIdentifiers().add(new ExportEntityIdentifier(
+                personIdentifier.getIdentifier().getCode(), personIdentifier.getValue(),
+                personIdentifier.getIdentifier().getUrlTemplate())));
         commonExportPerson.setOrcid(person.getOrcid());
         commonExportPerson.setScopusAuthorId(person.getScopusAuthorId());
         commonExportPerson.setSex(person.getPersonalInfo().getSex());
@@ -176,17 +179,11 @@ public class ExportPersonConverter extends ExportConverterBase {
             dcPerson.getIdentifier().add("scopus:" + exportPerson.getScopusAuthorId());
         }
 
-        if (StringUtil.valueExists(exportPerson.getENaukaId())) {
-            dcPerson.getIdentifier().add("enauka:" + exportPerson.getENaukaId());
-        }
-
-        if (StringUtil.valueExists(exportPerson.getECrisId())) {
-            dcPerson.getIdentifier().add("ecris:" + exportPerson.getECrisId());
-        }
-
-        if (StringUtil.valueExists(exportPerson.getApvnt())) {
-            dcPerson.getIdentifier().add("apvnt:" + exportPerson.getApvnt());
-        }
+        exportPerson.getIdentifiers().stream()
+            .filter(identifier -> StringUtil.valueExists(identifier.getCode()) &&
+                StringUtil.valueExists(identifier.getValue()))
+            .forEach(identifier -> dcPerson.getIdentifier()
+                .add(identifier.getCode() + ":" + identifier.getValue()));
 
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcPerson.getIdentifier()

@@ -57,6 +57,7 @@ import rs.teslaris.core.model.rocrate.RoCratePublishable;
 import rs.teslaris.core.model.rocrate.RoCrateThesis;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -467,6 +468,10 @@ public class RoCrateConverter {
                 person.getPersonalInfo().getProfessionalContact().getContactEmail());
         }
 
+        PublicPersonIdentifiers.resolvableUris(person.getId()).stream()
+            .filter(uri -> !uri.equals(identifier))
+            .forEach(uri -> personMetadata.getSameAs().add(new ContextualEntity(uri)));
+
         setAffiliationInfo(person, personMetadata, metadataInfo);
 
         return personMetadata;
@@ -607,11 +612,12 @@ public class RoCrateConverter {
             return "https://openalex.org/" + person.getOpenAlexId();
         } else if (StringUtil.valueExists(person.getWebOfScienceResearcherId())) {
             return "http://www.researcherid.com/rid/" + person.getWebOfScienceResearcherId();
-        } else if (StringUtil.valueExists(person.getECrisId())) {
-            return "https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" + person.getECrisId();
-        } else {
-            return baseUrl + "en/persons/" + person.getId();
         }
+
+        var configuredIdentifier = PublicPersonIdentifiers.firstResolvableUri(person.getId());
+
+        return Objects.nonNull(configuredIdentifier) ? configuredIdentifier
+            : baseUrl + "en/persons/" + person.getId();
     }
 
     private static String getFileIdentifier(DocumentFile documentFile) {

@@ -1,8 +1,10 @@
 package rs.teslaris.core.dto.person;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -60,4 +62,9 @@ public class ImportPersonDTO extends BasicPersonDTO {
     private String importSource;
 
     private List<LanguageKnowledgeDTO> languageKnowledges = new ArrayList<>();
+
+    /**
+     * Harvested identifier values keyed by the configured identifier code.
+     */
+    private Map<String, String> additionalIdentifiers = new HashMap<>();
 }

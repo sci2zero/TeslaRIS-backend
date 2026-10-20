@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -40,7 +41,6 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.MigrationLog;
 import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -71,6 +71,21 @@ public class FundingEntityCreatorTest {
 
     private FundingEntityCreator creator;
 
+    private static FundingDTO fundingWithAmount() {
+        var dto = new FundingDTO();
+        var amount = new MonetaryAmountDTO();
+        amount.setAmount(100);
+        amount.setCurrencyCode("EUR");
+        dto.setAmount(amount);
+        return dto;
+    }
+
+    private static ProjectMigrationDTO.ConsortiumEntry partnerWithAmount() {
+        return new ProjectMigrationDTO.ConsortiumEntry(
+            OrganisationUnitProjectContributionType.PARTNER,
+            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
+            new HydratorProjectModel.Amount("EUR", "1000"));
+    }
 
     @BeforeEach
     void setUp() {
@@ -86,15 +101,6 @@ public class FundingEntityCreatorTest {
         when(fundingService.createFunding(any())).thenReturn(created);
         when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(5);
-    }
-
-    private static FundingDTO fundingWithAmount() {
-        var dto = new FundingDTO();
-        var amount = new MonetaryAmountDTO();
-        amount.setAmount(100);
-        amount.setCurrencyCode("EUR");
-        dto.setAmount(amount);
-        return dto;
     }
 
     @Test
@@ -155,13 +161,6 @@ public class FundingEntityCreatorTest {
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
             true));
         verify(fundingService, never()).createFunding(any());
-    }
-
-    private static ProjectMigrationDTO.ConsortiumEntry partnerWithAmount() {
-        return new ProjectMigrationDTO.ConsortiumEntry(
-            OrganisationUnitProjectContributionType.PARTNER,
-            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
-            new HydratorProjectModel.Amount("EUR", "1000"));
     }
 
     @Test

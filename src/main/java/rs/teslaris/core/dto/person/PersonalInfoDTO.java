@@ -1,6 +1,5 @@
 package rs.teslaris.core.dto.person;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -41,14 +40,6 @@ public class PersonalInfoDTO implements PersonIdentifierable {
 
     @Valid
     private ContactDTO privateContact;
-
-    private String apvnt;
-
-    @JsonProperty("eCrisId")
-    private String eCrisId;
-
-    @JsonProperty("eNaukaId")
-    private String eNaukaId;
 
     private String orcid;
 
@@ -91,9 +82,6 @@ public class PersonalInfoDTO implements PersonIdentifierable {
         this.contact = other.contact != null ? new ContactDTO(other.contact) : null;
         this.privateContact =
             other.privateContact != null ? new ContactDTO(other.privateContact) : null;
-        this.apvnt = other.apvnt;
-        this.eCrisId = other.eCrisId;
-        this.eNaukaId = other.eNaukaId;
         this.orcid = other.orcid;
         this.scopusAuthorId = other.scopusAuthorId;
         this.openAlexId = other.openAlexId;

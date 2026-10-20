@@ -40,9 +40,6 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @Entity
 @DynamicUpdate
 @Table(name = "persons", indexes = {
-    @Index(name = "idx_person_apvnt", columnList = "apvnt"),
-    @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
-    @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
     @Index(name = "idx_person_orcid", columnList = "orcid"),
     @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
     @Index(name = "idx_wos_researcher_id", columnList = "web_of_science_researcher_id"),
@@ -82,15 +79,6 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
 
     @Embedded
     private ProfilePhotoOrLogo profilePhoto;
-
-    @Column(name = "apvnt")
-    private String apvnt;
-
-    @Column(name = "e_cris_id")
-    private String eCrisId;
-
-    @Column(name = "e_nauka_id")
-    private String eNaukaId;
 
     @Column(name = "national_science_id")
     private String nationalScienceId;

@@ -34,6 +34,7 @@ import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 
 @Component
 public class FairSignpostingL2Utility {
@@ -187,16 +188,29 @@ public class FairSignpostingL2Utility {
             );
         }
 
-        if (FairSignpostingL1Utility.valuePresent(person.getPersonalInfo().getECrisId())) {
-            var dataciteUri = "https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" +
-                person.getPersonalInfo().getECrisId();
-            linkEntries.add(
-                new FairSignpostingLinksetUtility.LinkEntry(dataciteUri, "cite-as", "text/html",
-                    anchor)
-            );
+        var citeAsClaimed =
+            FairSignpostingL1Utility.valuePresent(person.getPersonalInfo().getOrcid());
+
+        for (var uri : PublicPersonIdentifiers.resolvableUris(person.getId())) {
+            var identifierUri = FairSignpostingL1Utility.buildSafeUri(uri);
+
+            // cite-as names one authoritative identifier, so it is claimed only once.
+            if (citeAsClaimed) {
+                linkEntries.add(
+                    new FairSignpostingLinksetUtility.LinkEntry(identifierUri, "describedby",
+                        "text/html", anchor)
+                );
+            } else {
+                linkEntries.add(
+                    new FairSignpostingLinksetUtility.LinkEntry(identifierUri, "cite-as",
+                        "text/html", anchor)
+                );
+                citeAsClaimed = true;
+            }
+
             linkEntries.add(
                 new FairSignpostingLinksetUtility.LinkEntry(anchor, "describes", "text/html",
-                    dataciteUri)
+                    identifierUri)
             );
         }
 
@@ -326,10 +340,8 @@ public class FairSignpostingL2Utility {
         if (FairSignpostingL1Utility.valuePresent(info.getWebOfScienceResearcherId())) {
             return "http://www.researcherid.com/rid/" + info.getWebOfScienceResearcherId();
         }
-        if (FairSignpostingL1Utility.valuePresent(info.getECrisId())) {
-            return "https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" + info.getECrisId();
-        }
-        return null;
+
+        return PublicPersonIdentifiers.firstResolvableUri(person.getId());
     }
 
     private static void addMetadataLinks(

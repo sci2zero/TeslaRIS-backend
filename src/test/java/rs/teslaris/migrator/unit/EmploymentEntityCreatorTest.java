@@ -31,22 +31,17 @@ import rs.teslaris.migrator.util.MigrationLog;
 @ExtendWith(MockitoExtension.class)
 public class EmploymentEntityCreatorTest {
 
-    @Mock
-    private InvolvementService involvementService;
-
-    @Mock
-    private MigrationIdResolver idResolver;
-
-    @Mock
-    private HydratorInstitutionResolver institutionResolver;
-
-    @Mock
-    private MigrationLog migrationLog;
-
     private static final HydratorCVModel.Institution INSTITUTION =
         new HydratorCVModel.Institution("Test University", null,
             new HydratorCVModel.InstitutionIdentifier("12345", "RINGGOLD"), null);
-
+    @Mock
+    private InvolvementService involvementService;
+    @Mock
+    private MigrationIdResolver idResolver;
+    @Mock
+    private HydratorInstitutionResolver institutionResolver;
+    @Mock
+    private MigrationLog migrationLog;
     @InjectMocks
     private EmploymentEntityCreator creator;
 

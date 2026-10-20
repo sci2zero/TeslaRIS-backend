@@ -19,9 +19,6 @@ public class IdentifierConfigurationCatalogue {
         Collections.unmodifiableMap(
             new LinkedHashMap<ApplicableEntityType, Map<String, IdentifierConfiguration>>() {{
                 put(ApplicableEntityType.PERSON, new LinkedHashMap<>() {{
-                    put("apvnt", standard());
-                    put("eCrisId", standard());
-                    put("eNaukaId", standard());
                     put("nationalScienceId", standard());
                     put("scholarId", standard());
                     put("authenticusId", standard());

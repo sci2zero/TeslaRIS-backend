@@ -23,6 +23,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierCodeInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierReferenceConstraintViolationException;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
@@ -120,7 +121,9 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
 
         identifier.setRegularExpression(
             Objects.requireNonNullElse(identifierDTO.regularExpression(), ""));
-        identifier.setUriPrefix(Objects.requireNonNullElse(identifierDTO.uriPrefix(), ""));
+        IdentifierUtil.validateUrlTemplate(identifierDTO.urlTemplate());
+        identifier.setUrlTemplate(
+            Objects.requireNonNullElse(identifierDTO.urlTemplate(), ""));
     }
 
     @Override

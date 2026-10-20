@@ -87,6 +87,7 @@ import rs.teslaris.core.revision.QualityActivityProvider;
 import rs.teslaris.core.revision.QualityIdentifierField;
 import rs.teslaris.core.revision.QualityUniquenessChecker;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
@@ -1422,15 +1423,18 @@ public class DataQualityCalculator {
             }
         }
 
-        if (StringUtil.valueExists(dto.uriPrefix())) {
+        if (StringUtil.valueExists(dto.urlTemplate())) {
             var uriMaxLength = getIntConstraint(assessment, "identifierUriTooLong", "maxLength");
-            if (Objects.nonNull(uriMaxLength) && dto.uriPrefix().length() > uriMaxLength) {
-                reportIssue(assessment, "identifierUriTooLong", dto.uriPrefix(), uriMaxLength);
+            if (Objects.nonNull(uriMaxLength) && dto.urlTemplate().length() > uriMaxLength) {
+                reportIssue(assessment, "identifierUriTooLong", dto.urlTemplate(), uriMaxLength);
             }
 
             var uriPattern = getPatternConstraint(assessment, "invalidIdentifierUriFormat");
-            if (Objects.nonNull(uriPattern) && !uriPattern.matcher(dto.uriPrefix()).matches()) {
-                reportIssue(assessment, "invalidIdentifierUriFormat", dto.uriPrefix());
+            // The placeholder is substituted first so the template is judged as a resolved URL.
+            var resolvedUrl =
+                dto.urlTemplate().replace(IdentifierUtil.ID_PLACEHOLDER, "1");
+            if (Objects.nonNull(uriPattern) && !uriPattern.matcher(resolvedUrl).matches()) {
+                reportIssue(assessment, "invalidIdentifierUriFormat", dto.urlTemplate());
             }
         }
 

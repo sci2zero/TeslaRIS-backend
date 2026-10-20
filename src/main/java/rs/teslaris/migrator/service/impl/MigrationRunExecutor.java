@@ -17,8 +17,8 @@ import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.pipeline.MigrationPipelineRunner;
 import rs.teslaris.migrator.pipeline.ResolvedPipeline;
-import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.pipeline.RunScopedCache;
+import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 
 /**

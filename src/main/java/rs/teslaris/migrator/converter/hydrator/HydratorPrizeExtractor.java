@@ -104,7 +104,7 @@ public class HydratorPrizeExtractor
     }
 
     private Set<Integer> researchAreas(String key,
-                                                 HydratorCVModel.Distinction distinction) {
+                                       HydratorCVModel.Distinction distinction) {
         if (Objects.isNull(distinction.researchClassifications()) ||
             Objects.isNull(distinction.researchClassifications().researchClassification())) {
             return Set.of();

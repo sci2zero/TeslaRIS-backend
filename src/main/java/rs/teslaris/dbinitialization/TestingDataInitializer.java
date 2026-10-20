@@ -1442,7 +1442,7 @@ public class TestingDataInitializer {
         identifier2.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Identifier 2 description", 1)));
         identifier2.setApplicableTypes(Set.of(ApplicableEntityType.CONFERENCE));
-        identifier2.setUriPrefix("https://test.com/");
+        identifier2.setUrlTemplate("https://test.com/{ID}");
         identifier2.setAccessLevel(AccessLevel.CLOSED);
 
         identifierRepository.saveAll(List.of(identifier1, identifier2));

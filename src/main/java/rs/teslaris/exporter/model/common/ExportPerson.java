@@ -1,6 +1,5 @@
 package rs.teslaris.exporter.model.common;
 
-import jakarta.persistence.Column;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -21,14 +20,8 @@ public class ExportPerson extends BaseExportEntity {
     @Field("name")
     private ExportPersonName name;
 
-    @Field("apvnt")
-    private String apvnt;
-
-    @Column(name = "e_cris_id")
-    private String eCrisId;
-
-    @Column(name = "e_nauka_id")
-    private String eNaukaId;
+    @Field("identifiers")
+    private List<ExportEntityIdentifier> identifiers = new ArrayList<>();
 
     @Field("orcid")
     private String orcid;

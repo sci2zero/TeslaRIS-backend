@@ -19,7 +19,7 @@ public class IdentifierConverter {
                 List.of(ApplicableEntityType.ALL)
             ).stream().toList(),
             identifier.getRegularExpression(),
-            identifier.getUriPrefix()
+            identifier.getUrlTemplate()
         );
     }
 }

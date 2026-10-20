@@ -37,39 +37,6 @@ import rs.teslaris.project.model.project.ProjectStatus;
 public class HydratorProjectConverterTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    @Mock
-    private LanguageTagService languageTagService;
-
-    @Mock
-    private LanguageService languageService;
-
-    @Mock
-    private ResearchAreaService researchAreaService;
-
-    @Mock
-    private MigrationLog migrationLog;
-
-    private HydratorProjectConverter converter;
-
-
-    @BeforeEach
-    void setUp() {
-        when(researchAreaService.getResearchAreaNames("EN")).thenReturn(List.of(
-            new Pair<>(20, "natural sciences"),
-            new Pair<>(21, "mechanical engineering")));
-
-        converter = new HydratorProjectConverter(
-            new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
-            migrationLog);
-    }
-
-    private HydratorProjectModel.ProjectDocument document(String project) throws Exception {
-        return MAPPER.readValue("""
-            {"id": "doc-1", "record": {"metadata": {"project": %s}}}
-            """.formatted(project), HydratorProjectModel.ProjectDocument.class);
-    }
-
     private static final String FULL_PROJECT = """
         {"projectId": "TEST001",
          "acronym": "TP",
@@ -87,6 +54,32 @@ public class HydratorProjectConverterTest {
          "subjects": [{"language": "en", "value": "Natural sciences"},
                       {"language": "pt", "value": "Ciências naturais"}]}
         """;
+    @Mock
+    private LanguageTagService languageTagService;
+    @Mock
+    private LanguageService languageService;
+    @Mock
+    private ResearchAreaService researchAreaService;
+    @Mock
+    private MigrationLog migrationLog;
+    private HydratorProjectConverter converter;
+
+    @BeforeEach
+    void setUp() {
+        when(researchAreaService.getResearchAreaNames("EN")).thenReturn(List.of(
+            new Pair<>(20, "natural sciences"),
+            new Pair<>(21, "mechanical engineering")));
+
+        converter = new HydratorProjectConverter(
+            new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
+            migrationLog);
+    }
+
+    private HydratorProjectModel.ProjectDocument document(String project) throws Exception {
+        return MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": %s}}}
+            """.formatted(project), HydratorProjectModel.ProjectDocument.class);
+    }
 
     @Test
     void shouldMapFlatAttributes() throws Exception {
@@ -142,9 +135,9 @@ public class HydratorProjectConverterTest {
     @Test
     void shouldTreatFutureEndAsOngoing() throws Exception {
         var dto = converter.toDTO(document("""
-            {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
-             "startDate": "%s", "endDate": "%s"}
-            """.formatted(LocalDate.now().minusYears(1), LocalDate.now().plusYears(1))))
+                {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
+                 "startDate": "%s", "endDate": "%s"}
+                """.formatted(LocalDate.now().minusYears(1), LocalDate.now().plusYears(1))))
             .project();
 
         assertEquals(ProjectStatus.ONGOING, dto.getStatus());
@@ -153,9 +146,9 @@ public class HydratorProjectConverterTest {
     @Test
     void shouldTreatFutureStartAsSubmitted() throws Exception {
         var dto = converter.toDTO(document("""
-            {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
-             "startDate": "%s", "endDate": "%s"}
-            """.formatted(LocalDate.now().plusMonths(1), LocalDate.now().plusYears(2))))
+                {"projectId": "TEST002", "titles": [{"language": "en", "value": "Test"}],
+                 "startDate": "%s", "endDate": "%s"}
+                """.formatted(LocalDate.now().plusMonths(1), LocalDate.now().plusYears(2))))
             .project();
 
         assertEquals(ProjectStatus.SUBMITTED, dto.getStatus());

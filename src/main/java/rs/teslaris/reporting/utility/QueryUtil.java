@@ -100,7 +100,7 @@ public class QueryUtil {
     }
 
     public static Pair<Integer, Integer> sanitizeYearRange(double earliestYear,
-                                                          double latestYear) {
+                                                           double latestYear) {
         if (Double.isNaN(earliestYear) || Double.isNaN(latestYear)) {
             return new Pair<>(null, null);
         }
