@@ -12,9 +12,11 @@ public class CachingConfiguration {
 
     public static final String LANGUAGE_TAGS_CACHE = "languageTags";
 
+    public static final String OU_HIERARCHY_CACHE = "organisationUnitHierarchy";
+
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager(LANGUAGE_TAGS_CACHE);
+        return new ConcurrentMapCacheManager(LANGUAGE_TAGS_CACHE, OU_HIERARCHY_CACHE);
     }
 }
