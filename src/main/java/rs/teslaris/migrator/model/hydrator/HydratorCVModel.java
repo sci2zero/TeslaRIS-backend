@@ -28,6 +28,7 @@ public class HydratorCVModel {
         IdentifyingInfo identifyingInfo,
         Employments employments,
         Distinctions distinctions,
+        Fundings fundings,
         Outputs outputs
     ) {
     }
@@ -374,6 +375,100 @@ public class HydratorCVModel {
         String year,
         String month,
         String day
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Fundings(
+        Integer total,
+        List<Funding> funding
+    ) {
+    }
+
+    /**
+     * A project the curriculum owner took part in, with its funding; the source has no separate
+     * project record. {@code startDate}/{@code endDate} belong to the project, the
+     * {@code *Participation} dates to the owner.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Funding(
+        String id,
+        CodeValue fundingCategory,
+        String projectTitle,
+        String projectDescription,
+        DateInfo startDate,
+        DateInfo endDate,
+        DateInfo startDateParticipation,
+        DateInfo endDateParticipation,
+        FundingStatus status,
+        Institutions fundingInstitutions,
+        Institutions institutions,
+        String programName,
+        InvestigationRole investigationRole,
+        String yearAwarded,
+        TotalAmount totalAmount,
+        FundingIdentifiers fundingIdentifiers,
+        FundingInvestigators investigators,
+        Keywords keywords,
+        ResearchClassifications researchClassifications
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingStatus(
+        String code,
+        String status
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record InvestigationRole(
+        String code,
+        String role
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Institutions(
+        Integer total,
+        List<Institution> institution
+    ) {
+    }
+
+    /**
+     * The source may carry the currency without an amount.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TotalAmount(
+        String currency,
+        String amount
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingIdentifiers(
+        Integer total,
+        List<FundingIdentifier> fundingIdentifier
+    ) {
+    }
+
+    /**
+     * {@code reference} is free text - a project code, a grant agreement number or a URI.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingIdentifier(
+        String reference,
+        CodeValue relationshipType
+    ) {
+    }
+
+    /**
+     * Same shape as output authors; hydrator normalises plain-string investigators into it.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingInvestigators(
+        Integer total,
+        List<OutputAuthor> investigator
     ) {
     }
 
