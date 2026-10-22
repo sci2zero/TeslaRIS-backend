@@ -54,8 +54,12 @@ public class HydratorOutputConverters {
 
     private static final String ISBN_CODE = "isbn";
 
+    private static final String HANDLE_CODE = "handle";
+
     // Internal id of the source system, not a real PID - expected on almost every output
     private static final String SOURCE_WORK_ID_CODE = "source-work-id";
+
+    private static final String NOT_INFORMED = "Not informed";
 
     /**
      * MAP-000067: identifier types of the work itself, the document field each one fills, and the
@@ -243,16 +247,86 @@ public class HydratorOutputConverters {
 
         var language = languageOf(record);
         var dto = new ThesisDTO();
+        var entityType = MigrationEntityType.THESIS;
 
-        applyCommonFields(dto, record, output, MigrationEntityType.THESIS, dissertation.title(),
+        applyCommonFields(dto, record, output, entityType, dissertation.title(),
             language, dissertation.completionDate(), dissertation.url(),
             dissertation.authors(), null);
-        applyIdentifiers(dto, record, output, MigrationEntityType.THESIS,
+        applyIdentifiers(dto, record, output, entityType,
             dissertation.identifiers(), "MAP-000214", null);
+        applyPublicationFields(dto, record, output, entityType, language, dissertation.keywords(),
+            null, dissertation.researchClassifications(), "MAP-000217");
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
+        dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
+            institutionName(record, output, dissertation.institutions()), language));
+        dto.getContributions().addAll(supervisorContributions(dissertation.supervisors()));
+
+        if (!isBlank(dissertation.numberOfVolumes())) {
+            dto.setDescription(conversionUtil.multilingualContent(
+                "Number of volumes: " + dissertation.numberOfVolumes().trim(), "en"));
+        }
+
+        dropValue(record, output, entityType, "MAP-000211", dissertation.classification(),
+            "classification vocabulary is not defined");
 
         return dto;
+    }
+
+    // MAP-000209: a thesis has one institution, kept by name until matched to an organisation
+    // unit; core rejects a thesis without one
+    private String institutionName(HydratorCVModel.Curriculum record,
+                                   HydratorCVModel.Output output,
+                                   HydratorCVModel.Institutions institutions) {
+        var names = Objects.isNull(institutions) || Objects.isNull(institutions.institution()) ?
+            List.<String>of() : institutions.institution().stream()
+            .filter(Objects::nonNull)
+            .map(HydratorCVModel.Institution::name)
+            .filter(name -> !isBlank(name))
+            .map(String::trim)
+            .toList();
+
+        if (names.isEmpty()) {
+            return NOT_INFORMED;
+        }
+
+        names.stream().skip(1).forEach(name -> migrationLog.valueDropped(HydratorSource.NAME,
+            MigrationEntityType.THESIS.name(), outputKey(record, output), "MAP-000209",
+            "only one institution is kept: '" + name + "'"));
+
+        return names.getFirst();
+    }
+
+    // MAP-000216: supervisors and co-supervisors alike, after the author
+    private List<PersonDocumentContributionDTO> supervisorContributions(
+        HydratorCVModel.Supervisors supervisors) {
+        var contributions = new ArrayList<PersonDocumentContributionDTO>();
+
+        if (Objects.isNull(supervisors) || Objects.isNull(supervisors.supervisor())) {
+            return contributions;
+        }
+
+        for (var supervisor : supervisors.supervisor()) {
+            var name = Objects.isNull(supervisor) ? null :
+                conversionUtil.splitName(supervisor.name(), null);
+
+            if (Objects.nonNull(name)) {
+                contributions.add(contribution(DocumentContributionType.ADVISOR,
+                    contributions.size() + 2, name,
+                    personResolver.resolveByCienciaId(supervisor.cienciaId())));
+            }
+        }
+
+        return contributions;
+    }
+
+    private void dropValue(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
+                           MigrationEntityType entityType, String rule, String value,
+                           String reason) {
+        if (!isBlank(value)) {
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
+                outputKey(record, output), rule, reason + ": '" + value.trim() + "'");
+        }
     }
 
     private void applyCommonFields(DocumentDTO dto, HydratorCVModel.Curriculum record,
@@ -381,6 +455,13 @@ public class HydratorOutputConverters {
             var value = withoutPrefix(code, identifier.identifier().trim());
 
             if (!target.pattern().matcher(value).matches()) {
+                var handleUri = HANDLE_CODE.equals(code) ? handleUri(value) : null;
+
+                if (Objects.nonNull(handleUri)) {
+                    dto.getUris().add(handleUri);
+                    continue;
+                }
+
                 migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
                     outputKey(record, output), rule,
                     "invalid " + code + " format: '" + value + "'");
@@ -391,6 +472,15 @@ public class HydratorOutputConverters {
                 target.setter().accept(dto, value);
             }
         }
+    }
+
+    // Core's handle field only takes "20.500.x/…", so any other handle is kept as a link
+    private String handleUri(String value) {
+        if (value.matches("(?i)^https?://\\S+$")) {
+            return value;
+        }
+
+        return value.matches("^\\d+(\\.\\d+)*/\\S+$") ? "https://hdl.handle.net/" + value : null;
     }
 
     private String withoutPrefix(String code, String value) {
@@ -660,6 +750,11 @@ public class HydratorOutputConverters {
 
         if (value.contains("magist")) {
             return ThesisType.MR;
+        }
+
+        // "Degree" is the Portuguese licenciatura
+        if (value.contains("degree")) {
+            return ThesisType.BACHELOR;
         }
 
         return ThesisType.PHD;

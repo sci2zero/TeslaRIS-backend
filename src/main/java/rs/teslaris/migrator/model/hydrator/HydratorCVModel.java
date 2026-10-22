@@ -444,7 +444,42 @@ public class HydratorCVModel {
         DateInfo completionDate,
         String url,
         OutputIdentifiers identifiers,
-        OutputAuthors authors
+        OutputAuthors authors,
+        Supervisors supervisors,
+        Institutions institutions,
+        Keywords keywords,
+        ResearchClassifications researchClassifications,
+        String numberOfVolumes,
+        String classification
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Supervisors(
+        Integer total,
+        List<Supervisor> supervisor
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Supervisor(
+        String cienciaId,
+        String name,
+        SupervisorRole role
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SupervisorRole(
+        String code,
+        String role
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Institutions(
+        Integer total,
+        List<Institution> institution
     ) {
     }
 
