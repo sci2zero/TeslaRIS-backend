@@ -1,8 +1,19 @@
 databaseChangeLog:
+  # The initial changelog omits these CHECK constraints. Skip absent drops on
+  # fresh databases; preserve the SQL checksums already recorded on existing ones.
 
   - changeSet:
       id: 1780838502-1
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.users'::regclass
+                AND conname = 'users_user_notification_period_check';
       changes:
         - sql:
             splitStatements: false
@@ -14,6 +25,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-2
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.theses'::regclass
+                AND conname = 'theses_thesis_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -25,6 +45,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-3
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.scheduled_tasks'::regclass
+                AND conname = 'scheduled_tasks_task_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -36,6 +65,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-4
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.public_review_page_content_thesis_types'::regclass
+                AND conname = 'public_review_page_content_thesis_types_thesis_types_check';
       changes:
         - sql:
             splitStatements: false
@@ -47,6 +85,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-5
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.project_relations'::regclass
+                AND conname = 'project_relations_relation_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -58,6 +105,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-6
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.project_documents'::regclass
+                AND conname = 'project_documents_relation_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -69,6 +125,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-7
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.proceedings_publications'::regclass
+                AND conname = 'proceedings_publications_proceedings_publication_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -80,6 +145,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-8
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.person_project_contribution'::regclass
+                AND conname = 'person_project_contribution_contribution_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -91,6 +165,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-9
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.person_journal_contributions'::regclass
+                AND conname = 'person_journal_contributions_contribution_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -102,6 +185,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-10
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.person_event_contributions'::regclass
+                AND conname = 'person_event_contributions_contribution_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -113,6 +205,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-11
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.person_document_contribution'::regclass
+                AND conname = 'person_document_contribution_contribution_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -124,6 +225,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-12
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.monographs'::regclass
+                AND conname = 'monographs_monograph_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -135,6 +245,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-13
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.monograph_publications'::regclass
+                AND conname = 'monograph_publications_monograph_publication_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -146,6 +265,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-14
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.journal_publications'::regclass
+                AND conname = 'journal_publications_journal_publication_type_check';
       changes:
         - sql:
             splitStatements: false
@@ -157,6 +285,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-15
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.intangible_products'::regclass
+                AND conname = 'software_approve_status_check';
       changes:
         - sql:
             splitStatements: false
@@ -168,6 +305,15 @@ databaseChangeLog:
   - changeSet:
       id: 1780838502-16
       author: constraints-drift-script
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.commission_relations'::regclass
+                AND conname = 'commission_relations_result_calculation_method_check';
       changes:
         - sql:
             splitStatements: false
