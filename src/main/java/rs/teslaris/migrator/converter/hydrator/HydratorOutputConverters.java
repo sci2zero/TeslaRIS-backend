@@ -110,6 +110,9 @@ public class HydratorOutputConverters {
     // Every output type has its own CIÊNCIA VITAE rule for the same source field
     private static final Map<MigrationEntityType, OutputRules> OUTPUT_RULES = Map.of(
         MigrationEntityType.JOURNAL_PUBLICATION, new OutputRules(62, 67, 68, 69),
+        MigrationEntityType.PROCEEDINGS_PUBLICATION, new OutputRules(76, 85, 86, 88),
+        // Slides carry only the presentation date and the presenters
+        MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
     );
 
@@ -139,10 +142,10 @@ public class HydratorOutputConverters {
             article.articleTitle(), language, article.publicationDate(), article.url(),
             article.authors(), article.authoringRole());
         applyIdentifiers(dto, record, output, MigrationEntityType.JOURNAL_PUBLICATION,
-            article.identifiers(), "MAP-000067", null);
+            article.identifiers(), null);
         applyPublicationFields(dto, record, output, MigrationEntityType.JOURNAL_PUBLICATION,
             language, article.keywords(), article.publicationStatus(),
-            article.researchClassifications(), "MAP-000069");
+            article.researchClassifications());
         dto.setPeerReviewed(isTrue(article.refereed()));
         dto.setOpenAccess(isTrue(article.openAccess()));
         applyLocation(dto, language, article.publicationLocation());
@@ -165,9 +168,9 @@ public class HydratorOutputConverters {
     }
 
     /**
-     * MAP-000071: the paper only; its proceedings and conference are resolved when it is created
-     * (see {@link HydratorProceedingsResolver}), as core overwrites the paper's date and status
-     * from the proceedings anyway.
+     * CW-001-MAP-000071: the paper only; its proceedings and conference are resolved when it is
+     * created (see {@link HydratorProceedingsResolver}), as core overwrites the paper's date and
+     * status from the proceedings anyway.
      */
     public ProceedingsPublicationDTO toProceedingsPublication(HydratorCVModel.Curriculum record,
                                                               HydratorCVModel.Output output) {
@@ -183,10 +186,9 @@ public class HydratorOutputConverters {
 
         applyCommonFields(dto, record, output, entityType, paper.paperTitle(), language,
             paper.conferenceDate(), null, paper.authors(), paper.authoringRole());
-        applyIdentifiers(dto, record, output, entityType, paper.identifiers(), "MAP-000085",
-            ISBN_CODE);
+        applyIdentifiers(dto, record, output, entityType, paper.identifiers(), ISBN_CODE);
         applyPublicationFields(dto, record, output, entityType, language, paper.keywords(),
-            paper.publicationStatus(), paper.researchClassifications(), "MAP-000088");
+            paper.publicationStatus(), paper.researchClassifications());
 
         dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         dto.setStartPage(paper.pageFrom());
@@ -194,7 +196,7 @@ public class HydratorOutputConverters {
 
         if (!isBlank(paper.proceedingsPublisher())) {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                outputKey(record, output), "MAP-000083",
+                outputKey(record, output), HydratorMappingRule.cv(83),
                 "proceedings publisher not migrated: '" + paper.proceedingsPublisher().trim() +
                     "'");
         }
@@ -203,9 +205,9 @@ public class HydratorOutputConverters {
     }
 
     /**
-     * MAP-000090/091: the paper's presentation as slides, held at a performance event of its own
-     * (see {@link HydratorProceedingsResolver#createPresentationEvent}). TeslaRIS has no TOPIC_OF
-     * document relation, so the slides are not linked to the paper.
+     * CW-001-MAP-000090/091: the paper's presentation as slides, held at a performance event of its
+     * own (see {@link HydratorProceedingsResolver#createPresentationEvent}). TeslaRIS has no
+     * TOPIC_OF document relation, so the slides are not linked to the paper.
      */
     public PerformanceRelatedOutputDTO toPresentation(HydratorCVModel.Curriculum record,
                                                       HydratorCVModel.Output output) {
@@ -231,7 +233,7 @@ public class HydratorOutputConverters {
             .forEach(dto.getLanguageTagIds()::add);
 
         migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-            outputKey(record, output), "MAP-000090",
+            outputKey(record, output), HydratorMappingRule.cv(90),
             "no TOPIC_OF relation in TeslaRIS, slides are not linked to the paper");
 
         return dto;
@@ -258,9 +260,9 @@ public class HydratorOutputConverters {
             language, dissertation.completionDate(), dissertation.url(),
             dissertation.authors(), null);
         applyIdentifiers(dto, record, output, entityType,
-            dissertation.identifiers(), "MAP-000214", null);
+            dissertation.identifiers(), null);
         applyPublicationFields(dto, record, output, entityType, language, dissertation.keywords(),
-            null, dissertation.researchClassifications(), "MAP-000217");
+            null, dissertation.researchClassifications());
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
         dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
@@ -272,14 +274,15 @@ public class HydratorOutputConverters {
                 "Number of volumes: " + dissertation.numberOfVolumes().trim(), "en"));
         }
 
-        dropValue(record, output, entityType, "MAP-000211", dissertation.classification(),
+        dropValue(record, output, entityType, HydratorMappingRule.cv(211),
+            dissertation.classification(),
             "classification vocabulary is not defined");
 
         return dto;
     }
 
-    // MAP-000209: a thesis has one institution, kept by name until matched to an organisation
-    // unit; core rejects a thesis without one
+    // CW-001-MAP-000209: a thesis has one institution, kept by name until matched to an
+    // organisation unit; core rejects a thesis without one
     private String institutionName(HydratorCVModel.Curriculum record,
                                    HydratorCVModel.Output output,
                                    HydratorCVModel.Institutions institutions) {
@@ -296,13 +299,14 @@ public class HydratorOutputConverters {
         }
 
         names.stream().skip(1).forEach(name -> migrationLog.valueDropped(HydratorSource.NAME,
-            MigrationEntityType.THESIS.name(), outputKey(record, output), "MAP-000209",
+            MigrationEntityType.THESIS.name(), outputKey(record, output),
+            HydratorMappingRule.cv(209),
             "only one institution is kept: '" + name + "'"));
 
         return names.getFirst();
     }
 
-    // MAP-000216: supervisors and co-supervisors alike, after the author
+    // CW-001-MAP-000216: supervisors and co-supervisors alike, after the author
     private List<PersonDocumentContributionDTO> supervisorContributions(
         HydratorCVModel.Supervisors supervisors) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
@@ -383,12 +387,10 @@ public class HydratorOutputConverters {
                                         MigrationEntityType entityType, String language,
                                         HydratorCVModel.Keywords keywords,
                                         HydratorCVModel.CodeValue status,
-                                        HydratorCVModel.ResearchClassifications classifications,
-                                        String classificationRule) {
+                                        HydratorCVModel.ResearchClassifications classifications) {
         dto.setKeywords(conversionUtil.multilingualContent(keywords(keywords), language));
         dto.setPublicationStatus(publicationStatus(status));
-        dropResearchClassifications(record, output, entityType, classifications,
-            classificationRule);
+        dropResearchClassifications(record, output, entityType, classifications);
     }
 
     void applyLocation(DocumentDTO dto, String language,
@@ -407,13 +409,12 @@ public class HydratorOutputConverters {
         }
     }
 
-    // CW-001-MAP-000069: documents have no research areas in TeslaRIS, so values are only logged
     // Documents have no research areas in TeslaRIS, so the values are only logged
     private void dropResearchClassifications(HydratorCVModel.Curriculum record,
                                              HydratorCVModel.Output output,
                                              MigrationEntityType entityType,
                                              HydratorCVModel.ResearchClassifications
-                                                 classifications, String rule) {
+                                                 classifications) {
         if (Objects.isNull(classifications) ||
             Objects.isNull(classifications.researchClassification())) {
             return;
@@ -428,15 +429,13 @@ public class HydratorOutputConverters {
     }
 
     /**
-     * CW-001-MAP-000067: identifiers of the work itself fill their document fields, first value
-     * wins. "Part of" identifiers belong to the container and are join keys, not attributes.
      * Identifiers of the work itself fill their document fields, first value wins. "Part of"
      * identifiers, and any of the container's type, belong to the container and are join keys,
      * not attributes.
      */
     private void applyIdentifiers(DocumentDTO dto, HydratorCVModel.Curriculum record,
                                   HydratorCVModel.Output output, MigrationEntityType entityType,
-                                  HydratorCVModel.OutputIdentifiers identifiers, String rule,
+                                  HydratorCVModel.OutputIdentifiers identifiers,
                                   String containerCode) {
         if (Objects.isNull(identifiers) || Objects.isNull(identifiers.identifier())) {
             return;
@@ -505,7 +504,7 @@ public class HydratorOutputConverters {
         return firstIdentifier(identifiers, code, this::isPartOf);
     }
 
-    // MAP-000085: a paper has no ISBN of its own, so one marked "Self" is its proceedings' too
+    // CW-001-MAP-000085: a paper has no ISBN of its own, so one marked "Self" is its proceedings'
     String proceedingsIsbn(HydratorCVModel.OutputIdentifiers identifiers) {
         return Optional.ofNullable(partOfIdentifier(identifiers, ISBN_CODE))
             .orElseGet(() -> firstIdentifier(identifiers, ISBN_CODE, identifier -> true));
@@ -577,7 +576,7 @@ public class HydratorOutputConverters {
         return contributions;
     }
 
-    // MAP-000087: proceedings editors
+    // CW-001-MAP-000087: proceedings editors
     List<PersonDocumentContributionDTO> editorContributions(HydratorCVModel.Curriculum record,
                                                             HydratorCVModel.OutputAuthors editors) {
         return linkedContributions(record, editors, DocumentContributionType.EDITOR);
@@ -611,7 +610,7 @@ public class HydratorOutputConverters {
                                                        Integer personId) {
         var contribution = new PersonDocumentContributionDTO();
         contribution.setContributionType(type);
-        contribution.setIsMainContributor(orderNumber == 1);
+        contribution.setIsMainContributor(false);
         contribution.setIsCorrespondingContributor(false);
         contribution.setIsBoardPresident(false);
         contribution.setOrderNumber(orderNumber);

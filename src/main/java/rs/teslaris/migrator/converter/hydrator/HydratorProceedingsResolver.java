@@ -36,10 +36,10 @@ import rs.teslaris.migrator.util.MigrationLog;
 
 /**
  * The proceedings of a conference paper, its conference and the event it was presented at are
- * only named in the curriculum, so all are created on demand as stubs (MAP-000073…083,
- * MAP-000087, MAP-000090).
+ * only named in the curriculum, so all are created on demand as stubs (CW-001-MAP-000073…083,
+ * 000087, 000090).
  * <p>
- * Proceedings are matched by their ISBN (MAP-000085), otherwise by conference and title;
+ * Proceedings are matched by their ISBN (CW-001-MAP-000085), otherwise by conference and title;
  * conferences by name and year. Missing names fall back to "Not informed" per crosswalk.
  */
 @Component
@@ -186,9 +186,9 @@ public class HydratorProceedingsResolver implements RunScopedCache {
     }
 
     /**
-     * MAP-000090: the event a paper was presented at, one per presentation, named after the paper
-     * and held where its conference was. Dated by the presentation, or by the conference when only
-     * the presenters are known.
+     * CW-001-MAP-000090: the event a paper was presented at, one per presentation, named after the
+     * paper and held where its conference was. Dated by the presentation, or by the conference when
+     * only the presenters are known.
      *
      * @return the event's id, or {@code null} when there is no date to hold it on
      */
@@ -274,7 +274,7 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         if (!ISBN.matcher(isbn).matches()) {
             migrationLog.valueDropped(HydratorSource.NAME,
                 MigrationEntityType.PROCEEDINGS_PUBLICATION.name(),
-                converters.outputKey(record, output), "MAP-000085",
+                converters.outputKey(record, output), HydratorMappingRule.cv(85),
                 "invalid isbn format: '" + isbn + "'");
             return null;
         }
