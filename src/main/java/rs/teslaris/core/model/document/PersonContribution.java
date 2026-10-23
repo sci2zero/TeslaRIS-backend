@@ -32,7 +32,6 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter
 @Setter
@@ -106,10 +105,6 @@ public class PersonContribution extends BaseEntity {
 
     @Column(name = "invited_contributor")
     private Boolean isInvitedContributor = false;
-
-    @OneToMany(mappedBy = "personContribution", cascade = CascadeType.ALL,
-        orphanRemoval = true)
-    private Set<FundingPart> fundingParts = new HashSet<>();
 
     public PersonContribution(Person person,
                               Set<MultiLingualContent> contributionDescription,

@@ -18,8 +18,6 @@ public interface PrizeService extends JPAService<Prize> {
 
     PrizeResponseDTO addPrize(Integer personId, PrizeDTO dto);
 
-    PrizeResponseDTO addPrize(Integer personId, PrizeDTO dto, boolean performIndex);
-
     PrizeResponseDTO updatePrize(Integer prizeId, PrizeDTO dto);
 
     void deletePrize(Integer prizeId, Integer personId);

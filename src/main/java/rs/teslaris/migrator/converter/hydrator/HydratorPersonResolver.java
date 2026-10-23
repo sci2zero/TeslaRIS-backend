@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.person.Person;
@@ -17,15 +18,22 @@ import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 
 /**
- * Links output authors to persons migrated in the PERSON pass.
+ * Links hydrator records to persons migrated in the PERSON pass.
  * <p>
  * The curriculum owner is found through the record log, keyed by the curriculum id. A co-author
- * is reachable only through their Ciência ID, which the person pass stores as the national
- * science id. The same co-author shows up in many curricula, so lookups are cached for the run.
+ * or project team member is reachable only through their identifiers (Ciência ID, then ORCID),
+ * which the person pass stores on the person. The same person shows up in many records, so
+ * lookups are cached for the run.
  */
 @Component
 @RequiredArgsConstructor
 public class HydratorPersonResolver implements RunScopedCache {
+
+    static final String NO_IDENTIFIER = "person has no identifier";
+
+    static final String NOT_FOUND = "identifier not found";
+
+    static final String AMBIGUOUS = "ambiguous identifier";
 
     private static final String CIENCIA_ID_CODE = "CIENCIAID";
 
@@ -35,8 +43,37 @@ public class HydratorPersonResolver implements RunScopedCache {
 
     private final HydratorConversionUtil conversionUtil;
 
-    private final Map<String, Optional<Integer>> personIdsByCienciaId = new ConcurrentHashMap<>();
+    // Empty value = looked up, not found; ambiguous identifiers are not cached
+    private final Map<String, Optional<Integer>> personIds = new ConcurrentHashMap<>();
 
+
+    /**
+     * Matches a project team member to an existing person by Ciência ID, then ORCID
+     * (CW-002-MAP-000028).
+     */
+    public Match resolve(String cienciaId, String orcid) {
+        if (isBlank(cienciaId) && isBlank(orcid)) {
+            return new Match(null, NO_IDENTIFIER);
+        }
+
+        var ambiguous = false;
+        for (var identifier : new String[] {cienciaId, orcid}) {
+            if (isBlank(identifier)) {
+                continue;
+            }
+
+            try {
+                var personId = personIds.computeIfAbsent(identifier.trim(), this::lookUp);
+                if (personId.isPresent()) {
+                    return new Match(personId.get(), null);
+                }
+            } catch (IncorrectResultSizeDataAccessException e) {
+                ambiguous = true;
+            }
+        }
+
+        return new Match(null, ambiguous ? AMBIGUOUS : NOT_FOUND);
+    }
 
     /**
      * The record log is the direct link from a curriculum to its person; the owner's Ciência ID
@@ -129,13 +166,20 @@ public class HydratorPersonResolver implements RunScopedCache {
     }
 
     public Integer resolveByCienciaId(String cienciaId) {
-        if (Objects.isNull(cienciaId) || cienciaId.isBlank()) {
+        if (isBlank(cienciaId)) {
             return null;
         }
 
-        return personIdsByCienciaId.computeIfAbsent(cienciaId.trim(),
-                key -> personService.findPersonByIdentifier(key).map(Person::getId))
-            .orElse(null);
+        return personIds.computeIfAbsent(cienciaId.trim(), this::lookUp).orElse(null);
+    }
+
+    @Override
+    public void clearCache() {
+        personIds.clear();
+    }
+
+    private Optional<Integer> lookUp(String identifier) {
+        return personService.findPersonByIdentifier(identifier).map(Person::getId);
     }
 
     private HydratorCVModel.IdentifyingInfo identifyingInfo(HydratorCVModel.Curriculum record) {
@@ -143,8 +187,14 @@ public class HydratorPersonResolver implements RunScopedCache {
             record.curriculum().identifyingInfo();
     }
 
-    @Override
-    public void clearCache() {
-        personIdsByCienciaId.clear();
+    private boolean isBlank(String value) {
+        return Objects.isNull(value) || value.isBlank();
+    }
+
+    public record Match(Integer personId, String reason) {
+
+        public boolean found() {
+            return Objects.nonNull(personId);
+        }
     }
 }

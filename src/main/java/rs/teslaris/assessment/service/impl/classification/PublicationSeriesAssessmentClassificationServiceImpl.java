@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -232,7 +233,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     @Override
-    public void scheduleClassification(LocalDateTime timeToRun, Integer commissionId,
+    public void scheduleClassification(Instant timeToRun, Integer commissionId,
                                        Integer userId, List<Integer> classificationYears,
                                        List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
@@ -254,7 +255,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     }
 
     @Override
-    public void scheduleClassificationLoading(LocalDateTime timeToRun,
+    public void scheduleClassificationLoading(Instant timeToRun,
                                               EntityClassificationSource source,
                                               Integer userId, Integer commissionId) {
         Runnable handlerFunction = switch (source) {

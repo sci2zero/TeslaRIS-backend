@@ -27,8 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.revision.RevisionRestorer;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -40,10 +43,7 @@ import rs.teslaris.revisioner.dto.RevisionDTO;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 import rs.teslaris.revisioner.util.CompressionUtil;
 import rs.teslaris.revisioner.util.ObjectMapperProvider;
@@ -78,6 +78,12 @@ public class RevisionServiceImpl implements RevisionService {
     public void createRevisionIfChanged(RevisionCreateEvent event) {
         if (event.duringRestoration()) {
             // The restore records its own revision with the state the entity actually reached.
+            return;
+        }
+
+        // Backstop for the guards at the publish sites: a migration records no revisions, they are
+        // backfilled in bulk once the run has finished.
+        if (event.duringMigration()) {
             return;
         }
 
@@ -180,9 +186,9 @@ public class RevisionServiceImpl implements RevisionService {
     @Override
     public boolean createRevisionFromCurrentState(String entityType, Integer entityId,
                                                   String profileName) {
-        if (revisionRepository
-            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-            .isPresent()) {
+        // Only check existence here: loading a revision would read its PostgreSQL LOB outside
+        // a transaction, even though backfill does not need the stored snapshot.
+        if (revisionRepository.existsByEntityTypeAndEntityId(entityType, entityId)) {
             return false;
         }
 
@@ -237,9 +243,7 @@ public class RevisionServiceImpl implements RevisionService {
         var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
             revisionRepository.lockForRevisionWrite(entityType, entityId);
 
-            if (revisionRepository
-                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-                .isPresent()) {
+            if (revisionRepository.existsByEntityTypeAndEntityId(entityType, entityId)) {
                 return false;
             }
 

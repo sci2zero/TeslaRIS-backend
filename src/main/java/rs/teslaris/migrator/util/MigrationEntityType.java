@@ -15,6 +15,9 @@ public enum MigrationEntityType {
     PERSON,
     PERSON_EMPLOYMENT,
     PERSON_PRIZE,
+    PROJECT,
+    PROJECT_FUNDING,
+    PROJECT_ORGANISATION,
 
     DOCUMENT,
     JOURNAL_PUBLICATION,
@@ -24,7 +27,6 @@ public enum MigrationEntityType {
     MONOGRAPH_PUBLICATION,
     PERFORMANCE_RELATED_OUTPUT,
 
-    // Stubs created while resolving documents, kept so a restarted run reuses them
     CONFERENCE,
     PROCEEDINGS;
 
@@ -33,7 +35,8 @@ public enum MigrationEntityType {
         return switch (this) {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, THESIS, MONOGRAPH,
                  MONOGRAPH_PUBLICATION, PERFORMANCE_RELATED_OUTPUT -> DOCUMENT;
-            case PERSON_PRIZE -> PERSON;
+            case PERSON_EMPLOYMENT, PERSON_PRIZE -> PERSON;
+            case PROJECT_FUNDING, PROJECT_ORGANISATION -> PROJECT;
             default -> null;
         };
     }

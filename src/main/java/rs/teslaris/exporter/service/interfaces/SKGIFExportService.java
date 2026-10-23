@@ -3,9 +3,9 @@ package rs.teslaris.exporter.service.interfaces;
 import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.model.skgif.SKGIFListResponse;
+import rs.teslaris.core.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
-import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
-import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 
 @Service

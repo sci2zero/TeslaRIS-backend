@@ -684,6 +684,24 @@ public class TestingDataInitializer {
         person4.setScopusAuthorId("14419566900");
         personRepository.save(person4);
 
+        // Nothing is ever attached to this one so that the delete endpoint has a person
+        // it can actually delete. Every other seeded person is referenced by something
+        // and is rejected with a reference constraint violation.
+        var person5 = new Person();
+        var postalAddress5 = new PostalAddress(country, new HashSet<>(),
+            new HashSet<>(), new HashSet<>(), null);
+        var personalInfo5 =
+            new PersonalInfo(LocalDate.of(1983, 3, 11), "Serbia", Sex.MALE, postalAddress5,
+                new PostalAddress(),
+                new Contact("deletable@email.com", "021555770", "", ""),
+                null, new HashSet<>(), new HashSet<>());
+        person5.setApproveStatus(ApproveStatus.APPROVED);
+        person5.setPersonalInfo(personalInfo5);
+        person5.setName(
+            new PersonName("Nenad", "", "Deletic", LocalDate.of(1983, 3, 11), null,
+                PersonNameType.DISPLAY_NAME));
+        personRepository.save(person5);
+
         var conferenceEvent3 = new Conference();
         conferenceEvent3.setName(Set.of(new MultiLingualContent(serbianTag, "Konferencija3", 1)));
         conferenceEvent3.setDateFrom(LocalDate.of(2024, 6, 29));
@@ -1218,7 +1236,7 @@ public class TestingDataInitializer {
             List.of(pageContent1, pageContent2, pageContent3));
 
         scheduledTaskMetadataRepository.save(
-            new ScheduledTaskMetadata("ID", LocalDateTime.now(),
+            new ScheduledTaskMetadata("ID", java.time.Instant.now(),
                 ScheduledTaskType.THESIS_LIBRARY_BACKUP, Map.of(
                 "institutionId", 1,
                 "from", LocalDate.of(2000, 1, 1).toString(),

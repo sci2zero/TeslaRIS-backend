@@ -2,8 +2,8 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.applicationevent.ThesisUnarchivedEvent;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
@@ -72,6 +74,7 @@ import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
@@ -102,6 +105,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.DegradationOutcome;
 import rs.teslaris.core.util.restoration.RestorationContext;
@@ -112,8 +116,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Slf4j
@@ -183,6 +185,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              DocumentLookupService documentLookupService,
                              CountryService countryService,
+                             AssessmentGroupResolver assessmentGroupResolver,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -199,7 +202,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -298,15 +302,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var savedThesis = thesisJPAService.save(newThesis);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.THESIS.name(),
-                savedThesis.getId(),
-                null,
-                ThesisConverter.toDTO(savedThesis),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.THESIS.name(),
+                    savedThesis.getId(),
+                    null,
+                    ThesisConverter.toDTO(savedThesis),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
@@ -322,15 +328,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.THESIS.name(),
-                thesisId,
-                ThesisConverter.toDTO(thesisToUpdate),
-                thesisDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.THESIS.name(),
+                    thesisId,
+                    ThesisConverter.toDTO(thesisToUpdate),
+                    thesisDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkIfAvailableForEditing(thesisToUpdate);
 
@@ -520,7 +528,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     @Transactional
-    public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+    public void schedulePublicReviewEndCheck(Instant timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
                                              RecurrenceType recurrence, Boolean shortened) {
         var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +

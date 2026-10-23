@@ -1,6 +1,5 @@
 package rs.teslaris.migrator.converter.hydrator;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +11,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.migrator.pipeline.RunScopedCache;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
@@ -21,14 +21,15 @@ import rs.teslaris.migrator.util.MigrationLog;
  * <p>
  * The ISSN is the stronger key: an existing journal with it is reused, even one created by an
  * earlier run. Names are matched case-insensitively after normalisation only - no fuzzy matching.
- * An article with neither is linked to a shared "Not informed" journal (MAP-000053). Merging stubs
- * with real journals is left to the existing deduplication tooling.
+ * An article with neither is linked to a shared "Not informed" journal (CW-001-MAP-000053). Merging
+ * stubs with real journals is left to the existing deduplication tooling.
  * <p>
- * The cache only ever holds journals that exist, so unlike a cache of misses it may outlive a run.
+ * The cache holds only journals that exist, but deduplication between runs may merge or remove
+ * them, so it is cleared per run like every other resolver cache.
  */
 @Component
 @RequiredArgsConstructor
-public class HydratorJournalResolver {
+public class HydratorJournalResolver implements RunScopedCache {
 
     private static final String NOT_INFORMED = "Not informed";
 
@@ -49,7 +50,7 @@ public class HydratorJournalResolver {
         var title = isBlank(journalName) ? NOT_INFORMED : journalName;
 
         if (!isBlank(issn)) {
-            var normalisedIssn = issn.trim().toUpperCase(Locale.ROOT);
+            var normalisedIssn = issn.trim().toUpperCase();
 
             return resolvedJournals.computeIfAbsent("issn:" + normalisedIssn,
                 key -> findByIssn(normalisedIssn)
@@ -60,6 +61,7 @@ public class HydratorJournalResolver {
             key -> create(key, title, null, language));
     }
 
+    @Override
     public void clearCache() {
         resolvedJournals.clear();
     }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -301,7 +302,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     @Override
     @Transactional
-    public void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
+    public void scheduleIF5AndJCIRankComputation(Instant timeToRun,
                                                  List<Integer> classificationYears,
                                                  boolean calculateIF5,
                                                  boolean calculateJci,
@@ -406,7 +407,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     @Override
     @Transactional
-    public void scheduleIndicatorLoading(LocalDateTime timeToRun, EntityIndicatorSource source,
+    public void scheduleIndicatorLoading(Instant timeToRun, EntityIndicatorSource source,
                                          Integer userId) {
         Runnable handlerFunction = switch (source) {
             case WEB_OF_SCIENCE -> this::loadPublicationSeriesIndicatorsFromWOSCSVFiles;

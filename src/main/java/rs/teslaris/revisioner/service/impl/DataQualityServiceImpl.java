@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -78,6 +83,8 @@ import rs.teslaris.revisioner.util.dataquality.RelatedEntityType;
 @Slf4j
 public class DataQualityServiceImpl implements DataQualityService {
 
+    private static final String EMPTY_VALUE = "-";
+
     private static final String DOCUMENT_TARGET = "Document";
 
     private static final String PERSON_TARGET = "Person";
@@ -85,6 +92,10 @@ public class DataQualityServiceImpl implements DataQualityService {
     private static final String ACTIVITY_TARGET = "Activity";
 
     private static final String EVENT_TARGET = "Event";
+
+    private static final String PROJECT_TARGET = "Project";
+
+    private static final String FUNDING_TARGET = "Funding";
 
     private static final String PUBLICATION_SERIES_TARGET = "PublicationSeries";
 
@@ -95,6 +106,10 @@ public class DataQualityServiceImpl implements DataQualityService {
     private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
 
     private static final String EVENT_INDEX = "events";
+
+    private static final String PROJECT_INDEX = "project";
+
+    private static final String FUNDING_INDEX = "funding";
 
     private static final List<String> PUBLICATION_SERIES_INDEXES =
         List.of("journal", "book_series");
@@ -142,6 +157,8 @@ public class DataQualityServiceImpl implements DataQualityService {
     private final OrganisationUnitService organisationUnitService;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final MessageSource messageSource;
 
 
     @Override
@@ -249,6 +266,186 @@ public class DataQualityServiceImpl implements DataQualityService {
             .toList()).orElseGet(List::of);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public InputStreamResource exportFullReport(String entityType, Integer entityId,
+                                                String profileName, Integer majorVersion,
+                                                Integer minorVersion, String language) {
+        var assessment = findAssessmentsForEntityVersion(entityType, entityId, majorVersion,
+            minorVersion).stream()
+            .filter(candidate -> candidate.profileName().equalsIgnoreCase(profileName))
+            .findFirst()
+            .orElseThrow(() -> new NotFoundException(
+                String.format("Revision %d.%d of %s with ID %d has no %s assessment.",
+                    majorVersion, minorVersion, entityType, entityId, profileName)));
+
+        var rows = new ArrayList<List<Object>>();
+        rows.add(List.of(label("repositoryAnalytics.fullAssessmentReport", language)));
+        rows.add(List.of());
+
+        appendAssessmentSection(rows, assessment, profileName, majorVersion, minorVersion,
+            language);
+
+        // The related quality tab is shown for exactly these two types, so the report carries the
+        // section only when the screen does. Every other type reads as unsupported rows.
+        if (EntityType.PERSON.name().equals(entityType) ||
+            EntityType.ORGANISATION_UNIT.name().equals(entityType)) {
+            appendRelatedQualitySection(rows, entityType, entityId, profileName, language);
+        }
+
+        return TableExportHelper.createTypedXLSXFile(rows);
+    }
+
+    private void appendAssessmentSection(List<List<Object>> rows,
+                                         DataQualityAssessmentDTO assessment, String profileName,
+                                         Integer majorVersion, Integer minorVersion,
+                                         String language) {
+        rows.add(List.of(label("repositoryAnalytics.assessment", language)));
+        rows.add(List.of(label("repositoryAnalytics.profile", language),
+            DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(profileName,
+                language)));
+        rows.add(List.of(label("repositoryAnalytics.profileVersion", language),
+            Objects.requireNonNullElse(assessment.profileVersion(), EMPTY_VALUE)));
+        rows.add(List.of(label("repositoryAnalytics.assessmentDate", language),
+            localDate(assessment.finishedAt(), language)));
+        rows.add(List.of(label("repositoryAnalytics.header.recordVersion", language),
+            majorVersion + "." + minorVersion));
+        rows.add(List.of());
+
+        var failedRules = assessment.failedRulesList();
+        var totalRules = assessment.passedRules() + failedRules.size();
+
+        rows.add(List.of(label("repositoryAnalytics.header.overallScore", language),
+            percentage(assessment.qualityScore())));
+        rows.add(List.of(label("repositoryAnalytics.header.fairCompliance", language),
+            percentage(assessment.qualityScoreFair())));
+        rows.add(List.of(label("repositoryAnalytics.header.passedConstraints", language),
+            assessment.passedRules()));
+        rows.add(List.of(label("repositoryAnalytics.header.failedConstraints", language),
+            failedRules.size()));
+        rows.add(List.of(label("repositoryAnalytics.header.totalConstraints", language),
+            totalRules));
+        rows.add(List.of());
+
+        rows.add(List.of(label("repositoryAnalytics.failedConstraints", language)));
+
+        if (failedRules.isEmpty()) {
+            rows.add(List.of(label("repositoryAnalytics.noFailedConstraints", language)));
+            return;
+        }
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.constraint", language),
+            label("repositoryAnalytics.header.dimension", language),
+            label("repositoryAnalytics.header.metric", language),
+            label("repositoryAnalytics.header.severity", language),
+            label("repositoryAnalytics.header.message", language),
+            label("repositoryAnalytics.header.actualValue", language)
+        ));
+
+        // The screen resolves a rule's metric key to its configured title, so the column has to be
+        // resolved the same way rather than left as the raw key.
+        var metricTitles = listProfileMetrics(profileName).stream()
+            .collect(Collectors.toMap(MetricSummaryDTO::key,
+                metric -> content(metric.title(), language, metric.key())));
+
+        failedRules.forEach(rule -> rows.add(List.of(
+            content(rule.title(), language, rule.key()),
+            label("repositoryAnalytics.dimension." + rule.dimension().name(), language),
+            Objects.requireNonNullElse(metricTitles.get(rule.metric()),
+                Objects.requireNonNullElse(rule.metric(), EMPTY_VALUE)),
+            label("repositoryAnalytics.severity." + rule.severity().name(), language),
+            content(rule.message(), language, EMPTY_VALUE),
+            Objects.requireNonNullElse(rule.actualValue(), EMPTY_VALUE)
+        )));
+    }
+
+    private void appendRelatedQualitySection(List<List<Object>> rows, String entityType,
+                                             Integer entityId, String profileName,
+                                             String language) {
+        var relatedQuality = getRelatedQualityForEntity(entityType, entityId).stream()
+            .filter(candidate -> candidate.profileName().equalsIgnoreCase(profileName))
+            .findFirst();
+
+        if (relatedQuality.isEmpty()) {
+            return;
+        }
+
+        rows.add(List.of());
+        rows.add(List.of(label("repositoryAnalytics.relatedQuality", language)));
+        rows.add(List.of(label("repositoryAnalytics.profileVersion", language),
+            Objects.requireNonNullElse(relatedQuality.get().profileVersion(), EMPTY_VALUE)));
+        rows.add(List.of(label("repositoryAnalytics.assessmentDate", language),
+            localDate(relatedQuality.get().assessmentDate(), language)));
+
+        // Related quality is always read off the latest revision, whichever version the
+        // assessment section was asked for.
+        rows.add(List.of(label("repositoryAnalytics.header.recordVersion", language),
+            latestRecordVersion(entityType, entityId)));
+        rows.add(List.of());
+
+        rows.add(List.of(
+            label("repositoryAnalytics.header.entityType", language),
+            label("repositoryAnalytics.header.linkedRecords", language),
+            label("repositoryAnalytics.header.affectedRecords", language),
+            label("repositoryAnalytics.header.openIssues", language),
+            label("repositoryAnalytics.header.averageScore", language)
+        ));
+
+        relatedQuality.get().relatedQuality().forEach(row -> rows.add(List.of(
+            label("repositoryAnalytics.entityType." + row.entityType().name(), language),
+            count(row.supported(), row.linkedRecords()),
+            count(row.supported(), row.affectedRecords()),
+            count(row.supported(), row.openIssues()),
+            percentage(row.averageScore())
+        )));
+    }
+
+    private String latestRecordVersion(String entityType, Integer entityId) {
+        return entityRevisionRepository
+            .findTopByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .map(revision -> revision.getMajorVersion() + "." + revision.getMinorVersion())
+            .orElse(EMPTY_VALUE);
+    }
+
+    private String label(String key, String language) {
+        try {
+            return Objects.requireNonNullElse(
+                messageSource.getMessage(key, null, Locale.forLanguageTag(language)), key);
+        } catch (Exception e) {
+            return key;
+        }
+    }
+
+    private String localDate(@Nullable Instant instant, String language) {
+        return Objects.isNull(instant)
+            ? label("repositoryAnalytics.currentState", language)
+            : LocalDate.ofInstant(instant, ZoneId.systemDefault()).toString();
+    }
+
+    private String content(List<MultilingualContentDTO> content, String language,
+                           String fallback) {
+        if (Objects.isNull(content) || content.isEmpty()) {
+            return fallback;
+        }
+
+        return Objects.requireNonNullElse(content.stream()
+            .filter(candidate -> language.equalsIgnoreCase(candidate.getLanguageTag()))
+            .findFirst()
+            .map(MultilingualContentDTO::getContent)
+            .orElseGet(() -> content.getFirst().getContent()), fallback);
+    }
+
+    private Object percentage(@Nullable Double value) {
+        return Objects.isNull(value)
+            ? EMPTY_VALUE
+            : new TableExportHelper.PercentageValue(value);
+    }
+
+    private Object count(boolean supported, long value) {
+        return supported ? value : EMPTY_VALUE;
+    }
+
     private List<RelatedQualityDTO> relatedQuality(String entityType, Integer entityId,
                                                    String profileName) {
         var isPerson = EntityType.PERSON.name().equals(entityType);
@@ -330,11 +527,55 @@ public class DataQualityServiceImpl implements DataQualityService {
                 averageActivityScore(activityParents, assessedActivities),
                 true
             ),
-            // TODO: projects have no quality assessments yet.
-            RelatedQualityDTO.unsupported(RelatedEntityType.PROJECTS),
-            // TODO: fundings have no quality assessments yet.
-            RelatedQualityDTO.unsupported(RelatedEntityType.FUNDINGS)
+            // A project links to a person through its contributors and to a unit through their
+            // institutions; a funding inherits both from the project it funds. Neither raises
+            // Activity rules, so no activity occurrences have to be netted out here.
+            relatedTargetRow(RelatedEntityType.PROJECTS, PROJECT_TARGET, PROJECT_INDEX,
+                isPerson, entityId, scopeIds, profileName),
+            relatedTargetRow(RelatedEntityType.FUNDINGS, FUNDING_TARGET, FUNDING_INDEX,
+                isPerson, entityId, scopeIds, profileName)
         );
+    }
+
+    /**
+     * One row for a target whose records carry the person and institution links themselves, so the
+     * record count and the assessed figures come from the same two id fields.
+     */
+    private RelatedQualityDTO relatedTargetRow(RelatedEntityType entityType, String target,
+                                               String indexName, boolean isPerson,
+                                               Integer entityId, List<Integer> scopeIds,
+                                               String profileName) {
+        var assessments = dataQualityAggregator
+            .aggregateAssessments(
+                targetAssessmentsQuery(target, isPerson, entityId, scopeIds, profileName),
+                Set.of())
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        var records = dataQualityAggregator.countRecords(indexName,
+            isPerson
+                ? TermQuery.of(t -> t.field("person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds));
+
+        return new RelatedQualityDTO(
+            entityType,
+            records,
+            assessments.affectedRecords(),
+            assessments.openIssues(),
+            assessments.averageScore(),
+            true
+        );
+    }
+
+    private Query targetAssessmentsQuery(String target, boolean isPerson, Integer entityId,
+                                         List<Integer> scopeIds, String profileName) {
+        return BoolQuery.of(b -> b
+            .must(m -> m.term(t -> t.field("target").value(target)))
+            .must(m -> m.term(t -> t.field("is_latest").value(true)))
+            .must(m -> m.term(t -> t.field("profile_name").value(profileName)))
+            .must(isPerson
+                ? TermQuery.of(t -> t.field("related_person_ids").value(entityId))._toQuery()
+                : termsQuery("organisation_unit_ids", scopeIds))
+        )._toQuery();
     }
 
     // A person has no related persons in the index; a unit has everyone employed below it.
@@ -570,7 +811,8 @@ public class DataQualityServiceImpl implements DataQualityService {
         }
 
         return ACTIVITY_TARGET.equals(target)
-            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET)
+            ? List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET,
+            PROJECT_TARGET, FUNDING_TARGET)
             : List.of(target);
     }
 
@@ -964,13 +1206,17 @@ public class DataQualityServiceImpl implements DataQualityService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DataQualityProfileSummaryDTO> listDataQualityProfileNames() {
-        // Answered from the loaded configuration alone - no rules are converted and no language tag
-        // is resolved, which is what makes the full listing expensive.
+        // Answered from the loaded configuration alone - no rules are converted, which is what
+        // makes the full listing expensive.
         return DataQualityAssessmentConfigurationLoader.listAvailableProfilesWithVersion()
             .stream()
             .map(profileAndVersion -> new DataQualityProfileSummaryDTO(
-                profileAndVersion.a, profileAndVersion.b))
+                profileAndVersion.a, profileAndVersion.b,
+                StringUtil.buildMultilingualContentDTO(languageTagService,
+                    DataQualityAssessmentConfigurationLoader.getProfileName(
+                        profileAndVersion.a, profileAndVersion.b))))
             .toList();
     }
 

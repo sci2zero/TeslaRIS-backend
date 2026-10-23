@@ -2,6 +2,8 @@ package rs.teslaris.project.indexmodel.funding;
 
 import jakarta.persistence.Id;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -65,4 +67,17 @@ public class FundingIndex {
     @Field(type = FieldType.Date, name = "date_to")
     private LocalDate dateTo;
 
+    /**
+     * The funded project's contributors and their institutions, copied from the project index so a
+     * funding can be counted under an institution it belongs to, because a funding carries no
+     * contributor of its own. Empty for a funding attached to an involvement rather than a project.
+     */
+    @Field(type = FieldType.Integer, name = "person_ids")
+    private List<Integer> personIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids")
+    private List<Integer> organisationUnitIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "activities_count", store = true)
+    private Integer activitiesCount;
 }

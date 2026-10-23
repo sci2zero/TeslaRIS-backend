@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
+import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.commontypes.CountryDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.LanguageResponseDTO;
@@ -43,6 +44,7 @@ import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OrganisationUnitContributionDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
@@ -64,19 +66,26 @@ import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
+import rs.teslaris.core.dto.project.FundingQualityViewDTO;
+import rs.teslaris.core.dto.project.ProjectQualityViewDTO;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.OtherEventType;
+import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.revision.QualityActivityProvider;
+import rs.teslaris.core.revision.QualityIdentifierField;
+import rs.teslaris.core.revision.QualityUniquenessChecker;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -127,6 +136,17 @@ public class DataQualityCalculator {
 
     private final DataQualityAssessmentIndexer dataQualityAssessmentIndexer;
 
+    /**
+     * Uniqueness checks for entity types whose repository this class may not reach.
+     * A list rather than a map keeps the constructor Lombok-generated; there are two
+     * beans and at most three lookups per assessment.
+     */
+    private final List<QualityUniquenessChecker> uniquenessCheckers;
+
+    private final List<QualityActivityProvider> activityProviders;
+
+    private final InvolvementRepository involvementRepository;
+
     private final Map<Class<?>, BiConsumer<Object, DataQualityAssessment>> assessors =
         Map.ofEntries(
             Map.entry(ThesisResponseDTO.class,
@@ -172,22 +192,33 @@ public class DataQualityCalculator {
             Map.entry(InvolvementDTO.class,
                 (dto, assessment) -> assessEntity((InvolvementDTO) dto, assessment)),
             Map.entry(PublisherDTO.class,
-                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment))
+                (dto, assessment) -> assessEntity((PublisherDTO) dto, assessment)),
+            // Projects and fundings are assessed as core-owned projections of their snapshots -
+            // their own DTOs live in a module this one may not depend on.
+            Map.entry(ProjectQualityViewDTO.class,
+                (dto, assessment) -> assessEntity((ProjectQualityViewDTO) dto, assessment)),
+            Map.entry(FundingQualityViewDTO.class,
+                (dto, assessment) -> assessEntity((FundingQualityViewDTO) dto, assessment))
         );
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void assessDataQuality(DataQualityAssessment assessment, String json,
-                                  ObjectMapper objectMapper,
-                                  DataQualityAssessmentRepository repository,
-                                  List<String> targetTypes) {
+    public boolean assessDataQuality(DataQualityAssessment assessment, String json,
+                                     ObjectMapper objectMapper,
+                                     DataQualityAssessmentRepository repository,
+                                     List<String> targetTypes) {
         Class<?> dtoClass =
-            revisionHydratorRegistry.getDtoClass(assessment.getRevision().getEntityType());
+            revisionHydratorRegistry.getAssessmentDtoClass(
+                assessment.getRevision().getEntityType());
 
         try {
             Object dto = objectMapper.treeToValue(objectMapper.readTree(json), dtoClass);
 
-            assessEntity(dto, assessment, targetTypes);
+            // An entity type with no assessor has nothing to score yet, and a half-built
+            // assessment would be persisted with no finishedAt and then fail to index.
+            if (!assessEntity(dto, assessment, targetTypes)) {
+                return false;
+            }
 
             repository.save(assessment);
 
@@ -202,6 +233,8 @@ public class DataQualityCalculator {
                 assessment.getQualityScore(),
                 assessment.getIssues().size()
             );
+
+            return true;
         } catch (JsonProcessingException e) {
             log.error(
                 "Failed to deserialize revision {} of type {} into DTO {}.",
@@ -219,24 +252,28 @@ public class DataQualityCalculator {
                 e
             );
         }
+
+        return false;
     }
 
-    private void assessEntity(Object dto, DataQualityAssessment assessment,
-                              List<String> targetTypes) {
+    private boolean assessEntity(Object dto, DataQualityAssessment assessment,
+                                 List<String> targetTypes) {
         BiConsumer<Object, DataQualityAssessment> assessor = resolveAssessor(dto.getClass());
 
         if (Objects.isNull(assessor)) {
-            log.warn(
-                "No data quality assessor registered for DTO class {} (entityType={}, revisionId={}).",
+            log.debug(
+                "No data quality assessor for DTO class {} (entityType={}, revisionId={}).",
                 dto.getClass().getName(),
                 assessment.getRevision().getEntityType(),
                 assessment.getRevision().getId()
             );
-            return;
+            return false;
         }
 
         assessor.accept(dto, assessment);
         finishUpAssessment(assessment, targetTypes);
+
+        return true;
     }
 
     @Nullable
@@ -293,6 +330,10 @@ public class DataQualityCalculator {
         }
 
         var documentDate = FlexibleDateConverter.fromDTO(dto.getDocumentDate());
+        // Parsed once for the whole record: it is the same reference date for every contributor,
+        // and a date the record cannot express must not abort the assessment - the malformed
+        // value is reported as an issue of its own below.
+        var publicationDate = parseDocumentDateQuietly(documentDate);
 
         if (!CollectionOperations.containsValues(dto.getContributions())) {
             reportIssue(assessment, "contributorsMissing");
@@ -308,35 +349,32 @@ public class DataQualityCalculator {
 
             dto.getContributions().forEach(
                 contribution ->
-                    assessEntity(contribution, assessment,
-                        null, null,
-                        StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate)))
+                    assessEntity(contribution, assessment, null, null, publicationDate)
             );
         }
 
         if (!FlexibleDate.isDatePresentAndValid(documentDate)) {
             reportIssue(assessment, "documentDateMissing");
+        } else if (Objects.isNull(publicationDate) ||
+            FlexibleDate.hasMalformedComponents(documentDate)) {
+            // A zero month still yields a parseable year, so the stored components are checked
+            // too - otherwise the record would silently pass as a year-only date.
+            reportIssue(assessment, "invalidDocumentDateFormat", dto.getDocumentDate());
         } else {
-            try {
-                var date = StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
+            var documentDateMinYear =
+                getIntConstraint(assessment, "documentDateBefore", "minYear");
+            if (Objects.nonNull(documentDateMinYear) &&
+                publicationDate.isBefore(LocalDate.of(documentDateMinYear, 1, 1))) {
+                reportIssue(assessment, "documentDateBefore", dto.getDocumentDate(),
+                    documentDateMinYear);
+            }
 
-                var documentDateMinYear =
-                    getIntConstraint(assessment, "documentDateBefore", "minYear");
-                if (Objects.nonNull(documentDateMinYear) &&
-                    date.isBefore(LocalDate.of(documentDateMinYear, 1, 1))) {
-                    reportIssue(assessment, "documentDateBefore", dto.getDocumentDate(),
-                        documentDateMinYear);
-                }
-
-                var documentDateMaxFutureYears =
-                    getIntConstraint(assessment, "documentDateTooFarInFuture", "maxFutureYears");
-                if (Objects.nonNull(documentDateMaxFutureYears) &&
-                    date.isAfter(LocalDate.now().plusYears(documentDateMaxFutureYears))) {
-                    reportIssue(assessment, "documentDateTooFarInFuture",
-                        dto.getDocumentDate(), documentDateMaxFutureYears);
-                }
-            } catch (Exception e) {
-                reportIssue(assessment, "invalidDocumentDateFormat", dto.getDocumentDate());
+            var documentDateMaxFutureYears =
+                getIntConstraint(assessment, "documentDateTooFarInFuture", "maxFutureYears");
+            if (Objects.nonNull(documentDateMaxFutureYears) &&
+                publicationDate.isAfter(LocalDate.now().plusYears(documentDateMaxFutureYears))) {
+                reportIssue(assessment, "documentDateTooFarInFuture",
+                    dto.getDocumentDate(), documentDateMaxFutureYears);
             }
         }
 
@@ -1316,30 +1354,34 @@ public class DataQualityCalculator {
     }
 
     private void assessEntity(GeoLocationDTO dto, DataQualityAssessment assessment) {
-        if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
-            reportIssue(assessment, "latitudeMissing");
-        } else {
-            var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
-            var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
-            if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
-                (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
-                reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin, latMax);
+        if ((Objects.nonNull(dto.getLatitude()) && dto.getLatitude() != 0.0) ||
+            (Objects.nonNull(dto.getLongitude()) && dto.getLongitude() != 0.0)) {
+            if (Objects.isNull(dto.getLatitude()) || dto.getLatitude() == 0.0) {
+                reportIssue(assessment, "latitudeMissing");
+            } else {
+                var latMin = getDoubleConstraint(assessment, "latitudeOutOfRange", "min");
+                var latMax = getDoubleConstraint(assessment, "latitudeOutOfRange", "max");
+                if (Objects.nonNull(latMin) && Objects.nonNull(latMax) &&
+                    (dto.getLatitude() < latMin || dto.getLatitude() > latMax)) {
+                    reportIssue(assessment, "latitudeOutOfRange", dto.getLatitude(), latMin,
+                        latMax);
+                }
             }
-        }
 
-        if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
-            reportIssue(assessment, "longitudeMissing");
-        } else {
-            var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
-            var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
-            if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
-                (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
-                reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin, lonMax);
+            if (Objects.isNull(dto.getLongitude()) || dto.getLongitude() == 0.0) {
+                reportIssue(assessment, "longitudeMissing");
+            } else {
+                var lonMin = getDoubleConstraint(assessment, "longitudeOutOfRange", "min");
+                var lonMax = getDoubleConstraint(assessment, "longitudeOutOfRange", "max");
+                if (Objects.nonNull(lonMin) && Objects.nonNull(lonMax) &&
+                    (dto.getLongitude() < lonMin || dto.getLongitude() > lonMax)) {
+                    reportIssue(assessment, "longitudeOutOfRange", dto.getLongitude(), lonMin,
+                        lonMax);
+                }
             }
         }
 
         if (StringUtil.valueExists(dto.getAddress())) {
-
             var addressMaxLength = getIntConstraint(assessment, "addressTooLong", "maxLength");
             if (Objects.nonNull(addressMaxLength) &&
                 dto.getAddress().length() > addressMaxLength) {
@@ -1424,12 +1466,12 @@ public class DataQualityCalculator {
         return name.isBlank() ? "-" : name;
     }
 
-    private String activityName(InvolvementDTO dto) {
+    private String organisationUnitName(Integer organisationUnitId) {
         AtomicReference<String> organisationUnit = new AtomicReference<>("");
 
-        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+        if (Objects.nonNull(organisationUnitId)) {
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                dto.getOrganisationUnitId()).ifPresent(index -> {
+                organisationUnitId).ifPresent(index -> {
                     if (index.getNameSr().equals(index.getNameOther())) {
                         organisationUnit.set(index.getNameSr());
                     } else {
@@ -1437,6 +1479,16 @@ public class DataQualityCalculator {
                     }
                 }
             );
+        }
+
+        return organisationUnit.get().isBlank() ? "-" : organisationUnit.get();
+    }
+
+    private String activityName(InvolvementDTO dto) {
+        AtomicReference<String> organisationUnit = new AtomicReference<>("");
+
+        if (Objects.nonNull(dto.getOrganisationUnitId())) {
+            return organisationUnitName(dto.getOrganisationUnitId());
         } else {
             organisationUnit.set(StringUtil.getStringContent(dto.getDisplayOrganisationUnit(),
                 LanguageAbbreviations.PORTUGUESE));
@@ -1758,6 +1810,214 @@ public class DataQualityCalculator {
         // TODO lastModificationDateMissing
     }
 
+    private void assessEntity(ProjectQualityViewDTO dto, DataQualityAssessment assessment) {
+        checkMultilingualValue(assessment, "projectNameMissing", "projectNameTooShort",
+            "projectNameTooLong", "invalidProjectNameFormat", dto.getName());
+
+        if (!CollectionOperations.containsValues(dto.getDescription())) {
+            reportIssue(assessment, "projectDescriptionMissing");
+        }
+
+        checkMultilingualMinLength(assessment, "projectDescriptionTooShort",
+            dto.getDescription());
+
+        if (!StringUtil.valueExists(dto.getDoi())) {
+            reportIssue(assessment, "projectDoiMissing");
+        } else {
+            checkMinLength(assessment, "projectDoiTooShort", dto.getDoi());
+            checkMaxLength(assessment, "projectDoiTooLong", dto.getDoi());
+            checkPattern(assessment, "invalidProjectDoiFormat", dto.getDoi());
+            checkUnique(assessment, "projectDoiDuplicate", QualityIdentifierField.DOI,
+                dto.getDoi(), dto.getId());
+
+            if (!isResolvableDoi(dto.getDoi())) {
+                reportIssue(assessment, "projectDoiNotResolvable", dto.getDoi());
+            }
+        }
+
+        if (!StringUtil.valueExists(dto.getRaid())) {
+            reportIssue(assessment, "projectRaidMissing");
+        } else {
+            checkMinLength(assessment, "projectRaidTooShort", dto.getRaid());
+            checkMaxLength(assessment, "projectRaidTooLong", dto.getRaid());
+            checkPattern(assessment, "invalidProjectRaidFormat", dto.getRaid());
+            checkUnique(assessment, "projectRaidDuplicate", QualityIdentifierField.RAID,
+                dto.getRaid(), dto.getId());
+        }
+
+        if (!StringUtil.valueExists(dto.getNationalId())) {
+            reportIssue(assessment, "projectNationalIdMissing");
+        } else {
+            checkMinLength(assessment, "projectNationalIdTooShort", dto.getNationalId());
+            checkMaxLength(assessment, "projectNationalIdTooLong", dto.getNationalId());
+            checkUnique(assessment, "projectNationalIdDuplicate",
+                QualityIdentifierField.NATIONAL_ID, dto.getNationalId(), dto.getId());
+        }
+
+        if (!hasAnyIdentifier(dto.getInternalIdentifiers(), dto.getDoi(), dto.getRaid(),
+            dto.getNationalId())) {
+            reportIssue(assessment, "noProjectIdentifierPresent");
+        }
+
+        reportIfMissing(assessment, "projectDateFromMissing", dto.getDateFrom());
+        reportIfMissing(assessment, "projectDateToMissing", dto.getDateTo());
+
+        checkMinYear(assessment, "projectDateFromBefore", dto.getDateFrom());
+        checkMaxFutureYears(assessment, "projectDateFromTooFarInFuture", dto.getDateFrom());
+
+        reportIfBefore(assessment, "projectDateToBeforeDateFrom", dto.getDateTo(),
+            dto.getDateFrom());
+        checkMaxYearsAfter(assessment, "projectDurationTooLong", dto.getDateTo(),
+            dto.getDateFrom());
+
+        if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
+            reportIssue(assessment, "projectResearchAreasMissing");
+        }
+
+        assessProjectActivities(dto, assessment);
+
+        // TODO: the Project.fundings rules of the PTCRIS 2.0.0 profile are unreachable - that
+        //  field is excluded from the revision snapshot.
+    }
+
+    private void assessProjectActivities(ProjectQualityViewDTO dto,
+                                         DataQualityAssessment assessment) {
+        var provider = activityProviders.stream()
+            .filter(candidate ->
+                candidate.entityType().equals(assessment.getRevision().getEntityType()))
+            .findFirst();
+
+        if (provider.isEmpty() || Objects.isNull(dto.getId())) {
+            return;
+        }
+
+        provider.get().personContributions(dto.getId())
+            .forEach(contribution -> assessEntity(contribution, assessment, null, null, null));
+
+        provider.get().organisationUnitContributions(dto.getId())
+            .forEach(contribution -> assessEntity(contribution, assessment));
+    }
+
+    private void assessEntity(OrganisationUnitContributionDTO dto,
+                              DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getDateFrom()) && Objects.isNull(dto.getDateTo())) {
+            return;
+        }
+
+        assessment.setActivitiesCount(assessment.getActivitiesCount() + 1);
+        var issuesBeforeActivity = assessment.getIssues().size();
+
+        var activityType = "-";
+        var activityName = organisationUnitName(dto.getOrganisationUnitId());
+
+        if (Objects.isNull(dto.getDateFrom())) {
+            reportIssue(assessment, "activityStartDateMissing", "", activityType, activityName);
+        } else {
+            var startDateMinYear =
+                getIntConstraint(assessment, "activityStartDateBefore", "minYear");
+            if (Objects.nonNull(startDateMinYear) &&
+                dto.getDateFrom().isBefore(LocalDate.of(startDateMinYear, 1, 1))) {
+                reportIssue(assessment, "activityStartDateBefore", dto.getDateFrom(),
+                    startDateMinYear, activityType, activityName);
+            }
+
+            var startDateMaxFutureYears =
+                getIntConstraint(assessment, "activityStartDateTooFarInFuture", "maxFutureYears");
+            if (Objects.nonNull(startDateMaxFutureYears) &&
+                dto.getDateFrom().isAfter(LocalDate.now().plusYears(startDateMaxFutureYears))) {
+                reportIssue(assessment, "activityStartDateTooFarInFuture", dto.getDateFrom(),
+                    startDateMaxFutureYears, activityType, activityName);
+            }
+        }
+
+        if (Objects.isNull(dto.getDateTo())) {
+            reportIssue(assessment, "activityEndDateMissing", "", activityType, activityName);
+        } else if (Objects.nonNull(dto.getDateFrom()) &&
+            dto.getDateTo().isBefore(dto.getDateFrom())) {
+            reportIssue(assessment, "activityEndDateBeforeStartDate", dto.getDateTo(),
+                dto.getDateFrom(), activityType, activityName);
+        }
+
+        scoreActivity(assessment, issuesBeforeActivity);
+    }
+
+    private void assessEntity(FundingQualityViewDTO dto, DataQualityAssessment assessment) {
+        checkMultilingualValue(assessment, "fundingNameMissing", "fundingNameTooShort",
+            "fundingNameTooLong", "invalidFundingNameFormat", dto.getName());
+
+        if (!CollectionOperations.containsValues(dto.getDescription())) {
+            reportIssue(assessment, "fundingDescriptionMissing");
+        }
+
+        checkMultilingualMinLength(assessment, "fundingDescriptionTooShort",
+            dto.getDescription());
+
+        if (!StringUtil.valueExists(dto.getDoi())) {
+            reportIssue(assessment, "fundingDoiMissing");
+        } else {
+            checkMinLength(assessment, "fundingDoiTooShort", dto.getDoi());
+            checkMaxLength(assessment, "fundingDoiTooLong", dto.getDoi());
+            checkPattern(assessment, "invalidFundingDoiFormat", dto.getDoi());
+            checkUnique(assessment, "fundingDoiDuplicate", QualityIdentifierField.DOI,
+                dto.getDoi(), dto.getId());
+
+            if (!isResolvableDoi(dto.getDoi())) {
+                reportIssue(assessment, "fundingDoiNotResolvable", dto.getDoi());
+            }
+        }
+
+        if (!hasAnyIdentifier(dto.getInternalIdentifiers(), dto.getDoi(),
+            dto.getGrantAgreementId())) {
+            reportIssue(assessment, "noFundingIdentifierPresent");
+        }
+
+        if (Objects.isNull(dto.getAmount())) {
+            reportIssue(assessment, "fundingAmountMissing");
+        }
+
+        // A funding pays for a project or for a person's position; neither being set leaves it
+        // attached to nothing.
+        if (Objects.isNull(dto.getProjectId()) && Objects.isNull(dto.getInvolvementId())) {
+            reportIssue(assessment, "fundingProjectOrInvolvementMissing");
+        }
+
+        if (!CollectionOperations.containsValues(dto.getResearchAreasId())) {
+            reportIssue(assessment, "fundingResearchAreasMissing");
+        }
+
+        reportIfMissing(assessment, "fundingDateAwardedMissing", dto.getDateAwarded());
+        reportIfMissing(assessment, "fundingDateFromMissing", dto.getDateFrom());
+        reportIfMissing(assessment, "fundingDateToMissing", dto.getDateTo());
+
+        checkMinYear(assessment, "fundingDateSubmittedBefore", dto.getDateSubmitted());
+        checkMinYear(assessment, "fundingDateAwardedBefore", dto.getDateAwarded());
+
+        checkMaxFutureYears(assessment, "fundingDateAwardedTooFarInFuture", dto.getDateAwarded());
+        checkMaxFutureYears(assessment, "fundingDateFromTooFarInFuture", dto.getDateFrom());
+
+        reportIfAfter(assessment, "fundingDateSubmittedAfterDateAwarded", dto.getDateSubmitted(),
+            dto.getDateAwarded());
+        reportIfBefore(assessment, "fundingDateToBeforeDateFrom", dto.getDateTo(),
+            dto.getDateFrom());
+
+        reportIfAfter(assessment, "fundingDateAwardedAfterDateFrom", dto.getDateAwarded(),
+            dto.getDateFrom());
+
+        assessFundingActivity(dto, assessment);
+    }
+
+    private void assessFundingActivity(FundingQualityViewDTO dto,
+                                       DataQualityAssessment assessment) {
+        if (Objects.isNull(dto.getInvolvementId())) {
+            return;
+        }
+
+        involvementRepository.findById(dto.getInvolvementId())
+            .ifPresent(involvement -> assessEntity(
+                InvolvementConverter.<InvolvementDTO, Involvement>toSnapshotDTO(involvement),
+                assessment));
+    }
+
     private boolean isResolvableDoi(String doi) {
         try {
             restTemplateProvider.provideRestTemplate()
@@ -1867,6 +2127,106 @@ public class DataQualityCalculator {
         if (Objects.nonNull(maxCardinality) && size > maxCardinality) {
             reportIssue(assessment, issueKey, size, maxCardinality);
         }
+    }
+
+    /**
+     * Length and format bounds applied to every locale entry of a multilingual value, so a name
+     * that is well-formed in Serbian and stubbed in English is reported once for the entry that
+     * offends rather than once for the field.
+     */
+    private void checkMultilingualValue(DataQualityAssessment assessment, String missingKey,
+                                        String minLengthKey, String maxLengthKey,
+                                        String patternKey,
+                                        List<MultilingualContentDTO> content) {
+        if (!CollectionOperations.containsValues(content)) {
+            reportIssue(assessment, missingKey);
+            return;
+        }
+
+        content.forEach(entry -> {
+            var value = entry.getContent();
+
+            // A locale entry whose content canonicalized to null is an absent value, not a short
+            // one - the length and format bounds would say nothing useful about it.
+            if (!StringUtil.valueExists(value)) {
+                reportIssue(assessment, missingKey);
+                return;
+            }
+
+            checkMinLength(assessment, minLengthKey, value);
+            checkMaxLength(assessment, maxLengthKey, value);
+            checkPattern(assessment, patternKey, value);
+        });
+    }
+
+    private void checkUnique(DataQualityAssessment assessment, String issueKey,
+                             QualityIdentifierField field, String value, Integer entityId) {
+        if (!StringUtil.valueExists(value)) {
+            return;
+        }
+
+        uniquenessCheckers.stream()
+            .filter(checker ->
+                checker.entityType().equals(assessment.getRevision().getEntityType()))
+            .findFirst()
+            .filter(checker -> checker.isDuplicate(field, value, entityId))
+            .ifPresent(checker -> reportIssue(assessment, issueKey, value));
+    }
+
+    /**
+     * {@code parseDocumentDate} throws on anything it cannot read, and a single bad record used to
+     * abort the whole assessment with nothing recorded. A date that cannot be parsed is simply
+     * absent as far as the contributor checks are concerned.
+     */
+    @Nullable
+    private LocalDate parseDocumentDateQuietly(FlexibleDate documentDate) {
+        try {
+            return StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private void checkMinYear(DataQualityAssessment assessment, String issueKey, LocalDate date) {
+        if (Objects.isNull(date)) {
+            return;
+        }
+
+        var minYear = getIntConstraint(assessment, issueKey, "minYear");
+        if (Objects.nonNull(minYear) && date.getYear() < minYear) {
+            reportIssue(assessment, issueKey, date, minYear);
+        }
+    }
+
+    private void checkMaxYearsAfter(DataQualityAssessment assessment, String issueKey,
+                                    LocalDate date, LocalDate reference) {
+        if (Objects.isNull(date) || Objects.isNull(reference)) {
+            return;
+        }
+
+        var maxYears = getIntConstraint(assessment, issueKey, "maxYears");
+        if (Objects.nonNull(maxYears) && date.isAfter(reference.plusYears(maxYears))) {
+            reportIssue(assessment, issueKey, date, maxYears);
+        }
+    }
+
+    private void reportIfBefore(DataQualityAssessment assessment, String issueKey, LocalDate date,
+                                LocalDate reference) {
+        if (Objects.nonNull(date) && Objects.nonNull(reference) && date.isBefore(reference)) {
+            reportIssue(assessment, issueKey, date, reference);
+        }
+    }
+
+    private void reportIfAfter(DataQualityAssessment assessment, String issueKey, LocalDate date,
+                               LocalDate reference) {
+        if (Objects.nonNull(date) && Objects.nonNull(reference) && date.isAfter(reference)) {
+            reportIssue(assessment, issueKey, date, reference);
+        }
+    }
+
+    private boolean hasAnyIdentifier(Collection<String> identifiers, String... values) {
+        return Arrays.stream(values).anyMatch(StringUtil::valueExists) ||
+            CollectionOperations.containsValues(identifiers);
     }
 
     private void reportIfMissing(DataQualityAssessment assessment, String issueKey, Object value,

@@ -5,7 +5,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,9 +53,17 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
         return MongoClients.create(mongoClientSettings);
     }
 
+    /**
+     * Packages holding {@code @Document} types. A new Mongo document package has to be added here,
+     * otherwise its entities are only mapped lazily, on first use.
+     */
     @NotNull
     @Override
     public Collection<String> getMappingBasePackages() {
-        return Collections.singleton("rs.teslaris.core.harvester");
+        return List.of(
+            "rs.teslaris.exporter.model.common",
+            "rs.teslaris.exporter.util",
+            "rs.teslaris.importer.model.common",
+            "rs.teslaris.migrator.model");
     }
 }

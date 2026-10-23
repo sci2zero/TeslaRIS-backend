@@ -1,16 +1,16 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +31,8 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
+import rs.teslaris.migrator.pipeline.RunScopedCache;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 
 /**
@@ -40,7 +42,7 @@ import rs.teslaris.migrator.util.InvalidSourceValueException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class HydratorConversionUtil {
+public class HydratorConversionUtil implements RunScopedCache {
 
     /**
      * ISO 639-2 codes used by curricula, mapped onto the ISO 639-1 codes of the language
@@ -71,7 +73,8 @@ public class HydratorConversionUtil {
         "exact sciences", "natural sciences"
     );
 
-    private static final String RESEARCH_AREA_LEVEL_SEPARATOR = " - ";
+    // CV labels use " - " between levels, SciPROJ subjects use "/"
+    private static final String RESEARCH_AREA_LEVEL_SEPARATOR = "\\s+-\\s+|\\s*/\\s*";
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
@@ -83,13 +86,16 @@ public class HydratorConversionUtil {
         Set.of("da", "de", "do", "dos", "das", "e", "del", "della", "di", "du", "van", "von",
             "der", "la", "le", "los");
 
+    private static final Pattern ORCID_URL_PREFIX =
+        Pattern.compile("^https?://(www\\.)?orcid\\.org/", Pattern.CASE_INSENSITIVE);
+
     private final LanguageTagService languageTagService;
 
     private final LanguageService languageService;
 
     private final ResearchAreaService researchAreaService;
 
-    // The language registry is small and static, while every curriculum looks it up
+    // The language registry is small and static, so this outlives runs unlike the caches below
     private final Map<String, Optional<Integer>> languageIds = new ConcurrentHashMap<>();
 
     /**
@@ -139,7 +145,7 @@ public class HydratorConversionUtil {
         }
 
         return Arrays.stream(sourceCode.split("/"))
-            .map(code -> LANGUAGE_CODES.get(code.trim().toUpperCase(Locale.ROOT)))
+            .map(code -> LANGUAGE_CODES.get(code.trim().toUpperCase()))
             .filter(Objects::nonNull)
             .map(code -> languageIds.computeIfAbsent(code, this::findLanguageId))
             .flatMap(Optional::stream)
@@ -224,7 +230,8 @@ public class HydratorConversionUtil {
         return researchAreas;
     }
 
-    public void clearResearchAreaCache() {
+    @Override
+    public void clearCache() {
         researchAreaIdsByName = null;
         researchAreaMatches.clear();
     }
@@ -272,7 +279,7 @@ public class HydratorConversionUtil {
     private String researchAreaKey(String name) {
         var key = DIACRITICS.matcher(Normalizer.normalize(name, Normalizer.Form.NFKD))
             .replaceAll("")
-            .toLowerCase(Locale.ROOT)
+            .toLowerCase()
             .replace("&", "and")
             .replaceAll("\\s+", " ")
             .trim();
@@ -348,8 +355,57 @@ public class HydratorConversionUtil {
             dateInfo.year(), dateInfo.month(), dateInfo.day()));
     }
 
+    /**
+     * SciPROJ dates are ISO strings ({@code 2020-01-31}). A blank value yields {@code null}.
+     *
+     * @throws InvalidSourceValueException when the value is present but not an ISO date
+     */
+    public LocalDate isoDate(String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            throw new InvalidSourceValueException("invalid date '" + value + "'");
+        }
+    }
+
     private boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    // SciPROJ OrgUnit as an institution the resolver understands (Ringgold/ROR)
+    public HydratorCVModel.Institution institution(HydratorProjectModel.OrgUnit orgUnit) {
+        if (Objects.isNull(orgUnit)) {
+            return null;
+        }
+
+        var identifiers = new ArrayList<HydratorCVModel.InstitutionIdentifier>();
+        if (Objects.nonNull(orgUnit.identifiers())) {
+            orgUnit.identifiers().stream()
+                .filter(Objects::nonNull)
+                .forEach(identifier -> identifiers.add(new HydratorCVModel.InstitutionIdentifier(
+                    identifier.value(), typeName(identifier.type()))));
+        }
+        if (Objects.nonNull(orgUnit.rorId()) && !orgUnit.rorId().isBlank()) {
+            identifiers.add(new HydratorCVModel.InstitutionIdentifier(orgUnit.rorId(), "ROR"));
+        }
+
+        var name = Objects.isNull(orgUnit.name()) ? null : orgUnit.name().value();
+        return new HydratorCVModel.Institution(name, null, null,
+            new HydratorCVModel.OtherIdentifiers(identifiers.size(), identifiers));
+    }
+
+    // CERIF vocabulary URIs carry the term after '#'
+    public String typeName(String type) {
+        if (Objects.isNull(type) || type.isBlank()) {
+            return "";
+        }
+
+        var hash = type.lastIndexOf('#');
+        return hash >= 0 ? type.substring(hash + 1) : type.trim();
     }
 
     public Integer parseInteger(String value) {
@@ -378,7 +434,16 @@ public class HydratorConversionUtil {
     }
 
     public String normalise(String value) {
-        return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+        return value.trim().toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    // Bare ORCID iD from either the iD or its URL form; the checksum X is upper case
+    public String normaliseOrcid(String orcid) {
+        if (isBlank(orcid)) {
+            return null;
+        }
+
+        return ORCID_URL_PREFIX.matcher(orcid.trim()).replaceFirst("").toUpperCase();
     }
 
     /**
@@ -423,7 +488,7 @@ public class HydratorConversionUtil {
      * initials, so there only single letters count.
      */
     private int trailingInitialsStart(String[] words, String name) {
-        var allUppercase = name.equals(name.toUpperCase(Locale.ROOT));
+        var allUppercase = name.equals(name.toUpperCase());
         var start = words.length;
 
         while (start > 0) {
@@ -488,7 +553,7 @@ public class HydratorConversionUtil {
     private String foldCase(String value) {
         return DIACRITICS.matcher(Normalizer.normalize(value, Normalizer.Form.NFKD))
             .replaceAll("")
-            .toLowerCase(Locale.ROOT);
+            .toLowerCase();
     }
 
     public PersonNameDTO personName(String firstname, String lastname, PersonNameType type) {
@@ -508,6 +573,6 @@ public class HydratorConversionUtil {
         }
 
         // Curricula carry locales such as "pt_PT" / "en_GB"; tags are the bare language code
-        return language.trim().split("[_-]")[0].toUpperCase(Locale.ROOT);
+        return language.trim().split("[_-]")[0].toUpperCase();
     }
 }

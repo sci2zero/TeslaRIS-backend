@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.PublicationSeriesConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
@@ -42,9 +44,8 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -150,15 +151,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
         var newBookSeries = bookSeriesJPAService.save(bookSeries);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.BOOK_SERIES.name(),
-                newBookSeries.getId(),
-                null,
-                PublicationSeriesConverter.toDTO(newBookSeries),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.BOOK_SERIES.name(),
+                    newBookSeries.getId(),
+                    null,
+                    PublicationSeriesConverter.toDTO(newBookSeries),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexBookSeries(newBookSeries, new BookSeriesIndex());
@@ -172,15 +175,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public void updateBookSeries(Integer bookSeriesId, BookSeriesDTO bookSeriesDTO) {
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.BOOK_SERIES.name(),
-                bookSeriesId,
-                PublicationSeriesConverter.toDTO(bookSeriesToUpdate),
-                bookSeriesDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.BOOK_SERIES.name(),
+                    bookSeriesId,
+                    PublicationSeriesConverter.toDTO(bookSeriesToUpdate),
+                    bookSeriesDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         bookSeriesToUpdate.getLanguages().clear();
 

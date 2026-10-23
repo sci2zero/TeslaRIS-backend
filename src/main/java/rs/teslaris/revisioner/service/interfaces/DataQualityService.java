@@ -3,6 +3,7 @@ package rs.teslaris.revisioner.service.interfaces;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import rs.teslaris.revisioner.dto.ConstraintSummaryDTO;
 import rs.teslaris.revisioner.dto.DataQualityAssessmentDTO;
@@ -32,6 +33,10 @@ public interface DataQualityService {
 
     List<ProfileRelatedQualityDTO> getRelatedQualityForEntity(String entityType,
                                                               Integer entityId);
+
+    InputStreamResource exportFullReport(String entityType, Integer entityId, String profileName,
+                                         Integer majorVersion, Integer minorVersion,
+                                         String language);
 
     DataQualityIssuePageDTO findIssuesForEntity(String entityType, Integer entityId,
                                                 String profileName, String target,

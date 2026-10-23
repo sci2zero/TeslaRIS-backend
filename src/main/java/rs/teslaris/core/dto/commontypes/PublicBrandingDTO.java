@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.commontypes;
 
 import java.util.List;
+import rs.teslaris.core.model.commontypes.BrandingTheme;
 
 public record PublicBrandingDTO(
 
@@ -10,6 +11,10 @@ public record PublicBrandingDTO(
 
     String logoUrl,
 
-    String backgroundUrl
+    String backgroundUrl,
+
+    BrandingTheme chromeTheme,
+
+    BrandingTheme heroTheme
 ) {
 }

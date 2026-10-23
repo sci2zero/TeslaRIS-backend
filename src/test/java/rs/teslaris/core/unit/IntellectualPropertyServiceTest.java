@@ -56,6 +56,7 @@ import rs.teslaris.core.repository.document.IntellectualPropertyRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.IntellectualPropertyServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntellectualPropertyJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -109,6 +110,11 @@ public class IntellectualPropertyServiceTest {
     @Mock
     private CountryService countryService;
 
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
+
     @Mock
     private PublisherService publisherService;
 
@@ -135,7 +141,7 @@ public class IntellectualPropertyServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(intellectualPropertyService, "documentApprovedByDefault",
             true);
     }

@@ -2,7 +2,7 @@ package rs.teslaris.core.controller.document;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -389,7 +389,7 @@ public class DocumentPublicationController {
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleUnmanagedDocumentsDeletion(
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("timestamp") Instant timestamp,
         @RequestParam("recurrence") RecurrenceType recurrence,
         @RequestHeader("Authorization") String bearerToken) {
 

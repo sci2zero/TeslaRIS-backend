@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
-import rs.teslaris.revisioner.restorer.RevisionRestorer;
+import rs.teslaris.core.revision.RevisionRestorer;
 
 @Component
 public class RevisionRestorerRegistry {

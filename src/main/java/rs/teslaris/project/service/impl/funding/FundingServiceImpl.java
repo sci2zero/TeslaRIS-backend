@@ -4,20 +4,28 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
@@ -29,25 +37,31 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingPart;
+import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.util.FundingPartFactory;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @Service
 @RequiredArgsConstructor
 public class FundingServiceImpl extends JPAServiceImpl<Funding> implements FundingService {
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final FundingRepository fundingRepository;
 
@@ -70,6 +84,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final CurrencyService currencyService;
 
     private final FundingIndexRepository fundingIndexRepository;
+
+    private final ProjectScopeCalculator projectScopeCalculator;
 
     private final DocumentFileService documentFileService;
 
@@ -102,6 +118,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         var newFunding = new Funding();
 
         setCommonFields(newFunding, fundingDTO);
+        setProvenance(newFunding, fundingDTO);
 
         var savedFunding = save(newFunding);
 
@@ -109,6 +126,20 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         fundingIndexRepository.save(
             indexCommonFields(savedFunding, new FundingIndex()));
+
+        refreshFundedProjectIndex(savedFunding.getProject());
+
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.FUNDING.name(),
+                    savedFunding.getId(),
+                    null,
+                    FundingConverter.toDTO(savedFunding),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         return savedFunding;
     }
@@ -119,6 +150,18 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                               FundingDTO fundingDTO) {
         var fundingToUpdate = findOne(fundingId);
 
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.FUNDING.name(),
+                fundingId,
+                FundingConverter.toDTO(fundingToUpdate),
+                fundingDTO,
+                RevisionType.UPDATE
+            )
+        );
+
+        var previousProject = fundingToUpdate.getProject();
+
         clearCommonFields(fundingToUpdate);
         setCommonFields(fundingToUpdate, fundingDTO);
 
@@ -127,12 +170,33 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                 indexCommonFields(fundingToUpdate, index);
                 fundingIndexRepository.save(index);
             });
+
+        // A funding moved between projects leaves one scope and enters another.
+        refreshFundedProjectIndex(previousProject);
+
+        if (!Objects.equals(previousProject, fundingToUpdate.getProject())) {
+            refreshFundedProjectIndex(fundingToUpdate.getProject());
+        }
     }
 
     @Override
     @Transactional
     public void deleteFunding(Integer fundingId) {
+        var fundedProject = findOne(fundingId).getProject();
+
         delete(fundingId);
+
+        refreshFundedProjectIndex(fundedProject);
+    }
+
+    /**
+     * A funding carries its funder into the funded project's scope, so the project index is
+     * rebuilt whenever a funding is written.
+     */
+    private void refreshFundedProjectIndex(Project project) {
+        if (Objects.nonNull(project)) {
+            projectService.refreshProjectIndex(project.getId());
+        }
     }
 
     @Override
@@ -168,6 +232,15 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         save(fundingCall);
     }
 
+    // Only on creation: updates do not carry provenance and must not erase it
+    private void setProvenance(Funding funding, FundingDTO fundingDTO) {
+        if (Objects.nonNull(fundingDTO.getOldIds())) {
+            funding.getOldIds().addAll(fundingDTO.getOldIds());
+        }
+
+        funding.setImportSource(fundingDTO.getImportSource());
+    }
+
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
@@ -175,31 +248,29 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             throw new DateRangeException("Funding must start before it ends.");
         }
 
+        // A funding detached from its project disappears from that project's fundings, which is
+        // worse than refusing the restore outright.
+        RestorationSupport.requireExists(fundingDTO.getProjectId(), projectService, "projectId");
+
         if (Objects.nonNull(fundingDTO.getProjectId())) {
-            var project = projectService.findOne(fundingDTO.getProjectId());
-            funding.setProject(project);
+            projectService.findOne(fundingDTO.getProjectId()).addFunding(funding);
         } else {
             funding.setProject(null);
         }
 
-        if (Objects.nonNull(fundingDTO.getFundingCallId())) {
-            var fundingCall = fundingCallService.findOne(fundingDTO.getFundingCallId());
-            funding.setFundingCall(fundingCall);
-        } else {
-            funding.setFundingCall(null);
-        }
+        funding.setFundingCall(RestorationSupport.resolveDegradable(
+            fundingDTO.getFundingCallId(), fundingCallService, fundingCallService::findOne,
+            "fundingCallId", "restoreFundingCallMissingMessage",
+            List.of(String.valueOf(fundingDTO.getFundingCallId()))));
 
-        if (Objects.nonNull(fundingDTO.getFunderId())) {
-            funding.setFunder(organisationUnitService.findOne(fundingDTO.getFunderId()));
-        } else {
-            funding.setFunder(null);
-        }
+        funding.setFunder(RestorationSupport.resolveDegradable(
+            fundingDTO.getFunderId(), organisationUnitService, organisationUnitService::findOne,
+            "funderId", "restoreFunderMissingMessage",
+            List.of(String.valueOf(fundingDTO.getFunderId()))));
 
-        if (Objects.nonNull(fundingDTO.getInvolvementId())) {
-            funding.setInvolvement(involvementService.findOne(fundingDTO.getInvolvementId()));
-        } else {
-            funding.setInvolvement(null);
-        }
+        funding.setInvolvement(RestorationSupport.resolveOptional(
+            fundingDTO.getInvolvementId(), involvementService, involvementService::findOne,
+            "involvementId", "restoreInvolvementMissingMessage"));
 
         funding.setDateSubmitted(fundingDTO.getDateSubmitted());
         funding.setDateAwarded(fundingDTO.getDateAwarded());
@@ -221,25 +292,45 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setDisplayFunder(
             multilingualContentService.getMultilingualContent(fundingDTO.getDisplayFunder()));
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            fundingDTO.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = fundingDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         funding.setResearchAreas(new HashSet<>(researchAreas));
 
         funding.setFundingTypes(fundingDTO.getFundingTypes());
 
-        if (Objects.nonNull(fundingDTO.getAmount())) {
+        // An amount without its currency is a number without a unit, so the whole amount goes.
+        var currency = Objects.nonNull(fundingDTO.getAmount())
+            ? RestorationSupport.resolveOptional(fundingDTO.getAmount().getCurrencyId(),
+            currencyService, currencyService::findOne, "amount.currencyId",
+            "restoreCurrencyMissingMessage")
+            : null;
+
+        if (Objects.nonNull(fundingDTO.getAmount()) && Objects.nonNull(currency)) {
             if (Objects.isNull(funding.getAmount())) {
                 funding.setAmount(new MonetaryAmount());
             }
-            funding.getAmount()
-                .setCurrency(currencyService.findOne(fundingDTO.getAmount().getCurrencyId()));
+            funding.getAmount().setCurrency(currency);
             funding.getAmount().setAmount(fundingDTO.getAmount().getAmount());
         } else {
             funding.setAmount(null);
         }
 
         funding.setUris(fundingDTO.getUris());
-        funding.setDoi(fundingDTO.getDoi());
+        IdentifierUtil.validateAndSetIdentifier(
+            fundingDTO.getDoi(),
+            funding.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            fundingRepository::existsByDoi,
+            funding::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
         funding.setGrantAgreementId(fundingDTO.getGrantAgreementId());
         funding.setCompetitive(fundingDTO.getCompetitive());
         funding.setRenewable(fundingDTO.getRenewable());
@@ -333,6 +424,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             index.setProjectId(funding.getProject().getId());
         }
 
+        indexProjectScope(funding, index);
+
         if (Objects.nonNull(funding.getFundingCall())) {
             index.setFundingCallId(funding.getFundingCall().getId());
         } else {
@@ -342,8 +435,49 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         index.setDatabaseId(funding.getId());
         index.setDateFrom(funding.getDateFrom());
         index.setDateTo(funding.getDateTo());
+        index.setActivitiesCount(countActivities(funding));
 
         return index;
+    }
+
+    /**
+     * A funding has no contributors of its own, so its involvement is the only thing that can be
+     * an activity, and it is one once it says when it happened or what it was about.
+     */
+    private Integer countActivities(Funding funding) {
+        var involvement = funding.getInvolvement();
+
+        if (Objects.isNull(involvement)) {
+            return 0;
+        }
+
+        return (Objects.nonNull(involvement.getDateFrom()) ||
+            Objects.nonNull(involvement.getDateTo()) ||
+            (Objects.nonNull(involvement.getResearchAreas()) &&
+                !involvement.getResearchAreas().isEmpty())) ? 1 : 0;
+    }
+
+    /**
+     * A funding has no contributors of its own, so the persons and institutions it belongs to are
+     * the funded project's, with its own funder added.
+     */
+    private void indexProjectScope(Funding funding, FundingIndex index) {
+        var institutionIds = new LinkedHashSet<Integer>();
+
+        if (Objects.nonNull(funding.getProject())) {
+            index.setPersonIds(projectScopeCalculator.personIds(funding.getProject()));
+            institutionIds.addAll(
+                projectScopeCalculator.organisationUnitIds(funding.getProject()));
+        } else {
+            index.setPersonIds(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(funding.getFunder())) {
+            projectScopeCalculator.addWithSuperHierarchy(institutionIds,
+                funding.getFunder().getId());
+        }
+
+        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
     }
 
     private void indexFunderFields(Funding funding,

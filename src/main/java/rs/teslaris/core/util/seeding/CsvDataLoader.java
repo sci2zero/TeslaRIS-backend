@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
-import rs.teslaris.assessment.util.BatchWriter;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @Component

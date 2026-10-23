@@ -19,15 +19,18 @@ pipeline beans.
 
 ## Running a migration
 
-Passes must run in order - documents reference persons, employments reference both persons and
-organisation units:
+Passes must run in order - persons and projects reference organisation units, project teams and
+documents reference persons:
 
 ```
 POST /api/migrator/run?source=hydrator&entityType=ORGANISATION_UNIT
 POST /api/migrator/run?source=hydrator&entityType=PERSON
-POST /api/migrator/run?source=hydrator&entityType=PERSON_EMPLOYMENT
+POST /api/migrator/run?source=hydrator&entityType=PROJECT
 POST /api/migrator/run?source=hydrator&entityType=DOCUMENT
 ```
+
+The `PERSON` pass also creates each person's prizes (`PERSON_PRIZE`) and employments
+(`PERSON_EMPLOYMENT`), and the `PROJECT` pass each project's fundings (`PROJECT_FUNDING`).
 
 Each call returns a run id immediately and executes on the `migrationExecutor`. Progress:
 

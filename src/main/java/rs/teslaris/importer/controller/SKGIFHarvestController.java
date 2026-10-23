@@ -1,6 +1,6 @@
 package rs.teslaris.importer.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +41,7 @@ public class SKGIFHarvestController {
     public void scheduleSKGIFHarvest(@RequestParam String sourceName,
                                      @RequestParam RelativeDateDTO from,
                                      @RequestParam RelativeDateDTO until,
-                                     @RequestParam LocalDateTime timestamp,
+                                     @RequestParam Instant timestamp,
                                      @RequestParam RecurrenceType recurrence,
                                      @RequestParam(required = false) String authorIdentifier,
                                      @RequestParam(required = false) String institutionIdentifier,

@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -32,7 +31,7 @@ import rs.teslaris.migrator.util.MigrationLog;
  * One curriculum yields exactly one person, so this is a 1:1 converter wrapped with
  * {@link RecordExtractor#of}.
  * <p>
- * Applies the CIÊNCIA VITAE person crosswalk ({@code CW-001-MAP-000019…037}). Loss policy:
+ * Applies the CIÊNCIA VITAE person crosswalk ({@code CW-001-MAP-000019…000037}). Loss policy:
  * <ul>
  *     <li>a source value with no target in the crosswalk is logged as dropped;</li>
  *     <li>several source values for one target slot are ranked by the PTCRIS scalar precedence
@@ -134,39 +133,39 @@ public class HydratorPersonConverter
         var dto = new ImportPersonDTO();
         dto.setImportSource(HydratorSource.IMPORT_SOURCE);
 
-        // MAP-000023…028
+        // CW-001-MAP-000023…000028
         dto.setPersonName(personName);
         dto.setOtherNames(otherNames(personInfo, info.citationNames(), personName));
 
-        // MAP-000020…022
+        // CW-001-MAP-000020…000022
         dto.setLocalBirthDate(birthDate(personInfo.dateOfBirth()));
         dto.setSex(sex(record, personInfo.gender()));
         logPhotoDropped(record, personInfo.photography());
 
-        // MAP-000029, MAP-000036
+        // CW-001-MAP-000029, CW-001-MAP-000036
         dto.setBiography(conversionUtil.multilingualContent(
             Objects.isNull(info.resume()) ? null : info.resume().text(), language));
         dto.setKeywords(conversionUtil.multilingualContent(keywords(info), language));
 
-        // MAP-000030…033
+        // CW-001-MAP-000030…000033
         setEmails(record, dto, info.emails());
         setPhoneNumbers(record, dto, info.phoneNumbers());
         setMailingAddresses(record, dto, info.mailingAddresses(), language);
         dto.setUris(uris(record, info.webAddresses()));
 
-        // MAP-000034, MAP-000035
+        // CW-001-MAP-000034, CW-001-MAP-000035
         dto.setLanguageKnowledges(languageKnowledges(record, info.languageCompetencies()));
-        dto.setResearchAreasId(researchAreas(record, info.domainActivities()));
+        dto.setResearchAreasId(new ArrayList<>(researchAreas(record, info.domainActivities())));
 
-        // MAP-000037
+        // CW-001-MAP-000037
         setIdentifiers(record, dto);
 
         return dto;
     }
 
     /**
-     * MAP-000024 + MAP-000025 build one instance: {@code names} and {@code surnames} are the
-     * default name. Falls back to splitting the full name when either half is missing.
+     * CW-001-MAP-000024 + CW-001-MAP-000025 build one instance: {@code names} and {@code surnames}
+     * are the default name. Falls back to splitting the full name when either half is missing.
      */
     private PersonNameDTO personName(HydratorCVModel.PersonInfo personInfo,
                                      String fullNameFallback) {
@@ -211,7 +210,7 @@ public class HydratorPersonConverter
         return conversionUtil.normalise(name.getFirstname() + " " + name.getLastname());
     }
 
-    // MAP-000020: the source keeps the date only when it is public
+    // CW-001-MAP-000020: the source keeps the date only when it is public
     private LocalDate birthDate(HydratorCVModel.DateOfBirth dateOfBirth) {
         if (Objects.isNull(dateOfBirth) || !isPublic(dateOfBirth.privacyLevel())) {
             return null;
@@ -232,32 +231,33 @@ public class HydratorPersonConverter
         }
     }
 
-    // MAP-000021
+    // CW-001-MAP-000021
     private Sex sex(HydratorCVModel.Curriculum record, HydratorCVModel.Gender gender) {
         if (Objects.isNull(gender) || isBlank(gender.code())) {
             return null;
         }
 
-        var sex = SEX_BY_CODE.get(gender.code().trim().toUpperCase(Locale.ROOT));
+        var sex = SEX_BY_CODE.get(gender.code().trim().toUpperCase());
 
         if (Objects.isNull(sex)) {
-            dropped(record, "MAP-000021", "unmapped gender code '" + gender.code() + "'");
+            dropped(record, HydratorMappingRule.cv(21),
+                "unmapped gender code '" + gender.code() + "'");
         }
 
         return sex;
     }
 
-    // MAP-000022: the source carries only a file name, never the image itself
+    // CW-001-MAP-000022: the source carries only a file name, never the image itself
     private void logPhotoDropped(HydratorCVModel.Curriculum record,
                                  HydratorCVModel.Photography photography) {
         if (Objects.nonNull(photography) && isPublic(photography.privacyLevel()) &&
             !isBlank(photography.fileName())) {
-            dropped(record, "MAP-000022",
+            dropped(record, HydratorMappingRule.cv(22),
                 "photo '" + photography.fileName() + "' has no retrievable content");
         }
     }
 
-    // MAP-000036: every domain's keywords, one per line
+    // CW-001-MAP-000036: every domain's keywords, one per line
     private String keywords(HydratorCVModel.IdentifyingInfo info) {
         var keywords = new LinkedHashSet<String>();
 
@@ -274,7 +274,7 @@ public class HydratorPersonConverter
         return String.join("\n", keywords);
     }
 
-    // MAP-000030: professional unless typed personal; EMAIL_PRECEDENCE picks the slot winner
+    // CW-001-MAP-000030: professional unless typed personal; EMAIL_PRECEDENCE picks the slot winner
     private void setEmails(HydratorCVModel.Curriculum record, ImportPersonDTO dto,
                            HydratorCVModel.Emails emails) {
         listOf(emails, HydratorCVModel.Emails::email).stream()
@@ -284,16 +284,16 @@ public class HydratorPersonConverter
                 var address = email.emailAddress().trim();
 
                 if (isPersonal(email.emailType())) {
-                    fill(record, "MAP-000030", address, dto::getPrivateContactEmail,
+                    fill(record, HydratorMappingRule.cv(30), address, dto::getPrivateContactEmail,
                         dto::setPrivateContactEmail);
                 } else {
-                    fill(record, "MAP-000030", address, dto::getContactEmail,
+                    fill(record, HydratorMappingRule.cv(30), address, dto::getContactEmail,
                         dto::setContactEmail);
                 }
             });
     }
 
-    // MAP-000031: phone type picks the field, usage type picks professional vs private contact
+    // CW-001-MAP-000031: phone type picks the field, usage type professional vs private contact
     private void setPhoneNumbers(HydratorCVModel.Curriculum record, ImportPersonDTO dto,
                                  HydratorCVModel.PhoneNumbers phoneNumbers) {
         listOf(phoneNumbers, HydratorCVModel.PhoneNumbers::phoneNumber).stream()
@@ -306,17 +306,17 @@ public class HydratorPersonConverter
                     phoneNumber.phoneType().code();
 
                 if (MOBILE_PHONE_CODE.equals(phoneType)) {
-                    fill(record, "MAP-000031", number,
+                    fill(record, HydratorMappingRule.cv(31), number,
                         personal ? dto::getPrivateMobilePhoneNumber :
                             dto::getMobilePhoneNumber,
                         personal ? dto::setPrivateMobilePhoneNumber :
                             dto::setMobilePhoneNumber);
                 } else if (FAX_CODE.equals(phoneType)) {
-                    fill(record, "MAP-000031", number,
+                    fill(record, HydratorMappingRule.cv(31), number,
                         personal ? dto::getPrivateFaxNumber : dto::getFaxNumber,
                         personal ? dto::setPrivateFaxNumber : dto::setFaxNumber);
                 } else {
-                    fill(record, "MAP-000031", number,
+                    fill(record, HydratorMappingRule.cv(31), number,
                         personal ? dto::getPrivatePhoneNumber : dto::getPhoneNumber,
                         personal ? dto::setPrivatePhoneNumber : dto::setPhoneNumber);
                 }
@@ -338,7 +338,7 @@ public class HydratorPersonConverter
         return number;
     }
 
-    // MAP-000032: professional unless typed personal; MAILING_ADDRESS_PRECEDENCE picks the winner
+    // CW-001-MAP-000032: professional unless typed personal; MAILING_ADDRESS_PRECEDENCE picks one
     private void setMailingAddresses(HydratorCVModel.Curriculum record, ImportPersonDTO dto,
                                      HydratorCVModel.MailingAddresses mailingAddresses,
                                      String language) {
@@ -352,7 +352,7 @@ public class HydratorPersonConverter
                     !dto.getAddressLine().isEmpty() || !dto.getAddressCity().isEmpty();
 
                 if (slotTaken) {
-                    dropped(record, "MAP-000032", "additional " +
+                    dropped(record, HydratorMappingRule.cv(32), "additional " +
                         (personal ? "personal" : "professional") + " address " + address.id() +
                         " ranked below the kept one");
                     return;
@@ -392,7 +392,7 @@ public class HydratorPersonConverter
         return (int) parts.stream().filter(part -> !isBlankValue(part)).count();
     }
 
-    // MAP-000033: the target has no field for the site type, so that distinction is lost
+    // CW-001-MAP-000033: the target has no field for the site type, so that distinction is lost
     private Set<String> uris(HydratorCVModel.Curriculum record,
                              HydratorCVModel.WebAddresses webAddresses) {
         var uris = new LinkedHashSet<String>();
@@ -404,7 +404,7 @@ public class HydratorPersonConverter
                 uris.add(URL_SCHEME.matcher(url).matches() ? url : "https://" + url);
 
                 if (Objects.nonNull(webAddress.siteType())) {
-                    dropped(record, "MAP-000033",
+                    dropped(record, HydratorMappingRule.cv(33),
                         "site type '" + webAddress.siteType().value() + "' of " + url);
                 }
             });
@@ -413,9 +413,9 @@ public class HydratorPersonConverter
     }
 
     /**
-     * MAP-000034: language knowledge, the language-specific kind of expertise. Stored with the
-     * person, since it references nothing but the language registry. A language missing from the
-     * registry is logged rather than failing the person.
+     * CW-001-MAP-000034: language knowledge, the language-specific kind of expertise. Stored with
+     * the person, since it references nothing but the language registry. A language missing from
+     * the registry is logged rather than failing the person.
      */
     private List<LanguageKnowledgeDTO> languageKnowledges(
         HydratorCVModel.Curriculum record,
@@ -430,13 +430,13 @@ public class HydratorPersonConverter
                 var languageId = conversionUtil.languageId(sourceCode);
 
                 if (Objects.isNull(languageId)) {
-                    dropped(record, "MAP-000034",
+                    dropped(record, HydratorMappingRule.cv(34),
                         "language '" + sourceCode + "' is not in the language registry");
                     return;
                 }
 
                 if (!seenLanguages.add(languageId)) {
-                    dropped(record, "MAP-000034",
+                    dropped(record, HydratorMappingRule.cv(34),
                         "additional competency for language '" + sourceCode + "'");
                     return;
                 }
@@ -463,17 +463,18 @@ public class HydratorPersonConverter
         }
 
         try {
-            return LanguageLevel.valueOf(level.code().trim().toUpperCase(Locale.ROOT));
+            return LanguageLevel.valueOf(level.code().trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            dropped(record, "MAP-000034", "unmapped language level '" + level.code() + "'");
+            dropped(record, HydratorMappingRule.cv(34),
+                "unmapped language level '" + level.code() + "'");
             return null;
         }
     }
 
     /**
-     * MAP-000035: curricula classify by FCT field codes, TeslaRIS by EuroSciVoc, and the two share
-     * no codes - so fields are matched by name. A field missing from EuroSciVoc falls back to its
-     * nearest named ancestor, which loses precision and is logged.
+     * CW-001-MAP-000035: curricula classify by FCT field codes, TeslaRIS by EuroSciVoc, and the two
+     * share no codes - so fields are matched by name. A field missing from EuroSciVoc falls back to
+     * its nearest named ancestor, which loses precision and is logged.
      */
     private Set<Integer> researchAreas(HydratorCVModel.Curriculum record,
                                        HydratorCVModel.DomainActivities domainActivities) {
@@ -483,21 +484,20 @@ public class HydratorPersonConverter
                 .toList();
 
         return conversionUtil.researchAreaIds(classifications,
-            reason -> dropped(record, "MAP-000035", reason));
+            reason -> dropped(record, HydratorMappingRule.cv(35), reason));
     }
 
-    // MAP-000037: the identifier type picks the target field
+    // CW-001-MAP-000037: the identifier type picks the target field
     private void setIdentifiers(HydratorCVModel.Curriculum record, ImportPersonDTO dto) {
         dto.setNationalScienceId(
             identifier(record, CIENCIA_ID_CODE, value -> value, null));
-        dto.setOrcid(identifier(record, ORCID_CODE,
-            value -> value.replaceFirst("(?i)^https?://(www\\.)?orcid\\.org/", "")
-                .toUpperCase(Locale.ROOT), ORCID_PATTERN));
+        dto.setOrcid(identifier(record, ORCID_CODE, conversionUtil::normaliseOrcid,
+            ORCID_PATTERN));
         dto.setScopusAuthorId(identifier(record, SCOPUS_CODE, value -> value, SCOPUS_PATTERN));
         dto.setScholarId(
             identifier(record, GOOGLE_SCHOLAR_CODE, this::scholarId, SCHOLAR_PATTERN));
         dto.setWebOfScienceResearcherId(identifier(record, WEB_OF_SCIENCE_CODE,
-            value -> value.toUpperCase(Locale.ROOT), WEB_OF_SCIENCE_PATTERN));
+            value -> value.toUpperCase(), WEB_OF_SCIENCE_PATTERN));
     }
 
     /**
@@ -526,7 +526,7 @@ public class HydratorPersonConverter
 
         values.stream()
             .filter(value -> !value.equals(accepted))
-            .forEach(value -> dropped(record, "MAP-000037",
+            .forEach(value -> dropped(record, HydratorMappingRule.cv(37),
                 "additional " + code + " '" + value + "', kept '" + accepted + "'"));
 
         return accepted;

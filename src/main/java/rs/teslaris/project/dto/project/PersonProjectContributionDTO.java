@@ -23,7 +23,6 @@ public class PersonProjectContributionDTO extends PersonContributionDTO {
     @NotNull(message = "You have to provide a contribution type.")
     private PersonProjectContributionType contributionType;
 
-    @NotNull(message = "You have to provide an investigation role.")
     private PersonProjectInvestigationRole investigationRole;
 
     @Valid

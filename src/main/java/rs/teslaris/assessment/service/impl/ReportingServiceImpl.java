@@ -1,7 +1,7 @@
 package rs.teslaris.assessment.service.impl;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +21,6 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentReportGenerator;
-import rs.teslaris.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -34,6 +33,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.report.ReportTemplateEngine;
 import rs.teslaris.core.util.scheduling.DateUtil;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -59,7 +59,7 @@ public class ReportingServiceImpl implements ReportingService {
 
 
     @Override
-    public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
+    public void scheduleReportGeneration(Instant timeToRun, ReportType reportType,
                                          Integer specifiedStartYear, Integer assessmentYear,
                                          List<Integer> commissionIds, String locale,
                                          Integer topLevelInstitutionId, Integer userId,

@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.stereotype.Component;
-import rs.teslaris.assessment.util.LocalizationUtil;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.language.LocalizationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.MultilingualContent;
 

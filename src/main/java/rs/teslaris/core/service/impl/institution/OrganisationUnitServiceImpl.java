@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
+import rs.teslaris.core.configuration.CachingConfiguration;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -89,6 +94,7 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -96,8 +102,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @RequiredArgsConstructor
@@ -479,8 +483,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, key = "#sourceOUId",
+        condition = "#sourceOUId != null")
     public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {
-        return organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId);
+        return List.copyOf(organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId));
     }
 
     @Override
@@ -533,15 +539,17 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.ORGANISATION_UNIT.name(),
-                organisationUnitId,
-                OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
-                organisationUnitDTORequest,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.ORGANISATION_UNIT.name(),
+                    organisationUnitId,
+                    OrganisationUnitConverter.toDTO(organisationUnitToUpdate),
+                    organisationUnitDTORequest,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldNames = organisationUnitToUpdate.getName().stream()
             .map(MultiLingualContent::getContent)
@@ -1169,6 +1177,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void forceDeleteOrganisationUnit(Integer organisationUnitId) {
         organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
         organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
@@ -1223,6 +1232,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO relationDTO) {
         if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
@@ -1257,6 +1267,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public OrganisationUnitsRelationDTO addSubOrganisationUnit(Integer sourceId, Integer targetId) {
         if (organisationUnitsRelationRepository.getSuperOU(targetId).isPresent()) {
             throw new OrganisationUnitReferenceConstraintViolationException(
@@ -1312,6 +1323,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void editOrganisationUnitsRelation(OrganisationUnitsRelationDTO relationDTO,
                                               Integer id) {
         var relationToUpdate = findOrganisationUnitsRelationById(id);
@@ -1330,6 +1342,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void deleteOrganisationUnitsRelation(Integer id) {
         var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
@@ -1344,6 +1357,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
                                                 Integer targetOrganisationUnitId) {
         var relations =
@@ -1393,6 +1407,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void approveRelation(Integer relationId, Boolean approve) {
         var relationToApprove = findOrganisationUnitsRelationById(relationId);
         if (relationToApprove.getApproveStatus().equals(ApproveStatus.REQUESTED)) {

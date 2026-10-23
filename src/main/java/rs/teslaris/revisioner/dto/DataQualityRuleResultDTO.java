@@ -14,6 +14,8 @@ public record DataQualityRuleResultDTO(
 
     QualityDimension dimension,
 
+    String metric,
+
     IssueSeverity severity,
 
     boolean blocking,

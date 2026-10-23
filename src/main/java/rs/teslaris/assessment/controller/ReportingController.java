@@ -2,7 +2,7 @@ package rs.teslaris.assessment.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class ReportingController {
     @ReportGenerationCheck
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleReportGeneration(
-        @RequestParam(value = "timestamp", required = false) LocalDateTime timestamp,
+        @RequestParam(value = "timestamp", required = false) Instant timestamp,
         @RequestParam("type") ReportType reportType,
         @RequestParam("commissionId") List<Integer> commissionIds,
         @RequestParam(value = "startYear", required = false) Integer startYear,

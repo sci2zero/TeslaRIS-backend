@@ -66,6 +66,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -132,6 +133,11 @@ public class ProceedingsPublicationServiceTest {
     @Mock
     private CountryService countryService;
 
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
+
     @Mock
     private CrisContextInformationService crisContextInformationService;
 
@@ -153,7 +159,7 @@ public class ProceedingsPublicationServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(proceedingsPublicationService, "documentApprovedByDefault",
             false);
     }

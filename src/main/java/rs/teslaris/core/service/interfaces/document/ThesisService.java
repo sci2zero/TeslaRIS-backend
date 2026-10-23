@@ -1,6 +1,6 @@
 package rs.teslaris.core.service.interfaces.document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -55,7 +55,7 @@ public interface ThesisService {
 
     void transferPreliminaryFileToOfficial(Integer thesisId, Integer documentFileId);
 
-    void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+    void schedulePublicReviewEndCheck(Instant timestamp, List<ThesisType> types,
                                       Integer publicReviewLengthDays, Integer userId,
                                       RecurrenceType recurrence, Boolean shortened);
 

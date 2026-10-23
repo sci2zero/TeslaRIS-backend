@@ -1,6 +1,6 @@
 package rs.teslaris.core.service.interfaces.commontypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
@@ -10,7 +10,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 @Service
 public interface TaskManagerService {
 
-    String scheduleTask(String taskId, LocalDateTime dateTime, Runnable task, Integer userId,
+    String scheduleTask(String taskId, Instant dateTime, Runnable task, Integer userId,
                         RecurrenceType recurrence);
 
     boolean cancelTask(String taskId);
@@ -34,7 +34,7 @@ public interface TaskManagerService {
 
     List<ScheduledTaskResponseDTO> listScheduledMaintenanceTasks();
 
-    LocalDateTime findNextFreeExecutionTime();
+    Instant findNextFreeExecutionTime();
 
     void saveTaskMetadata(ScheduledTaskMetadata scheduledTask);
 }

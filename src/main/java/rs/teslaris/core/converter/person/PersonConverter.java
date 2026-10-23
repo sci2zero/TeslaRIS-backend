@@ -3,6 +3,7 @@ package rs.teslaris.core.converter.person;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -11,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -25,6 +28,7 @@ import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
@@ -158,8 +162,28 @@ public class PersonConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 person.getPersonalInfo().getDisplayTitle()
             ),
-            person.getId()
+            researchAreaIds(person),
+            person.getId(),
+            researchAreaHierarchy(person)
         );
+    }
+
+    private static List<Integer> researchAreaIds(Person person) {
+        if (Objects.isNull(person.getResearchAreas())) {
+            return new ArrayList<>();
+        }
+
+        return person.getResearchAreas().stream().map(ResearchArea::getId).toList();
+    }
+
+    private static Set<ResearchAreaHierarchyDTO> researchAreaHierarchy(Person person) {
+        if (Objects.isNull(person.getResearchAreas())) {
+            return new HashSet<>();
+        }
+
+        return person.getResearchAreas().stream()
+            .map(ResearchAreaConverter::toDTO)
+            .collect(Collectors.toCollection(HashSet::new));
     }
 
     private static ContactDTO toContactDTO(Contact contact) {
@@ -283,7 +307,8 @@ public class PersonConverter {
                 person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
-                    person.getPersonalInfo().getDisplayTitle()), person.getId()),
+                    person.getPersonalInfo().getDisplayTitle()), researchAreaIds(person),
+                person.getId(), researchAreaHierarchy(person)),
             MultilingualContentConverter.getMultilingualContentDTO(person.getBiography()),
             MultilingualContentConverter.getMultilingualContentDTO(person.getKeyword()),
             person.getApproveStatus(), userDTO, instituion.b, instituion.a

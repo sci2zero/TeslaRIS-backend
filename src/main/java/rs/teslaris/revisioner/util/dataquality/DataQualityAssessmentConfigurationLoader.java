@@ -143,6 +143,7 @@ public class DataQualityAssessmentConfigurationLoader {
 
         return new DataQualityProfile(
             version,
+            Objects.requireNonNullElse(config.name(), Map.of()),
             config.minimumRequiredScore(),
             Objects.requireNonNullElse(config.dimensionDefinitions(), Map.of()),
             Objects.requireNonNullElse(config.metricDefinitions(), Map.of()),
@@ -310,6 +311,7 @@ public class DataQualityAssessmentConfigurationLoader {
             .getOrDefault(version,
                 new DataQualityProfile(
                     "1.0.0",
+                    Collections.emptyMap(),
                     100.0,
                     Collections.emptyMap(),
                     Collections.emptyMap(),
@@ -392,6 +394,40 @@ public class DataQualityAssessmentConfigurationLoader {
         return metrics;
     }
 
+    public static Map<String, String> getProfileName(String profileName, String version) {
+        var versions = dataQualityProfiles.get(profileName.toLowerCase());
+
+        if (Objects.isNull(versions)) {
+            return Collections.emptyMap();
+        }
+
+        var profile = versions.get(version);
+
+        return Objects.isNull(profile)
+            ? Collections.emptyMap()
+            : Objects.requireNonNullElse(profile.name(), Collections.emptyMap());
+    }
+
+    public static String getLocalisedProfileName(String profileName, String version,
+                                                 String language) {
+        var name = getProfileName(profileName, version);
+
+        return Objects.requireNonNullElse(
+            name.getOrDefault(language.toLowerCase(),
+                name.get(language.toLowerCase().split("-")[0])),
+            profileName);
+    }
+
+    public static String getLocalisedProfileName(String profileName, String language) {
+        var versions = dataQualityProfiles.get(profileName.toLowerCase());
+
+        if (Objects.isNull(versions) || versions.isEmpty()) {
+            return profileName;
+        }
+
+        return getLocalisedProfileName(profileName, versions.lastEntry().getKey(), language);
+    }
+
     public static Set<MultiLingualContent> getMetricTitle(String profile, String version,
                                                           String metric) {
         var definition = metricDefinition(profile, version, metric);
@@ -466,6 +502,7 @@ public class DataQualityAssessmentConfigurationLoader {
             case PUBLISHER -> List.of("Publisher");
             case PRIZE -> List.of("Prize");
             case PROJECT -> List.of("Project");
+            case FUNDING -> List.of("Funding");
             default -> List.of();
         };
     }
@@ -486,6 +523,9 @@ public class DataQualityAssessmentConfigurationLoader {
     public record DataQualityProfile(
         @JsonProperty(value = "version")
         String version,
+
+        @JsonProperty(value = "name")
+        Map<String, String> name,
 
         @JsonProperty(value = "minimumRequiredScore")
         Double minimumRequiredScore,

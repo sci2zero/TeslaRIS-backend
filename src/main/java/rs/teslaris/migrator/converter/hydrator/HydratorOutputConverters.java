@@ -3,7 +3,6 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,10 +61,10 @@ public class HydratorOutputConverters {
     private static final String NOT_INFORMED = "Not informed";
 
     /**
-     * MAP-000067: identifier types of the work itself, the document field each one fills, and the
-     * format core accepts for it. Core rejects the whole document on a malformed identifier, so a
-     * value failing the format is dropped here instead. The patterns mirror
-     * {@code DocumentPublicationServiceImpl#setCommonIdentifiers}; keep them in sync.
+     * CW-001-MAP-000067: identifier types of the work itself, the document field each one fills,
+     * and the format core accepts for it. Core rejects the whole document on a malformed
+     * identifier, so a value failing the format is dropped here instead. The patterns mirror {@code
+     * DocumentPublicationServiceImpl#setCommonIdentifiers}; keep them in sync.
      */
     private static final Map<String, IdentifierTarget> IDENTIFIER_TARGETS = Map.of(
         "doi", new IdentifierTarget(DocumentDTO::setDoi,
@@ -95,7 +94,7 @@ public class HydratorOutputConverters {
     );
 
     /**
-     * MAP-000065: authoring / editing role codes of the curriculum owner.
+     * CW-001-MAP-000065: authoring / editing role codes of the curriculum owner.
      */
     private static final Map<String, DocumentContributionType> OWNER_ROLES = Map.of(
         "AT", DocumentContributionType.AUTHOR,
@@ -106,6 +105,12 @@ public class HydratorOutputConverters {
         "EA", DocumentContributionType.ASSOCIATED_EDITOR,
         "TD", DocumentContributionType.TRANSLATOR,
         "PS", DocumentContributionType.ASSISTANT_STAFF
+    );
+
+    // Every output type has its own CIÊNCIA VITAE rule for the same source field
+    private static final Map<MigrationEntityType, OutputRules> OUTPUT_RULES = Map.of(
+        MigrationEntityType.JOURNAL_PUBLICATION, new OutputRules(62, 67, 68, 69),
+        MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
     );
 
     private final HydratorConversionUtil conversionUtil;
@@ -342,7 +347,7 @@ public class HydratorOutputConverters {
         dto.setDocumentDate(documentDate(record, output, entityType, date));
         dto.setContributions(contributions(record, output, entityType, authors, ownerRole));
 
-        // MAP-000972 asks for a generated citation as the fallback description. The source's
+        // CW-001-MAP-000972 asks for a generated citation as the fallback description. The source's
         // output:citation is only the author list, so the description is left empty for now.
 
         if (!isBlank(url)) {
@@ -360,7 +365,8 @@ public class HydratorOutputConverters {
             ((!isBlank(date.month()) && Objects.isNull(documentDate.month())) ||
                 (!isBlank(date.day()) && Objects.isNull(documentDate.day())))) {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                outputKey(record, output), "date",
+                outputKey(record, output),
+                HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).date()),
                 String.format("invalid date part (year='%s', month='%s', day='%s')",
                     date.year(), date.month(), date.day()));
         }
@@ -401,6 +407,7 @@ public class HydratorOutputConverters {
         }
     }
 
+    // CW-001-MAP-000069: documents have no research areas in TeslaRIS, so values are only logged
     // Documents have no research areas in TeslaRIS, so the values are only logged
     private void dropResearchClassifications(HydratorCVModel.Curriculum record,
                                              HydratorCVModel.Output output,
@@ -415,11 +422,14 @@ public class HydratorOutputConverters {
         classifications.researchClassification().stream()
             .filter(Objects::nonNull)
             .forEach(classification -> migrationLog.valueDropped(HydratorSource.NAME,
-                entityType.name(), outputKey(record, output), rule,
+                entityType.name(), outputKey(record, output),
+                HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).researchClassifications()),
                 "document has no research areas: '" + classification.value() + "'"));
     }
 
     /**
+     * CW-001-MAP-000067: identifiers of the work itself fill their document fields, first value
+     * wins. "Part of" identifiers belong to the container and are join keys, not attributes.
      * Identifiers of the work itself fill their document fields, first value wins. "Part of"
      * identifiers, and any of the container's type, belong to the container and are join keys,
      * not attributes.
@@ -447,7 +457,8 @@ public class HydratorOutputConverters {
 
             if (Objects.isNull(target)) {
                 migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                    outputKey(record, output), rule,
+                    outputKey(record, output),
+                    HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).identifiers()),
                     "unsupported identifier type '" + code + "'");
                 continue;
             }
@@ -463,7 +474,8 @@ public class HydratorOutputConverters {
                 }
 
                 migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                    outputKey(record, output), rule,
+                    outputKey(record, output),
+                    HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).identifiers()),
                     "invalid " + code + " format: '" + value + "'");
                 continue;
             }
@@ -525,7 +537,7 @@ public class HydratorOutputConverters {
             return null;
         }
 
-        return identifier.identifierType().code().trim().toLowerCase(Locale.ROOT);
+        return identifier.identifierType().code().trim().toLowerCase();
     }
 
     private List<PersonDocumentContributionDTO> contributions(HydratorCVModel.Curriculum record,
@@ -652,7 +664,8 @@ public class HydratorOutputConverters {
 
         if (match < 0 && !people.isEmpty()) {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                outputKey(record, output), "owner-match",
+                outputKey(record, output),
+                HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()),
                 (match == -2 ? "several authors match the owner's name" :
                     "owner not identified") + " among " + people.size() + " authors");
             return -1;
@@ -707,7 +720,7 @@ public class HydratorOutputConverters {
             return DocumentContributionType.AUTHOR;
         }
 
-        return OWNER_ROLES.getOrDefault(role.code().trim().toUpperCase(Locale.ROOT),
+        return OWNER_ROLES.getOrDefault(role.code().trim().toUpperCase(),
             DocumentContributionType.AUTHOR);
     }
 
@@ -721,10 +734,10 @@ public class HydratorOutputConverters {
             return null;
         }
 
-        return PUBLICATION_STATUSES.get(status.code().trim().toUpperCase(Locale.ROOT));
+        return PUBLICATION_STATUSES.get(status.code().trim().toUpperCase());
     }
 
-    // MAP-000070: one keyword per line, as everywhere else in TeslaRIS
+    // CW-001-MAP-000070: one keyword per line, as everywhere else in TeslaRIS
     private String keywords(HydratorCVModel.Keywords keywords) {
         if (Objects.isNull(keywords) || Objects.isNull(keywords.keyword())) {
             return null;
@@ -742,7 +755,7 @@ public class HydratorOutputConverters {
             return ThesisType.PHD;
         }
 
-        var value = Objects.toString(degreeType.value(), "").toLowerCase(Locale.ROOT);
+        var value = Objects.toString(degreeType.value(), "").toLowerCase();
 
         if (value.contains("master")) {
             return ThesisType.MASTER;
@@ -779,6 +792,10 @@ public class HydratorOutputConverters {
 
     private boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    private record OutputRules(int date, int identifiers, int authors,
+                               int researchClassifications) {
     }
 
     private record IdentifierTarget(BiConsumer<DocumentDTO, String> setter, Pattern pattern) {

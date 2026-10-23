@@ -1,6 +1,6 @@
 package rs.teslaris.core.controller.utility;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
@@ -45,7 +45,7 @@ public class ReindexController {
     @Idempotent
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleDatabaseReindex(@RequestParam("timestamp")
-                                        LocalDateTime timestamp,
+                                        Instant timestamp,
                                         @RequestParam(defaultValue = "ONCE")
                                         RecurrenceType recurrence,
                                         @RequestParam Boolean reharvestCitationIndicators,

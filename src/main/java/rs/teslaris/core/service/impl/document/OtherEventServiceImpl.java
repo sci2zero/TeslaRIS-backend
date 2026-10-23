@@ -13,6 +13,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.OtherEventConverter;
 import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -36,8 +38,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
+import rs.teslaris.core.util.migration.MigrationContext;
 
 @Service
 @Traceable
@@ -115,15 +116,17 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
 
         var saved = otherEventJPAService.save(event);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.OTHER_EVENT.name(),
-                saved.getId(),
-                null,
-                OtherEventConverter.toDTO(saved),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.OTHER_EVENT.name(),
+                    saved.getId(),
+                    null,
+                    OtherEventConverter.toDTO(saved),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexOtherEvent(saved, new EventIndex());
@@ -137,15 +140,17 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public void updateOtherEvent(Integer otherEventId, OtherEventDTO dto) {
         var event = findOtherEventById(otherEventId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                EntityType.OTHER_EVENT.name(),
-                otherEventId,
-                OtherEventConverter.toDTO(event),
-                dto,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.OTHER_EVENT.name(),
+                    otherEventId,
+                    OtherEventConverter.toDTO(event),
+                    dto,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         var oldContributorIds = clearEventCommonFields(event);
         event.setType(dto.getType());

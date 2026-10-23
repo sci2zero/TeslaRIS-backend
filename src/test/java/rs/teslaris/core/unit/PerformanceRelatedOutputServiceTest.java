@@ -47,6 +47,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.PerformanceRelatedOutputServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.PerformanceRelatedOutputJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -130,6 +131,11 @@ public class PerformanceRelatedOutputServiceTest {
     @Mock
     private CountryService countryService;
 
+
+    @Mock
+
+    private AssessmentGroupResolver assessmentGroupResolver;
+
     @Mock
     private CrisContextInformationService crisContextInformationService;
 
@@ -141,7 +147,7 @@ public class PerformanceRelatedOutputServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, false));
+                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(performanceRelatedOutputService, "documentApprovedByDefault",
             true);
     }

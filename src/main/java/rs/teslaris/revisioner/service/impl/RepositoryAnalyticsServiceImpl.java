@@ -69,6 +69,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
 
     private static final String PUBLICATION_SERIES_TARGET = "PublicationSeries";
 
+    private static final String PROJECT_TARGET = "Project";
+
+    private static final String FUNDING_TARGET = "Funding";
+
     private static final String BLOCKING_RULE_KEYS_FIELD = "blocking_rule_keys";
 
     private static final String PERSON_INDEX = "person";
@@ -76,6 +80,10 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
     private static final String ACTIVITIES_COUNT_FIELD = "activities_count";
 
     private static final String ORGANISATION_UNIT_INDEX = "organisation_unit";
+
+    private static final String PROJECT_INDEX = "project";
+
+    private static final String FUNDING_INDEX = "funding";
 
     private static final String RELATED_INSTITUTION_IDS_FIELD = "related_institution_ids";
 
@@ -93,7 +101,8 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         List.of(EVENT_TARGET, PUBLICATION_SERIES_TARGET);
 
     private static final List<String> ACTIVITY_PARENT_TARGETS =
-        List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET);
+        List.of(DOCUMENT_TARGET, PERSON_TARGET, EVENT_TARGET, PUBLICATION_SERIES_TARGET,
+            PROJECT_TARGET, FUNDING_TARGET);
 
     private final DataQualityAggregator dataQualityAggregator;
 
@@ -180,10 +189,14 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
                     stringTermsQuery("target", ACTIVITY_PARENT_TARGETS)),
                 blockingRuleKeys(profileName, ACTIVITY_TARGET)),
-            // TODO: projects carry no quality assessments yet.
-            PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
-            // TODO: fundings carry no quality assessments yet.
-            PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
+            prevalentBlockingIssue(RepositoryEntityType.PROJECTS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", PROJECT_TARGET)),
+                PROJECT_TARGET),
+            prevalentBlockingIssue(RepositoryEntityType.FUNDINGS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", FUNDING_TARGET)),
+                FUNDING_TARGET)
         );
     }
 
@@ -221,10 +234,14 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
                     stringTermsQuery("target", ACTIVITY_PARENT_TARGETS)),
                 ruleKeys(profileName, ACTIVITY_TARGET)),
-            // TODO: projects carry no quality assessments yet.
-            PrevalentIssueDTO.none(RepositoryEntityType.PROJECTS),
-            // TODO: fundings carry no quality assessments yet.
-            PrevalentIssueDTO.none(RepositoryEntityType.FUNDINGS)
+            prevalentIssue(RepositoryEntityType.PROJECTS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", PROJECT_TARGET)),
+                PROJECT_TARGET),
+            prevalentIssue(RepositoryEntityType.FUNDINGS, profileName,
+                assessmentQuery(profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", FUNDING_TARGET)),
+                FUNDING_TARGET)
         );
     }
 
@@ -242,16 +259,20 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             termQuery("target", DOCUMENT_TARGET));
         var otherActivityParents = issueBreakdown(profileName, scopeOrganisationUnitIds,
             assessmentDate, stringTermsQuery("target", OTHER_ACTIVITY_PARENT_TARGETS));
+        // Projects and fundings raise no Activity rules, so their rows need no activity pass and
+        // nothing of theirs is double counted in the Activities row.
+        var projects = issueBreakdown(profileName, scopeOrganisationUnitIds, assessmentDate,
+            termQuery("target", PROJECT_TARGET));
+        var fundings = issueBreakdown(profileName, scopeOrganisationUnitIds, assessmentDate,
+            termQuery("target", FUNDING_TARGET));
 
         var rows = List.of(
             severityRow(RepositoryEntityType.PERSONS, persons),
             severityRow(RepositoryEntityType.ORGANISATION_UNITS, organisationUnits),
             severityRow(RepositoryEntityType.OUTPUTS, outputs),
             activityRow(List.of(persons, outputs, otherActivityParents)),
-            // TODO: projects carry no quality assessments yet.
-            SeverityBreakdownDTO.unsupported(RepositoryEntityType.PROJECTS),
-            // TODO: fundings carry no quality assessments yet.
-            SeverityBreakdownDTO.unsupported(RepositoryEntityType.FUNDINGS)
+            severityRow(RepositoryEntityType.PROJECTS, projects),
+            severityRow(RepositoryEntityType.FUNDINGS, fundings)
         );
 
         var errorIssues = rows.stream().mapToLong(SeverityBreakdownDTO::errorIssues).sum();
@@ -477,6 +498,8 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         scopes.put(RepositoryEntityType.OUTPUTS, termQuery("target", DOCUMENT_TARGET));
         scopes.put(RepositoryEntityType.ACTIVITIES,
             stringTermsQuery("target", ACTIVITY_PARENT_TARGETS));
+        scopes.put(RepositoryEntityType.PROJECTS, termQuery("target", PROJECT_TARGET));
+        scopes.put(RepositoryEntityType.FUNDINGS, termQuery("target", FUNDING_TARGET));
 
         var latestPeriods = periodEnds.size() > 1
             ? periodEnds.subList(periodEnds.size() - 2, periodEnds.size())
@@ -509,10 +532,6 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
             rows.add(new EntityTypeTrendDTO(entityType, current, previous,
                 change(current, previous), true));
         });
-
-        // TODO: projects and fundings carry no quality assessments yet.
-        rows.add(EntityTypeTrendDTO.unsupported(RepositoryEntityType.PROJECTS));
-        rows.add(EntityTypeTrendDTO.unsupported(RepositoryEntityType.FUNDINGS));
 
         return rows;
     }
@@ -683,6 +702,24 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds))
             .orElseGet(DataQualityAggregator.LinkedDocumentAggregates::empty);
 
+        var projects = dataQualityAggregator
+            .aggregateAssessments(
+                assessmentQuery(
+                    profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", PROJECT_TARGET)
+                ),
+                activityRuleKeys)
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
+        var fundings = dataQualityAggregator
+            .aggregateAssessments(
+                assessmentQuery(
+                    profileName, scopeOrganisationUnitIds, assessmentDate,
+                    termQuery("target", FUNDING_TARGET)
+                ),
+                activityRuleKeys)
+            .orElseGet(DataQualityAggregator.AssessmentAggregates::empty);
+
         return List.of(
             constructQualityByEntityTypeRowData(RepositoryEntityType.PERSONS,
                 dataQualityAggregator.countRecords(PERSON_INDEX,
@@ -696,12 +733,21 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 documents.linkedRecords(), outputs),
             constructQualityByEntityTypeActivitiesRow(
                 documents.linkedActivities() + personActivities(scopeOrganisationUnitIds) +
-                    otherParentActivities(scopeOrganisationUnitIds),
-                List.of(outputs, persons, otherActivityParents)),
-            // TODO: projects carry no quality assessments yet.
-            EntityTypeQualityDTO.unsupported(RepositoryEntityType.PROJECTS),
-            // TODO: fundings carry no quality assessments yet.
-            EntityTypeQualityDTO.unsupported(RepositoryEntityType.FUNDINGS)
+                    otherParentActivities(scopeOrganisationUnitIds) +
+                    projectActivities(scopeOrganisationUnitIds) +
+                    fundingActivities(scopeOrganisationUnitIds),
+                List.of(outputs, persons, otherActivityParents, projects, fundings)),
+            // Both indexes carry the institutions of the funded project's consortium, its
+            // contributors' employments and the funders, so a scoped count is exact rather than
+            // approximate.
+            constructQualityByEntityTypeRowData(RepositoryEntityType.PROJECTS,
+                dataQualityAggregator.countRecords(PROJECT_INDEX,
+                    scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds)),
+                projects),
+            constructQualityByEntityTypeRowData(RepositoryEntityType.FUNDINGS,
+                dataQualityAggregator.countRecords(FUNDING_INDEX,
+                    scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds)),
+                fundings)
         );
     }
 
@@ -1046,7 +1092,9 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
         var rows = new ArrayList<List<Object>>();
 
         rows.add(List.of(label(titleKey, language)));
-        rows.add(List.of(label("repositoryAnalytics.profile", language), profileName));
+        rows.add(List.of(label("repositoryAnalytics.profile", language),
+            DataQualityAssessmentConfigurationLoader.getLocalisedProfileName(profileName,
+                language)));
         rows.add(List.of(
             label("repositoryAnalytics.assessmentDate", language),
             Objects.isNull(assessmentDate)
@@ -1143,6 +1191,18 @@ public class RepositoryAnalyticsServiceImpl implements RepositoryAnalyticsServic
                 scopedQuery(RELATED_INSTITUTION_IDS_FIELD, scopeOrganisationUnitIds),
                 ACTIVITIES_COUNT_FIELD))
             .sum();
+    }
+
+    private long projectActivities(List<Integer> scopeOrganisationUnitIds) {
+        return dataQualityAggregator.sumField(PROJECT_INDEX,
+            scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds),
+            ACTIVITIES_COUNT_FIELD);
+    }
+
+    private long fundingActivities(List<Integer> scopeOrganisationUnitIds) {
+        return dataQualityAggregator.sumField(FUNDING_INDEX,
+            scopedQuery("organisation_unit_ids", scopeOrganisationUnitIds),
+            ACTIVITIES_COUNT_FIELD);
     }
 
     @Nullable

@@ -7,23 +7,25 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.document.OrganisationUnitContribution;
-import rs.teslaris.core.model.document.PersonContribution;
-import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
+import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
@@ -35,7 +37,9 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.OrganisationUnitProjectContributionConverter;
 import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
@@ -47,7 +51,6 @@ import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
@@ -61,10 +64,13 @@ import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectCon
 import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 import rs.teslaris.project.service.interfaces.project.ProjectsRelationService;
+import rs.teslaris.project.util.ProjectScopeCalculator;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl extends JPAServiceImpl<Project> implements ProjectService {
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final ProjectRepository projectRepository;
 
@@ -101,6 +107,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final OrganisationUnitService organisationUnitService;
 
     private final InvolvementRepository involvementRepository;
+
+    private final ProjectScopeCalculator projectScopeCalculator;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -205,6 +213,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var newProject = new Project();
 
         setCommonFields(newProject, projectDTO);
+        setProvenance(newProject, projectDTO);
 
         var savedProject = save(newProject);
 
@@ -212,6 +221,18 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         projectIndexRepository.save(
             indexCommonFields(savedProject, new ProjectIndex()));
+
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    EntityType.PROJECT.name(),
+                    savedProject.getId(),
+                    null,
+                    ProjectConverter.toDTO(savedProject),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         return savedProject;
     }
@@ -221,6 +242,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     public void updateProject(Integer projectId,
                               ProjectDTO projectDTO) {
         var projectToUpdate = findOne(projectId);
+
+        applicationEventPublisher.publishEvent(
+            new RevisionCreateEvent(
+                EntityType.PROJECT.name(),
+                projectId,
+                ProjectConverter.toDTO(projectToUpdate),
+                projectDTO,
+                RevisionType.UPDATE
+            )
+        );
 
         clearCommonFields(projectToUpdate);
         setCommonFields(projectToUpdate, projectDTO);
@@ -316,6 +347,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         projectIndexRepository.save(index);
     }
 
+    @Override
+    @Transactional
+    public void refreshProjectIndex(Integer projectId) {
+        projectRepository.findById(projectId).ifPresent(this::refreshProjectIndex);
+    }
+
     private void refreshProjectIndex(Project project) {
         var index = projectIndexRepository.findProjectIndexByDatabaseId(project.getId())
             .orElseGet(ProjectIndex::new);
@@ -349,6 +386,15 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         );
     }
 
+    // Only on creation: updates do not carry provenance and must not erase it
+    private void setProvenance(Project project, ProjectDTO projectDTO) {
+        if (Objects.nonNull(projectDTO.getOldIds())) {
+            project.getOldIds().addAll(projectDTO.getOldIds());
+        }
+
+        project.setImportSource(projectDTO.getImportSource());
+    }
+
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
         if (Objects.nonNull(projectDTO.getDateFrom()) &&
             Objects.nonNull(projectDTO.getDateTo()) &&
@@ -366,13 +412,36 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setKeywords(
             multilingualContentService.getMultilingualContent(projectDTO.getKeywords()));
 
-        var researchAreas = researchAreaService.getResearchAreasByIds(
-            projectDTO.getResearchAreasId().stream().toList());
+        var requestedResearchAreaIds = projectDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
         project.setResearchAreas(new HashSet<>(researchAreas));
 
         project.setUris(projectDTO.getUris());
-        project.setDoi(projectDTO.getDoi());
-        project.setRaid(projectDTO.getRaid());
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getDoi(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByDoi,
+            project::setDoi,
+            "doiFormatError",
+            "doiExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            projectDTO.getRaid(),
+            project.getId(),
+            "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$",
+            projectRepository::existsByRaid,
+            project::setRaid,
+            "raidFormatError",
+            "raidExistsError"
+        );
+
         IdentifierUtil.validateAndSetIdentifier(
             projectDTO.getNationalId(),
             project.getId(),
@@ -391,12 +460,18 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.setNotFunded(projectDTO.getNotFunded());
         project.setInternalIdentifiers(projectDTO.getInternalIdentifiers());
 
-        if (Objects.nonNull(projectDTO.getCosts())) {
+        // An amount without its currency is a number without a unit, so the whole amount goes.
+        var currency = Objects.nonNull(projectDTO.getCosts())
+            ? RestorationSupport.resolveOptional(projectDTO.getCosts().getCurrencyId(),
+            currencyService, currencyService::findOne, "costs.currencyId",
+            "restoreCurrencyMissingMessage")
+            : null;
+
+        if (Objects.nonNull(projectDTO.getCosts()) && Objects.nonNull(currency)) {
             if (Objects.isNull(project.getCosts())) {
                 project.setCosts(new MonetaryAmount());
             }
-            project.getCosts().setCurrency(
-                currencyService.findOne(projectDTO.getCosts().getCurrencyId()));
+            project.getCosts().setCurrency(currency);
             project.getCosts().setAmount(projectDTO.getCosts().getAmount());
         } else {
             project.setCosts(null);
@@ -544,44 +619,38 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
         indexContributorIds(project, index);
         indexCoordinatorFields(project, index);
+        index.setActivitiesCount(countActivities(project));
 
         return index;
     }
 
-    private void indexContributorIds(Project project, ProjectIndex index) {
-        index.setPersonIds(project.getPersons().stream()
-            .map(PersonContribution::getPerson)
-            .filter(Objects::nonNull)
-            .map(Person::getId)
-            .toList());
+    /**
+     * A contribution counts as an activity once it says when it happened or what it was about,
+     * which is the same rule the document index and the quality assessment apply.
+     */
+    private Integer countActivities(Project project) {
+        var personActivities = project.getPersons().stream()
+            .filter(contribution -> isActivity(contribution.getDateFrom(),
+                contribution.getDateTo(), contribution.getResearchAreas()))
+            .count();
 
-        var institutionIds = new HashSet<Integer>();
+        var organisationActivities = project.getOrganisations().stream()
+            .filter(contribution -> isActivity(contribution.getDateFrom(),
+                contribution.getDateTo(), null))
+            .count();
 
-        project.getOrganisations().stream()
-            .map(OrganisationUnitContribution::getOrganisationUnit)
-            .filter(Objects::nonNull)
-            .map(OrganisationUnit::getId)
-            .forEach(organisationUnitId -> addWithSuperHierarchy(institutionIds,
-                organisationUnitId));
-
-        project.getPersons().stream()
-            .map(PersonContribution::getPerson)
-            .filter(Objects::nonNull)
-            .forEach(person -> involvementRepository.findEmploymentsForPerson(person.getId())
-                .stream()
-                .filter(employment -> InvolvementType.EMPLOYED_AT.equals(
-                    employment.getInvolvementType()))
-                .forEach(employment -> addWithSuperHierarchy(institutionIds,
-                    employment.getOrganisationUnit().getId())));
-
-        index.setOrganisationUnitIds(new ArrayList<>(institutionIds));
+        return Math.toIntExact(personActivities + organisationActivities);
     }
 
-    private void addWithSuperHierarchy(HashSet<Integer> institutionIds,
-                                       Integer organisationUnitId) {
-        institutionIds.add(organisationUnitId);
-        institutionIds.addAll(
-            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
+    private boolean isActivity(LocalDate dateFrom, LocalDate dateTo,
+                               Set<ResearchArea> researchAreas) {
+        return Objects.nonNull(dateFrom) || Objects.nonNull(dateTo) ||
+            (Objects.nonNull(researchAreas) && !researchAreas.isEmpty());
+    }
+
+    private void indexContributorIds(Project project, ProjectIndex index) {
+        index.setPersonIds(projectScopeCalculator.personIds(project));
+        index.setOrganisationUnitIds(projectScopeCalculator.organisationUnitIds(project));
     }
 
     private void indexCoordinatorFields(Project project, ProjectIndex index) {

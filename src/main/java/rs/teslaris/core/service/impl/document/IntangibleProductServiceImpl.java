@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RevisionCreateEvent;
+import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.IntangibleProductConverter;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -23,6 +25,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.IntangibleProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolver;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -41,12 +44,11 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
-import rs.teslaris.revisioner.model.RevisionCreateEvent;
-import rs.teslaris.revisioner.model.RevisionType;
 
 @Service
 @Traceable
@@ -81,6 +83,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                         DocumentLookupService documentLookupService,
                                         CountryService countryService,
+                                        AssessmentGroupResolver assessmentGroupResolver,
                                         IntangibleProductJPAServiceImpl intangibleProductJPAService,
                                         PublisherService publisherService,
                                         ResearchAreaService researchAreaService) {
@@ -89,7 +92,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             applicationEventPublisher, crisContextInformationService, personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService, documentLookupService, countryService);
+            organisationUnitOutputConfigurationService, documentLookupService, countryService,
+            assessmentGroupResolver);
         this.intangibleProductJPAService = intangibleProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
@@ -135,15 +139,17 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
 
         var savedIntangibleProduct = intangibleProductJPAService.save(newIntangibleProduct);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
-                savedIntangibleProduct.getId(),
-                null,
-                IntangibleProductConverter.toDTO(savedIntangibleProduct),
-                RevisionType.CREATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                    savedIntangibleProduct.getId(),
+                    null,
+                    IntangibleProductConverter.toDTO(savedIntangibleProduct),
+                    RevisionType.CREATE
+                )
+            );
+        }
 
         if (index) {
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
@@ -160,15 +166,17 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
 
-        applicationEventPublisher.publishEvent(
-            new RevisionCreateEvent(
-                DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
-                intangibleProductId,
-                IntangibleProductConverter.toDTO(intangibleProductToUpdate),
-                intangibleProductDTO,
-                RevisionType.UPDATE
-            )
-        );
+        if (!MigrationContext.isActive()) {
+            applicationEventPublisher.publishEvent(
+                new RevisionCreateEvent(
+                    DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
+                    intangibleProductId,
+                    IntangibleProductConverter.toDTO(intangibleProductToUpdate),
+                    intangibleProductDTO,
+                    RevisionType.UPDATE
+                )
+            );
+        }
 
         checkForDocumentDate(intangibleProductDTO);
         var oldContributorIds = clearCommonFields(intangibleProductToUpdate);

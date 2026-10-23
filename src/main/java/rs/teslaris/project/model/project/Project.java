@@ -24,9 +24,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingApplication;
 
@@ -110,17 +110,17 @@ public class Project extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ProjectStatus status;
 
-    @Column(name = "collaboration_type", nullable = false)
+    @Column(name = "collaboration_type")
     private ProjectCollaborationType collaborationType;
 
-    @Column(name = "research_type", nullable = false)
+    @Column(name = "research_type")
     private ProjectResearchType researchType;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Funding> funding = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
-    private Set<FundingApplication> fundingApplications;
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<FundingApplication> fundingApplications = new HashSet<>();
 
     @Column(name = "not_funded")
     private Boolean notFunded;
@@ -133,6 +133,16 @@ public class Project extends BaseEntity {
             .filter(o ->
                 o.getContributionType() == OrganisationUnitProjectContributionType.COORDINATOR)
             .findFirst();
+    }
+
+    public void addFunding(Funding funding) {
+        this.funding.add(funding);
+        funding.setProject(this);
+    }
+
+    public void addFundingApplication(FundingApplication fundingApplication) {
+        fundingApplications.add(fundingApplication);
+        fundingApplication.setProject(this);
     }
 
     public boolean hasContributions() {

@@ -6,13 +6,14 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.repository.commontypes.CurrencyRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
-import rs.teslaris.project.model.common.Currency;
-import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
@@ -24,7 +25,6 @@ import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectDocumentType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
-import rs.teslaris.project.repository.common.CurrencyRepository;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
@@ -144,32 +144,32 @@ public class ProjectDataInitializer {
         funding1.setAmount(new MonetaryAmount(1000000, currencyEuro));
         funding1.setFunder(funder1);
         funding1.setFundingCall(fundingCall1);
-        funding1.setProject(project1);
+        project1.addFunding(funding1);
 
         var funding2 = new Funding();
         funding2.setName(Set.of(new MultiLingualContent(englishTag, "Small Funding", 1)));
         funding2.setDateFrom(LocalDate.of(2023, 7, 6));
         funding2.setDateTo(LocalDate.of(2024, 3, 17));
         funding2.setAmount(new MonetaryAmount(1000000, currencyEuro));
-        funding1.setFunder(funder1);
-        funding1.setFundingCall(fundingCall1);
-        funding1.setProject(project2);
+        funding2.setFunder(funder1);
+        funding2.setFundingCall(fundingCall1);
+        project2.addFunding(funding2);
 
         var funding3 = new Funding();
         funding3.setName(Set.of(new MultiLingualContent(englishTag, "Big Funding", 1)));
-        funding1.setDateFrom(LocalDate.of(2024, 7, 6));
-        funding1.setDateTo(LocalDate.of(2025, 3, 17));
+        funding3.setDateFrom(LocalDate.of(2024, 7, 6));
+        funding3.setDateTo(LocalDate.of(2025, 3, 17));
         funding3.setAmount(new MonetaryAmount(1000000000, currencyEuro));
-        funding1.setFunder(funder1);
-        funding1.setFundingCall(fundingCall1);
-        funding1.setProject(project1);
+        funding3.setFunder(funder1);
+        funding3.setFundingCall(fundingCall1);
+        project1.addFunding(funding3);
 
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
 
         var fundingPart1 = new FundingPart();
         fundingPart1.setDescription(Set.of(new MultiLingualContent(englishTag, "Small Part", 1)));
         fundingPart1.setAmount(new MonetaryAmount(3000, currencyEuro));
-        fundingPart1.setFunding(funding3);
+        fundingPart1.setFunding(funding1);
 
         var fundingPart2 = new FundingPart();
         fundingPart2.setDescription(Set.of(new MultiLingualContent(englishTag, "Big Part", 1)));
@@ -180,9 +180,11 @@ public class ProjectDataInitializer {
 
         var fundingApplication1 = new FundingApplication();
         fundingApplication1.setFundingCall(fundingCall1);
+        project1.addFundingApplication(fundingApplication1);
 
         var fundingApplication2 = new FundingApplication();
         fundingApplication2.setFundingCall(fundingCall1);
+        project2.addFundingApplication(fundingApplication2);
 
         fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
 
