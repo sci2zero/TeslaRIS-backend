@@ -137,6 +137,13 @@ databaseChangeLog:
 - changeSet:
     id: 1792799894257-22
     author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_apvnt
+        tableName: persons
     changes:
     - dropIndex:
         indexName: idx_person_apvnt
@@ -144,6 +151,13 @@ databaseChangeLog:
 - changeSet:
     id: 1792799894257-23
     author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_e_cris_id
+        tableName: persons
     changes:
     - dropIndex:
         indexName: idx_person_e_cris_id
@@ -151,6 +165,13 @@ databaseChangeLog:
 - changeSet:
     id: 1792799894257-24
     author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_e_nauka_id
+        tableName: persons
     changes:
     - dropIndex:
         indexName: idx_person_e_nauka_id
