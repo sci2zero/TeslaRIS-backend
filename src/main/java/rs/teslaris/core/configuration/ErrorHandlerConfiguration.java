@@ -41,6 +41,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
+import rs.teslaris.core.util.exceptionhandling.exception.ExpertiseOrSkillAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
@@ -58,6 +59,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.PrizeAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
@@ -253,6 +255,22 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleRevisionRestoreException(HttpServletRequest request,
                                                RevisionRestoreException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ExpertiseOrSkillAlreadyExistsException.class)
+    @ResponseBody
+    ErrorObject handleExpertiseOrSkillAlreadyExistsException(
+        HttpServletRequest request, ExpertiseOrSkillAlreadyExistsException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(PrizeAlreadyExistsException.class)
+    @ResponseBody
+    ErrorObject handlePrizeAlreadyExistsException(HttpServletRequest request,
+                                                  PrizeAlreadyExistsException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)

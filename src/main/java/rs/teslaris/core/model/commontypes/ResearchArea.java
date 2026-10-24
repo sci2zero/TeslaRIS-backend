@@ -9,9 +9,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +23,6 @@ import org.hibernate.annotations.SQLRestriction;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@EqualsAndHashCode(callSuper = false)
 @Table(name = "research_area")
 @SQLRestriction("deleted=false")
 public class ResearchArea extends BaseEntity {
@@ -43,4 +42,25 @@ public class ResearchArea extends BaseEntity {
 
     @Column(name = "scheme_name")
     private String schemeName;
+
+
+    // Identity is the primary key, never the content. Hibernate keys the snapshot of a collection
+    // holding research areas by the elements as they hashed when it loaded, so a hash derived from
+    // content that is still being resolved at that point goes stale and an unchanged element is
+    // taken for a new one, which duplicates its row in the join table.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ResearchArea other)) {
+            return false;
+        }
+        return Objects.nonNull(getId()) && Objects.equals(getId(), other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
 }

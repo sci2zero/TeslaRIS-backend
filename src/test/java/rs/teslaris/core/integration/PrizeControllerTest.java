@@ -40,6 +40,7 @@ public class PrizeControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(1)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testSearchPrizes() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -53,6 +54,7 @@ public class PrizeControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(2)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testAddPrize() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
@@ -70,6 +72,7 @@ public class PrizeControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(3)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testUpdatePrize() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();

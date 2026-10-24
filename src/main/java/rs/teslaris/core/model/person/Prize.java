@@ -10,9 +10,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,7 +26,6 @@ import rs.teslaris.core.model.document.DocumentFile;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "prizes")
 @SQLRestriction("deleted=false")
@@ -61,4 +60,24 @@ public class Prize extends BaseEntity {
 
     @Column(name = "favorite")
     private Boolean favorite = false;
+
+
+    // Identity is the primary key, never the content: a content based hash would force every lazy
+    // collection to load on each HashSet insertion and would change whenever a prize is edited,
+    // corrupting the sets holding it. Duplicates are detected in PrizeServiceImpl.addPrize.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Prize other)) {
+            return false;
+        }
+        return Objects.nonNull(getId()) && Objects.equals(getId(), other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
 }
