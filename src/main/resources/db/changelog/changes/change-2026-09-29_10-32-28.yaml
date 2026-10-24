@@ -2,6 +2,16 @@ databaseChangeLog:
   - changeSet:
       id: 1790670748-3
       author: constraints-drift-script
+      # Fresh databases do not have the Hibernate-generated constraint to drop.
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: HALT
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT COUNT(*) FROM pg_catalog.pg_constraint
+              WHERE conrelid = 'public.document_files'::regclass
+                AND conname = 'document_files_resource_type_check';
       changes:
         - sql:
             splitStatements: false
