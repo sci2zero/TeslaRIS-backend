@@ -15,15 +15,6 @@ public class Person {
     @Field("name")
     private PersonName name;
 
-    @Field("apvnt")
-    private String apvnt;
-
-    @Field("e_cris_id")
-    private String eCrisId;
-
-    @Field("e_nauka_id")
-    private String eNaukaId;
-
     @Field("orcid")
     private String orcid;
 

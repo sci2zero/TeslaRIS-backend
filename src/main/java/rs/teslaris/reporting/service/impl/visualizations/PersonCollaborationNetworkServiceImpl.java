@@ -103,17 +103,26 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
         var structure = new NetworkStructure(authorId);
 
         structure.addAuthor(authorId, 0);
-        buildNetworkLevel(structure, authorId, 1, depth, collaborationType, yearFrom, yearTo);
+        buildNetworkLevel(structure, authorId, 1, depth, collaborationType, yearFrom, yearTo,
+            new HashMap<>());
 
         return structure;
     }
 
     private void buildNetworkLevel(NetworkStructure structure, Integer authorId, int currentDepth,
                                    int maxDepth, CollaborationType collaborationType,
-                                   Integer yearFrom, Integer yearTo) {
+                                   Integer yearFrom, Integer yearTo,
+                                   Map<Integer, Integer> shallowestExpansionDepths) {
         if (currentDepth > maxDepth) {
             return;
         }
+
+        // A shallower arrival still needs expanding because it can reach further.
+        var previousDepth = shallowestExpansionDepths.get(authorId);
+        if (Objects.nonNull(previousDepth) && previousDepth <= currentDepth) {
+            return;
+        }
+        shallowestExpansionDepths.put(authorId, currentDepth);
 
         var queryAndAggregationFields =
             getQueryAndAggregationFields(collaborationType);
@@ -138,7 +147,7 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
             if (currentDepth < maxDepth) {
                 var collaboratorId = collaborator.a;
                 buildNetworkLevel(structure, collaboratorId, currentDepth + 1, maxDepth,
-                    collaborationType, yearFrom, yearTo);
+                    collaborationType, yearFrom, yearTo, shallowestExpansionDepths);
             }
         }
     }

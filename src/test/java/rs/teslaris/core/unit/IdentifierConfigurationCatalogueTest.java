@@ -21,7 +21,7 @@ public class IdentifierConfigurationCatalogueTest {
         var catalogue = IdentifierConfigurationCatalogue.configurableIdentifiers();
 
         assertEquals(4, catalogue.size());
-        assertEquals(11, catalogue.get(ApplicableEntityType.PERSON).size());
+        assertEquals(8, catalogue.get(ApplicableEntityType.PERSON).size());
         assertEquals(11, catalogue.get(ApplicableEntityType.ORGANISATION_UNIT).size());
         assertEquals(3, catalogue.get(ApplicableEntityType.PROJECT).size());
         assertEquals(9, catalogue.get(ApplicableEntityType.DOCUMENT).size());
@@ -57,17 +57,17 @@ public class IdentifierConfigurationCatalogueTest {
     void shouldShareNoDefaultPolicyInstanceBetweenIdentifiers() {
         var defaults = IdentifierConfigurationCatalogue.defaults();
 
-        defaults.get(ApplicableEntityType.PERSON).get("apvnt").setFeatured(true);
+        defaults.get(ApplicableEntityType.PERSON).get("scholarId").setFeatured(true);
 
         assertFalse(IdentifierConfigurationCatalogue.defaults()
-            .get(ApplicableEntityType.PERSON).get("apvnt").getFeatured());
-        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("eCrisId").getFeatured());
+            .get(ApplicableEntityType.PERSON).get("scholarId").getFeatured());
+        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("authenticusId").getFeatured());
     }
 
     @Test
     void shouldDefaultToTodaysBehaviour() {
         var policy = IdentifierConfigurationCatalogue.defaults()
-            .get(ApplicableEntityType.PERSON).get("apvnt");
+            .get(ApplicableEntityType.PERSON).get("scholarId");
 
         assertTrue(policy.getHideWhenNotSet());
         assertFalse(policy.getFeatured());
@@ -88,7 +88,7 @@ public class IdentifierConfigurationCatalogueTest {
         // nothing an organisation unit header showed, so nothing is featured there
         defaults.get(ApplicableEntityType.ORGANISATION_UNIT).forEach(
             (identifier, policy) -> assertFalse(policy.getFeatured(), identifier));
-        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("apvnt").getFeatured());
+        assertFalse(defaults.get(ApplicableEntityType.PERSON).get("scholarId").getFeatured());
     }
 
     @Test
@@ -104,7 +104,7 @@ public class IdentifierConfigurationCatalogueTest {
         assertTrue(orcid.getFeatured());
         assertFalse(orcid.getCanBeUpdated());
 
-        assertTrue(completed.get(ApplicableEntityType.PERSON).get("apvnt").getHideWhenNotSet());
+        assertTrue(completed.get(ApplicableEntityType.PERSON).get("scholarId").getHideWhenNotSet());
         assertEquals(9, completed.get(ApplicableEntityType.DOCUMENT).size());
     }
 

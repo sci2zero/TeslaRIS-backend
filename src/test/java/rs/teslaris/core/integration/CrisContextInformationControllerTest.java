@@ -122,7 +122,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             .andExpect(jsonPath("$.identifierConfiguration.PERSON.orcid.featured").value("true"))
             .andExpect(
                 jsonPath("$.identifierConfiguration.PERSON.orcid.canBeUpdated").value("false"))
-            .andExpect(jsonPath("$.identifierConfiguration.PERSON.apvnt.canBeUpdated")
+            .andExpect(jsonPath("$.identifierConfiguration.PERSON.scholarId.canBeUpdated")
                 .value("true"))
             .andExpect(jsonPath("$.nationalIdentifierName[0].content")
                 .value("National researcher number"))

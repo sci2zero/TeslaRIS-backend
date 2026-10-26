@@ -1,0 +1,11 @@
+{
+  "pipelines": [
+    {
+      "pipelineName": "",
+      "version": 1,
+      "matchedRemarkKeys": ["", ""],
+      "appliedFixators": ["", ""],
+      "createVersionOnEveryStep": false
+    }
+  ]
+}

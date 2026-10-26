@@ -20,6 +20,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.oaipmh.OAIPMHParseUtility;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 
@@ -27,6 +28,8 @@ import rs.teslaris.importer.utility.RecordConverter;
 @RequiredArgsConstructor
 @Slf4j
 public class ImportPersonConverter implements RecordConverter<Person, ImportPersonDTO> {
+
+    private static final String APVNT_IDENTIFIER_CODE = "apvnt";
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -57,8 +60,11 @@ public class ImportPersonConverter implements RecordConverter<Person, ImportPers
 
         dto.setScopusAuthorId(person.getScopusAuthorId());
         dto.setOrcid(person.getOrcid());
-        dto.setApvnt(person.getApvnt());
         dto.setPersonName(personName);
+
+        if (StringUtil.valueExists(person.getApvnt())) {
+            dto.getAdditionalIdentifiers().put(APVNT_IDENTIFIER_CODE, person.getApvnt().trim());
+        }
 
         if (Objects.nonNull(person.getBirthDate())) {
             dto.setLocalBirthDate(

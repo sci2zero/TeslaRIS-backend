@@ -18,6 +18,6 @@ public record IdentifierResponseDTO(
 
     String regularExpression,
 
-    String uriPrefix
+    String urlTemplate
 ) {
 }

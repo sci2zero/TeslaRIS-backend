@@ -1,6 +1,7 @@
 package rs.teslaris.reporting.service.impl.visualizations;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,29 +52,33 @@ public class DigitalLibraryVisualizationDataServiceImpl
                                                                  Integer startYear,
                                                                  Integer endYear,
                                                                  List<ThesisType> allowedThesisTypes) {
+        if (!organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+            return Collections.emptyList();
+        }
+
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
         var institutionIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
         var yearRange = constructYearRange(startYear, endYear, institutionIds, searchFields,
             allowedThesisTypes);
-        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b) ||
-            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
+            return Collections.emptyList();
+        }
+
+        Map<Integer, Map<String, Long>> countsByYear;
+        try {
+            countsByYear = getThesisCountsByTypeForOUAndAllowedTypes(institutionIds, yearRange,
+                searchFields, allowedThesisTypes);
+        } catch (IOException | ElasticsearchException e) {
+            log.warn("Unable to fetch OU theses counts for {}. Reason: {}", organisationUnitId,
+                e.getMessage());
             return Collections.emptyList();
         }
 
         var yearlyCounts = new ArrayList<YearlyCounts>();
         for (int i = yearRange.a; i <= yearRange.b; i++) {
-            try {
-                var counts =
-                    getThesisCountsByTypeForOUAndYearAndAllowedTypes(institutionIds, i,
-                        searchFields, allowedThesisTypes);
-                if (Objects.nonNull(counts)) {
-                    yearlyCounts.add(new YearlyCounts(i, counts));
-                }
-            } catch (IOException e) {
-                log.warn("Unable to fetch OU theses counts for {}. Adding all zeros.", i);
-            }
+            yearlyCounts.add(new YearlyCounts(i, countsByYear.getOrDefault(i, Map.of())));
         }
 
         return yearlyCounts;
@@ -83,11 +89,14 @@ public class DigitalLibraryVisualizationDataServiceImpl
                                                            LocalDate from, LocalDate to,
                                                            StatisticsType statisticsType,
                                                            List<ThesisType> allowedThesisTypes) {
+        if (!organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+            return Collections.emptyMap();
+        }
+
         var eligibleDocumentIds =
             documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
                 allowedThesisTypes, from.getYear(), to.getYear());
-        if (eligibleDocumentIds.isEmpty() ||
-            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+        if (eligibleDocumentIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
@@ -152,11 +161,14 @@ public class DigitalLibraryVisualizationDataServiceImpl
     public List<StatisticsByCountry> getByCountryStatisticsForDigitalLibrary(
         Integer organisationUnitId, LocalDate from, LocalDate to, StatisticsType statisticsType,
         List<ThesisType> allowedThesisTypes) {
+        if (!organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+            return Collections.emptyList();
+        }
+
         var eligibleDocumentIds =
             documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
                 allowedThesisTypes, from.getYear(), to.getYear());
-        if (eligibleDocumentIds.isEmpty() ||
-            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+        if (eligibleDocumentIds.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -264,15 +276,14 @@ public class DigitalLibraryVisualizationDataServiceImpl
             return new Pair<>(null, null);
         }
 
-        double min = response.aggregations().get("earliestYear").min().value();
-        double max = response.aggregations().get("latestYear").max().value();
-
-        return new Pair<>((int) min, (int) max);
+        return QueryUtil.sanitizeYearRange(
+            response.aggregations().get("earliestYear").min().value(),
+            response.aggregations().get("latestYear").max().value());
     }
 
-    private Map<String, Long> getThesisCountsByTypeForOUAndYearAndAllowedTypes(
+    private Map<Integer, Map<String, Long>> getThesisCountsByTypeForOUAndAllowedTypes(
         List<Integer> organisationUnitIds,
-        Integer year,
+        Pair<Integer, Integer> yearRange,
         List<String> searchFields,
         List<ThesisType> allowedThesisTypes
     ) throws IOException {
@@ -283,7 +294,9 @@ public class DigitalLibraryVisualizationDataServiceImpl
                     .bool(b -> {
                             b.must(m -> m.term(t -> t.field("is_approved").value(true)))
                                 .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
-                                .must(m -> m.term(t -> t.field("year").value(year)))
+                                .must(m -> m.range(r -> r.field("year")
+                                    .gte(JsonData.of(yearRange.a))
+                                    .lte(JsonData.of(yearRange.b))))
                                 .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                     searchFields))
                                 .must(m -> m.term(t -> t.field("type").value("THESIS")));
@@ -294,23 +307,36 @@ public class DigitalLibraryVisualizationDataServiceImpl
                         }
                     )
                 )
-                .aggregations("by_publication_type", a -> a
-                    .terms(t -> t.field("publication_type").size(getBucketSize(allowedThesisTypes)))
+                .aggregations("by_year", a -> a
+                    .terms(t -> t.field("year").size(yearRange.b - yearRange.a + 1))
+                    .aggregations("by_publication_type", sub -> sub
+                        .terms(t -> t.field("publication_type")
+                            .size(getBucketSize(allowedThesisTypes)))
+                    )
                 ),
             Void.class
         );
 
-        return response.aggregations()
-            .get("by_publication_type")
-            .sterms()
+        var countsByYear = new HashMap<Integer, Map<String, Long>>();
+        response.aggregations()
+            .get("by_year")
+            .lterms()
             .buckets()
             .array()
-            .stream()
-            .filter(b -> Objects.nonNull(b.key()))
-            .collect(Collectors.toMap(
-                b -> b.key().stringValue(),
-                MultiBucketBase::docCount
-            ));
+            .forEach(yearBucket -> countsByYear.put((int) yearBucket.key(),
+                yearBucket.aggregations()
+                    .get("by_publication_type")
+                    .sterms()
+                    .buckets()
+                    .array()
+                    .stream()
+                    .filter(b -> Objects.nonNull(b.key()))
+                    .collect(Collectors.toMap(
+                        b -> b.key().stringValue(),
+                        MultiBucketBase::docCount
+                    ))));
+
+        return countsByYear;
     }
 
     private int getBucketSize(List<ThesisType> allowedThesisTypes) {

@@ -74,6 +74,12 @@ public class ProjectEntityCreatorTest {
 
     private ProjectEntityCreator creator;
 
+    private static OrganisationUnitProjectContribution contribution(int id, int orderNumber) {
+        var contribution = new OrganisationUnitProjectContribution();
+        contribution.setId(id);
+        contribution.setOrderNumber(orderNumber);
+        return contribution;
+    }
 
     @BeforeEach
     void setUp() {
@@ -98,11 +104,11 @@ public class ProjectEntityCreatorTest {
             .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
 
         var id = creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(
-            new ProjectMigrationDTO.ConsortiumEntry(
-                OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1, null),
-            new ProjectMigrationDTO.ConsortiumEntry(
-                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
-            null),
+                new ProjectMigrationDTO.ConsortiumEntry(
+                    OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1, null),
+                new ProjectMigrationDTO.ConsortiumEntry(
+                    OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
+                null),
             true);
 
         assertEquals(42, id);
@@ -195,12 +201,5 @@ public class ProjectEntityCreatorTest {
             MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101);
         verify(idResolver).remember(HydratorSource.NAME,
             MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102);
-    }
-
-    private static OrganisationUnitProjectContribution contribution(int id, int orderNumber) {
-        var contribution = new OrganisationUnitProjectContribution();
-        contribution.setId(id);
-        contribution.setOrderNumber(orderNumber);
-        return contribution;
     }
 }

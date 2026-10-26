@@ -223,6 +223,7 @@ public class AuthorityDataInitializer {
         var backfillEntityRevision = new Privilege("BACKFILL_ENTITY_REVISION");
         var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
         var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
+        var manageDataQualityFixators = new Privilege("MANAGE_DATA_QUALITY_FIXATORS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -274,7 +275,7 @@ public class AuthorityDataInitializer {
                 deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-                saveModuleAccessConfiguration
+                saveModuleAccessConfiguration, manageDataQualityFixators
             ));
 
         return new Privileges(
@@ -334,7 +335,7 @@ public class AuthorityDataInitializer {
             editFunding, readProjects, editProjects, deleteProjects,
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-            saveModuleAccessConfiguration);
+            saveModuleAccessConfiguration, manageDataQualityFixators);
     }
 
     private Authority adminAuthority(Privileges p) {
@@ -418,7 +419,7 @@ public class AuthorityDataInitializer {
                 p.editProjects(),
                 p.deleteProjects(),
                 p.restoreEntityRevision(), p.backfillEntityRevision(), p.assessDataQuality(),
-                p.saveModuleAccessConfiguration()
+                p.saveModuleAccessConfiguration(), p.manageDataQualityFixators()
             )));
     }
 
@@ -696,7 +697,8 @@ public class AuthorityDataInitializer {
         Privilege restoreEntityRevision,
         Privilege backfillEntityRevision,
         Privilege assessDataQuality,
-        Privilege saveModuleAccessConfiguration
+        Privilege saveModuleAccessConfiguration,
+        Privilege manageDataQualityFixators
     ) {
     }
 }

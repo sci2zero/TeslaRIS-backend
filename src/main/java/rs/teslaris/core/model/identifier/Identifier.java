@@ -44,6 +44,6 @@ public class Identifier extends BaseEntity {
     @Column(name = "regular_expression")
     private String regularExpression;
 
-    @Column(name = "uri_prefix")
-    private String uriPrefix;
+    @Column(name = "url_template")
+    private String urlTemplate;
 }

@@ -97,18 +97,15 @@ public class HydratorConversionUtil implements RunScopedCache {
 
     // The language registry is small and static, so this outlives runs unlike the caches below
     private final Map<String, Optional<Integer>> languageIds = new ConcurrentHashMap<>();
-
+    // Whole curriculum labels already resolved; only a few hundred distinct ones exist
+    private final Map<String, Optional<ResearchAreaMatch>> researchAreaMatches =
+        new ConcurrentHashMap<>();
     /**
      * Normalised English research area name to id, read in one query on first use - not at
      * startup, as the vocabulary is loaded asynchronously after the database is initialised.
      * Published immutable, so readers need no locking.
      */
     private volatile Map<String, Integer> researchAreaIdsByName;
-
-    // Whole curriculum labels already resolved; only a few hundred distinct ones exist
-    private final Map<String, Optional<ResearchAreaMatch>> researchAreaMatches =
-        new ConcurrentHashMap<>();
-
 
     public List<MultilingualContentDTO> multilingualContent(String content, String language) {
         if (Objects.isNull(content) || content.isBlank()) {
@@ -287,10 +284,9 @@ public class HydratorConversionUtil implements RunScopedCache {
         return RESEARCH_AREA_SYNONYMS.getOrDefault(key, key);
     }
 
-    public record ResearchAreaMatch(Integer id, String name, boolean broader) {
-    }
-
-    /** Drops a month or day that cannot exist; null without a year. */
+    /**
+     * Drops a month or day that cannot exist; null without a year.
+     */
     public FlexibleDateDTO flexibleDate(HydratorCVModel.DateInfo dateInfo) {
         if (Objects.isNull(dateInfo)) {
             return null;
@@ -574,5 +570,8 @@ public class HydratorConversionUtil implements RunScopedCache {
 
         // Curricula carry locales such as "pt_PT" / "en_GB"; tags are the bare language code
         return language.trim().split("[_-]")[0].toUpperCase();
+    }
+
+    public record ResearchAreaMatch(Integer id, String name, boolean broader) {
     }
 }

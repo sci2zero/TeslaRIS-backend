@@ -452,22 +452,19 @@ public class MergeServiceImpl implements MergeService {
         updateAndRestoreMetadata(personService::updatePersonalInfo, personService::indexPerson,
             personService::findOne, leftId, rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
+            dto -> new String[] {
                 dto.getScopusAuthorId(), dto.getOrcid(), dto.getOpenAlexId(),
                 dto.getWebOfScienceResearcherId(), dto.getNationalScienceId(), dto.getScholarId(),
                 dto.getAuthenticusId(), dto.getLattesId()},
             (dto, values) -> {
-                dto.setApvnt(values[0]);
-                dto.setECrisId(values[1]);
-                dto.setENaukaId(values[2]);
-                dto.setScopusAuthorId(values[3]);
-                dto.setOrcid(values[4]);
-                dto.setOpenAlexId(values[5]);
-                dto.setWebOfScienceResearcherId(values[6]);
-                dto.setNationalScienceId(values[7]);
-                dto.setScholarId(values[8]);
-                dto.setAuthenticusId(values[9]);
-                dto.setLattesId(values[10]);
+                dto.setScopusAuthorId(values[0]);
+                dto.setOrcid(values[1]);
+                dto.setOpenAlexId(values[2]);
+                dto.setWebOfScienceResearcherId(values[3]);
+                dto.setNationalScienceId(values[4]);
+                dto.setScholarId(values[5]);
+                dto.setAuthenticusId(values[6]);
+                dto.setLattesId(values[7]);
             });
     }
 

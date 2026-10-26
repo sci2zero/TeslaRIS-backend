@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
@@ -205,6 +208,13 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     PageRequest.of(pageNumber, chunkSize,
                         Sort.by(Sort.Direction.ASC, "databaseId")));
 
+                var chunkAuthorIds = chunk.getContent().stream()
+                    .flatMap(documentIndex -> documentIndex.getAuthorIds().stream())
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(HashSet::new));
+                chunkAuthorIds.add(personId);
+                PublicPersonIdentifiers.prime(chunkAuthorIds);
+
                 chunk.forEach(documentIndex -> {
                     progressService.send(
                         exportId,
@@ -270,6 +280,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             throw new LoadingException(
                 "Failed to create RO-Crate ZIP. Reason: "
                     + e.getMessage());
+        } finally {
+            PublicPersonIdentifiers.clear();
         }
     }
 

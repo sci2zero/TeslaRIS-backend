@@ -9,8 +9,8 @@ import rs.teslaris.core.dto.commontypes.ResearchAreaNodeDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaResponseDTO;
 import rs.teslaris.core.dto.institution.ResearchAreaDTO;
 import rs.teslaris.core.model.commontypes.ResearchArea;
-import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface ResearchAreaService extends JPAService<ResearchArea> {

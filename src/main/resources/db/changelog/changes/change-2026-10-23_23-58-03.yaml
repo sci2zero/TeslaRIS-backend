@@ -1,0 +1,235 @@
+databaseChangeLog:
+- changeSet:
+    id: 1792799894257-14
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_funding_applications
+        constraintName: fk8ricvk2mkejpyc0577u2iqenb
+- changeSet:
+    id: 1792799894257-15
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_funding
+        constraintName: fka5m8bcjx57nqjvaojcjqb6roo
+- changeSet:
+    id: 1792799894257-16
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_funding
+        constraintName: fkc4tx0mldxwv4505wj418wu42v
+- changeSet:
+    id: 1792799894257-17
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: projects_funding_applications
+        constraintName: fkmmqxbpg5kmkxx1g44j26gsg3t
+- changeSet:
+    id: 1792799894257-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_national_identifier_name_pkey
+            name: cris_context_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_national_identifier_name_pkey
+            name: mlc_id
+            type: INTEGER
+        tableName: cris_national_identifier_name
+- changeSet:
+    id: 1792799894257-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: cris_national_identifier_name_mlc_id_key
+        tableName: cris_national_identifier_name
+- changeSet:
+    id: 1792799894257-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: url_template
+            type: VARCHAR(255)
+        tableName: identifiers
+- changeSet:
+    id: 1792799894257-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: identifier_configuration
+            type: JSONB
+        tableName: cris_context_information
+- changeSet:
+    id: 1792799894257-12
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: cris_national_identifier_name
+        constraintName: fk88valkw3mi6t2hnfxxqre65nr
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1792799894257-13
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: cris_context_information_id
+        baseTableName: cris_national_identifier_name
+        constraintName: fkel2mvq3xwtm2xcjfvnqddk2lx
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: cris_context_information
+        validate: true
+- changeSet:
+    id: 1792799894257-18
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: apvnt
+        tableName: persons
+- changeSet:
+    id: 1792799894257-19
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: e_cris_id
+        tableName: persons
+- changeSet:
+    id: 1792799894257-20
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: e_nauka_id
+        tableName: persons
+- changeSet:
+    id: 1792799894257-21
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: uri_prefix
+        tableName: identifiers
+- changeSet:
+    id: 1792799894257-22
+    author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_apvnt
+        tableName: persons
+    changes:
+    - dropIndex:
+        indexName: idx_person_apvnt
+        tableName: persons
+- changeSet:
+    id: 1792799894257-23
+    author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_e_cris_id
+        tableName: persons
+    changes:
+    - dropIndex:
+        indexName: idx_person_e_cris_id
+        tableName: persons
+- changeSet:
+    id: 1792799894257-24
+    author: milospopovic (generated)
+    # PostgreSQL removes this index when its column is dropped above.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - indexExists:
+        indexName: idx_person_e_nauka_id
+        tableName: persons
+    changes:
+    - dropIndex:
+        indexName: idx_person_e_nauka_id
+        tableName: persons
+- changeSet:
+    id: 1792799894257-1
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: smallint(5)
+        columnName: collaboration_type
+        tableName: projects
+- changeSet:
+    id: 1792799894257-2
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: document_national_id_url
+        newDataType: varchar(255)
+        tableName: cris_context_information
+- changeSet:
+    id: 1792799894257-3
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: smallint(5)
+        columnName: investigation_role
+        tableName: person_project_contribution
+- changeSet:
+    id: 1792799894257-4
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: organisation_unit_national_id_url
+        newDataType: varchar(255)
+        tableName: cris_context_information
+- changeSet:
+    id: 1792799894257-5
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: person_national_id_url
+        newDataType: varchar(255)
+        tableName: cris_context_information
+- changeSet:
+    id: 1792799894257-6
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: project_national_id_url
+        newDataType: varchar(255)
+        tableName: cris_context_information
+- changeSet:
+    id: 1792799894257-7
+    author: milospopovic (generated)
+    changes:
+    - dropNotNullConstraint:
+        columnDataType: smallint(5)
+        columnName: research_type
+        tableName: projects
+

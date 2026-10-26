@@ -12,9 +12,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +28,6 @@ import rs.teslaris.core.model.document.DocumentFile;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "expertise_or_skills")
 @SQLRestriction("deleted=false")
@@ -56,4 +55,25 @@ public class ExpertiseOrSkill extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
     private Person person;
+
+
+    // Identity is the primary key, never the content: a content based hash would force every lazy
+    // collection to load on each HashSet insertion and would change whenever a skill is edited,
+    // corrupting the sets holding it. Duplicates are detected in
+    // ExpertiseOrSkillServiceImpl.addExpertiseOrSkill.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExpertiseOrSkill other)) {
+            return false;
+        }
+        return Objects.nonNull(getId()) && Objects.equals(getId(), other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
+    }
 }

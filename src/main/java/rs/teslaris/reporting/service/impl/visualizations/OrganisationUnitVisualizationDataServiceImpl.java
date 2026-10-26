@@ -1,11 +1,14 @@
 package rs.teslaris.reporting.service.impl.visualizations;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
@@ -58,17 +61,19 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             return Collections.emptyList();
         }
 
+        Map<Integer, Map<String, Long>> countsByYear;
+        try {
+            countsByYear =
+                getPublicationCountsByTypeForOU(institutionIds, yearRange, searchFields);
+        } catch (IOException | ElasticsearchException e) {
+            log.warn("Unable to fetch OU publication counts for {}. Reason: {}",
+                organisationUnitId, e.getMessage());
+            return Collections.emptyList();
+        }
+
         var yearlyCounts = new ArrayList<YearlyCounts>();
         for (int i = yearRange.a; i <= yearRange.b; i++) {
-            try {
-                var counts =
-                    getPublicationCountsByTypeForOUAndYear(institutionIds, i, searchFields);
-                if (Objects.nonNull(counts)) {
-                    yearlyCounts.add(new YearlyCounts(i, counts));
-                }
-            } catch (IOException e) {
-                log.warn("Unable to fetch OU publication counts for {}. Adding all zeros.", i);
-            }
+            yearlyCounts.add(new YearlyCounts(i, countsByYear.getOrDefault(i, Map.of())));
         }
 
         return yearlyCounts;
@@ -157,21 +162,31 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             return Collections.emptyList();
         }
 
-        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
+        var commissions =
+            new ArrayList<>(QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId));
+        if (commissions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Integer, Map<Integer, Map<String, Long>>> countsByCommissionAndYear;
+        try {
+            countsByCommissionAndYear = getPublicationMCategoryCountsByTypeForOUAndCommissions(
+                institutionIds, commissions.stream().map(commission -> commission.a).toList(),
+                yearRange, searchFields);
+        } catch (IOException | ElasticsearchException e) {
+            log.warn("Unable to fetch OU M category counts for {}. Reason: {}", organisationUnitId,
+                e.getMessage());
+            return Collections.emptyList();
+        }
 
         var commissionYearlyCounts = new ArrayList<CommissionYearlyCounts>();
         for (var commission : commissions) {
+            var countsByYear =
+                countsByCommissionAndYear.getOrDefault(commission.a, Map.of());
+
             var yearlyCounts = new ArrayList<YearlyCounts>();
-
             for (int i = yearRange.a; i <= yearRange.b; i++) {
-                try {
-                    yearlyCounts.add(new YearlyCounts(i,
-                        getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
-                            institutionIds, commission.a, i, searchFields)));
-
-                } catch (IOException e) {
-                    log.warn("Unable to fetch OU M category counts for {}. Adding all zeros.", i);
-                }
+                yearlyCounts.add(new YearlyCounts(i, countsByYear.getOrDefault(i, Map.of())));
             }
 
             commissionYearlyCounts.add(new CommissionYearlyCounts(
@@ -377,9 +392,9 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         }
     }
 
-    private Map<String, Long> getPublicationCountsByTypeForOUAndYear(
+    private Map<Integer, Map<String, Long>> getPublicationCountsByTypeForOU(
         List<Integer> organisationUnitIds,
-        Integer year,
+        Pair<Integer, Integer> yearRange,
         List<String> searchFields
     ) throws IOException {
         SearchResponse<Void> response = elasticsearchClient.search(s -> s
@@ -388,21 +403,38 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 .query(q -> q
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                        .must(m -> m.term(t -> t.field("year").value(year)))
+                        .must(m -> m.range(r -> r.field("year")
+                            .gte(JsonData.of(yearRange.a))
+                            .lte(JsonData.of(yearRange.b))))
                         .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                             searchFields))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                     )
                 )
-                .aggregations("by_type", a -> a
-                    .terms(t -> t.field("type")
-                        .size(DocumentPublicationType.values().length))
+                .aggregations("by_year", a -> a
+                    .terms(t -> t.field("year").size(yearSpan(yearRange)))
+                    .aggregations("by_type", sub -> sub
+                        .terms(t -> t.field("type")
+                            .size(DocumentPublicationType.values().length))
+                    )
                 ),
             Void.class
         );
 
-        return response.aggregations()
-            .get("by_type")
+        var countsByYear = new HashMap<Integer, Map<String, Long>>();
+        response.aggregations()
+            .get("by_year")
+            .lterms()
+            .buckets()
+            .array()
+            .forEach(yearBucket -> countsByYear.put((int) yearBucket.key(),
+                countsByType(yearBucket.aggregations().get("by_type"))));
+
+        return countsByYear;
+    }
+
+    private Map<String, Long> countsByType(Aggregate aggregate) {
+        return aggregate
             .sterms()
             .buckets()
             .array()
@@ -412,6 +444,10 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 b -> b.key().stringValue(),
                 MultiBucketBase::docCount
             ));
+    }
+
+    private int yearSpan(Pair<Integer, Integer> yearRange) {
+        return yearRange.b - yearRange.a + 1;
     }
 
     @Override
@@ -488,44 +524,84 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             return new Pair<>(null, null);
         }
 
-        double min = response.aggregations().get("earliestYear").min().value();
-        double max = response.aggregations().get("latestYear").max().value();
-
-        return new Pair<>((int) min, (int) max);
+        return QueryUtil.sanitizeYearRange(
+            response.aggregations().get("earliestYear").min().value(),
+            response.aggregations().get("latestYear").max().value());
     }
 
-    private Map<String, Long> getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
-        List<Integer> organisationUnitIds, Integer commissionId, Integer year,
-        List<String> searchFields)
+    private Map<Integer, Map<Integer, Map<String, Long>>>
+    getPublicationMCategoryCountsByTypeForOUAndCommissions(
+        List<Integer> organisationUnitIds, List<Integer> commissionIds,
+        Pair<Integer, Integer> yearRange, List<String> searchFields)
         throws IOException {
+        // One filter branch per commission matches what a query per commission counted.
+        var commissionFilters = new HashMap<String, Query>();
+        commissionIds.forEach(commissionId -> commissionFilters.put(commissionBucketKey(
+            commissionId), Query.of(q -> q.bool(sb -> sb
+            .should(sn -> sn.term(
+                t -> t.field("commission_assessment_groups.a").value(commissionId)))
+            .should(sn -> sn.bool(nb -> nb.mustNot(
+                mn -> mn.exists(e -> e.field("commission_assessment_groups.a")))))
+            .minimumShouldMatch("1")
+        ))));
+
         SearchResponse<Void> response = elasticsearchClient.search(s -> s
                 .index("document_publication")
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                        .must(m -> m.term(t -> t.field("year").value(year)))
+                        .must(m -> m.range(r -> r.field("year")
+                            .gte(JsonData.of(yearRange.a))
+                            .lte(JsonData.of(yearRange.b))))
                         .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                             searchFields))
-                        .must(m -> m.bool(sb -> sb
-                            .should(sn -> sn.term(
-                                t -> t.field("commission_assessment_groups.a").value(commissionId)))
-                            .should(sn -> sn.bool(nb -> nb.mustNot(
-                                mn -> mn.exists(e -> e.field("commission_assessment_groups.a")))))
-                            .minimumShouldMatch("1")
-                        ))
                     )
                 )
-                .aggregations("by_m_category", a -> a
-                    .terms(t -> t.field("commission_assessment_groups.b.keyword")
-                        .missing("NONE")
-                        .size(11))
+                .aggregations("by_commission", a -> a
+                    .filters(f -> f.keyed(true).filters(bu -> bu.keyed(commissionFilters)))
+                    .aggregations("by_year", year -> year
+                        .terms(t -> t.field("year").size(yearSpan(yearRange)))
+                        .aggregations("by_m_category", sub -> sub
+                            .terms(t -> t.field("commission_assessment_groups.b.keyword")
+                                .missing("NONE")
+                                .size(11))
+                        )
+                    )
                 ),
             Void.class
         );
 
-        return response.aggregations()
-            .get("by_m_category")
+        var countsByCommissionAndYear = new HashMap<Integer, Map<Integer, Map<String, Long>>>();
+        var commissionBuckets = response.aggregations()
+            .get("by_commission")
+            .filters()
+            .buckets()
+            .keyed();
+
+        commissionIds.forEach(commissionId -> {
+            var commissionBucket = commissionBuckets.get(commissionBucketKey(commissionId));
+            if (Objects.isNull(commissionBucket)) {
+                return;
+            }
+
+            var countsByYear = new HashMap<Integer, Map<String, Long>>();
+            commissionBucket.aggregations()
+                .get("by_year")
+                .lterms()
+                .buckets()
+                .array()
+                .forEach(yearBucket -> countsByYear.put((int) yearBucket.key(),
+                    countsByMCategory(yearBucket.aggregations().get("by_m_category"))));
+
+            countsByCommissionAndYear.put(commissionId, countsByYear);
+        });
+
+        return countsByCommissionAndYear;
+    }
+
+    private Map<String, Long> countsByMCategory(Aggregate aggregate) {
+        return aggregate
             .sterms()
             .buckets()
             .array()
@@ -534,6 +610,10 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 b -> b.key().stringValue(),
                 MultiBucketBase::docCount
             ));
+    }
+
+    private String commissionBucketKey(Integer commissionId) {
+        return "commission_" + commissionId;
     }
 
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,

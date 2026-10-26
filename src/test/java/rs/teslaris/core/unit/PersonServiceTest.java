@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -56,7 +57,6 @@ import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
-import rs.teslaris.core.dto.person.LanguageKnowledgeDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
@@ -67,19 +67,17 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
-import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.License;
-import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.identifier.Identifier;
+import rs.teslaris.core.model.identifier.PersonIdentifier;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.model.person.LanguageKnowledge;
-import rs.teslaris.core.model.person.LanguageLevel;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
@@ -88,6 +86,8 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.identifier.IdentifierRepository;
+import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -119,6 +119,12 @@ public class PersonServiceTest {
 
     @Mock
     private PersonRepository personRepository;
+
+    @Mock
+    private PersonIdentifierRepository personIdentifierRepository;
+
+    @Mock
+    private IdentifierRepository identifierRepository;
 
     @Mock
     private LanguageTagService languageTagService;
@@ -309,9 +315,6 @@ public class PersonServiceTest {
         personDTO.setSex(Sex.MALE);
         personDTO.setLocalBirthDate(LocalDate.of(1985, 5, 15));
         personDTO.setPhoneNumber("+1-555-555-5555");
-        personDTO.setApvnt("12345");
-        personDTO.setECrisId("67890");
-        personDTO.setENaukaId("rp67890");
         personDTO.setOrcid("0000-0002-1825-0097");
         personDTO.setScopusAuthorId("00000000000");
         personDTO.setOrganisationUnitId(1);
@@ -344,9 +347,6 @@ public class PersonServiceTest {
         assertEquals(LocalDate.of(1985, 5, 15), result.getPersonalInfo().getLocalBirthDate());
         assertEquals("+1-555-555-5555",
             result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
-        assertEquals("12345", result.getApvnt());
-        assertEquals("67890", result.getECrisId());
-        assertEquals("rp67890", result.getENaukaId());
         assertEquals("0000-0002-1825-0097", result.getOrcid());
         assertEquals("00000000000", result.getScopusAuthorId());
         assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
@@ -375,9 +375,6 @@ public class PersonServiceTest {
         personDTO.setAddressCity(new ArrayList<>());
         personDTO.setBiography(new ArrayList<>());
         personDTO.setKeywords(new ArrayList<>());
-        personDTO.setApvnt("23456");
-        personDTO.setECrisId("78901");
-        personDTO.setENaukaId("rp78901");
         personDTO.setOrcid("0000-0002-1825-0000");
         personDTO.setScopusAuthorId("11111111111");
         personDTO.setOrganisationUnitId(2);
@@ -410,9 +407,6 @@ public class PersonServiceTest {
         assertEquals(LocalDate.of(1990, 3, 10), result.getPersonalInfo().getLocalBirthDate());
         assertEquals("+1-444-444-4444",
             result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
-        assertEquals("23456", result.getApvnt());
-        assertEquals("78901", result.getECrisId());
-        assertEquals("rp78901", result.getENaukaId());
         assertEquals("0000-0002-1825-0000", result.getOrcid());
         assertEquals("11111111111", result.getScopusAuthorId());
         assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
@@ -422,6 +416,101 @@ public class PersonServiceTest {
         assertEquals(InvolvementType.EMPLOYED_AT, currentEmployment.getInvolvementType());
         assertEquals(EmploymentPosition.RESEARCH_ASSOCIATE,
             ((Employment) currentEmployment).getEmploymentPosition());
+    }
+
+    private ImportPersonDTO minimalImportPersonDTO() {
+        var personDTO = new ImportPersonDTO();
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname("Jane");
+        personNameDTO.setLastname("Smith");
+        personDTO.setPersonName(personNameDTO);
+        personDTO.setContactEmail("jane.smith@example.com");
+        personDTO.setSex(Sex.FEMALE);
+        personDTO.setLocalBirthDate(LocalDate.of(1990, 3, 10));
+        personDTO.setPhoneNumber("+1-444-444-4444");
+        personDTO.setPlaceOfBirth("New York");
+        personDTO.setAddressLine(new ArrayList<>());
+        personDTO.setAddressCity(new ArrayList<>());
+        personDTO.setBiography(new ArrayList<>());
+        personDTO.setKeywords(new ArrayList<>());
+
+        return personDTO;
+    }
+
+    private void stubPersonSave(Person person) {
+        when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
+        when(personRepository.save(any(Person.class))).thenReturn(person);
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
+    }
+
+    private Person savedPersonStub() {
+        var person = new Person();
+        person.setId(7);
+        person.setName(new PersonName());
+        person.setPersonalInfo(new PersonalInfo());
+
+        return person;
+    }
+
+    @Test
+    void shouldAttachHarvestedIdentifierToImportedPerson() {
+        // given
+        var personDTO = minimalImportPersonDTO();
+        personDTO.getAdditionalIdentifiers().put("apvnt", "12345");
+
+        var identifier = new Identifier();
+        identifier.setCode("apvnt");
+
+        stubPersonSave(savedPersonStub());
+        when(identifierRepository.findByCode("apvnt")).thenReturn(identifier);
+        when(personIdentifierRepository.existsByValue("12345", 7)).thenReturn(false);
+
+        // when
+        personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        var captor = ArgumentCaptor.forClass(PersonIdentifier.class);
+        verify(personIdentifierRepository).save(captor.capture());
+        assertEquals("12345", captor.getValue().getValue());
+        assertEquals("apvnt", captor.getValue().getIdentifier().getCode());
+        assertEquals(7, captor.getValue().getPerson().getId().intValue());
+    }
+
+    @Test
+    void shouldSkipHarvestedIdentifierWithoutConfiguredCode() {
+        // given
+        var personDTO = minimalImportPersonDTO();
+        personDTO.getAdditionalIdentifiers().put("unconfigured", "12345");
+
+        stubPersonSave(savedPersonStub());
+        when(identifierRepository.findByCode("unconfigured")).thenReturn(null);
+
+        // when
+        personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        verify(personIdentifierRepository, never()).save(any(PersonIdentifier.class));
+    }
+
+    @Test
+    void shouldSkipHarvestedIdentifierValueAlreadyTaken() {
+        // given
+        var personDTO = minimalImportPersonDTO();
+        personDTO.getAdditionalIdentifiers().put("apvnt", "12345");
+
+        var identifier = new Identifier();
+        identifier.setCode("apvnt");
+
+        stubPersonSave(savedPersonStub());
+        when(identifierRepository.findByCode("apvnt")).thenReturn(identifier);
+        when(personIdentifierRepository.existsByValue("12345", 7)).thenReturn(true);
+
+        // when
+        personService.importPersonWithBasicInfo(personDTO, false);
+
+        // then
+        verify(personIdentifierRepository, never()).save(any(PersonIdentifier.class));
     }
 
 
@@ -587,9 +676,6 @@ public class PersonServiceTest {
         var personId = 1;
         var personalInfoDTO = new PersonalInfoDTO();
         personalInfoDTO.setPlaceOfBirth("City");
-        personalInfoDTO.setApvnt("123123");
-        personalInfoDTO.setECrisId("67890");
-        personalInfoDTO.setENaukaId("aa123456");
         personalInfoDTO.setOrcid("0000-0000-0000-0000");
         personalInfoDTO.setScopusAuthorId("1234567");
         personalInfoDTO.setPostalAddress(
@@ -627,9 +713,6 @@ public class PersonServiceTest {
         // then
         verify(personRepository, times(1)).findById(personId);
         verify(personRepository, times(1)).save(personToUpdate);
-        assertEquals("123123", personToUpdate.getApvnt());
-        assertEquals("67890", personToUpdate.getECrisId());
-        assertEquals("aa123456", personToUpdate.getENaukaId());
         assertEquals("0000-0000-0000-0000", personToUpdate.getOrcid());
         assertEquals("1234567", personToUpdate.getScopusAuthorId());
         assertEquals("City", personalInfo.getPlaceOfBrith());
@@ -1105,14 +1188,14 @@ public class PersonServiceTest {
         String identifier = "ecris-987";
         Integer personId = 2;
 
-        when(personRepository.existsByeCrisId(identifier, personId)).thenReturn(true);
+        when(personIdentifierRepository.existsByValue(identifier, personId)).thenReturn(true);
 
         // When
         boolean result = personService.isIdentifierInUse(identifier, personId);
 
         // Then
         assertTrue(result);
-        verify(personRepository).existsByeCrisId(identifier, personId);
+        verify(personIdentifierRepository).existsByValue(identifier, personId);
     }
 
     @Test
@@ -1123,8 +1206,7 @@ public class PersonServiceTest {
 
         when(personRepository.existsByOrcid(identifier, personId)).thenReturn(false);
         when(personRepository.existsByScopusAuthorId(identifier, personId)).thenReturn(false);
-        when(personRepository.existsByeCrisId(identifier, personId)).thenReturn(false);
-        when(personRepository.existsByeNaukaId(identifier, personId)).thenReturn(false);
+        when(personIdentifierRepository.existsByValue(identifier, personId)).thenReturn(false);
 
         // When
         boolean result = personService.isIdentifierInUse(identifier, personId);
@@ -1133,8 +1215,7 @@ public class PersonServiceTest {
         assertFalse(result);
         verify(personRepository).existsByOrcid(identifier, personId);
         verify(personRepository).existsByScopusAuthorId(identifier, personId);
-        verify(personRepository).existsByeCrisId(identifier, personId);
-        verify(personRepository).existsByeNaukaId(identifier, personId);
+        verify(personIdentifierRepository).existsByValue(identifier, personId);
     }
 
     @ParameterizedTest

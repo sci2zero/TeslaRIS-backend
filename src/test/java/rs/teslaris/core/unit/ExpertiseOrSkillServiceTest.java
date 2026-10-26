@@ -2,18 +2,24 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillDTO;
@@ -26,6 +32,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.ExpertiseOrSkillAlreadyExistsException;
 
 @SpringBootTest
 public class ExpertiseOrSkillServiceTest {
@@ -67,6 +74,24 @@ public class ExpertiseOrSkillServiceTest {
 
         // Then
         assertNotNull(responseDTO);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenAddingDuplicateExpertiseOrSkill() {
+        // Given
+        var dto = new ExpertiseOrSkillDTO();
+        dto.setName(List.of(new MultilingualContentDTO(1, "EN", " Cybersecurity ", 1)));
+
+        when(personService.findOne(1)).thenReturn(new Person());
+        when(expertiseOrSkillRepository.existsForPersonWithName(1,
+            Set.of("cybersecurity"))).thenReturn(true);
+
+        // When
+        assertThrows(ExpertiseOrSkillAlreadyExistsException.class,
+            () -> expertiseOrSkillService.addExpertiseOrSkill(1, dto));
+
+        // Then
+        verify(expertiseOrSkillRepository, never()).save(any(ExpertiseOrSkill.class));
     }
 
     @Test

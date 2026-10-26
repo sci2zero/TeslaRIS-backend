@@ -127,12 +127,24 @@ databaseChangeLog:
 - changeSet:
     id: 1790558589594-14
     author: milospopovic (generated)
+    # These legacy tables are absent when replaying the changelog from scratch.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - tableExists:
+        tableName: data_quality_assessment_2
     changes:
     - dropTable:
         tableName: data_quality_assessment_2
 - changeSet:
     id: 1790558589594-15
     author: milospopovic (generated)
+    # These legacy tables are absent when replaying the changelog from scratch.
+    preConditions:
+    - onFail: MARK_RAN
+    - onError: HALT
+    - tableExists:
+        tableName: entity_revision_2
     changes:
     - dropTable:
         tableName: entity_revision_2
