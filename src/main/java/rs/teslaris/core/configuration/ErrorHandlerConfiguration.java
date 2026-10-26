@@ -42,6 +42,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceCons
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.core.util.exceptionhandling.exception.ExpertiseOrSkillAlreadyExistsException;
+import rs.teslaris.core.util.exceptionhandling.exception.FixatorPipelineAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
@@ -262,6 +263,14 @@ public class ErrorHandlerConfiguration {
     @ResponseBody
     ErrorObject handleExpertiseOrSkillAlreadyExistsException(
         HttpServletRequest request, ExpertiseOrSkillAlreadyExistsException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(FixatorPipelineAlreadyExistsException.class)
+    @ResponseBody
+    ErrorObject handleFixatorPipelineAlreadyExistsException(
+        HttpServletRequest request, FixatorPipelineAlreadyExistsException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.CONFLICT);
     }
 
