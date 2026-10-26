@@ -70,6 +70,21 @@ public class FundingEntityCreatorTest {
 
     private FundingEntityCreator creator;
 
+    private static FundingDTO fundingWithAmount() {
+        var dto = new FundingDTO();
+        var amount = new MonetaryAmountDTO();
+        amount.setAmount(100);
+        amount.setCurrencyCode("EUR");
+        dto.setAmount(amount);
+        return dto;
+    }
+
+    private static ProjectMigrationDTO.ConsortiumEntry partnerWithAmount() {
+        return new ProjectMigrationDTO.ConsortiumEntry(
+            OrganisationUnitProjectContributionType.PARTNER,
+            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
+            new HydratorProjectModel.Amount("EUR", "1000"));
+    }
 
     @BeforeEach
     void setUp() {
@@ -84,15 +99,6 @@ public class FundingEntityCreatorTest {
             .thenReturn(new FundingMigrationWriter.MigratedFunding(42, true));
         when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(5);
-    }
-
-    private static FundingDTO fundingWithAmount() {
-        var dto = new FundingDTO();
-        var amount = new MonetaryAmountDTO();
-        amount.setAmount(100);
-        amount.setCurrencyCode("EUR");
-        dto.setAmount(amount);
-        return dto;
     }
 
     @Test
@@ -171,13 +177,6 @@ public class FundingEntityCreatorTest {
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
             true));
         verify(fundingMigrationWriter, never()).migrate(any(), any());
-    }
-
-    private static ProjectMigrationDTO.ConsortiumEntry partnerWithAmount() {
-        return new ProjectMigrationDTO.ConsortiumEntry(
-            OrganisationUnitProjectContributionType.PARTNER,
-            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
-            new HydratorProjectModel.Amount("EUR", "1000"));
     }
 
     @Test

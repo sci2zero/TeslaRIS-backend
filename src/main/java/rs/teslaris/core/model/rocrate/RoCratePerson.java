@@ -25,6 +25,8 @@ public class RoCratePerson extends ContextualEntity {
 
     private String description;
 
+    private List<ContextualEntity> sameAs = new ArrayList<>();
+
     private List<ContextualEntity> affiliations = new ArrayList<>();
 
 

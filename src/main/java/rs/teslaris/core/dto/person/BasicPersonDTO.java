@@ -1,6 +1,5 @@
 package rs.teslaris.core.dto.person;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
@@ -38,14 +37,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private String faxNumber;
 
     private String mobilePhoneNumber;
-
-    private String apvnt;
-
-    @JsonProperty("eCrisId")
-    private String eCrisId;
-
-    @JsonProperty("eNaukaId")
-    private String eNaukaId;
 
     private String orcid;
 

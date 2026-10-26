@@ -41,6 +41,12 @@ public class HydratorFundingPartFactoryTest {
 
     private HydratorFundingPartFactory factory;
 
+    private static ProjectMigrationDTO.ConsortiumEntry partner(String currency, String value) {
+        return new ProjectMigrationDTO.ConsortiumEntry(
+            OrganisationUnitProjectContributionType.PARTNER,
+            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
+            new HydratorProjectModel.Amount(currency, value));
+    }
 
     @BeforeEach
     void setUp() {
@@ -52,13 +58,6 @@ public class HydratorFundingPartFactoryTest {
         var euro = new Currency();
         euro.setId(3);
         when(currencyService.findCurrencyByCode("EUR")).thenReturn(euro);
-    }
-
-    private static ProjectMigrationDTO.ConsortiumEntry partner(String currency, String value) {
-        return new ProjectMigrationDTO.ConsortiumEntry(
-            OrganisationUnitProjectContributionType.PARTNER,
-            new HydratorCVModel.Institution("Test Partner", null, null, null), 2,
-            new HydratorProjectModel.Amount(currency, value));
     }
 
     @Test

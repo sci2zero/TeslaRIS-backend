@@ -23,6 +23,7 @@ import rs.teslaris.core.util.functional.Pair;
 public class QueryUtil {
 
     public static final int NUMBER_OF_WORLD_COUNTRIES = 195;
+    private static final int EARLIEST_PLAUSIBLE_PUBLICATION_YEAR = 1500;
     private static OrganisationUnitOutputConfigurationService
         organisationUnitOutputConfigurationService;
     private static OrganisationUnitService organisationUnitService;
@@ -42,11 +43,15 @@ public class QueryUtil {
 
     public static Query organisationUnitMatchQuery(List<Integer> organisationUnitIds,
                                                    List<String> searchFields) {
+        // One terms clause per field keeps the query small for deep hierarchies.
+        var organisationUnitIdValues = organisationUnitIds.stream()
+            .map(FieldValue::of)
+            .toList();
+
         return Query.of(q -> q.bool(b -> {
             for (String field : searchFields) {
-                for (Integer id : organisationUnitIds) {
-                    b.should(s -> s.term(t -> t.field(field).value(id)));
-                }
+                b.should(s -> s.terms(
+                    t -> t.field(field).terms(v -> v.value(organisationUnitIdValues))));
             }
             return b.minimumShouldMatch("1");
         }));
@@ -88,10 +93,27 @@ public class QueryUtil {
     public static Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear) {
         if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
             var currentYear = LocalDate.now().getYear();
-            return new Pair<>(currentYear, currentYear - 10);
+            return new Pair<>(currentYear - 10, currentYear);
         }
 
         return new Pair<>(startYear, endYear);
+    }
+
+    public static Pair<Integer, Integer> sanitizeYearRange(double earliestYear,
+                                                           double latestYear) {
+        if (Double.isNaN(earliestYear) || Double.isNaN(latestYear)) {
+            return new Pair<>(null, null);
+        }
+
+        // Keeps implausible indexed years from turning into a range spanning millennia.
+        var from = Math.max((int) earliestYear, EARLIEST_PLAUSIBLE_PUBLICATION_YEAR);
+        var to = Math.min((int) latestYear, LocalDate.now().getYear() + 1);
+
+        if (from > to) {
+            return new Pair<>(null, null);
+        }
+
+        return new Pair<>(from, to);
     }
 
     public static Set<Pair<Integer, Set<MultiLingualContent>>> fetchCommissionsForOrganisationUnit(

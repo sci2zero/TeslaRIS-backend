@@ -1084,10 +1084,7 @@ public class CommonLoaderImpl implements CommonLoader {
         basicPersonDTO.setPersonName(personNameDTO);
 
         basicPersonDTO.setScopusAuthorId(person.getScopusAuthorId());
-        basicPersonDTO.setECrisId(person.getECrisId());
-        basicPersonDTO.setENaukaId(person.getENaukaId());
         basicPersonDTO.setOrcid(person.getOrcid());
-        basicPersonDTO.setApvnt(person.getApvnt());
         basicPersonDTO.setOpenAlexId(person.getOpenAlexId());
         return basicPersonDTO;
     }

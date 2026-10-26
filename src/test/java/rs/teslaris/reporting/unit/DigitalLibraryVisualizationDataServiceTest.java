@@ -16,6 +16,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.MaxAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.MinAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
@@ -57,6 +58,24 @@ public class DigitalLibraryVisualizationDataServiceTest {
     private DigitalLibraryVisualizationDataServiceImpl service;
 
 
+    private static Aggregate byYearAggregate(Map<Integer, Aggregate> aggregationsByYear,
+                                             String subAggregationName) {
+        var buckets = aggregationsByYear.entrySet().stream()
+            .map(entry -> {
+                var bucket = mock(LongTermsBucket.class);
+                when(bucket.key()).thenReturn(entry.getKey().longValue());
+                when(bucket.aggregations()).thenReturn(
+                    Map.of(subAggregationName, entry.getValue()));
+                return bucket;
+            })
+            .toList();
+
+        var aggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(aggregate.lterms().buckets().array()).thenReturn(buckets);
+
+        return aggregate;
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnThesisCountsForOrganisationUnit() throws IOException {
@@ -90,10 +109,8 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
 
-        mockAggregations.put("by_publication_type", mockAgg);
-
-        var mockYearlyResponse = mock(SearchResponse.class);
-        when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
+        mockAggregations.put("by_year", byYearAggregate(
+            Map.of(2020, mockAgg, 2021, mockAgg, 2022, mockAgg), "by_publication_type"));
 
         when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
             setIsClientInstitutionDl(true);
@@ -126,13 +143,11 @@ public class DigitalLibraryVisualizationDataServiceTest {
         Map<String, Aggregate> mockAggregations = new HashMap<>();
         var earliestYearAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         var latestYearAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        var byTypeAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(earliestYearAgg.min().value()).thenReturn(Double.NaN);
         when(latestYearAgg.max().value()).thenReturn(Double.NaN);
-        when(byTypeAgg.sterms().buckets().array()).thenReturn(List.of());
         mockAggregations.put("earliestYear", earliestYearAgg);
         mockAggregations.put("latestYear", latestYearAgg);
-        mockAggregations.put("by_publication_type", byTypeAgg);
+        mockAggregations.put("by_year", byYearAggregate(Map.of(), "by_publication_type"));
 
         var mockRangeResponse = mock(SearchResponse.class);
         when(mockRangeResponse.aggregations()).thenReturn(mockAggregations);
@@ -169,7 +184,9 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockAgg.sterms().buckets().array()).thenReturn(List.of(masterBucket));
-        mockAggregations.put("by_publication_type", mockAgg);
+        mockAggregations.put("by_year", byYearAggregate(
+            Map.of(2010, mockAgg, 2011, mockAgg, 2012, mockAgg, 2013, mockAgg, 2014, mockAgg,
+                2015, mockAgg), "by_publication_type"));
 
         var mockYearlyResponse = mock(SearchResponse.class);
         when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
@@ -180,12 +197,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
-            .thenReturn(mockYearlyResponse) // 2010
-            .thenReturn(mockYearlyResponse) // 2011
-            .thenReturn(mockYearlyResponse) // 2012
-            .thenReturn(mockYearlyResponse) // 2013
-            .thenReturn(mockYearlyResponse) // 2014
-            .thenReturn(mockYearlyResponse); // 2015
+            .thenReturn(mockYearlyResponse);
 
         // When
         var result = service.getThesisCountsForOrganisationUnit(
@@ -227,7 +239,8 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockAgg.sterms().buckets().array()).thenReturn(
             List.of(masterBucket, phdBucket, undergraduateBucket));
-        mockAggregations.put("by_publication_type", mockAgg);
+        mockAggregations.put("by_year", byYearAggregate(Map.of(2023, mockAgg),
+            "by_publication_type"));
 
         var mockYearlyResponse = mock(SearchResponse.class);
         when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
@@ -322,6 +335,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var to = LocalDate.of(2023, 3, 31);
         var statisticsType = StatisticsType.DOWNLOAD;
         var allowedThesisTypes = List.of(ThesisType.MASTER);
+
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
 
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
             allowedThesisTypes, 2023, 2023))

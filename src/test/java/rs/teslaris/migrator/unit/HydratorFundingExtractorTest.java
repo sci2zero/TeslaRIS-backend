@@ -48,6 +48,21 @@ public class HydratorFundingExtractorTest {
 
     private HydratorFundingExtractor extractor;
 
+    private static String funding(String id, String startDate) {
+        return """
+            {"fundedBy": {"orgUnit": {"id": "OU1", "name": {"language": "en", "value": "Test Agency"},
+               "rorId": "https://ror.org/00example",
+               "identifiers": [{"type": "%sRingGold", "value": "12345"}]}},
+             "fundedAs": {"funding": {"id": "%s", "grantId": "GA-1",
+               "type": {"value": "https://example.com/vocab#FundingProgramme"},
+               "name": {"language": "en", "value": "Test Programme 2020"},
+               "amount": {"currency": "eur", "value": "1500.50"},
+               "duration": {"startDate": "%s", "endDate": "2021-12-31"},
+               "identifiers": [{"type": "%sDOI", "value": "10.1234/test"},
+                               {"type": "%sProjectReference", "value": "TEST/0001/2020"},
+                               {"type": "%sQREN", "value": "QREN-1"}]}}}
+            """.formatted(ID_TYPES, id, startDate, ID_TYPES, ID_TYPES, ID_TYPES);
+    }
 
     @BeforeEach
     void setUp() {
@@ -68,22 +83,6 @@ public class HydratorFundingExtractorTest {
                   "amount": {"currency": "EUR", "value": "1000"}}}]},
               "funded": %s}}}}
             """.formatted(funded), HydratorProjectModel.ProjectDocument.class);
-    }
-
-    private static String funding(String id, String startDate) {
-        return """
-            {"fundedBy": {"orgUnit": {"id": "OU1", "name": {"language": "en", "value": "Test Agency"},
-               "rorId": "https://ror.org/00example",
-               "identifiers": [{"type": "%sRingGold", "value": "12345"}]}},
-             "fundedAs": {"funding": {"id": "%s", "grantId": "GA-1",
-               "type": {"value": "https://example.com/vocab#FundingProgramme"},
-               "name": {"language": "en", "value": "Test Programme 2020"},
-               "amount": {"currency": "eur", "value": "1500.50"},
-               "duration": {"startDate": "%s", "endDate": "2021-12-31"},
-               "identifiers": [{"type": "%sDOI", "value": "10.1234/test"},
-                               {"type": "%sProjectReference", "value": "TEST/0001/2020"},
-                               {"type": "%sQREN", "value": "QREN-1"}]}}}
-            """.formatted(ID_TYPES, id, startDate, ID_TYPES, ID_TYPES, ID_TYPES);
     }
 
     @Test

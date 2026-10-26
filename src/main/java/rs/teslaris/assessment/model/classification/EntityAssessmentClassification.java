@@ -42,7 +42,8 @@ import rs.teslaris.core.model.institution.Commission;
         @Index(name = "idx_event_comm_year", columnList = "event_id, commission_id, classification_year"),
         @Index(
             name = "idx_psac_comm_type_series_year",
-            columnList = "commission_id, entity_type, publication_series_id, classification_year")
+            columnList = "commission_id, entity_type, publication_series_id, classification_year"),
+        @Index(name = "idx_prize_comm", columnList = "prize_id, commission_id")
     }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

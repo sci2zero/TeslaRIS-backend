@@ -56,9 +56,6 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("SELECT p FROM Person p WHERE " +
         "(p.scopusAuthorId = :identifier OR " +
-        "p.apvnt = :identifier OR " +
-        "p.eCrisId = :identifier OR " +
-        "p.eNaukaId = :identifier OR " +
         "p.openAlexId = :identifier OR " +
         "p.orcid = :identifier OR " +
         "p.webOfScienceResearcherId = :identifier OR " +
@@ -68,18 +65,6 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")
     Optional<Integer> findPersonIdForUserId(Integer userId);
-
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.apvnt = :apvnt AND (:id IS NULL OR p.id <> :id)")
-    boolean existsByApvnt(String apvnt, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.eCrisId = :eCrisId AND (:id IS NULL OR p.id <> :id)")
-    boolean existsByeCrisId(String eCrisId, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.eNaukaId = :eNaukaId AND (:id IS NULL OR p.id <> :id)")
-    boolean existsByeNaukaId(String eNaukaId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Person p WHERE p.nationalScienceId = :nationalScienceId AND (:id IS NULL OR p.id <> :id)")

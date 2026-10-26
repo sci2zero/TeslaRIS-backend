@@ -63,9 +63,6 @@ public class DocumentConverter {
         person.setFirstName(importContribution.getPerson().getName().getFirstName());
         person.setMiddleName(importContribution.getPerson().getName().getMiddleName());
         person.setLastName(importContribution.getPerson().getName().getLastName());
-        person.setECrisId(importContribution.getPerson().getECrisId());
-        person.setENaukaId(importContribution.getPerson().getENaukaId());
-        person.setApvnt(importContribution.getPerson().getApvnt());
         person.setOrcid(importContribution.getPerson().getOrcid());
         person.setScopusAuthorId(importContribution.getPerson().getScopusAuthorId());
         person.setOpenAlexId(importContribution.getPerson().getOpenAlexId());

@@ -353,10 +353,11 @@ public class CrisContextInformationServiceTest {
         assertTrue(orcid.featured());
         assertFalse(orcid.canBeUpdated());
 
-        var apvnt = result.identifierConfiguration().get(ApplicableEntityType.PERSON).get("apvnt");
-        assertTrue(apvnt.hideWhenNotSet());
-        assertFalse(apvnt.featured());
-        assertTrue(apvnt.canBeUpdated());
+        var scholarId =
+            result.identifierConfiguration().get(ApplicableEntityType.PERSON).get("scholarId");
+        assertTrue(scholarId.hideWhenNotSet());
+        assertFalse(scholarId.featured());
+        assertTrue(scholarId.canBeUpdated());
         assertNotNull(result.identifierConfiguration().get(ApplicableEntityType.DOCUMENT)
             .get("doi"));
     }

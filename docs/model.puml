@@ -317,9 +317,6 @@ package person {
     Set<MultiLingualContent> biography
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String apvnt 
-    String eCrisId 
-    String eNaukaId 
     String nationalId /' !!! rename from nationalScienceId to nationalId'/
     String orcid
     String scopusAuthorId

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -447,6 +448,12 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         List<T> batch = mongoTemplate.find(query, entityClass);
         batch.forEach(record -> {
             D creationDTO = converter.toDTO(record);
+
+            if (creationDTO instanceof ImportPersonDTO harvestedPerson &&
+                mergeWithExistingPerson(harvestedPerson)) {
+                return;
+            }
+
             try {
                 creatorMethod.apply(creationDTO, performIndex);
             } catch (Exception e) {
@@ -456,8 +463,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     creationDTO instanceof ImportPersonDTO importDTO) {
                     Map<String, Function<ImportPersonDTO, String>> identifierResolvers = Map.of(
                         "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
-                        "orcidIdExistsError", ImportPersonDTO::getOrcid,
-                        "apvntExistsError", ImportPersonDTO::getApvnt
+                        "orcidIdExistsError", ImportPersonDTO::getOrcid
                     );
 
                     Optional.ofNullable(identifierResolvers.get(e.getMessage()))
@@ -474,6 +480,33 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
             }
         });
         return batch.size() == batchSize;
+    }
+
+    /**
+     * Links the harvested record to a person an earlier run already created, so a re-harvest does
+     * not duplicate them.
+     */
+    private boolean mergeWithExistingPerson(ImportPersonDTO importDTO) {
+        var existingPerson = Stream.concat(
+                Stream.of(importDTO.getOrcid(), importDTO.getScopusAuthorId()),
+                importDTO.getAdditionalIdentifiers().values().stream())
+            .filter(StringUtil::valueExists)
+            .map(personService::findPersonByIdentifier)
+            .flatMap(Optional::stream)
+            .findFirst();
+
+        if (existingPerson.isEmpty()) {
+            return false;
+        }
+
+        if (Objects.nonNull(importDTO.getOldId())) {
+            personService.addOldId(existingPerson.get().getId(), importDTO.getOldId());
+        }
+
+        log.info("Linked harvested PERSON '{}' to existing person ({}).", importDTO.getOldId(),
+            existingPerson.get().getId());
+
+        return true;
     }
 
     private void handleDataRelations(DataSet requestDataSet, boolean performIndex) {

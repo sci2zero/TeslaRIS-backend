@@ -15,6 +15,8 @@ public interface OrganisationUnitIndexRepository
 
     Optional<OrganisationUnitIndex> findOrganisationUnitIndexByDatabaseId(Integer databaseId);
 
+    Page<OrganisationUnitIndex> findByDatabaseIdIn(List<Integer> databaseIds, Pageable pageable);
+
     Page<OrganisationUnitIndex> findOrganisationUnitIndexesBySuperOUId(Integer superOUId,
                                                                        Pageable pageable);
 

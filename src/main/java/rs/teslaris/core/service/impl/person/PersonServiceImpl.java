@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -72,6 +73,7 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.identifier.PersonIdentifier;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -85,6 +87,8 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.identifier.IdentifierRepository;
+import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
@@ -114,7 +118,6 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
-import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
@@ -142,6 +145,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Comparator.nullsFirst(Enum::compareTo));
 
     private final PersonRepository personRepository;
+
+    private final PersonIdentifierRepository personIdentifierRepository;
+
+    private final IdentifierRepository identifierRepository;
 
     private final CrisContextInformationService crisContextInformationService;
 
@@ -342,11 +349,46 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var saved = this.save(person);
         person.setId(saved.getId());
 
+        setImportedIdentifiers(saved, personDTO.getAdditionalIdentifiers());
+
         if (status == ApproveStatus.APPROVED && index) {
             indexPerson(saved);
         }
 
         return person;
+    }
+
+    private void setImportedIdentifiers(Person person, Map<String, String> additionalIdentifiers) {
+        if (Objects.isNull(additionalIdentifiers) || additionalIdentifiers.isEmpty()) {
+            return;
+        }
+
+        additionalIdentifiers.forEach((code, value) -> {
+            if (!StringUtil.valueExists(value)) {
+                return;
+            }
+
+            var identifier = identifierRepository.findByCode(code);
+
+            if (Objects.isNull(identifier)) {
+                log.warn("No identifier is configured for code '{}', so the harvested value for " +
+                    "person ({}) was skipped.", code, person.getId());
+                return;
+            }
+
+            if (personIdentifierRepository.existsByValue(value, person.getId())) {
+                log.warn("Identifier '{}' with value '{}' is already taken, so it was not " +
+                    "attached to person ({}).", code, value, person.getId());
+                return;
+            }
+
+            var personIdentifier = new PersonIdentifier();
+            personIdentifier.setPerson(person);
+            personIdentifier.setIdentifier(identifier);
+            personIdentifier.setValue(value);
+
+            personIdentifierRepository.save(personIdentifier);
+        });
     }
 
     /**
@@ -1801,36 +1843,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private void setAllPersonIdentifiers(Person person, PersonIdentifierable personDTO) {
         IdentifierUtil.validateAndSetIdentifier(
-            personDTO.getApvnt(),
-            person.getId(),
-            "^\\d+$",
-            personRepository::existsByApvnt,
-            person::setApvnt,
-            "apvntFormatError",
-            "apvntExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
-            personDTO.getECrisId(),
-            person.getId(),
-            "^\\d+$",
-            personRepository::existsByeCrisId,
-            person::setECrisId,
-            "eCrisIdFormatError",
-            "eCrisIdExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
-            personDTO.getENaukaId(),
-            person.getId(),
-            "^[A-Z]{2}\\d+$",
-            personRepository::existsByeNaukaId,
-            person::setENaukaId,
-            "eNaukaIdFormatError",
-            "eNaukaIdExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
             personDTO.getScholarId(),
             person.getId(),
             "^[a-zA-Z0-9_-]{12,}$",
@@ -1921,14 +1933,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public boolean isIdentifierInUse(String identifier, Integer personId) {
         return personRepository.existsByOrcid(identifier, personId) ||
             personRepository.existsByScopusAuthorId(identifier, personId) ||
-            personRepository.existsByApvnt(identifier, personId) ||
-            personRepository.existsByeCrisId(identifier, personId) ||
-            personRepository.existsByeNaukaId(identifier, personId) ||
             personRepository.existsByOpenAlexId(identifier, personId) ||
             personRepository.existsByNationalScienceId(identifier, personId) ||
             personRepository.existsByScholarId(identifier, personId) ||
             personRepository.existsByAuthenticusId(identifier, personId) ||
-            personRepository.existsByLattesId(identifier, personId);
+            personRepository.existsByLattesId(identifier, personId) ||
+            personIdentifierRepository.existsByValue(identifier, personId);
     }
 
     @Override
@@ -1974,7 +1984,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return Optional.empty();
         }
 
-        return personRepository.findPersonForIdentifier(identifier);
+        var person = personRepository.findPersonForIdentifier(identifier);
+
+        if (person.isPresent()) {
+            return person;
+        }
+
+        return personIdentifierRepository.findPersonsByIdentifierValue(identifier).stream()
+            .findFirst();
     }
 
     @Override

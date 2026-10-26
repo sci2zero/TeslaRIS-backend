@@ -77,37 +77,22 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                         )
                     )
-                    .aggregations("by_all_persons", a -> a
-                        .filter(f -> f
-                            .terms(t -> t
-                                .field("author_ids")
-                                .terms(ts -> ts.value(
-                                    eligiblePersonIds.stream()
-                                        .map(FieldValue::of)
-                                        .toList()
-                                ))
-                            )
-                        )
-                        .aggregations("by_person", aa -> aa
-                            .terms(t -> t
-                                .field("author_ids")
-                                .size(10)
-                                .include(TermsInclude.of(
-                                    i -> i.terms(eligiblePersonIds
-                                        .stream()
-                                        .map(Object::toString)
-                                        .toList()
-                                    )))
-                            )
+                    // The query already restricts documents to eligible authors.
+                    .aggregations("by_person", a -> a
+                        .terms(t -> t
+                            .field("author_ids")
+                            .size(10)
+                            .include(TermsInclude.of(
+                                i -> i.terms(eligiblePersonIds
+                                    .stream()
+                                    .map(Object::toString)
+                                    .toList()
+                                )))
                         )
                     )
                 , Void.class);
 
-            var byAllPersonsAgg = publicationResponse.aggregations()
-                .get("by_all_persons")
-                .filter();
-
-            var byPersonAgg = byAllPersonsAgg.aggregations()
+            var byPersonAgg = publicationResponse.aggregations()
                 .get("by_person")
                 .lterms();
 
@@ -152,6 +137,11 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
             return Collections.emptyList();
         }
 
+        var yearRange = QueryUtil.constructYearRange(fromYear, toYear);
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
+            return Collections.emptyList();
+        }
+
         var eligiblePersonIds = getEligiblePersonIds(institutionId);
         if (eligiblePersonIds.isEmpty()) {
             return Collections.emptyList();
@@ -178,7 +168,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .size(2000)
                     );
 
-                    for (int year = fromYear; year <= toYear; year++) {
+                    for (int year = yearRange.a; year <= yearRange.b; year++) {
                         var currentYear = year;
                         agg.aggregations("year_" + year, sum -> sum
                             .sum(v -> v.field("citations_by_year." + currentYear)));
@@ -216,7 +206,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
         return buckets.stream()
             .map(bucket -> {
                 long periodSum = 0L;
-                for (int year = fromYear; year <= toYear; year++) {
+                for (int year = yearRange.a; year <= yearRange.b; year++) {
                     var agg = bucket.aggregations().get("year_" + year).sum();
                     if (agg != null && agg.value() > 0) {
                         periodSum += (long) agg.value();

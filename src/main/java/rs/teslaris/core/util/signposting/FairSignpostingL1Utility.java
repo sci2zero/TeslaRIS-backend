@@ -43,6 +43,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 
 @Component
 public class FairSignpostingL1Utility {
@@ -64,7 +65,7 @@ public class FairSignpostingL1Utility {
             "<https://schema.org/Person>; rel=\"type\"");
         headers.add(HttpHeaders.LINK,
             "<" + frontendUrl + defaultLocale + "/persons/" + person.getId() +
-                "> ; rel=\"collection\" ; type=\"text/html\"");
+                ">; rel=\"collection\"; type=\"text/html\"");
         headers.add(HttpHeaders.LINK,
             "<" + baseUrl + selfUrl + "/" + person.getId() +
                 ">; rel=\"describedby\"; type=\"application/json\"");
@@ -88,17 +89,14 @@ public class FairSignpostingL1Utility {
         }
 
         if (valuePresent(person.getPersonalInfo().getWebOfScienceResearcherId())) {
-            headers.add(HttpHeaders.LINK, "http://www.researcherid.com/rid/" +
+            headers.add(HttpHeaders.LINK, "<http://www.researcherid.com/rid/" +
                 person.getPersonalInfo().getWebOfScienceResearcherId() +
                 ">; rel=\"identifier\"; type=\"text/html\"");
         }
 
-        if (valuePresent(person.getPersonalInfo().getECrisId())) {
+        PublicPersonIdentifiers.resolvableUris(person.getId()).forEach(uri ->
             headers.add(HttpHeaders.LINK,
-                "<https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" +
-                    person.getPersonalInfo().getECrisId() + ">; rel=\"identifier\"");
-        }
-
+                "<" + buildSafeUri(uri) + ">; rel=\"identifier\"; type=\"text/html\""));
 
         addLinksetReferences(headers, selfUrl, String.valueOf(person.getId()));
     }
@@ -112,7 +110,7 @@ public class FairSignpostingL1Utility {
             "<https://schema.org/Organization>; rel=\"type\"");
         headers.add(HttpHeaders.LINK,
             "<" + frontendUrl + defaultLocale + "/organisation-units/" + organisationUnit.getId() +
-                "> ; rel=\"collection\" ; type=\"text/html\"");
+                ">; rel=\"collection\"; type=\"text/html\"");
         headers.add(HttpHeaders.LINK,
             "<" + baseUrl + selfUrl + "/" + organisationUnit.getId() +
                 ">; rel=\"describedby\"; type=\"application/json\"");
@@ -121,7 +119,7 @@ public class FairSignpostingL1Utility {
             headers.add(HttpHeaders.LINK,
                 "<" + frontendUrl + defaultLocale + "/organisation-unit/" +
                     superRelation.getTargetOrganisationUnit().getId() +
-                    "> ; rel=\"collection\" ; type=\"https://schema.org/parentOrganization\"");
+                    ">; rel=\"collection\"; type=\"https://schema.org/parentOrganization\"");
         }
 
         addLinksetReferences(headers, selfUrl, String.valueOf(organisationUnit.getId()));
@@ -139,11 +137,11 @@ public class FairSignpostingL1Utility {
         if (publicationSeries instanceof JournalResponseDTO) {
             headers.add(HttpHeaders.LINK,
                 "<" + frontendUrl + defaultLocale + "/journals/" + publicationSeries.getId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
         } else {
             headers.add(HttpHeaders.LINK,
                 "<" + frontendUrl + defaultLocale + "/book-series/" + publicationSeries.getId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
         }
 
         if (valuePresent(publicationSeries.getEissn())) {
@@ -167,7 +165,7 @@ public class FairSignpostingL1Utility {
                 "<" + frontendUrl + defaultLocale + "/scientific-results/" +
                     deduceDocumentType(documentFile.getDocument()) + "/" +
                     documentFile.getDocument().getId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
         }
 
         addLinksetReferences(headers, "/api/file", documentFile.getServerFilename());
@@ -176,7 +174,7 @@ public class FairSignpostingL1Utility {
     public static void addHeadersForMetadataFormats(HttpHeaders headers, Integer thesisId) {
         headers.add(HttpHeaders.LINK,
             "<" + frontendUrl + defaultLocale + "/scientific-results/thesis/" + thesisId +
-                "> ; rel=\"collection\" ; type=\"text/html\"");
+                ">; rel=\"collection\"; type=\"text/html\"");
     }
 
     public static HttpHeaders constructHeaders(DocumentDTO dto, String selfUrl) {
@@ -235,7 +233,7 @@ public class FairSignpostingL1Utility {
                     if (Objects.nonNull(author.getPersonId()) && author.getPersonId() > 0) {
                         headers.add(HttpHeaders.LINK,
                             "<" + frontendUrl + defaultLocale + "/persons/" + author.getPersonId() +
-                                ">; rel=\"author\"");
+                                ">; rel=\"author\"; type=\"text/html\"");
                     }
                 });
         }
@@ -246,29 +244,29 @@ public class FairSignpostingL1Utility {
     private static void deduceResourceType(HttpHeaders headers, DocumentDTO dto) {
         switch (dto) {
             case JournalPublicationResponseDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/ScholarlyArticle> ; rel=\"type\"");
+                "<https://schema.org/ScholarlyArticle>; rel=\"type\"");
             case IntangibleProductDTO ignored -> headers.add(HttpHeaders.LINK,
                 IntangibleProductType.DATASET.equals(ignored.getIntangibleProductType()) ?
                     "https://schema.org/Dataset" :
-                    "https://schema.org/Product" + " ; rel=\"type\"");
+                    "https://schema.org/Product" + "; rel=\"type\"");
             case IntellectualPropertyDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/result> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/result>; rel=\"type\"");
             case ProceedingsResponseDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Collection> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/Collection>; rel=\"type\"");
             case ProceedingsPublicationDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/ScholarlyArticle> ; rel=\"type\"");
+                "<https://schema.org/ScholarlyArticle>; rel=\"type\"");
             case MonographDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Book> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/Book>; rel=\"type\"");
             case MonographPublicationDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Chapter> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/Chapter>; rel=\"type\"");
             case ThesisResponseDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Thesis> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/Thesis>; rel=\"type\"");
             case MaterialProductDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/Product> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/Product>; rel=\"type\"");
             case GeneticMaterialDTO ignored ->
-                headers.add(HttpHeaders.LINK, "<https://schema.org/BioChemEntity> ; rel=\"type\"");
+                headers.add(HttpHeaders.LINK, "<https://schema.org/BioChemEntity>; rel=\"type\"");
             case PerformanceRelatedOutputDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/PerformingArtsEvent> ; rel=\"type\"");
+                "<https://schema.org/PerformingArtsEvent>; rel=\"type\"");
             default -> {
             }
         }
@@ -293,15 +291,15 @@ public class FairSignpostingL1Utility {
             case JournalPublicationResponseDTO journalPublicationResponseDTO ->
                 headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/journals/" +
                     journalPublicationResponseDTO.getJournalId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
             case ProceedingsPublicationDTO proceedingsPublicationDTO ->
                 headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/journals/" +
                     proceedingsPublicationDTO.getProceedingsId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
             case MonographPublicationDTO monographPublicationDTO ->
                 headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/journals/" +
                     monographPublicationDTO.getMonographId() +
-                    "> ; rel=\"collection\" ; type=\"text/html\"");
+                    ">; rel=\"collection\"; type=\"text/html\"");
             default -> {
             }
         }
@@ -334,7 +332,7 @@ public class FairSignpostingL1Utility {
             .forEach(file ->
                 headers.add(HttpHeaders.LINK,
                     "<" + buildSafeUri(baseUrl + "/api/file/" + file.getServerFilename()) +
-                        ">; rel=\"item\" type=\"" + file.getMimeType() + "\"")
+                        ">; rel=\"item\"; type=\"" + file.getMimeType() + "\"")
             );
     }
 

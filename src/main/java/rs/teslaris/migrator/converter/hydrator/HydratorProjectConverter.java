@@ -43,6 +43,22 @@ public class HydratorProjectConverter implements
 
     private final MigrationLog migrationLog;
 
+    // Fundings that are migrated, i.e. the ones carrying an id
+    public static long fundingCount(HydratorProjectModel.Project project) {
+        if (Objects.isNull(project.funded())) {
+            return 0;
+        }
+
+        return project.funded().stream()
+            .filter(funded -> Objects.nonNull(funded) && Objects.nonNull(funded.fundedAs()) &&
+                Objects.nonNull(funded.fundedAs().funding()) &&
+                !isBlank(funded.fundedAs().funding().id()))
+            .count();
+    }
+
+    private static boolean isBlank(String value) {
+        return Objects.isNull(value) || value.isBlank();
+    }
 
     @Override
     public ProjectMigrationDTO toDTO(HydratorProjectModel.ProjectDocument record) {
@@ -108,19 +124,6 @@ public class HydratorProjectConverter implements
             OrganisationUnitProjectContributionType.PARTNER);
 
         return entries;
-    }
-
-    // Fundings that are migrated, i.e. the ones carrying an id
-    public static long fundingCount(HydratorProjectModel.Project project) {
-        if (Objects.isNull(project.funded())) {
-            return 0;
-        }
-
-        return project.funded().stream()
-            .filter(funded -> Objects.nonNull(funded) && Objects.nonNull(funded.fundedAs()) &&
-                Objects.nonNull(funded.fundedAs().funding()) &&
-                !isBlank(funded.fundedAs().funding().id()))
-            .count();
     }
 
     private void addMembers(List<ProjectMigrationDTO.ConsortiumEntry> entries,
@@ -311,9 +314,5 @@ public class HydratorProjectConverter implements
     private void dropped(String key, String rule, String reason) {
         migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(), key,
             rule, reason);
-    }
-
-    private static boolean isBlank(String value) {
-        return Objects.isNull(value) || value.isBlank();
     }
 }

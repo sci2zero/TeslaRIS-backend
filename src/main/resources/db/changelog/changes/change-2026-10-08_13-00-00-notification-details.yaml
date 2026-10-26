@@ -1,4 +1,6 @@
 databaseChangeLog:
+  # Preserve the deployed changeset identity while sorting before the type change.
+  - logicalFilePath: db/changelog/changes/change-2026-10-08_1notification-details.yaml
   - changeSet:
       id: 2026-10-08-notification-details
       author: milospopovic

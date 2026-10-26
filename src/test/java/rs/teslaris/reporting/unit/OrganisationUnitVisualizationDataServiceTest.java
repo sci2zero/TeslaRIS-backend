@@ -16,6 +16,8 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
 import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.FiltersBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.MaxAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.MinAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
@@ -30,6 +32,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import org.junit.jupiter.api.Test;
@@ -57,6 +60,24 @@ class OrganisationUnitVisualizationDataServiceTest {
     @InjectMocks
     private OrganisationUnitVisualizationDataServiceImpl service;
 
+
+    private static Aggregate byYearAggregate(Map<Integer, Aggregate> aggregationsByYear,
+                                             String subAggregationName) {
+        var buckets = aggregationsByYear.entrySet().stream()
+            .map(entry -> {
+                var bucket = mock(LongTermsBucket.class);
+                when(bucket.key()).thenReturn(entry.getKey().longValue());
+                when(bucket.aggregations()).thenReturn(
+                    Map.of(subAggregationName, entry.getValue()));
+                return bucket;
+            })
+            .toList();
+
+        var aggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(aggregate.lterms().buckets().array()).thenReturn(buckets);
+
+        return aggregate;
+    }
 
     @Test
     @SuppressWarnings("unchecked")
@@ -86,20 +107,13 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
-        when(mockAggregations.get("by_type")).thenReturn(mockAgg);
-
-        var mockYearlyAggregations = mock(HashMap.class);
-        when(mockYearlyAggregations.get("by_type")).thenReturn(mockAgg);
-
-        var mockYearlyResponse = mock(SearchResponse.class);
-        when(mockYearlyResponse.aggregations()).thenReturn(mockYearlyAggregations);
+        var byYearAgg =
+            byYearAggregate(Map.of(2020, mockAgg, 2021, mockAgg, 2022, mockAgg), "by_type");
+        when(mockAggregations.get("by_year")).thenReturn(byYearAgg);
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
-            .thenReturn(mockRangeResponse) // For year range
-            .thenReturn(mockYearlyResponse) // For 2020
-            .thenReturn(mockYearlyResponse) // For 2021
-            .thenReturn(mockYearlyResponse); // For 2022
+            .thenReturn(mockRangeResponse);
 
         // When
         var result =
@@ -124,7 +138,7 @@ class OrganisationUnitVisualizationDataServiceTest {
         var mockMinAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockMinAgg.min().value()).thenReturn(Double.NaN);
         var mockMaxAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockMaxAgg.min().value()).thenReturn(Double.NaN);
+        when(mockMaxAgg.max().value()).thenReturn(Double.NaN);
         var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
 
         var mockAggregations = mock(HashMap.class);
@@ -250,20 +264,22 @@ class OrganisationUnitVisualizationDataServiceTest {
             var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
 
-            var mockYearlyAggregations = mock(HashMap.class);
-            when(mockYearlyAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
-            when(mockRangeAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
+            var byYearAgg = byYearAggregate(
+                Map.of(2020, mockTermsAgg, 2021, mockTermsAgg, 2022, mockTermsAgg),
+                "by_m_category");
 
-            var mockYearlyResponse = mock(SearchResponse.class);
-            when(mockYearlyResponse.aggregations()).thenReturn(mockYearlyAggregations);
+            var commissionBucket = mock(FiltersBucket.class);
+            when(commissionBucket.aggregations()).thenReturn(Map.of("by_year", byYearAgg));
+
+            var mockCommissionAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            var commissionBuckets = Map.of("commission_1", commissionBucket);
+            when(mockCommissionAgg.filters().buckets().keyed()).thenReturn(commissionBuckets);
+            when(mockRangeAggregations.get("by_commission")).thenReturn(mockCommissionAgg);
 
             when(elasticsearchClient.search(
                 (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
                 eq(Void.class)))
-                .thenReturn(mockRangeResponse) // For year range
-                .thenReturn(mockYearlyResponse) // For 2020
-                .thenReturn(mockYearlyResponse) // For 2021
-                .thenReturn(mockYearlyResponse); // For 2022
+                .thenReturn(mockRangeResponse);
 
             // When
             var result =

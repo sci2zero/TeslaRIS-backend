@@ -31,6 +31,7 @@ import rs.teslaris.core.repository.identifier.IdentifierRepository;
 import rs.teslaris.core.service.impl.identifier.IdentifierServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierCodeInUseException;
+import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -252,6 +253,55 @@ class IdentifierServiceTest {
         assertNotNull(result);
         assertEquals("DOI", result.getCode());
         verify(identifierRepository).save(any());
+    }
+
+    @Test
+    void shouldStoreUrlTemplateWhenItCarriesPlaceholder() {
+        // Given
+        var dto = new IdentifierDTO(null, "ORCID",
+            List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.PERSON),
+            null, "https://orcid.org/{ID}");
+
+        when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(any()))
+            .thenReturn(new HashSet<>());
+        when(identifierRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // When
+        var result = identifierService.createIdentifier(dto);
+
+        // Then
+        assertEquals("https://orcid.org/{ID}", result.getUrlTemplate());
+    }
+
+    @Test
+    void shouldRejectUrlTemplateWithoutPlaceholder() {
+        // Given
+        var dto = new IdentifierDTO(null, "ORCID",
+            List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.PERSON),
+            null, "https://orcid.org/");
+
+        when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
+
+        // When & Then
+        assertThrows(IdentifierException.class, () -> identifierService.createIdentifier(dto));
+
+        verify(identifierRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRejectUrlTemplateThatIsNotHttpUrl() {
+        // Given
+        var dto = new IdentifierDTO(null, "ISSN",
+            List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
+            null, "urn:issn:{ID}");
+
+        when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
+
+        // When & Then
+        assertThrows(IdentifierException.class, () -> identifierService.createIdentifier(dto));
+
+        verify(identifierRepository, never()).save(any());
     }
 
     @Test

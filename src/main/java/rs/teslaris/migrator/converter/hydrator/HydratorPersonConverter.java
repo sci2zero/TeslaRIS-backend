@@ -113,6 +113,19 @@ public class HydratorPersonConverter
 
     private final MigrationLog migrationLog;
 
+    private static int completeness(HydratorCVModel.MailingAddress address) {
+        var parts = new ArrayList<String>();
+        parts.add(address.streetAddress());
+        parts.add(address.city());
+        parts.add(address.postalCode());
+        parts.add(Objects.isNull(address.country()) ? null : address.country().code());
+
+        return (int) parts.stream().filter(part -> !isBlankValue(part)).count();
+    }
+
+    private static boolean isBlankValue(String value) {
+        return Objects.isNull(value) || value.isBlank();
+    }
 
     @Override
     public ImportPersonDTO toDTO(HydratorCVModel.Curriculum record) {
@@ -382,16 +395,6 @@ public class HydratorPersonConverter
             });
     }
 
-    private static int completeness(HydratorCVModel.MailingAddress address) {
-        var parts = new ArrayList<String>();
-        parts.add(address.streetAddress());
-        parts.add(address.city());
-        parts.add(address.postalCode());
-        parts.add(Objects.isNull(address.country()) ? null : address.country().code());
-
-        return (int) parts.stream().filter(part -> !isBlankValue(part)).count();
-    }
-
     // CW-001-MAP-000033: the target has no field for the site type, so that distinction is lost
     private Set<String> uris(HydratorCVModel.Curriculum record,
                              HydratorCVModel.WebAddresses webAddresses) {
@@ -592,9 +595,5 @@ public class HydratorPersonConverter
 
     private boolean isBlank(String value) {
         return isBlankValue(value);
-    }
-
-    private static boolean isBlankValue(String value) {
-        return Objects.isNull(value) || value.isBlank();
     }
 }

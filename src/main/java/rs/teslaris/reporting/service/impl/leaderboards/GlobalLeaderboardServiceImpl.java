@@ -20,7 +20,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.configuration.CachingConfiguration;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -33,12 +35,18 @@ import rs.teslaris.reporting.service.interfaces.leaderboards.GlobalLeaderboardSe
 @Slf4j
 public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     private final ElasticsearchClient elasticsearchClient;
 
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
 
     @Override
+    @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
+        key = "'personsWithMostCitations'",
+        unless = "#result.isEmpty()")
     public List<Pair<PersonIndex, Long>> getPersonsWithMostCitations() {
         var eligibleOUIds = getEligibleOrganisationUnitIds(false);
         if (eligibleOUIds.isEmpty()) {
@@ -55,6 +63,9 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
     }
 
     @Override
+    @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
+        key = "'institutionsWithMostCitations'",
+        unless = "#result.isEmpty()")
     public List<Pair<OrganisationUnitIndex, Long>> getInstitutionsWithMostCitations() {
         var eligibleOUIds = getEligibleOrganisationUnitIds(true);
         if (eligibleOUIds.isEmpty()) {
@@ -70,6 +81,9 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
     }
 
     @Override
+    @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
+        key = "'documentsWithMostCitations'",
+        unless = "#result.isEmpty()")
     public List<Pair<DocumentPublicationIndex, Long>> getDocumentsWithMostCitations() {
         return getTopCitations(
             "document_publication",
@@ -144,12 +158,9 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
                 T entity = null;
                 if (Objects.nonNull(hit)) {
                     try {
-                        var mapper = new ObjectMapper();
-                        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
                         var source = hit.source();
                         if (Objects.nonNull(source)) {
-                            entity = mapper.convertValue(source.to(Map.class), clazz);
+                            entity = OBJECT_MAPPER.convertValue(source.to(Map.class), clazz);
                         }
                     } catch (Exception e) {
                         log.error("Error converting top hit to {}", clazz.getSimpleName(), e);
