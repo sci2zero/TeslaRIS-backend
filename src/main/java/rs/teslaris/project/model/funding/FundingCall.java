@@ -26,6 +26,7 @@ import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 @Getter

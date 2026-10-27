@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
 
 @Getter
 @Setter

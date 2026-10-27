@@ -6,8 +6,8 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
+import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.converter.funding.FundingPartConverter;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 
 public class PersonProjectContributionConverter {

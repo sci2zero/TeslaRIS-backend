@@ -16,9 +16,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
-import rs.teslaris.project.model.funding.FundingType;
 
 @SpringBootTest
 public class FundingCallControllerTest extends BaseTest {

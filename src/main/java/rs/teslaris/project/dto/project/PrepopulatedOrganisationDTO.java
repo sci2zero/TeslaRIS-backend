@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
 
 @Getter
 @Setter

@@ -7,13 +7,13 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.RecordExtractor;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.funding.FundingDTO;
 
 /**
  * Fundings of one SciPROJ project (CW-002-MAP-000001…000014 and CW-002-MAP-000036…000039).

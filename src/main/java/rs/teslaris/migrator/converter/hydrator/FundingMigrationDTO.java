@@ -1,9 +1,9 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.List;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.MigrationDTO;
-import rs.teslaris.project.dto.funding.FundingDTO;
 
 /**
  * Project, funder and currency are resolved at creation time. {@code consortiumAmounts} become

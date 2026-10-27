@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
+import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.person.Contact;
@@ -20,8 +22,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;

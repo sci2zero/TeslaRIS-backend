@@ -3,7 +3,7 @@ package rs.teslaris.project.converter.funding;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 
 public class FundingPartConverter {

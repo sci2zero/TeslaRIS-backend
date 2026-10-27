@@ -8,11 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.model.funding.FundingCall;
-import rs.teslaris.project.model.funding.FundingType;
 
 @Service
 public interface FundingCallService extends JPAService<FundingCall> {

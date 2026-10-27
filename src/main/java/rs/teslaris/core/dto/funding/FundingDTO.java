@@ -1,4 +1,4 @@
-package rs.teslaris.project.dto.funding;
+package rs.teslaris.core.dto.funding;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,7 +16,7 @@ import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.project.model.funding.FundingType;
+import rs.teslaris.core.model.funding.FundingType;
 
 @Getter
 @Setter
