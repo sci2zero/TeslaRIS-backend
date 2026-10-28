@@ -61,7 +61,7 @@ public class MigrationIdResolverTest {
     public void shouldRememberEntityCreatedAsPartOfAnother() {
         // when
         idResolver.remember("test-source", MigrationEntityType.PROJECT_ORGANISATION,
-            "TEST001#consortium#2", 11);
+            "TEST001#consortium#2", 11, "run-1");
 
         // then
         var captor = ArgumentCaptor.forClass(MigrationRecordLog.class);
@@ -72,5 +72,6 @@ public class MigrationIdResolverTest {
         assertEquals("TEST001#consortium#2", entry.getSourceKey());
         assertEquals(MigrationItemStatus.CREATED, entry.getStatus());
         assertEquals(11, entry.getTargetEntityId());
+        assertEquals("run-1", entry.getRunId());
     }
 }

@@ -34,6 +34,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorFundingPartFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
@@ -48,6 +49,8 @@ import rs.teslaris.project.service.interfaces.funding.FundingService;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class FundingEntityCreatorTest {
+
+    private static final MigrationRun RUN = MigrationRun.builder().id("run-1").build();
 
     private static final HydratorCVModel.Institution FUNDER =
         new HydratorCVModel.Institution("Test Agency", null, null,
@@ -113,7 +116,7 @@ public class FundingEntityCreatorTest {
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
 
         var id = creator.create(
-            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), RUN);
 
         assertEquals(42, id);
         assertEquals(5, dto.getProjectId());
@@ -129,7 +132,7 @@ public class FundingEntityCreatorTest {
             .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
 
         creator.create(
-            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), RUN);
 
         assertNull(dto.getFunderId());
         assertEquals("Test Agency", dto.getDisplayFunder().getFirst().getContent());
@@ -144,7 +147,7 @@ public class FundingEntityCreatorTest {
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
 
         creator.create(
-            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), true);
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, dto, List.of(), null), RUN);
 
         assertNull(dto.getAmount());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
@@ -159,7 +162,7 @@ public class FundingEntityCreatorTest {
 
         assertThrows(MigrationException.class, () -> creator.create(
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
-            true));
+            RUN));
         verify(fundingService, never()).createFunding(any());
     }
 
@@ -174,7 +177,7 @@ public class FundingEntityCreatorTest {
             .thenReturn(Optional.of(11));
 
         creator.create(new FundingMigrationDTO("TEST001", "F1", null, dto,
-            List.of(partnerWithAmount()), null), true);
+            List.of(partnerWithAmount()), null), RUN);
 
         assertEquals(1, dto.getFundingParts().size());
         var part = dto.getFundingParts().getFirst();
@@ -192,7 +195,7 @@ public class FundingEntityCreatorTest {
             .thenReturn(Optional.empty());
 
         creator.create(new FundingMigrationDTO("TEST001", "F1", null, dto,
-            List.of(partnerWithAmount()), null), true);
+            List.of(partnerWithAmount()), null), RUN);
 
         assertTrue(dto.getFundingParts().isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),

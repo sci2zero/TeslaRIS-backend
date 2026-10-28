@@ -50,8 +50,9 @@ public class MigrationIdResolver {
      * have no item of their own in the record log.
      */
     public void remember(String source, MigrationEntityType entityType, String sourceKey,
-                         Integer targetId) {
+                         Integer targetId, String runId) {
         recordLogRepository.record(MigrationRecordLog.builder()
+            .runId(runId)
             .source(source)
             .entityType(entityType)
             .sourceKey(sourceKey)

@@ -134,7 +134,7 @@ public class MigrationPipelineRunner {
 
         for (int attempt = 1; ; attempt++) {
             try {
-                var targetId = item.create(run.isPerformIndex());
+                var targetId = item.create(run);
                 migrationLog.itemCreated(run, item, targetId);
                 return targetId;
             } catch (Exception e) {

@@ -91,11 +91,11 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 MigrationEntityType.JOURNAL_PUBLICATION,
                 converters.outputKey(record, output),
                 dto,
-                (article, performIndex) -> {
+                (article, run) -> {
                     requireUnusedIdentifiers(article);
                     article.setJournalId(converters.journalId(record, output));
                     return journalPublicationService.createJournalPublication(article,
-                        performIndex).getId();
+                        run.isPerformIndex()).getId();
                 },
                 duplicateFailureHandler.forType(JournalPublicationDTO.class));
         }
@@ -108,14 +108,14 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 MigrationEntityType.PROCEEDINGS_PUBLICATION,
                 converters.outputKey(record, output),
                 dto,
-                (publication, performIndex) -> {
+                (publication, run) -> {
                     requireUnusedIdentifiers(publication);
                     var container =
-                        proceedingsResolver.resolveOrCreate(record, output, performIndex);
+                        proceedingsResolver.resolveOrCreate(record, output, run.isPerformIndex());
                     publication.setProceedingsId(container.proceedingsId());
                     publication.setEventId(container.eventId());
                     return proceedingsPublicationService.createProceedingsPublication(
-                        publication, performIndex).getId();
+                        publication, run.isPerformIndex()).getId();
                 },
                 duplicateFailureHandler.forType(ProceedingsPublicationDTO.class));
         }
@@ -149,11 +149,12 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
             MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             converters.outputKey(record, output),
             dto,
-            (slides, performIndex) -> {
+            (slides, run) -> {
                 slides.setEventId(
-                    proceedingsResolver.createPresentationEvent(record, output, performIndex));
+                    proceedingsResolver.createPresentationEvent(record, output,
+                        run.isPerformIndex()));
                 return performanceRelatedOutputService.createPerformanceRelatedOutput(slides,
-                    performIndex).getId();
+                    run.isPerformIndex()).getId();
             },
             FailureHandler.noOp());
     }
