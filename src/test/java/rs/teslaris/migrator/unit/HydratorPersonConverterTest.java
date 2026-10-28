@@ -277,6 +277,91 @@ public class HydratorPersonConverterTest {
     }
 
     @Test
+    void shouldMapBareLattesId() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "LATTESID"}, "identifier": "1234567890123456"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("1234567890123456", dto.getLattesId());
+    }
+
+    @Test
+    void shouldExtractLattesIdFromCvUrl() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "LATTESID"},
+                 "identifier": "http://lattes.cnpq.br/1234567890123456"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("1234567890123456", dto.getLattesId());
+    }
+
+    @Test
+    void shouldExtractLattesIdFromLabelledValue() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "LATTESID"},
+                 "identifier": "ID Lattes: 1234567890123456"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("1234567890123456", dto.getLattesId());
+    }
+
+    @Test
+    void shouldPassLattesValueWithoutSingleIdOnUnchanged() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "LATTESID"},
+                 "identifier": "http://buscatextual.cnpq.br/visualizacv.do?id=K1234567A8"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("http://buscatextual.cnpq.br/visualizacv.do?id=K1234567A8",
+            dto.getLattesId());
+    }
+
+    @Test
+    void shouldLogIdentifierTypeWithoutTargetAsDropped() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "AUTHENTICUSID"}, "identifier": "R-000-AB1"}]}}
+            """);
+
+        // when
+        converter.toDTO(record);
+
+        // then
+        verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
+            eq("CW-001-MAP-000037"), eq("AUTHENTICUSID 'R-000-AB1' has no target"));
+    }
+
+    @Test
     void shouldRankCompetingValuesForOneSlot() throws Exception {
         // given
         var record = curriculum("""

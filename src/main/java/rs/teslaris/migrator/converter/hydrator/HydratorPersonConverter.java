@@ -69,6 +69,11 @@ public class HydratorPersonConverter
 
     private static final String WEB_OF_SCIENCE_CODE = "WOS";
 
+    private static final String LATTES_CODE = "LATTESID";
+
+    private static final Set<String> MAPPED_IDENTIFIER_CODES = Set.of(CIENCIA_ID_CODE, ORCID_CODE,
+        SCOPUS_CODE, GOOGLE_SCHOLAR_CODE, WEB_OF_SCIENCE_CODE, LATTES_CODE);
+
     // Same formats PersonServiceImpl enforces, used to prefer a valid value over an invalid one
     private static final Pattern ORCID_PATTERN =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$");
@@ -79,6 +84,10 @@ public class HydratorPersonConverter
 
     private static final Pattern WEB_OF_SCIENCE_PATTERN =
         Pattern.compile("^[A-Z]{1,3}-\\d{4}-\\d{4}$");
+
+    private static final Pattern LATTES_PATTERN = Pattern.compile("^\\d{16}$");
+
+    private static final Pattern LATTES_DIGITS = Pattern.compile("(?<!\\d)\\d{16}(?!\\d)");
 
     private static final Pattern SCHOLAR_USER_PARAMETER = Pattern.compile("[?&]user=([^&#]+)");
 
@@ -501,6 +510,15 @@ public class HydratorPersonConverter
             identifier(record, GOOGLE_SCHOLAR_CODE, this::scholarId, SCHOLAR_PATTERN));
         dto.setWebOfScienceResearcherId(identifier(record, WEB_OF_SCIENCE_CODE,
             value -> value.toUpperCase(), WEB_OF_SCIENCE_PATTERN));
+        dto.setLattesId(identifier(record, LATTES_CODE, this::lattesId, LATTES_PATTERN));
+
+        identifiersOf(record).stream()
+            .filter(identifier -> Objects.nonNull(identifier.identifierType()) &&
+                Objects.nonNull(identifier.identifierType().code()) &&
+                !MAPPED_IDENTIFIER_CODES.contains(identifier.identifierType().code().toUpperCase()))
+            .forEach(identifier -> dropped(record, HydratorMappingRule.cv(37),
+                identifier.identifierType().code() + " '" + identifier.identifier() +
+                    "' has no target"));
     }
 
     /**
@@ -546,6 +564,13 @@ public class HydratorPersonConverter
         var parameters = value.indexOf('&');
 
         return parameters < 0 ? value : value.substring(0, parameters);
+    }
+
+    // Lattes ids are often entered as the CV URL or with a label, around the 16 digits
+    private String lattesId(String value) {
+        var matches = LATTES_DIGITS.matcher(value).results().toList();
+
+        return matches.size() == 1 ? matches.getFirst().group() : value;
     }
 
     private void fill(HydratorCVModel.Curriculum record, String rule, String value,
