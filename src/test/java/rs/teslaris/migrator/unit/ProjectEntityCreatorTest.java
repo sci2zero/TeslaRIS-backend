@@ -201,8 +201,8 @@ public class ProjectEntityCreatorTest {
             null), RUN);
 
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, "run-1");
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, RUN);
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, "run-1");
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, RUN);
     }
 }

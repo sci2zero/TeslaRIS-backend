@@ -70,7 +70,7 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
         created.getOrganisations().forEach(contribution -> idResolver.remember(
             HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
             ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), contribution.getOrderNumber()),
-            contribution.getId(), run.getId()));
+            contribution.getId(), run));
 
         return created.getId();
     }

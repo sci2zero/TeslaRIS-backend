@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.migrator.model.MigrationItemStatus;
 import rs.teslaris.migrator.model.MigrationRecordLog;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
@@ -47,12 +48,12 @@ public class MigrationIdResolver {
 
     /**
      * For entities created as part of another one (a project's consortium contributions), which
-     * have no item of their own in the record log.
+     * have no item of their own in the record log. Counted as created by the run, like its items.
      */
     public void remember(String source, MigrationEntityType entityType, String sourceKey,
-                         Integer targetId, String runId) {
+                         Integer targetId, MigrationRun run) {
         recordLogRepository.record(MigrationRecordLog.builder()
-            .runId(runId)
+            .runId(run.getId())
             .source(source)
             .entityType(entityType)
             .sourceKey(sourceKey)
@@ -60,5 +61,7 @@ public class MigrationIdResolver {
             .targetEntityId(targetId)
             .processedAt(Instant.now())
             .build());
+
+        run.setItemsCreated(run.getItemsCreated() + 1);
     }
 }
