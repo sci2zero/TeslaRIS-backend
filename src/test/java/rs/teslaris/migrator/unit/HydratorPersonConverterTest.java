@@ -350,7 +350,7 @@ public class HydratorPersonConverterTest {
         var record = curriculum("""
             {"personInfo": {"names": "John", "surnames": "Doe"},
              "authorIdentifiers": {"total": 1, "authorIdentifier": [
-                {"identifierType": {"code": "AUTHENTICUSID"}, "identifier": "R-000-AB1"}]}}
+                {"identifierType": {"code": "OTHERID"}, "identifier": "X123"}]}}
             """);
 
         // when
@@ -358,7 +358,66 @@ public class HydratorPersonConverterTest {
 
         // then
         verify(migrationLog).valueDropped(anyString(), anyString(), eq("cv-1"),
-            eq("CW-001-MAP-000037"), eq("AUTHENTICUSID 'R-000-AB1' has no target"));
+            eq("CW-001-MAP-000037"), eq("OTHERID 'X123' has no target"));
+    }
+
+    @Test
+    void shouldMapBareAuthenticusId() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "AUTHENTICUSID"}, "identifier": "R-000-AB1"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("R-000-AB1", dto.getAuthenticusId());
+        verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
+            eq("CW-001-MAP-000037"), anyString());
+    }
+
+    @Test
+    void shouldExtractAuthenticusIdFromUrlOrLabel() throws Exception {
+        // given
+        var fromUrl = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "AUTHENTICUSID"},
+                 "identifier": "https://www.authenticus.pt/R-000-AB1"}]}}
+            """);
+        var fromLabel = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "AUTHENTICUSID"},
+                 "identifier": "AuthenticusID: r-000-ab1"}]}}
+            """);
+
+        // when
+        var urlDto = converter.toDTO(fromUrl);
+        var labelDto = converter.toDTO(fromLabel);
+
+        // then
+        assertEquals("R-000-AB1", urlDto.getAuthenticusId());
+        assertEquals("R-000-AB1", labelDto.getAuthenticusId());
+    }
+
+    @Test
+    void shouldPassAuthenticusValueWithoutSingleIdOnUnchanged() throws Exception {
+        // given
+        var record = curriculum("""
+            {"personInfo": {"names": "John", "surnames": "Doe"},
+             "authorIdentifiers": {"total": 1, "authorIdentifier": [
+                {"identifierType": {"code": "AUTHENTICUSID"}, "identifier": "john@example.com"}]}}
+            """);
+
+        // when
+        var dto = converter.toDTO(record);
+
+        // then
+        assertEquals("john@example.com", dto.getAuthenticusId());
     }
 
     @Test

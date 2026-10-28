@@ -1855,7 +1855,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getAuthenticusId(),
             person.getId(),
-            "^A-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
+            "^[A-Z]-[0-9A-Z]{3}-[0-9A-Z]{3}$",
             personRepository::existsByAuthenticusId,
             person::setAuthenticusId,
             "authenticusIdFormatError",
