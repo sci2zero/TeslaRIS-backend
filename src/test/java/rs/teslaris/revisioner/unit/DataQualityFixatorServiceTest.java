@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -21,12 +22,15 @@ import rs.teslaris.revisioner.dto.DataQualityFixatorPipelineDTO;
 import rs.teslaris.revisioner.model.fixator.DataQualityFixatorPipeline;
 import rs.teslaris.revisioner.repository.DataQualityFixatorPipelineRepository;
 import rs.teslaris.revisioner.service.impl.DataQualityFixatorServiceImpl;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.fixators.DataQualityFixatorConfigurationLoader;
-import rs.teslaris.revisioner.util.fixators.DataQualityFixatorRegistry;
 import rs.teslaris.revisioner.util.fixators.DataQualityFixatorConfigurationLoader.FixatorPipeline;
+import rs.teslaris.revisioner.util.fixators.DataQualityFixatorRegistry;
 
 @SpringBootTest
 public class DataQualityFixatorServiceTest {
+
+    private static final String PROFILE = "ptcris";
 
     @Mock
     private DataQualityFixatorPipelineRepository dataQualityFixatorPipelineRepository;
@@ -40,6 +44,7 @@ public class DataQualityFixatorServiceTest {
     private DataQualityFixatorPipeline pipeline(String name, int version) {
         var pipeline = new DataQualityFixatorPipeline();
         pipeline.setPipelineName(name);
+        pipeline.setProfileName(PROFILE);
         pipeline.setVersion(version);
         pipeline.setMatchedRemarkKeys(List.of("titleTooLong"));
         pipeline.setAppliedFixators(List.of());
@@ -49,7 +54,37 @@ public class DataQualityFixatorServiceTest {
     }
 
     private FixatorPipeline configured(String name, int version) {
-        return new FixatorPipeline(name, version, List.of("titleTooLong"), List.of(), true);
+        return new FixatorPipeline(name, PROFILE, version, List.of("titleTooLong"), List.of(),
+            true);
+    }
+
+    private DataQualityFixatorPipelineDTO dto(String name, Integer version, String profileName,
+                                              List<String> remarkKeys,
+                                              List<String> appliedFixators) {
+        return new DataQualityFixatorPipelineDTO(name, profileName, version, remarkKeys,
+            appliedFixators, false);
+    }
+
+    @Test
+    public void shouldLeaveOutPipelineWhoseProfileLeftTheConfiguration() {
+        var configured = pipeline("titles", 1);
+        var floating = pipeline("orphans", 1);
+        floating.setProfileName("goneProfile");
+
+        when(dataQualityFixatorPipelineRepository.findAllByOrderByPipelineNameAsc()).thenReturn(
+            List.of(floating, configured));
+
+        List<DataQualityFixatorPipelineDTO> result;
+
+        try (var profiles = mockStatic(DataQualityAssessmentConfigurationLoader.class)) {
+            profiles.when(DataQualityAssessmentConfigurationLoader::listAvailableProfiles)
+                .thenReturn(Set.of(PROFILE));
+
+            result = dataQualityFixatorService.listPipelines();
+        }
+
+        assertEquals(1, result.size());
+        assertEquals("titles", result.getFirst().pipelineName());
     }
 
     @Test
@@ -71,6 +106,7 @@ public class DataQualityFixatorServiceTest {
 
         assertEquals("titles", captor.getValue().getPipelineName());
         assertEquals(3, captor.getValue().getVersion());
+        assertEquals(PROFILE, captor.getValue().getProfileName());
         assertEquals(List.of("titleTooLong"), captor.getValue().getMatchedRemarkKeys());
     }
 
@@ -90,6 +126,27 @@ public class DataQualityFixatorServiceTest {
 
         verify(dataQualityFixatorPipelineRepository).save(persistedPipeline);
         assertEquals(5, persistedPipeline.getVersion());
+    }
+
+    @Test
+    public void shouldFillInMissingProfileEvenWhenConfiguredVersionIsNotGreater() {
+        var persistedPipeline = pipeline("titles", 9);
+        persistedPipeline.setProfileName(null);
+
+        when(dataQualityFixatorPipelineRepository.findByPipelineName("titles")).thenReturn(
+            Optional.of(persistedPipeline));
+
+        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class)) {
+            loader.when(DataQualityFixatorConfigurationLoader::listPipelines)
+                .thenReturn(List.of(configured("titles", 5)));
+
+            dataQualityFixatorService.synchroniseWithConfiguration();
+        }
+
+        verify(dataQualityFixatorPipelineRepository).save(persistedPipeline);
+
+        assertEquals(PROFILE, persistedPipeline.getProfileName());
+        assertEquals(9, persistedPipeline.getVersion());
     }
 
     @Test
@@ -135,10 +192,13 @@ public class DataQualityFixatorServiceTest {
 
         DataQualityFixatorPipelineDTO result;
 
-        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class)) {
+        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class);
+             var profiles = mockStatic(DataQualityAssessmentConfigurationLoader.class)) {
+            profiles.when(DataQualityAssessmentConfigurationLoader::listAvailableProfiles)
+                .thenReturn(Set.of(PROFILE));
+
             result = dataQualityFixatorService.updatePipeline("titles",
-                new DataQualityFixatorPipelineDTO("titles", 1, List.of("titleTooShort"), List.of(),
-                    true));
+                dto("titles", 1, PROFILE, List.of("titleTooShort"), List.of()));
 
             loader.verify(() -> DataQualityFixatorConfigurationLoader.persistConfiguration(any()));
         }
@@ -158,9 +218,13 @@ public class DataQualityFixatorServiceTest {
 
         DataQualityFixatorPipelineDTO result;
 
-        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class)) {
+        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class);
+             var profiles = mockStatic(DataQualityAssessmentConfigurationLoader.class)) {
+            profiles.when(DataQualityAssessmentConfigurationLoader::listAvailableProfiles)
+                .thenReturn(Set.of(PROFILE));
+
             result = dataQualityFixatorService.createPipeline(
-                new DataQualityFixatorPipelineDTO("titles", 99, List.of(), List.of(), false));
+                dto("titles", 99, PROFILE, List.of(), List.of()));
 
             loader.verify(() -> DataQualityFixatorConfigurationLoader.persistConfiguration(any()));
         }
@@ -175,7 +239,7 @@ public class DataQualityFixatorServiceTest {
 
         assertThrows(FixatorPipelineAlreadyExistsException.class,
             () -> dataQualityFixatorService.createPipeline(
-                new DataQualityFixatorPipelineDTO("titles", null, List.of(), List.of(), false)));
+                dto("titles", null, PROFILE, List.of(), List.of())));
     }
 
     @Test
@@ -186,8 +250,31 @@ public class DataQualityFixatorServiceTest {
 
         assertThrows(NotFoundException.class,
             () -> dataQualityFixatorService.createPipeline(
-                new DataQualityFixatorPipelineDTO("titles", null, List.of(),
-                    List.of("ghostFixator"), false)));
+                dto("titles", null, PROFILE, List.of(), List.of("ghostFixator"))));
+    }
+
+    @Test
+    public void shouldRejectPipelineReferencingUnknownProfile() {
+        when(dataQualityFixatorPipelineRepository.findByPipelineName("titles")).thenReturn(
+            Optional.empty());
+
+        try (var profiles = mockStatic(DataQualityAssessmentConfigurationLoader.class)) {
+            profiles.when(DataQualityAssessmentConfigurationLoader::listAvailableProfiles)
+                .thenReturn(Set.of(PROFILE));
+
+            assertThrows(NotFoundException.class,
+                () -> dataQualityFixatorService.createPipeline(
+                    dto("titles", null, "ghostProfile", List.of(), List.of())));
+        }
+    }
+
+    @Test
+    public void shouldThrowWhenAssertingUnknownPipelineExists() {
+        when(dataQualityFixatorPipelineRepository.findByPipelineName("titles")).thenReturn(
+            Optional.empty());
+
+        assertThrows(NotFoundException.class,
+            () -> dataQualityFixatorService.assertPipelineExists("titles"));
     }
 
     @Test

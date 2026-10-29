@@ -17,6 +17,7 @@ import rs.teslaris.revisioner.dto.FixatorSummaryDTO;
 import rs.teslaris.revisioner.model.fixator.DataQualityFixatorPipeline;
 import rs.teslaris.revisioner.repository.DataQualityFixatorPipelineRepository;
 import rs.teslaris.revisioner.service.interfaces.DataQualityFixatorService;
+import rs.teslaris.revisioner.util.dataquality.DataQualityAssessmentConfigurationLoader;
 import rs.teslaris.revisioner.util.fixators.DataQualityFixatorConfigurationLoader;
 import rs.teslaris.revisioner.util.fixators.DataQualityFixatorConfigurationLoader.FixatorPipeline;
 import rs.teslaris.revisioner.util.fixators.DataQualityFixatorRegistry;
@@ -39,10 +40,17 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
             .toList();
     }
 
+    /**
+     * A pipeline whose profile left the configuration is unusable, thus it stays out of the list.
+     */
     @Override
     public List<DataQualityFixatorPipelineDTO> listPipelines() {
+        var availableProfiles = DataQualityAssessmentConfigurationLoader.listAvailableProfiles();
+
         return dataQualityFixatorPipelineRepository.findAllByOrderByPipelineNameAsc()
             .stream()
+            .filter(pipeline -> Objects.nonNull(pipeline.getProfileName()) &&
+                availableProfiles.contains(pipeline.getProfileName().toLowerCase()))
             .map(DataQualityFixatorPipelineConverter::toDTO)
             .toList();
     }
@@ -52,6 +60,7 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
     public DataQualityFixatorPipelineDTO createPipeline(DataQualityFixatorPipelineDTO pipeline) {
         assertNameIsFree(pipeline.pipelineName());
         assertFixatorsExist(pipeline.appliedFixators());
+        assertProfileExists(pipeline.profileName());
 
         var newPipeline = new DataQualityFixatorPipeline();
         newPipeline.setVersion(1);
@@ -74,6 +83,7 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
         }
 
         assertFixatorsExist(pipeline.appliedFixators());
+        assertProfileExists(pipeline.profileName());
 
         existingPipeline.setVersion(existingPipeline.getVersion() + 1);
         apply(existingPipeline, pipeline);
@@ -89,6 +99,11 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
     public void deletePipeline(String pipelineName) {
         dataQualityFixatorPipelineRepository.delete(findByName(pipelineName));
         writeConfigurationFile();
+    }
+
+    @Override
+    public void assertPipelineExists(String pipelineName) {
+        findByName(pipelineName);
     }
 
     /**
@@ -119,6 +134,17 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
             var persistedPipeline = existingPipeline.get();
 
             if (configuredPipeline.version() <= persistedPipeline.getVersion()) {
+                // A row that predates the profile column holds no profile, and a version alone
+                // cannot repair it, thus the configured profile fills it in.
+                if (Objects.isNull(persistedPipeline.getProfileName()) ||
+                    persistedPipeline.getProfileName().isBlank()) {
+                    persistedPipeline.setProfileName(configuredPipeline.profileName());
+                    dataQualityFixatorPipelineRepository.save(persistedPipeline);
+
+                    log.info("Filled in the missing profile of fixator pipeline '{}'",
+                        configuredPipeline.pipelineName());
+                }
+
                 continue;
             }
 
@@ -157,12 +183,21 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
             .toList();
 
         if (!unknownFixators.isEmpty()) {
-            throw new NotFoundException("Unknown fixator(s): " + String.join(", ", unknownFixators));
+            throw new NotFoundException(
+                "Unknown fixator(s): " + String.join(", ", unknownFixators));
+        }
+    }
+
+    private void assertProfileExists(String profileName) {
+        if (!DataQualityAssessmentConfigurationLoader.listAvailableProfiles()
+            .contains(profileName.toLowerCase())) {
+            throw new NotFoundException("Unknown data quality profile: " + profileName);
         }
     }
 
     private void apply(DataQualityFixatorPipeline pipeline, DataQualityFixatorPipelineDTO dto) {
         pipeline.setPipelineName(dto.pipelineName());
+        pipeline.setProfileName(dto.profileName());
         pipeline.setMatchedRemarkKeys(new ArrayList<>(dto.matchedRemarkKeys()));
         pipeline.setAppliedFixators(new ArrayList<>(dto.appliedFixators()));
         pipeline.setCreateVersionOnEveryStep(dto.createVersionOnEveryStep());
@@ -177,6 +212,7 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
 
     private void copyInto(DataQualityFixatorPipeline pipeline, FixatorPipeline configuredPipeline) {
         pipeline.setPipelineName(configuredPipeline.pipelineName());
+        pipeline.setProfileName(configuredPipeline.profileName());
         pipeline.setVersion(Objects.requireNonNullElse(configuredPipeline.version(), 1));
         pipeline.setMatchedRemarkKeys(
             new ArrayList<>(Objects.requireNonNullElse(configuredPipeline.matchedRemarkKeys(),

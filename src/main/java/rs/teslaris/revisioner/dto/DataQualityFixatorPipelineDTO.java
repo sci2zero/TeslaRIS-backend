@@ -9,6 +9,9 @@ public record DataQualityFixatorPipelineDTO(
     @NotBlank
     String pipelineName,
 
+    @NotBlank
+    String profileName,
+
     Integer version,
 
     @NotNull

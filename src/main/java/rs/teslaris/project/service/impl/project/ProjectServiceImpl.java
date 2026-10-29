@@ -396,8 +396,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
-        // Migrated dates are carried over as the source has them
-        if (!MigrationContext.isActive() && Objects.nonNull(projectDTO.getDateFrom()) &&
+        if (!MigrationContext.isActive() &&
+            Objects.nonNull(projectDTO.getDateFrom()) &&
             Objects.nonNull(projectDTO.getDateTo()) &&
             projectDTO.getDateTo().isBefore(projectDTO.getDateFrom())) {
             throw new DateRangeException(

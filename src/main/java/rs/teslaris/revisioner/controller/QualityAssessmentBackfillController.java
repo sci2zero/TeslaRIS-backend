@@ -1,10 +1,7 @@
 package rs.teslaris.revisioner.controller;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,9 +13,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
-import rs.teslaris.core.model.commontypes.ScheduledTaskType;
-import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillService;
@@ -30,8 +24,6 @@ import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillServic
 public class QualityAssessmentBackfillController {
 
     private final JwtUtil tokenUtil;
-
-    private final TaskManagerService taskManagerService;
 
     private final QualityAssessmentBackfillService qualityAssessmentBackfillService;
 
@@ -50,25 +42,8 @@ public class QualityAssessmentBackfillController {
         Boolean rewriteExistingAssessments,
         @RequestParam("timestamp") Instant timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType) {
-        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
-
-        var taskId = taskManagerService.scheduleTask(
-            "Quality_Assessment_Backfill-" +
-                entityTypes.stream().map(Enum::name).collect(Collectors.joining("_")) +
-                "-" + UUID.randomUUID(), timestamp,
-            () -> qualityAssessmentBackfillService.performBackfill(entityTypes, personIds,
-                organisationUnitIds, profileName, rewriteExistingAssessments),
-            userId, recurrenceType);
-
-        taskManagerService.saveTaskMetadata(
-            new ScheduledTaskMetadata(taskId, timestamp,
-                ScheduledTaskType.QUALITY_ASSESSMENT_BACKFILL, new HashMap<>() {{
-                put("entityTypes", entityTypes.stream().map(Enum::name).toList());
-                put("personIds", personIds);
-                put("organisationUnitIds", organisationUnitIds);
-                put("profileName", profileName);
-                put("rewriteExistingAssessments", rewriteExistingAssessments);
-                put("userId", userId);
-            }}, recurrenceType));
+        qualityAssessmentBackfillService.scheduleBackfill(timestamp, entityTypes, personIds,
+            organisationUnitIds, profileName, rewriteExistingAssessments,
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrenceType);
     }
 }

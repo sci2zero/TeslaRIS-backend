@@ -258,6 +258,11 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return listScheduledTasks(null, UserRole.ADMIN.name(), this::isMaintenanceTask);
     }
 
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledDataQualityFixTasks() {
+        return listScheduledTasks(null, UserRole.ADMIN.name(), this::isDataQualityFixTask);
+    }
+
     private List<ScheduledTaskResponseDTO> listScheduledTasks(Integer userId, String role,
                                                               Function<String, Boolean> taskFilter) {
         // Admins, and users who are not bound to an institution, are not restricted to one.
@@ -308,6 +313,10 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         scheduledTask.getMetadata().putIfAbsent(SchedulingTime.TIMEZONE_KEY,
             SchedulingTime.requestZone().getId());
         scheduledTaskMetadataRepository.save(scheduledTask);
+    }
+
+    private boolean isDataQualityFixTask(String taskId) {
+        return taskId.startsWith("Data_Quality_Fix-");
     }
 
     private boolean isReportGenerationTask(String taskId) {

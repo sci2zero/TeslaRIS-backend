@@ -26,6 +26,9 @@ public class DataQualityFixatorPipeline extends BaseEntity {
     @Column(name = "pipeline_name", nullable = false, unique = true)
     private String pipelineName;
 
+    @Column(name = "profile_name", nullable = false)
+    private String profileName;
+
     /**
      * Incremented on every edit made through the UI, and only ever overwritten by a configuration
      * file carrying a strictly greater version.
