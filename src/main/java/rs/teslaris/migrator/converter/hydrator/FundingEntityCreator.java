@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.funding.FundingDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
+import rs.teslaris.core.migration.FundingMigrationWriter;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
-import rs.teslaris.project.service.interfaces.funding.FundingService;
 
 /**
  * Resolves the project, the funder organisation unit and the currency, then creates the funding.
@@ -22,7 +22,7 @@ import rs.teslaris.project.service.interfaces.funding.FundingService;
 @RequiredArgsConstructor
 public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> {
 
-    private final FundingService fundingService;
+    private final FundingMigrationWriter fundingMigrationWriter;
 
     private final CurrencyService currencyService;
 
@@ -51,9 +51,15 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
         setCurrency(key, funding);
         setFundingParts(key, dto);
 
-        var created = fundingService.createFunding(funding);
+        // The id a previous run produced, so a re-run updates that funding instead of creating a
+        // second one for the same source record.
+        var existingId = idResolver
+            .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, key)
+            .orElse(null);
 
-        return Objects.isNull(created) ? null : created.getId();
+        var migrated = fundingMigrationWriter.migrate(funding, existingId);
+
+        return Objects.isNull(migrated) ? null : migrated.id();
     }
 
     // Consortium amounts of the project's only funding, each linked to its member's contribution

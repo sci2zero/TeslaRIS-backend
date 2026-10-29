@@ -1,11 +1,9 @@
 {
-  "pipelines": [
-    {
-      "pipelineName": "",
-      "version": 1,
-      "matchedRemarkKeys": ["", ""],
-      "appliedFixators": ["", ""],
-      "createVersionOnEveryStep": false
-    }
-  ]
+  "pipelines" : [ {
+    "pipelineName" : "Test Pipeline",
+    "version" : 2,
+    "matchedRemarkKeys" : [ "doiNotResolvable", "doiTooLong", "doiTooShort" ],
+    "appliedFixators" : [ "identifierAffix", "typographicCharacter" ],
+    "createVersionOnEveryStep" : false
+  } ]
 }

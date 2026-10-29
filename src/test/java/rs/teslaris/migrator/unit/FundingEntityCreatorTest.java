@@ -22,7 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
+import rs.teslaris.core.migration.FundingMigrationWriter;
 import rs.teslaris.core.model.commontypes.Currency;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -41,10 +44,6 @@ import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.model.funding.Funding;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.service.interfaces.funding.FundingService;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -58,7 +57,7 @@ public class FundingEntityCreatorTest {
                 List.of(new HydratorCVModel.InstitutionIdentifier("12345", "RingGold"))));
 
     @Mock
-    private FundingService fundingService;
+    private FundingMigrationWriter fundingMigrationWriter;
 
     @Mock
     private CurrencyService currencyService;
@@ -94,14 +93,13 @@ public class FundingEntityCreatorTest {
     void setUp() {
         var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
             mock(LanguageService.class), mock(ResearchAreaService.class));
-        creator = new FundingEntityCreator(fundingService, currencyService, idResolver,
+        creator = new FundingEntityCreator(fundingMigrationWriter, currencyService, idResolver,
             institutionResolver, conversionUtil,
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
             migrationLog);
 
-        var created = new Funding();
-        created.setId(42);
-        when(fundingService.createFunding(any())).thenReturn(created);
+        when(fundingMigrationWriter.migrate(any(), any()))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(42, true));
         when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(5);
     }
@@ -123,6 +121,24 @@ public class FundingEntityCreatorTest {
         assertEquals(7, dto.getFunderId());
         assertEquals(3, dto.getAmount().getCurrencyId());
         assertEquals(0, dto.getDisplayFunder().size());
+    }
+
+    @Test
+    void shouldReuseTheFundingAPreviousRunCreated() {
+        var key = FundingMigrationDTO.keyOf("TEST001", "F1");
+        when(institutionResolver.resolve(FUNDER))
+            .thenReturn(new HydratorInstitutionResolver.Match(7, null));
+        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, key))
+            .thenReturn(Optional.of(9));
+        when(fundingMigrationWriter.migrate(any(), eq(9)))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(9, false));
+
+        var id = creator.create(
+            new FundingMigrationDTO("TEST001", "F1", FUNDER, new FundingDTO(), List.of(), null),
+            RUN);
+
+        assertEquals(9, id);
+        verify(fundingMigrationWriter).migrate(any(), eq(9));
     }
 
     @Test
@@ -163,7 +179,7 @@ public class FundingEntityCreatorTest {
         assertThrows(MigrationException.class, () -> creator.create(
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
             RUN));
-        verify(fundingService, never()).createFunding(any());
+        verify(fundingMigrationWriter, never()).migrate(any(), any());
     }
 
     @Test

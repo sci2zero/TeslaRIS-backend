@@ -27,6 +27,10 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.ProjectCollaborationType;
+import rs.teslaris.core.model.project.ProjectResearchType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingApplication;
 

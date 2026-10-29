@@ -1,4 +1,4 @@
-package rs.teslaris.project.dto.funding;
+package rs.teslaris.core.dto.funding;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

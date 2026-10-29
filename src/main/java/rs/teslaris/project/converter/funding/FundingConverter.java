@@ -4,7 +4,7 @@ import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
-import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.project.model.funding.Funding;
 
 public class FundingConverter {

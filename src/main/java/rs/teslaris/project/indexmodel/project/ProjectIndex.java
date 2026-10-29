@@ -13,7 +13,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.core.model.project.ProjectStatus;
 
 @Getter
 @Setter

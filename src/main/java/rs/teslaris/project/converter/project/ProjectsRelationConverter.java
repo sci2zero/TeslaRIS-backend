@@ -2,7 +2,7 @@ package rs.teslaris.project.converter.project;
 
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.project.dto.project.ProjectsRelationDTO;
+import rs.teslaris.core.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.model.project.ProjectsRelation;
 
 public class ProjectsRelationConverter {

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.project.service.interfaces.funding.FundingPartService;
 
 @RestController
