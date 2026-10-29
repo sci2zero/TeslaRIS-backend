@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +21,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.core.model.commontypes.Currency;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -37,12 +43,7 @@ import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -55,7 +56,7 @@ public class ProjectEntityCreatorTest {
         new HydratorCVModel.Institution("Test Partner", null, null, null);
 
     @Mock
-    private ProjectService projectService;
+    private ProjectMigrationWriter projectMigrationWriter;
 
     @Mock
     private HydratorInstitutionResolver institutionResolver;
@@ -85,14 +86,14 @@ public class ProjectEntityCreatorTest {
     void setUp() {
         var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
             mock(LanguageService.class), mock(ResearchAreaService.class));
-        creator = new ProjectEntityCreator(projectService, institutionResolver, personResolver,
+        creator = new ProjectEntityCreator(projectMigrationWriter, institutionResolver,
+            personResolver,
             conversionUtil,
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
             idResolver, migrationLog);
 
-        var project = new Project();
-        project.setId(42);
-        when(projectService.createProject(any())).thenReturn(project);
+        when(projectMigrationWriter.migrate(any(), any()))
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true));
     }
 
     @Test
@@ -133,7 +134,7 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
                 "invalid date 'x'"),
             true));
-        verify(projectService, never()).createProject(any());
+        verify(projectMigrationWriter, never()).migrate(any(), any());
     }
 
     @Test
@@ -187,12 +188,23 @@ public class ProjectEntityCreatorTest {
     }
 
     @Test
+    void shouldReuseTheProjectAPreviousRunCreated() {
+        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
+            .thenReturn(Optional.of(7));
+        when(projectMigrationWriter.migrate(any(), eq(7)))
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false));
+
+        var id = creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(),
+            List.of(), null), true);
+
+        assertEquals(7, id);
+        verify(projectMigrationWriter).migrate(any(), eq(7));
+    }
+
+    @Test
     void shouldRememberConsortiumContributions() {
-        var project = new Project();
-        project.setId(42);
-        project.getOrganisations().add(contribution(101, 1));
-        project.getOrganisations().add(contribution(102, 2));
-        when(projectService.createProject(any())).thenReturn(project);
+        when(projectMigrationWriter.migrate(any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
             null), true);

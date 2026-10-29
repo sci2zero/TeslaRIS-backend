@@ -2,10 +2,10 @@ package rs.teslaris.project.revision;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.dto.project.ProjectQualityViewDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.revision.RevisionRestorer;
-import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 /**

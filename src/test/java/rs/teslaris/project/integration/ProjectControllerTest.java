@@ -17,19 +17,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.dto.project.ProjectsRelationDTO;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectInvestigationRole;
+import rs.teslaris.core.model.project.ProjectCollaborationType;
+import rs.teslaris.core.model.project.ProjectResearchType;
+import rs.teslaris.core.model.project.ProjectStatus;
+import rs.teslaris.core.model.project.ProjectsRelationType;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
-import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.dto.project.ProjectsRelationDTO;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectInvestigationRole;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
-import rs.teslaris.project.model.project.ProjectsRelationType;
 
 @SpringBootTest
 public class ProjectControllerTest extends BaseTest {

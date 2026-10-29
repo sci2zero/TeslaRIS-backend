@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 

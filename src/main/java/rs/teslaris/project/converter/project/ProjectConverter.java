@@ -3,7 +3,7 @@ package rs.teslaris.project.converter.project;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
-import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.Project;
 
 public class ProjectConverter {

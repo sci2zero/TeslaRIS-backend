@@ -2,10 +2,10 @@ package rs.teslaris.project.revision;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.project.FundingQualityViewDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.revision.RevisionRestorer;
-import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 
 /**

@@ -37,6 +37,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -50,7 +51,6 @@ import rs.teslaris.project.dto.funding.FundingProgramDTO;
 import rs.teslaris.project.indexmodel.funding.FundingProgramIndex;
 import rs.teslaris.project.indexrepository.funding.FundingProgramIndexRepository;
 import rs.teslaris.project.model.funding.FundingProgram;
-import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.service.impl.funding.FundingProgramServiceImpl;
 

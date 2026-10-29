@@ -17,7 +17,7 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.project.model.funding.FundingType;
+import rs.teslaris.core.model.funding.FundingType;
 
 @Getter
 @Setter

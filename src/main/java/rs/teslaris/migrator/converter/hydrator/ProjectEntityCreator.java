@@ -8,19 +8,19 @@ import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
+import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @Component
 @RequiredArgsConstructor
 public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> {
 
-    private final ProjectService projectService;
+    private final ProjectMigrationWriter projectMigrationWriter;
 
     private final HydratorInstitutionResolver institutionResolver;
 
@@ -60,18 +60,23 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
                 dto.sourceId(), HydratorMappingRule.sciproj(28),
                 count + " team member(s) " + reason));
 
-        var created = projectService.createProject(dto.project());
-        if (Objects.isNull(created)) {
+        // The id a previous run produced, so a re-run updates that project instead of creating a
+        // second one for the same source record.
+        var existingId = idResolver
+            .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, dto.sourceId())
+            .orElse(null);
+
+        var migrated = projectMigrationWriter.migrate(dto.project(), existingId);
+        if (Objects.isNull(migrated)) {
             return null;
         }
 
         // Fundings of the project link their parts to these contributions
-        created.getOrganisations().forEach(contribution -> idResolver.remember(
-            HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
-            ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), contribution.getOrderNumber()),
-            contribution.getId()));
+        migrated.organisationContributionIds().forEach((orderNumber, contributionId) ->
+            idResolver.remember(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
+                ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), orderNumber), contributionId));
 
-        return created.getId();
+        return migrated.id();
     }
 
     // CW-002-MAP-000022: linked by identifier, otherwise kept as display name

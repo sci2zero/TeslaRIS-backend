@@ -1,4 +1,4 @@
-package rs.teslaris.project.model.project;
+package rs.teslaris.core.model.project;
 
 public enum OrganisationUnitProjectContributionType {
     COORDINATOR,
