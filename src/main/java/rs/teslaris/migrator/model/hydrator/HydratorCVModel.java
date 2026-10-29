@@ -588,13 +588,6 @@ public class HydratorCVModel {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Institutions(
-        Integer total,
-        List<Institution> institution
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record DegreeType(
         String code,
         String value
