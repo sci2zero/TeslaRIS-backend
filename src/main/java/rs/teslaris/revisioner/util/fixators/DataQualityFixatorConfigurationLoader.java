@@ -89,7 +89,8 @@ public class DataQualityFixatorConfigurationLoader {
                 .writeValue(targetPath.toFile(), new DataQualityFixatorConfiguration(pipelines));
         } catch (IOException e) {
             throw new StorageException(
-                "Failed to write data quality fixator configuration to " + targetPath + ". Reason: " +
+                "Failed to write data quality fixator configuration to " + targetPath +
+                    ". Reason: " +
                     e.getMessage());
         }
 
@@ -108,6 +109,9 @@ public class DataQualityFixatorConfigurationLoader {
 
         @JsonProperty(value = "pipelineName", required = true)
         String pipelineName,
+
+        @JsonProperty(value = "profileName", required = true)
+        String profileName,
 
         @JsonProperty(value = "version", required = true)
         Integer version,

@@ -12,6 +12,7 @@ public class DataQualityFixatorPipelineConverter {
     public static DataQualityFixatorPipelineDTO toDTO(DataQualityFixatorPipeline pipeline) {
         return new DataQualityFixatorPipelineDTO(
             pipeline.getPipelineName(),
+            pipeline.getProfileName(),
             pipeline.getVersion(),
             new ArrayList<>(nullSafe(pipeline.getMatchedRemarkKeys())),
             new ArrayList<>(nullSafe(pipeline.getAppliedFixators())),
@@ -22,6 +23,7 @@ public class DataQualityFixatorPipelineConverter {
     public static FixatorPipeline toConfigurationEntry(DataQualityFixatorPipeline pipeline) {
         return new FixatorPipeline(
             pipeline.getPipelineName(),
+            pipeline.getProfileName(),
             pipeline.getVersion(),
             new ArrayList<>(nullSafe(pipeline.getMatchedRemarkKeys())),
             new ArrayList<>(nullSafe(pipeline.getAppliedFixators())),

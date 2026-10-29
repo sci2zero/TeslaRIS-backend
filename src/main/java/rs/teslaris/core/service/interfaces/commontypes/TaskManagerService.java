@@ -34,6 +34,8 @@ public interface TaskManagerService {
 
     List<ScheduledTaskResponseDTO> listScheduledMaintenanceTasks();
 
+    List<ScheduledTaskResponseDTO> listScheduledDataQualityFixTasks();
+
     Instant findNextFreeExecutionTime();
 
     void saveTaskMetadata(ScheduledTaskMetadata scheduledTask);

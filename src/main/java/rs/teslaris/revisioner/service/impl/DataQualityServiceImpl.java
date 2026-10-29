@@ -1109,6 +1109,10 @@ public class DataQualityServiceImpl implements DataQualityService {
                                                              @Nullable QualityDimension dimension,
                                                              @Nullable String metric) {
         var version = DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(profileName);
+        var profile = DataQualityAssessmentConfigurationLoader.getProfile(profileName, version);
+        var remarks = Objects.isNull(profile)
+            ? Map.<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark>of()
+            : profile.dataQualityRemarks();
 
         // The rules of a target family are what the issues table can be filtered by, and the family
         // is known here - the picker does not need the rest of the profile to work it out. A null
@@ -1117,11 +1121,18 @@ public class DataQualityServiceImpl implements DataQualityService {
             .listRuleKeys(profileName, version, target, dimension, null, metric)
             .stream()
             .sorted()
-            .map(ruleKey -> new ConstraintSummaryDTO(
-                ruleKey,
-                MultilingualContentConverter.getMultilingualContentDTO(
-                    DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
-                        profileName, version, ruleKey))))
+            .map(ruleKey -> {
+                var remark = remarks.get(ruleKey);
+
+                return new ConstraintSummaryDTO(
+                    ruleKey,
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                            profileName, version, ruleKey)),
+                    Objects.isNull(remark) ? null : remark.target(),
+                    Objects.isNull(remark) ? null : remark.dimension(),
+                    Objects.isNull(remark) ? null : remark.metric());
+            })
             .toList();
     }
 

@@ -75,6 +75,12 @@ public class TaskManagerController {
             tokenUtil.extractUserRoleFromToken(bearerToken));
     }
 
+    @GetMapping("/data-quality-fix")
+    @PreAuthorize("hasAuthority('MANAGE_DATA_QUALITY_FIXATORS')")
+    public List<ScheduledTaskResponseDTO> listScheduledDataQualityFixTasks() {
+        return taskManagerService.listScheduledDataQualityFixTasks();
+    }
+
     @DeleteMapping("/{taskId}")
     @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
     public void cancelTask(@PathVariable String taskId) {

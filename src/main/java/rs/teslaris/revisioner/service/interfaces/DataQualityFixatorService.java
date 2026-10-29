@@ -17,5 +17,7 @@ public interface DataQualityFixatorService {
 
     void deletePipeline(String pipelineName);
 
+    void assertPipelineExists(String pipelineName);
+
     void synchroniseWithConfiguration();
 }
