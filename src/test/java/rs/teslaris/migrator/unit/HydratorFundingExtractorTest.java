@@ -133,11 +133,13 @@ public class HydratorFundingExtractorTest {
     void shouldMapKnownFundingTypes() throws Exception {
         var result = extractor.extract(document("[" + funding("F1", "2020-01-01", "Contract") +
             "," + funding("F2", "2020-01-01", "Gift") + "," +
-            funding("F3", "2020-01-01", "Call") + "]"));
+            funding("F3", "2020-01-01", "Call") + "," +
+            funding("F4", "2020-01-01", "Grant") + "]"));
 
         assertEquals(Set.of(FundingType.CONTRACT), result.get(0).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.GIFT), result.get(1).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.CALL), result.get(2).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.GRANT), result.get(3).funding().getFundingTypes());
         verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
             eq("CW-002-MAP-000002"), anyString());
     }

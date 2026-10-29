@@ -28,6 +28,7 @@ public class HydratorFundingExtractor
     // OpenAIRE funding types seen in the source; any other type is dropped
     private static final Map<String, FundingType> FUNDING_TYPES = Map.of(
         "FundingProgramme", FundingType.FUNDING_PROGRAMME,
+        "Grant", FundingType.GRANT,
         "Contract", FundingType.CONTRACT,
         "Gift", FundingType.GIFT,
         "Call", FundingType.CALL);
