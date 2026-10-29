@@ -3,11 +3,13 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.funding.FundingDTO;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.RecordExtractor;
@@ -22,6 +24,13 @@ import rs.teslaris.migrator.util.MigrationLog;
 @RequiredArgsConstructor
 public class HydratorFundingExtractor
     implements RecordExtractor<HydratorProjectModel.ProjectDocument, FundingMigrationDTO> {
+
+    // OpenAIRE funding types seen in the source; any other type is dropped
+    private static final Map<String, FundingType> FUNDING_TYPES = Map.of(
+        "FundingProgramme", FundingType.FUNDING_PROGRAMME,
+        "Contract", FundingType.CONTRACT,
+        "Gift", FundingType.GIFT,
+        "Call", FundingType.CALL);
 
     private final HydratorConversionUtil conversionUtil;
 
@@ -68,8 +77,13 @@ public class HydratorFundingExtractor
             }
 
             if (Objects.nonNull(funding.type()) && !isBlank(funding.type().value())) {
-                dropped(key, HydratorMappingRule.sciproj(2),
-                    "funding type '" + typeName(funding.type().value()) + "' has no vocabulary");
+                var type = typeName(funding.type().value());
+                if (FUNDING_TYPES.containsKey(type)) {
+                    dto.getFundingTypes().add(FUNDING_TYPES.get(type));
+                } else {
+                    dropped(key, HydratorMappingRule.sciproj(2),
+                        "funding type '" + type + "' has no vocabulary");
+                }
             }
 
             setIdentifiers(dto, funding.identifiers());
