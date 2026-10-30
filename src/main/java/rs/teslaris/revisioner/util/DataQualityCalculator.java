@@ -334,7 +334,7 @@ public class DataQualityCalculator {
         // Parsed once for the whole record: it is the same reference date for every contributor,
         // and a date the record cannot express must not abort the assessment - the malformed
         // value is reported as an issue of its own below.
-        var publicationDate = parseDocumentDateQuietly(documentDate);
+        var publicationDate = FlexibleDate.toLocalDate(documentDate);
 
         if (!CollectionOperations.containsValues(dto.getContributions())) {
             reportIssue(assessment, "contributorsMissing");
@@ -356,18 +356,16 @@ public class DataQualityCalculator {
 
         if (!FlexibleDate.isDatePresentAndValid(documentDate)) {
             reportIssue(assessment, "documentDateMissing");
-        } else if (Objects.isNull(publicationDate) ||
-            FlexibleDate.hasMalformedComponents(documentDate)) {
-            // A zero month still yields a parseable year, so the stored components are checked
-            // too - otherwise the record would silently pass as a year-only date.
-            reportIssue(assessment, "invalidDocumentDateFormat", dto.getDocumentDate());
+        } else if (Objects.isNull(publicationDate)) {
+            reportIssue(assessment, "invalidDocumentDateFormat",
+                FlexibleDate.toISOString(documentDate));
         } else {
             var documentDateMinYear =
                 getIntConstraint(assessment, "documentDateBefore", "minYear");
             if (Objects.nonNull(documentDateMinYear) &&
                 publicationDate.isBefore(LocalDate.of(documentDateMinYear, 1, 1))) {
-                reportIssue(assessment, "documentDateBefore", dto.getDocumentDate(),
-                    documentDateMinYear);
+                reportIssue(assessment, "documentDateBefore",
+                    FlexibleDate.toISOString(documentDate), documentDateMinYear);
             }
 
             var documentDateMaxFutureYears =
@@ -375,7 +373,7 @@ public class DataQualityCalculator {
             if (Objects.nonNull(documentDateMaxFutureYears) &&
                 publicationDate.isAfter(LocalDate.now().plusYears(documentDateMaxFutureYears))) {
                 reportIssue(assessment, "documentDateTooFarInFuture",
-                    dto.getDocumentDate(), documentDateMaxFutureYears);
+                    FlexibleDate.toISOString(documentDate), documentDateMaxFutureYears);
             }
         }
 
@@ -2175,20 +2173,6 @@ public class DataQualityCalculator {
             .findFirst()
             .filter(checker -> checker.isDuplicate(field, value, entityId))
             .ifPresent(checker -> reportIssue(assessment, issueKey, value));
-    }
-
-    /**
-     * {@code parseDocumentDate} throws on anything it cannot read, and a single bad record used to
-     * abort the whole assessment with nothing recorded. A date that cannot be parsed is simply
-     * absent as far as the contributor checks are concerned.
-     */
-    @Nullable
-    private LocalDate parseDocumentDateQuietly(FlexibleDate documentDate) {
-        try {
-            return StringUtil.parseDocumentDate(FlexibleDate.toISOString(documentDate));
-        } catch (RuntimeException e) {
-            return null;
-        }
     }
 
     private void checkMinYear(DataQualityAssessment assessment, String issueKey, LocalDate date) {
