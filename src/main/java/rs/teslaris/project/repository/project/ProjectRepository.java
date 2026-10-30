@@ -19,4 +19,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Project p WHERE p.raid = :raid AND (:id IS NULL OR p.id <> :id)")
     boolean existsByRaid(String raid, Integer id);
+
+    @Query("SELECT COUNT(p) > 0 FROM Project p WHERE p.costs.currency.id = :currencyId")
+    boolean isCurrencyInUse(Integer currencyId);
 }

@@ -11,4 +11,8 @@ public interface FundingProgramRepository extends JpaRepository<FundingProgram, 
     @Query("SELECT COUNT(fc) > 0 FROM FundingCall fc " +
         "WHERE fc.fundingProgram.id = :fundingProgramId")
     boolean hasFundingCalls(Integer fundingProgramId);
+
+    @Query("SELECT COUNT(fp) > 0 FROM FundingProgram fp " +
+        "WHERE fp.totalAmount.currency.id = :currencyId")
+    boolean isCurrencyInUse(Integer currencyId);
 }

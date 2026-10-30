@@ -14,4 +14,8 @@ public interface FundingApplicationRepository extends JpaRepository<FundingAppli
 
     @Query("SELECT COUNT(fa) > 0 FROM FundingApplication fa WHERE fa.funding IS NOT NULL AND fa.id = :id")
     boolean hasFunding(@Param("id") Integer id);
+
+    @Query("SELECT COUNT(fa) > 0 FROM FundingApplication fa " +
+        "WHERE fa.requestedAmount.currency.id = :currencyId")
+    boolean isCurrencyInUse(Integer currencyId);
 }
