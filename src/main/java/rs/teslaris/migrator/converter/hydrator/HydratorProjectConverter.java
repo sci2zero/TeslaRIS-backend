@@ -150,7 +150,7 @@ public class HydratorProjectConverter implements
 
         addTeam(key, entries, team.principalInvestigator(),
             PersonProjectContributionType.PRINCIPLE_INVESTIGATOR);
-        addTeam(key, entries, Objects.isNull(team.contact()) ? null : List.of(team.contact()),
+        addTeam(key, entries, team.contact(),
             PersonProjectContributionType.CONTACT);
         addTeam(key, entries, team.members(), PersonProjectContributionType.TEAM_MEMBER);
 
