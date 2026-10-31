@@ -1542,7 +1542,10 @@ public class TestingDataInitializer {
         contribution.setApproveStatus(ApproveStatus.APPROVED);
         contribution.setInstitutions(Set.of(institution));
         contribution.setAffiliationStatement(
-            new AffiliationStatement(new HashSet<>(), person.getName(),
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person.getName().getFirstname(), person.getName().getOtherName(),
+                    person.getName().getLastname(), person.getName().getDateFrom(),
+                    person.getName().getDateTo(), person.getName().getNameType()),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
                 new Contact("", "", "", "")));
     }
