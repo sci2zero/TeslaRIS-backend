@@ -7,11 +7,15 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +29,11 @@ import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.PublisherIndex;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.revisioner.model.QualityAssessmentTarget;
@@ -69,6 +77,33 @@ public class QualityAssessmentBackfillServiceImpl implements QualityAssessmentBa
 
     private final SearchService<PublisherIndex> publisherSearchService;
 
+    private final TaskManagerService taskManagerService;
+
+
+    @Override
+    public void scheduleBackfill(Instant timeToRun, List<QualityAssessmentTarget> targets,
+                                 List<Integer> personIds, List<Integer> organisationUnitIds,
+                                 String profileName, boolean rewriteExistingAssessments,
+                                 Integer userId, RecurrenceType recurrence) {
+        var taskId = taskManagerService.scheduleTask(
+            "Quality_Assessment_Backfill-" +
+                targets.stream().map(Enum::name).collect(Collectors.joining("_")) +
+                "-" + UUID.randomUUID(), timeToRun,
+            () -> performBackfill(targets, personIds, organisationUnitIds, profileName,
+                rewriteExistingAssessments),
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.QUALITY_ASSESSMENT_BACKFILL, new HashMap<>() {{
+                put("entityTypes", targets.stream().map(Enum::name).toList());
+                put("personIds", personIds);
+                put("organisationUnitIds", organisationUnitIds);
+                put("profileName", profileName);
+                put("rewriteExistingAssessments", rewriteExistingAssessments);
+                put("userId", userId);
+            }}, recurrence));
+    }
 
     @Override
     public void performBackfill(List<QualityAssessmentTarget> targets, List<Integer> personIds,

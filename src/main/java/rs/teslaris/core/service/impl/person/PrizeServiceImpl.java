@@ -42,8 +42,10 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
+import rs.teslaris.core.util.exceptionhandling.exception.PrizeAlreadyExistsException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -83,15 +85,14 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         var newPrize = new Prize();
         var person = personService.findOne(personId);
 
+        assertPrizeIsNotADuplicate(personId, dto);
+
         setCommonFields(newPrize, dto);
         newPrize.setPerson(person);
         var savedPrize = prizeRepository.save(newPrize);
         prizeRepository.flush();
 
-        person.addPrize(savedPrize);
-        personService.save(person);
-
-        indexPrize(savedPrize, new PrizeIndex());
+        indexPrize(savedPrize, new PrizeIndex(), false);
 
         return PrizeConverter.toDTO(savedPrize);
     }
@@ -107,7 +108,8 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         var savedPrize = prizeRepository.save(prizeToUpdate);
 
         indexPrize(savedPrize,
-            prizeIndexRepository.findPrizeIndexByDatabaseId(prizeId).orElse(new PrizeIndex()));
+            prizeIndexRepository.findPrizeIndexByDatabaseId(prizeId).orElse(new PrizeIndex()),
+            true);
 
         return PrizeConverter.toDTO(prizeToUpdate);
     }
@@ -166,7 +168,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
-            (prize) -> indexPrize(prize, new PrizeIndex())
+            (prize) -> indexPrize(prize, new PrizeIndex(), true)
         );
 
         return null;
@@ -231,6 +233,30 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
             PrizeIndex.class, "prize");
     }
 
+    private void assertPrizeIsNotADuplicate(Integer personId, PrizeDTO dto) {
+        // Migrated data arrives in bulk and is frequently dirty, duplicates are reconciled later.
+        if (MigrationContext.isActive() || Objects.isNull(dto.getTitle())) {
+            return;
+        }
+
+        var titles = dto.getTitle().stream()
+            .map(title -> title.getContent().trim().toLowerCase())
+            .filter(title -> !title.isEmpty())
+            .collect(Collectors.toSet());
+
+        if (titles.isEmpty()) {
+            return;
+        }
+
+        var duplicateExists = Objects.isNull(dto.getDate())
+            ? prizeRepository.existsForPersonWithTitleAndNoDate(personId, titles)
+            : prizeRepository.existsForPersonWithTitleAndDate(personId, dto.getDate(), titles);
+
+        if (duplicateExists) {
+            throw new PrizeAlreadyExistsException("prizeAlreadyExistsMessage");
+        }
+    }
+
     private void setCommonFields(Prize prize, PrizeDTO dto) {
         prize.setTitle(multilingualContentService.getMultilingualContent(dto.getTitle()));
         prize.setDescription(
@@ -249,7 +275,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         prize.setResearchAreas(new HashSet<>(researchAreas));
     }
 
-    private void indexPrize(Prize prize, PrizeIndex index) {
+    private void indexPrize(Prize prize, PrizeIndex index, boolean indexAssessments) {
         index.setDatabaseId(prize.getId());
 
         indexMultilingualContent(index, prize, Prize::getTitle, PrizeIndex::setTitleSr,
@@ -266,7 +292,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         index.setPersonName(prize.getPerson().getName().toText());
         index.setPersonNameSortable(index.getPersonName());
 
-        reindexPrizeVolatileInformation(prize, index, true, true);
+        reindexPrizeVolatileInformation(prize, index, true, indexAssessments);
 
         prizeIndexRepository.save(index);
     }

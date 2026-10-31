@@ -2,8 +2,8 @@ package rs.teslaris.project.converter.project;
 
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.converter.funding.FundingPartConverter;
-import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 
 public class OrganisationUnitProjectContributionConverter {

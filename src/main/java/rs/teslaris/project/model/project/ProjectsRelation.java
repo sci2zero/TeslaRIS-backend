@@ -18,6 +18,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.project.ProjectsRelationType;
 
 @Getter
 @Setter

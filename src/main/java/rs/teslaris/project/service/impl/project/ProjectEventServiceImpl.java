@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -17,7 +18,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.project.converter.project.ProjectEventConverter;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.project.ProjectEvent;

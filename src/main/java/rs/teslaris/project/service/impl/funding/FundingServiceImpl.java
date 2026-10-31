@@ -23,6 +23,8 @@ import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.ResearchArea;
@@ -42,8 +44,6 @@ import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
-import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
@@ -242,7 +242,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
-        if (Objects.nonNull(fundingDTO.getDateFrom()) &&
+        // Migrated dates are carried over as the source has them
+        if (!MigrationContext.isActive() && Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
             fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
             throw new DateRangeException("Funding must start before it ends.");

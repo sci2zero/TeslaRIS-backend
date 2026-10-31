@@ -21,4 +21,11 @@ public interface RevisionService {
 
     void restoreRevision(String entityType, Integer entityId, Integer majorVersion,
                          Integer minorVersion);
+
+    /**
+     * Writes an already mutated snapshot DTO back onto the live entity through its
+     * {@code RevisionRestorer} and records the result as a new revision stamped with
+     * {@code adminNote}.
+     */
+    void applyFixedState(String entityType, Integer entityId, Object dto, String adminNote);
 }

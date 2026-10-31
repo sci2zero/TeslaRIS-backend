@@ -28,6 +28,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.revisioner.model.QualityAssessmentTarget;
 import rs.teslaris.revisioner.service.impl.QualityAssessmentBackfillServiceImpl;
@@ -45,6 +46,9 @@ public class QualityAssessmentBackfillServiceTest {
 
     @Mock
     private DataQualityService dataQualityService;
+
+    @Mock
+    private TaskManagerService taskManagerService;
 
     @Mock
     private SearchService<PersonIndex> personSearchService;
@@ -82,7 +86,7 @@ public class QualityAssessmentBackfillServiceTest {
             revisionService, dataQualityService, organisationUnitService, dataQualityAggregator,
             personSearchService, organisationUnitSearchService, eventSearchService,
             documentSearchService, journalSearchService, bookSeriesSearchService,
-            publisherSearchService);
+            publisherSearchService, taskManagerService);
     }
 
     private PersonIndex person(Integer databaseId) {

@@ -48,9 +48,8 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
             "WHERE psac.publicationSeries.id = :journalId")
     List<Integer> findCommissionsThatClassifiedJournal(Integer journalId);
 
-    @Query("SELECT c.id FROM Commission c " +
-        "LEFT JOIN PrizeAssessmentClassification pac " +
-        "ON pac.commission.id = c.id " +
+    @Query("SELECT c.id FROM PrizeAssessmentClassification pac " +
+        "JOIN pac.commission c " +
         "WHERE pac.prize.id = :prizeId")
     List<Integer> findCommissionsThatAssessedPrize(Integer prizeId);
 

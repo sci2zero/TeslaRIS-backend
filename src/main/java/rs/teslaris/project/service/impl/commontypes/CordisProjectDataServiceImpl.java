@@ -16,14 +16,14 @@ import org.w3c.dom.NodeList;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.dto.project.PrepopulatedEventDTO;
 import rs.teslaris.project.dto.project.PrepopulatedOrganisationDTO;
 import rs.teslaris.project.dto.project.PrepopulatedProjectMetadataDTO;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.service.interfaces.commontypes.CordisProjectDataService;
 import rs.teslaris.project.util.CordisXmlClient;
 

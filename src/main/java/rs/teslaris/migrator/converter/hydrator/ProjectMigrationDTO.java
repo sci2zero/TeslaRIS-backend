@@ -1,12 +1,12 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.List;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.MigrationDTO;
-import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
 
 /**
  * Consortium OUs and team persons are resolved at creation time.

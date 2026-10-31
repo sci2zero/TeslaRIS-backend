@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.ExpertiseOrSkillAlreadyExistsException;
 
 @Service
 @RequiredArgsConstructor
@@ -52,12 +53,11 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         var person = personService.findOne(personId);
         var newExpertiseOrSkill = new ExpertiseOrSkill();
 
+        assertExpertiseOrSkillIsNotADuplicate(personId, dto);
+
         setCommonFields(newExpertiseOrSkill, dto);
         newExpertiseOrSkill.setPerson(person);
         var savedExpertiseOrSkill = expertiseOrSkillRepository.save(newExpertiseOrSkill);
-
-        person.getExpertisesAndSkills().add(newExpertiseOrSkill);
-        personService.save(person);
 
         return ExpertiseOrSkillConverter.toDTO(savedExpertiseOrSkill);
     }
@@ -110,6 +110,27 @@ public class ExpertiseOrSkillServiceImpl extends JPAServiceImpl<ExpertiseOrSkill
         save(expertiseOrSkill);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
+    }
+
+    private void assertExpertiseOrSkillIsNotADuplicate(Integer personId,
+                                                       ExpertiseOrSkillDTO dto) {
+        if (Objects.isNull(dto.getName())) {
+            return;
+        }
+
+        var names = dto.getName().stream()
+            .map(name -> name.getContent().trim().toLowerCase())
+            .filter(name -> !name.isEmpty())
+            .collect(Collectors.toSet());
+
+        if (names.isEmpty()) {
+            return;
+        }
+
+        if (expertiseOrSkillRepository.existsForPersonWithName(personId, names)) {
+            throw new ExpertiseOrSkillAlreadyExistsException(
+                "expertiseOrSkillAlreadyExistsMessage");
+        }
     }
 
     private void setCommonFields(ExpertiseOrSkill expertiseOrSkill, ExpertiseOrSkillDTO dto) {

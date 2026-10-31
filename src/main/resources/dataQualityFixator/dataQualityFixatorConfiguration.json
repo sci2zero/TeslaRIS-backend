@@ -1,0 +1,10 @@
+{
+  "pipelines" : [ {
+    "pipelineName" : "Test Pipeline",
+    "profileName" : "ptcris",
+    "version" : 1,
+    "matchedRemarkKeys" : [ "doiNotResolvable", "doiTooLong", "doiTooShort" ],
+    "appliedFixators" : [ "identifierAffix", "typographicCharacter" ],
+    "createVersionOnEveryStep" : false
+  } ]
+}

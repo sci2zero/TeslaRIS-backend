@@ -369,8 +369,9 @@ public class RevisionServiceImpl implements RevisionService {
                 return null;
             });
 
-            recordRestoredRevision(entityType, entityId, revision, json, restorer,
-                degradedReferences);
+            recordRevision(entityType, entityId, revision, json, restorer, degradedReferences,
+                "revisionRestore:" + revision.getMajorVersion() + "." +
+                    revision.getMinorVersion());
         } catch (Exception e) {
             log.error("Failed to restore revision {}.{} of entity '{}' (ID={}).",
                 majorVersion, minorVersion, entityType, entityId, e);
@@ -386,6 +387,51 @@ public class RevisionServiceImpl implements RevisionService {
 
         log.info("Restored entity '{}' (ID={}) to revision {}.{}.",
             entityType, entityId, majorVersion, minorVersion);
+    }
+
+    @Override
+    @Transactional
+    public void applyFixedState(String entityType, Integer entityId, Object dto,
+                                String adminNote) {
+        var restorer = revisionRestorerRegistry
+            .get(entityType)
+            .orElseThrow(() -> new RevisionRestoreException(
+                String.format("Restoring revisions of type %s is not supported.", entityType)));
+
+        revisionRepository.lockForRevisionWrite(entityType, entityId);
+
+        var baselineRevision = revisionRepository
+            .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
+            .orElseThrow(() -> new NotFoundException(
+                String.format("No revision of %s with ID %d to fix.", entityType, entityId)));
+
+        assertRestorable(entityType, entityId);
+
+        try {
+            var fixedJson = objectMapper.writeValueAsString(dto);
+
+            var degradedReferences = RestorationContext.collectDuring(() -> {
+                restoreUnchecked(restorer, entityId, dto);
+                return null;
+            });
+
+            recordRevision(entityType, entityId, baselineRevision, fixedJson, restorer,
+                degradedReferences, adminNote);
+        } catch (Exception e) {
+            log.error("Failed to apply fixed state to entity '{}' (ID={}), noted as '{}'.",
+                entityType, entityId, adminNote, e);
+
+            if (e instanceof RevisionRestoreException revisionRestoreException) {
+                throw revisionRestoreException;
+            }
+
+            throw new RevisionRestoreException(
+                String.format("Unable to apply fixed state to %s with ID %d. Reason: %s",
+                    entityType, entityId, e.getMessage()));
+        }
+
+        log.info("Applied fixed state to entity '{}' (ID={}), noted as '{}'.",
+            entityType, entityId, adminNote);
     }
 
     // The edit methods refuse these too, but late and with an untranslatable reason.
@@ -410,20 +456,24 @@ public class RevisionServiceImpl implements RevisionService {
         }
     }
 
-    private void recordRestoredRevision(String entityType, Integer entityId,
-                                        EntityRevision restoredRevision, String restoredJson,
-                                        RevisionRestorer<?> restorer,
-                                        List<DegradedReference> degradedReferences)
+    /**
+     * Records whatever state the entity actually reached as a new revision on the same major line
+     * as {@code baselineRevision} and publishes it for assessment.
+     */
+    private void recordRevision(String entityType, Integer entityId,
+                                EntityRevision baselineRevision, String baselineJson,
+                                RevisionRestorer<?> restorer,
+                                List<DegradedReference> degradedReferences, String adminNote)
         throws JsonProcessingException {
 
         var latestRevision = revisionRepository
             .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)
-            .orElse(restoredRevision);
+            .orElse(baselineRevision);
 
         var sameMajorLine = Objects.equals(
-            restoredRevision.getMajorVersion(), latestRevision.getMajorVersion());
+            baselineRevision.getMajorVersion(), latestRevision.getMajorVersion());
 
-        var achievedJson = readAchievedState(entityType, entityId, restorer, restoredJson);
+        var achievedJson = readAchievedState(entityType, entityId, restorer, baselineJson);
 
         var revision =
             EntityRevision.builder()
@@ -437,25 +487,21 @@ public class RevisionServiceImpl implements RevisionService {
                 .restorationWarnings(new ArrayList<>(degradedReferences))
                 .build();
 
-        revision.setAdminNote(
-            "revisionRestore:" +
-                restoredRevision.getMajorVersion() + "." +
-                restoredRevision.getMinorVersion()
-        );
+        revision.setAdminNote(adminNote);
 
         revisionRepository.save(revision);
 
         if (!degradedReferences.isEmpty()) {
-            log.warn("Restore of entity '{}' (ID={}) to revision {}.{} degraded {} reference(s).",
-                entityType, entityId, restoredRevision.getMajorVersion(),
-                restoredRevision.getMinorVersion(), degradedReferences.size());
+            log.warn("Write to entity '{}' (ID={}) noted as '{}' degraded {} reference(s).",
+                entityType, entityId, adminNote, degradedReferences.size());
         }
 
         applicationEventPublisher.publishEvent(
             new DataQualityAssessmentEvent(revision, achievedJson));
 
-        log.info("Recorded restored state of entity '{}' (ID={}) as revision {}.{}.",
-            entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion());
+        log.info("Recorded state of entity '{}' (ID={}) as revision {}.{} ({}).",
+            entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion(),
+            adminNote);
     }
 
     /**

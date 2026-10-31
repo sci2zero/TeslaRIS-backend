@@ -35,9 +35,7 @@ public class ModuleBoundaryTest {
         "thesislibrary"
     );
 
-    private static final Map<String, Set<String>> KNOWN_EXCEPTIONS = Map.of(
-        "migrator", Set.of("project")
-    );
+    private static final Map<String, Set<String>> KNOWN_EXCEPTIONS = Map.of();
 
     /**
      * {@code core} reaching back into a module is the worse direction: it makes that module

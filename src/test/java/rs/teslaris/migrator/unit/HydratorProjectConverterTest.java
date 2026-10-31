@@ -20,6 +20,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -28,9 +31,6 @@ import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.ProjectStatus;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -49,7 +49,9 @@ public class HydratorProjectConverterTest {
             "value": "TEST/0001/2020"},
            {"type": "https://w3id.org/cerif/vocab/IdentifierTypes#QREN", "value": "QREN-1"},
            {"type": "https://w3id.org/cerif/vocab/IdentifierTypes#FundingProgram",
-            "value": "Test Programme"}],
+            "value": "Test Programme"},
+           {"type": "https://w3id.org/cerif/vocab/IdentifierTypes#URL",
+            "value": " https://example.com/project "}],
          "startDate": "2018-01-01", "endDate": "2020-12-31",
          "subjects": [{"language": "en", "value": "Natural sciences"},
                       {"language": "pt", "value": "Ciências naturais"}]}
@@ -113,6 +115,15 @@ public class HydratorProjectConverterTest {
         assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
             eq("CW-002-MAP-000019"), eq("identifier type 'FundingProgram' not mapped"));
+    }
+
+    @Test
+    void shouldMapUrlIdentifierToUris() throws Exception {
+        var dto = converter.toDTO(document(FULL_PROJECT)).project();
+
+        assertEquals(Set.of("https://example.com/project"), dto.getUris());
+        verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), eq("identifier type 'URL' not mapped"));
     }
 
     @Test

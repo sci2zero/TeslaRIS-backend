@@ -6,12 +6,14 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.project.ProjectCollaborationType;
+import rs.teslaris.core.model.project.ProjectResearchType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.repository.commontypes.CurrencyRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.project.model.funding.Funding;
@@ -20,11 +22,8 @@ import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
 import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectDocumentType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
@@ -58,23 +57,7 @@ public class ProjectDataInitializer {
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1,
                                              Thesis document1) {
-        var currencyEuro = new Currency();
-        currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
-        currencyEuro.setCode("EUR");
-        currencyEuro.setSymbol("€");
-
-        var currencyDollar = new Currency();
-        currencyDollar.setName(Set.of(new MultiLingualContent(englishTag, "Dollar", 1)));
-        currencyDollar.setCode("USD");
-        currencyDollar.setSymbol("$");
-
-        var currencySerbianDinar = new Currency();
-        currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
-        currencySerbianDinar.setCode("RSD");
-        currencySerbianDinar.setSymbol("RSD");
-
-        currencyRepository.saveAll(List.of(currencyEuro, currencyDollar, currencySerbianDinar));
+        var currencyEuro = currencyRepository.findByCode("EUR").orElseThrow();
 
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(

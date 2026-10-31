@@ -604,6 +604,40 @@ public class RevisionServiceTest {
     }
 
     @Test
+    public void shouldRecordFixedStateUnderGivenAdminNote() {
+        // given
+        var latestRevision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 2, 3);
+        var restorer = stubRestorerFor(latestRevision);
+        var fixedDto = new DummyDTO(1, "Fixed title");
+
+        doReturn(fixedDto).when(restorer).readCurrentState(1);
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(latestRevision));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            revisionService.applyFixedState(ENTITY_TYPE, 1, fixedDto, "revisionFixator:titles");
+
+            // then
+            verify(restorer).restore(1, fixedDto);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+
+            assertEquals("revisionFixator:titles", savedRevision.getAdminNote());
+            assertEquals(2, savedRevision.getMajorVersion());
+            assertEquals(4, savedRevision.getMinorVersion());
+            assertTrue(CompressionUtil.decompress(savedRevision.getCompressedContent())
+                .contains("Fixed title"));
+
+            verify(applicationEventPublisher).publishEvent(any(DataQualityAssessmentEvent.class));
+        }
+    }
+
+    @Test
     public void shouldRecordStateEntityActuallyReachedWhenRestorerCanReadItBack() {
         // given
         var revision = revisionWithContent("{\"id\":1,\"title\":\"Old title\"}", 1, 2);

@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -13,11 +14,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.PrizeDTO;
@@ -46,6 +50,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.exceptionhandling.exception.PrizeAlreadyExistsException;
 
 @SpringBootTest
 public class PrizeServiceTest {
@@ -94,6 +99,7 @@ public class PrizeServiceTest {
             new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
 
         var newPrize = new Prize();
+        newPrize.setPerson(person);
 
         when(personService.findOne(1)).thenReturn(person);
         when(prizeRepository.save(any(Prize.class))).thenReturn(
@@ -102,10 +108,6 @@ public class PrizeServiceTest {
             Optional.of(new PersonIndex() {{
                 setEmploymentInstitutionsIdHierarchy(List.of(1, 2, 3));
             }}));
-        when(commissionRepository.findCommissionsThatAssessedPrize(any())).thenReturn(
-            Collections.emptyList());
-        when(commissionRepository.findAssessmentClassificationBasicInfoForPrizeAndCommissions(any(),
-            any())).thenReturn(Collections.emptyList());
 
         // When
         var responseDTO = prizeService.addPrize(1, dto);
@@ -113,6 +115,26 @@ public class PrizeServiceTest {
         // Then
         assertNotNull(responseDTO);
         verify(prizeIndexRepository, times(1)).save(any());
+        verify(commissionRepository, never()).findCommissionsThatAssessedPrize(any());
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenAddingDuplicatePrize() {
+        // Given
+        var dto = new PrizeDTO();
+        dto.setTitle(List.of(new MultilingualContentDTO(1, "EN", " Best Paper Award ", 1)));
+        dto.setDate(LocalDate.of(2024, 5, 1));
+
+        when(personService.findOne(1)).thenReturn(new Person());
+        when(prizeRepository.existsForPersonWithTitleAndDate(1, LocalDate.of(2024, 5, 1),
+            Set.of("best paper award"))).thenReturn(true);
+
+        // When
+        assertThrows(PrizeAlreadyExistsException.class, () -> prizeService.addPrize(1, dto));
+
+        // Then
+        verify(prizeRepository, never()).save(any(Prize.class));
+        verify(prizeIndexRepository, never()).save(any());
     }
 
     @Test

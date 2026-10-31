@@ -51,6 +51,8 @@ public class DbInitializer implements ApplicationRunner {
 
     private final CountryDataInitializer countryDataInitializer;
 
+    private final CurrencyDataInitializer currencyDataInitializer;
+
     private final BrandingDataInitializer brandingDataInitializer;
 
     private final AssessmentDataInitializer assessmentDataInitializer;
@@ -89,6 +91,9 @@ public class DbInitializer implements ApplicationRunner {
         // COUNTRIES
         countryDataInitializer.initializeCountries(languages.serbianTag(),
             languages.englishTag());
+
+        // CURRENCIES
+        currencyDataInitializer.initializeCurrencies(languages.englishTag());
 
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(languages.englishTag(),

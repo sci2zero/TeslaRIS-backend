@@ -18,6 +18,7 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.OrganisationUnitContribution;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter

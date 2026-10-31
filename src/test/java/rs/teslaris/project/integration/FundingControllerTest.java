@@ -17,11 +17,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
+import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
-import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.dto.funding.FundingPartDTO;
-import rs.teslaris.project.model.funding.FundingType;
 
 @SpringBootTest
 public class FundingControllerTest extends BaseTest {

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +21,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.core.model.commontypes.Currency;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -31,22 +37,20 @@ import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
-import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
-import rs.teslaris.project.model.project.OrganisationUnitProjectContributionType;
-import rs.teslaris.project.model.project.PersonProjectContributionType;
-import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ProjectEntityCreatorTest {
+
+    private static final MigrationRun RUN = MigrationRun.builder().id("run-1").build();
 
     private static final HydratorCVModel.Institution COORDINATOR =
         new HydratorCVModel.Institution("Test University", null, null, null);
@@ -55,7 +59,7 @@ public class ProjectEntityCreatorTest {
         new HydratorCVModel.Institution("Test Partner", null, null, null);
 
     @Mock
-    private ProjectService projectService;
+    private ProjectMigrationWriter projectMigrationWriter;
 
     @Mock
     private HydratorInstitutionResolver institutionResolver;
@@ -85,14 +89,14 @@ public class ProjectEntityCreatorTest {
     void setUp() {
         var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
             mock(LanguageService.class), mock(ResearchAreaService.class));
-        creator = new ProjectEntityCreator(projectService, institutionResolver, personResolver,
+        creator = new ProjectEntityCreator(projectMigrationWriter, institutionResolver,
+            personResolver,
             conversionUtil,
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
             idResolver, migrationLog);
 
-        var project = new Project();
-        project.setId(42);
-        when(projectService.createProject(any())).thenReturn(project);
+        when(projectMigrationWriter.migrate(any(), any()))
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true));
     }
 
     @Test
@@ -109,7 +113,7 @@ public class ProjectEntityCreatorTest {
                 new ProjectMigrationDTO.ConsortiumEntry(
                     OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
                 null),
-            true);
+            RUN);
 
         assertEquals(42, id);
         var linked = dto.getOrganisations().get(0);
@@ -132,8 +136,8 @@ public class ProjectEntityCreatorTest {
         assertThrows(InvalidSourceValueException.class, () -> creator.create(
             new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
                 "invalid date 'x'"),
-            true));
-        verify(projectService, never()).createProject(any());
+            RUN));
+        verify(projectMigrationWriter, never()).migrate(any(), any());
     }
 
     @Test
@@ -150,7 +154,7 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
                 "Jane Smith", null, null, 2),
             new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
-                "Test Member", null, null, 3)), null), true);
+                "Test Member", null, null, 3)), null), RUN);
 
         var linked = dto.getPersons().get(0);
         assertEquals(9, linked.getPersonId());
@@ -175,7 +179,7 @@ public class ProjectEntityCreatorTest {
         creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(
             new ProjectMigrationDTO.ConsortiumEntry(
                 OrganisationUnitProjectContributionType.PARTNER, PARTNER, 1,
-                new HydratorProjectModel.Amount("EUR", "1000"))), List.of(), null), true);
+                new HydratorProjectModel.Amount("EUR", "1000"))), List.of(), null), RUN);
 
         var parts = dto.getOrganisations().getFirst().getFundingParts();
         assertEquals(1, parts.size());
@@ -187,19 +191,30 @@ public class ProjectEntityCreatorTest {
     }
 
     @Test
+    void shouldReuseTheProjectAPreviousRunCreated() {
+        when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
+            .thenReturn(Optional.of(7));
+        when(projectMigrationWriter.migrate(any(), eq(7)))
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false));
+
+        var id = creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(),
+            List.of(), null), RUN);
+
+        assertEquals(7, id);
+        verify(projectMigrationWriter).migrate(any(), eq(7));
+    }
+
+    @Test
     void shouldRememberConsortiumContributions() {
-        var project = new Project();
-        project.setId(42);
-        project.getOrganisations().add(contribution(101, 1));
-        project.getOrganisations().add(contribution(102, 2));
-        when(projectService.createProject(any())).thenReturn(project);
+        when(projectMigrationWriter.migrate(any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
-            null), true);
+            null), RUN);
 
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101);
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, RUN);
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102);
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, RUN);
     }
 }

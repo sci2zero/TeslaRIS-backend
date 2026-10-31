@@ -2291,6 +2291,52 @@ public class DataQualityServiceTest {
     }
 
     @Test
+    public void shouldCarryTargetDimensionAndMetricOfEveryListedConstraint() {
+        // given
+        var remark = new DataQualityAssessmentConfigurationLoader.DataQualityRemark(
+            Map.of("en", "Title"), Map.of("en", "Message"), "Document.JournalPublication",
+            IssueSeverity.ERROR, QualityDimension.STRUCTURAL_CONSISTENCY, "PTCRIS-01",
+            false, 1.0, false, Map.of());
+
+        try (var configurationLoader = mockStatic(
+            DataQualityAssessmentConfigurationLoader.class)) {
+
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getLatestProfileVersion(
+                    "ptcris"))
+                .thenReturn("1.0.0");
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getProfile("ptcris", "1.0.0"))
+                .thenReturn(profileHolding(Map.of("titleTooLong", remark)));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.listRuleKeys(
+                    anyString(), anyString(), any(), any(), any(), any()))
+                .thenReturn(new LinkedHashSet<>(List.of("titleTooLong")));
+            configurationLoader
+                .when(() -> DataQualityAssessmentConfigurationLoader.getDataQualityTitle(
+                    anyString(), anyString(), anyString()))
+                .thenReturn(Set.of(multilingualContent("Title")));
+
+            // when
+            var result = dataQualityService.listProfileConstraints("ptcris", null, null, null);
+
+            // then (the picker filters in the browser, so it needs the fields it filters by)
+            assertEquals(1, result.size());
+            assertEquals("Document.JournalPublication", result.getFirst().target());
+            assertEquals(QualityDimension.STRUCTURAL_CONSISTENCY,
+                result.getFirst().dimension());
+            assertEquals("PTCRIS-01", result.getFirst().metric());
+        }
+    }
+
+    private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileHolding(
+        Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
+        return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
+            "1.0.0", Map.of(), 0.0, Map.of(), Map.of(), Map.of(), remarks, Map.of(), Map.of(),
+            Map.of());
+    }
+
+    @Test
     public void shouldListEveryMetricOfTheProfileWithItsDescription() {
         // given
         try (var configurationLoader = mockStatic(

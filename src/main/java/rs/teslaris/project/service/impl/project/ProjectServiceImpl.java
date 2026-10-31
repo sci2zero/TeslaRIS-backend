@@ -22,10 +22,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
+import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
+import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
+import rs.teslaris.core.dto.project.ProjectsRelationDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
@@ -45,16 +50,11 @@ import rs.teslaris.project.converter.project.OrganisationUnitProjectContribution
 import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
 import rs.teslaris.project.converter.project.ProjectConverter;
 import rs.teslaris.project.converter.project.ProjectsRelationConverter;
-import rs.teslaris.project.dto.project.OrganisationUnitProjectContributionDTO;
-import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
-import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.dto.project.ProjectsRelationDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.project.OrganisationUnitProjectContributionRepository;
 import rs.teslaris.project.repository.project.PersonProjectContributionRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
@@ -396,7 +396,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
-        if (Objects.nonNull(projectDTO.getDateFrom()) &&
+        if (!MigrationContext.isActive() &&
+            Objects.nonNull(projectDTO.getDateFrom()) &&
             Objects.nonNull(projectDTO.getDateTo()) &&
             projectDTO.getDateTo().isBefore(projectDTO.getDateFrom())) {
             throw new DateRangeException(
