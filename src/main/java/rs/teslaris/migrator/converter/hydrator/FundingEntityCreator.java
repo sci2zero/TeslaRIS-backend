@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.funding.FundingPartDTO;
 import rs.teslaris.core.migration.FundingMigrationWriter;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -37,7 +38,7 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
 
 
     @Override
-    public Integer create(FundingMigrationDTO dto, boolean performIndex) {
+    public Integer create(FundingMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
         var key = dto.sourceKey();

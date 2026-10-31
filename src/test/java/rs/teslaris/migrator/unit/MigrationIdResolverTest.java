@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import rs.teslaris.migrator.model.MigrationItemStatus;
 import rs.teslaris.migrator.model.MigrationRecordLog;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -59,9 +60,12 @@ public class MigrationIdResolverTest {
 
     @Test
     public void shouldRememberEntityCreatedAsPartOfAnother() {
+        // given
+        var run = MigrationRun.builder().id("run-1").itemsCreated(3).build();
+
         // when
         idResolver.remember("test-source", MigrationEntityType.PROJECT_ORGANISATION,
-            "TEST001#consortium#2", 11);
+            "TEST001#consortium#2", 11, run);
 
         // then
         var captor = ArgumentCaptor.forClass(MigrationRecordLog.class);
@@ -72,5 +76,7 @@ public class MigrationIdResolverTest {
         assertEquals("TEST001#consortium#2", entry.getSourceKey());
         assertEquals(MigrationItemStatus.CREATED, entry.getStatus());
         assertEquals(11, entry.getTargetEntityId());
+        assertEquals("run-1", entry.getRunId());
+        assertEquals(4, run.getItemsCreated());
     }
 }

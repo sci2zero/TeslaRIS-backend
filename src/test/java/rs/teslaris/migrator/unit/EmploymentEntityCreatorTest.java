@@ -21,6 +21,7 @@ import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentMigrationDTO;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
@@ -30,6 +31,8 @@ import rs.teslaris.migrator.util.MigrationLog;
 
 @ExtendWith(MockitoExtension.class)
 public class EmploymentEntityCreatorTest {
+
+    private static final MigrationRun RUN = MigrationRun.builder().id("run-1").build();
 
     private static final HydratorCVModel.Institution INSTITUTION =
         new HydratorCVModel.Institution("Test University", null,
@@ -58,7 +61,7 @@ public class EmploymentEntityCreatorTest {
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
 
         var id = creator.create(
-            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), false);
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), RUN);
 
         assertEquals(42, id);
         assertEquals(7, employment.getOrganisationUnitId());
@@ -71,7 +74,7 @@ public class EmploymentEntityCreatorTest {
 
         assertThrows(MigrationException.class, () -> creator.create(
             new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, new EmploymentDTO(),
-                null), false));
+                null), RUN));
         verify(involvementService, never()).addEmployment(anyInt(), any());
     }
 
@@ -80,7 +83,7 @@ public class EmploymentEntityCreatorTest {
         var dto = new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, new EmploymentDTO(),
             "invalid date (year='2015', month='2', day='30')");
 
-        assertThrows(InvalidSourceValueException.class, () -> creator.create(dto, false));
+        assertThrows(InvalidSourceValueException.class, () -> creator.create(dto, RUN));
         verify(involvementService, never()).addEmployment(anyInt(), any());
     }
 
@@ -96,7 +99,7 @@ public class EmploymentEntityCreatorTest {
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
 
         var id = creator.create(
-            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), false);
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), RUN);
 
         assertEquals(43, id);
         assertNull(employment.getOrganisationUnitId());
