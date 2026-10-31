@@ -19,6 +19,7 @@ import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.PrizeMigrationDTO;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -26,6 +27,8 @@ import rs.teslaris.migrator.util.MigrationException;
 
 @ExtendWith(MockitoExtension.class)
 public class PrizeEntityCreatorTest {
+
+    private static final MigrationRun RUN = MigrationRun.builder().id("run-1").build();
 
     @Mock
     private PrizeService prizeService;
@@ -46,7 +49,7 @@ public class PrizeEntityCreatorTest {
             .thenReturn(5);
         when(prizeService.addPrize(5, prize)).thenReturn(response);
 
-        var id = creator.create(new PrizeMigrationDTO("cv-1", "7", prize, null), false);
+        var id = creator.create(new PrizeMigrationDTO("cv-1", "7", prize, null), RUN);
 
         assertEquals(42, id);
     }
@@ -57,7 +60,7 @@ public class PrizeEntityCreatorTest {
             .thenThrow(new MigrationException("not migrated"));
 
         assertThrows(MigrationException.class,
-            () -> creator.create(new PrizeMigrationDTO("cv-1", "7", new PrizeDTO(), null), true));
+            () -> creator.create(new PrizeMigrationDTO("cv-1", "7", new PrizeDTO(), null), RUN));
         verify(prizeService, never()).addPrize(anyInt(), any());
     }
 
@@ -66,7 +69,7 @@ public class PrizeEntityCreatorTest {
         var dto = new PrizeMigrationDTO("cv-1", "7", new PrizeDTO(), "invalid effective date 'x'");
 
         var exception = assertThrows(InvalidSourceValueException.class,
-            () -> creator.create(dto, false));
+            () -> creator.create(dto, RUN));
 
         assertEquals("invalid effective date 'x'", exception.getMessage());
         verify(prizeService, never()).addPrize(anyInt(), any());

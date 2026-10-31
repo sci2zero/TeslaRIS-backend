@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -33,6 +34,8 @@ public class HydratorProjectConverter implements
     private static final String FCT_REFERENCE_TYPE = "ProjectReference";
 
     private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of(FCT_REFERENCE_TYPE, "QREN");
+
+    private static final String URL_TYPE = "URL";
 
     private static final String ENGLISH = "en";
 
@@ -83,6 +86,7 @@ public class HydratorProjectConverter implements
 
         dto.setInternalIdentifiers(identifiers(key, project.identifiers()));
         dto.setNationalId(fctReference(project.identifiers()));
+        dto.setUris(uris(project.identifiers()));
         dto.setResearchAreasId(new HashSet<>(researchAreas(key, project.subjects())));
 
         String rejection = null;
@@ -150,7 +154,7 @@ public class HydratorProjectConverter implements
 
         addTeam(key, entries, team.principalInvestigator(),
             PersonProjectContributionType.PRINCIPLE_INVESTIGATOR);
-        addTeam(key, entries, Objects.isNull(team.contact()) ? null : List.of(team.contact()),
+        addTeam(key, entries, team.contact(),
             PersonProjectContributionType.CONTACT);
         addTeam(key, entries, team.members(), PersonProjectContributionType.TEAM_MEMBER);
 
@@ -252,9 +256,10 @@ public class HydratorProjectConverter implements
         identifiers.stream()
             .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()))
             .forEach(identifier -> {
-                if (PROJECT_IDENTIFIER_TYPES.contains(typeName(identifier.type()))) {
+                var type = typeName(identifier.type());
+                if (PROJECT_IDENTIFIER_TYPES.contains(type)) {
                     result.add(identifier.value().trim());
-                } else {
+                } else if (!URL_TYPE.equals(type)) {
                     dropped(key, HydratorMappingRule.sciproj(19),
                         "identifier type '" + typeName(identifier.type()) + "' not mapped");
                 }
@@ -274,6 +279,19 @@ public class HydratorProjectConverter implements
             .map(identifier -> identifier.value().trim())
             .findFirst()
             .orElse(null);
+    }
+
+    // CW-002-MAP-000019: the project's web page
+    private Set<String> uris(List<HydratorProjectModel.TypedValue> identifiers) {
+        if (Objects.isNull(identifiers)) {
+            return new HashSet<>();
+        }
+
+        return identifiers.stream()
+            .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()) &&
+                URL_TYPE.equals(typeName(identifier.type())))
+            .map(identifier -> identifier.value().trim())
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     // CW-002-MAP-000032: the English label is matched; the Portuguese one is the same field

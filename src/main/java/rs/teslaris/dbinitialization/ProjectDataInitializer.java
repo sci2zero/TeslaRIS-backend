@@ -6,7 +6,6 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -17,7 +16,6 @@ import rs.teslaris.core.model.project.ProjectResearchType;
 import rs.teslaris.core.model.project.ProjectStatus;
 import rs.teslaris.core.repository.commontypes.CurrencyRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
-import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
@@ -59,28 +57,7 @@ public class ProjectDataInitializer {
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1,
                                              Thesis document1) {
-        var currencyEuro = new Currency();
-        currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
-        currencyEuro.setCode("EUR");
-        currencyEuro.setSymbol("€");
-        currencyEuro.setProcessedName(" " + StringUtil.performSimpleLatinPreprocessing("Euro"));
-
-        var currencyDollar = new Currency();
-        currencyDollar.setName(Set.of(new MultiLingualContent(englishTag, "Dollar", 1)));
-        currencyDollar.setCode("USD");
-        currencyDollar.setSymbol("$");
-        currencyDollar.setProcessedName(
-            " " + StringUtil.performSimpleLatinPreprocessing("Dollar"));
-
-        var currencySerbianDinar = new Currency();
-        currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
-        currencySerbianDinar.setCode("RSD");
-        currencySerbianDinar.setSymbol("RSD");
-        currencySerbianDinar.setProcessedName(
-            " " + StringUtil.performSimpleLatinPreprocessing("Serbian Dinar"));
-
-        currencyRepository.saveAll(List.of(currencyEuro, currencyDollar, currencySerbianDinar));
+        var currencyEuro = currencyRepository.findByCode("EUR").orElseThrow();
 
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(

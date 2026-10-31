@@ -59,6 +59,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
@@ -536,6 +537,26 @@ public class ProjectServiceTest {
             () -> projectService.createProject(projectDTO));
 
         verify(projectRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldCreateProjectWithInvertedDatesDuringMigration() {
+        // given
+        var projectDTO = baseProjectDTO();
+        projectDTO.setDateFrom(LocalDate.now().plusYears(1));
+        projectDTO.setDateTo(LocalDate.now());
+
+        var savedProject = new Project();
+        savedProject.setId(1);
+
+        when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectIndexRepository.save(any(ProjectIndex.class))).thenReturn(new ProjectIndex());
+
+        // when
+        MigrationContext.runDuring(() -> projectService.createProject(projectDTO));
+
+        // then
+        verify(projectRepository).save(any(Project.class));
     }
 
     @Test

@@ -242,7 +242,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
-        if (Objects.nonNull(fundingDTO.getDateFrom()) &&
+        // Migrated dates are carried over as the source has them
+        if (!MigrationContext.isActive() && Objects.nonNull(fundingDTO.getDateFrom()) &&
             Objects.nonNull(fundingDTO.getDateTo()) &&
             fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
             throw new DateRangeException("Funding must start before it ends.");

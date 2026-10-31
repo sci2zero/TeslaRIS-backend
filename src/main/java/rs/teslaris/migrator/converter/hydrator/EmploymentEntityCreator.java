@@ -4,6 +4,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -26,7 +27,7 @@ public class EmploymentEntityCreator implements EntityCreator<EmploymentMigratio
 
 
     @Override
-    public Integer create(EmploymentMigrationDTO dto, boolean performIndex) {
+    public Integer create(EmploymentMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
         var personId = idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON,
