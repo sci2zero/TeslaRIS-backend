@@ -33,4 +33,7 @@ public class Currency extends BaseEntity {
     // from https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
     @Column(name = "code", nullable = false)
     private String code;
+
+    @Column(name = "processed_name", length = 2048)
+    private String processedName;
 }
