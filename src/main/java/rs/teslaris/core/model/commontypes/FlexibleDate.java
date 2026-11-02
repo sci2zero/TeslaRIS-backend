@@ -58,13 +58,17 @@ public class FlexibleDate {
     }
 
     /**
-     * Whether a month or day is present but outside the range it could ever hold. Imports and
-     * migrations store a zero for "unknown" rather than leaving the column null, which is not a
-     * value any formatter can render.
+     * Whether a month or day is present but outside the range it could ever hold, or a day stands
+     * without the month it belongs to. Imports and migrations store a zero for "unknown" rather
+     * than leaving the column null, which is not a value any formatter can render.
      */
     public static boolean hasMalformedComponents(FlexibleDate flexibleDate) {
         if (Objects.isNull(flexibleDate)) {
             return false;
+        }
+
+        if (Objects.nonNull(flexibleDate.getDay()) && Objects.isNull(flexibleDate.getMonth())) {
+            return true;
         }
 
         return !isInRange(flexibleDate.getMonth(), 12) || !isInRange(flexibleDate.getDay(), 31);
@@ -80,13 +84,14 @@ public class FlexibleDate {
             return null;
         }
 
-        // An out-of-range component is dropped rather than rendered: a zero month would make
-        // "2011-00", which is not parseable and not valid ISO 8601 for the exporters either.
-        if (!isInRange(flexibleDate.getMonth(), 12)) {
+        // An absent or out-of-range component truncates the string rather than being rendered. A
+        // zero month would make "2011-00" and an absent one "2011-null", and neither is parseable
+        // or valid ISO 8601 for the exporters.
+        if (Objects.isNull(flexibleDate.getMonth()) || !isInRange(flexibleDate.getMonth(), 12)) {
             return String.format("%04d", flexibleDate.getYear());
         }
 
-        if (!isInRange(flexibleDate.getDay(), 31)) {
+        if (Objects.isNull(flexibleDate.getDay()) || !isInRange(flexibleDate.getDay(), 31)) {
             return String.format("%04d-%02d", flexibleDate.getYear(), flexibleDate.getMonth());
         }
 
@@ -111,24 +116,21 @@ public class FlexibleDate {
         return new FlexibleDate(today.getYear(), today.getMonthValue(), today.getDayOfMonth());
     }
 
+    // A partial date resolves to the start of the period that it names.
     @Nullable
     public static LocalDate toLocalDate(FlexibleDate flexibleDate) {
-        if (!isDatePresentAndValid(flexibleDate)) {
-            return null;
-        }
-
-        if (Objects.isNull(flexibleDate.getMonth()) || Objects.isNull(flexibleDate.getDay())) {
+        if (!isDatePresentAndValid(flexibleDate) || hasMalformedComponents(flexibleDate)) {
             return null;
         }
 
         try {
             return LocalDate.of(
                 flexibleDate.getYear(),
-                flexibleDate.getMonth(),
-                flexibleDate.getDay()
+                Objects.requireNonNullElse(flexibleDate.getMonth(), 1),
+                Objects.requireNonNullElse(flexibleDate.getDay(), 1)
             );
         } catch (DateTimeException e) {
-            // Invalid date (e.g., February 30th, April 31st, etc.)
+            // A day the month does not have, such as 30 February.
             return null;
         }
     }
