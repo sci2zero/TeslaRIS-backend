@@ -170,7 +170,8 @@ public class DocumentPublicationServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
+                ".*", ".*", ".*", ".*", License.CC0, null,
+                List.of(), List.of(), List.of(), List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(documentPublicationService, "documentApprovedByDefault", true);
     }
 

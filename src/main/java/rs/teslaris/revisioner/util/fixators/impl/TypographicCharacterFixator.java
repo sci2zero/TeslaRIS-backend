@@ -6,9 +6,11 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.revision.DataQualityFixator;
 import rs.teslaris.revisioner.util.fixators.TypographicCharacterRules;
 
@@ -83,6 +85,25 @@ public class TypographicCharacterFixator implements DataQualityFixator {
         TypographicCharacterRules.normalise(publicationSeries.getTitle());
         TypographicCharacterRules.normalise(publicationSeries.getNameAbbreviation());
         TypographicCharacterRules.normalise(publicationSeries.getSubtitle());
+    }
+
+    @Override
+    public void applyFix(ProjectDTO project) {
+        TypographicCharacterRules.normalise(project.getName());
+        TypographicCharacterRules.normalise(project.getNameAbbreviation());
+        TypographicCharacterRules.normalise(project.getDescription());
+        TypographicCharacterRules.normalise(project.getKeywords());
+    }
+
+    @Override
+    public void applyFix(FundingDTO funding) {
+        TypographicCharacterRules.normalise(funding.getName());
+        TypographicCharacterRules.normalise(funding.getNameAbbreviation());
+        TypographicCharacterRules.normalise(funding.getDescription());
+        TypographicCharacterRules.normalise(funding.getKeywords());
+        TypographicCharacterRules.normalise(funding.getDisplayCall());
+        TypographicCharacterRules.normalise(funding.getDisplayProgram());
+        TypographicCharacterRules.normalise(funding.getDisplayFunder());
     }
 
     @Override

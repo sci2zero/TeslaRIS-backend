@@ -27,8 +27,10 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -358,6 +360,10 @@ public class DataQualityFixatorRunServiceImpl implements DataQualityFixatorRunSe
             fixator.applyFix(publicationSeries);
         } else if (dto instanceof PublisherDTO publisher) {
             fixator.applyFix(publisher);
+        } else if (dto instanceof ProjectDTO project) {
+            fixator.applyFix(project);
+        } else if (dto instanceof FundingDTO funding) {
+            fixator.applyFix(funding);
         }
     }
 

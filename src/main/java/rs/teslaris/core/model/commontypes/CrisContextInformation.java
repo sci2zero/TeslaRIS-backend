@@ -77,8 +77,26 @@ public class CrisContextInformation extends BaseEntity {
         identifierConfiguration = new HashMap<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(name = "cris_national_identifier_name",
+    @JoinTable(name = "cris_person_national_identifier_name",
         joinColumns = @JoinColumn(name = "cris_context_information_id"),
         inverseJoinColumns = @JoinColumn(name = "mlc_id"))
-    private Set<MultiLingualContent> nationalIdentifierName = new HashSet<>();
+    private Set<MultiLingualContent> personNationalIdentifierName = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "cris_ou_national_identifier_name",
+        joinColumns = @JoinColumn(name = "cris_context_information_id"),
+        inverseJoinColumns = @JoinColumn(name = "mlc_id"))
+    private Set<MultiLingualContent> organisationUnitNationalIdentifierName = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "cris_project_national_identifier_name",
+        joinColumns = @JoinColumn(name = "cris_context_information_id"),
+        inverseJoinColumns = @JoinColumn(name = "mlc_id"))
+    private Set<MultiLingualContent> projectNationalIdentifierName = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "cris_document_national_identifier_name",
+        joinColumns = @JoinColumn(name = "cris_context_information_id"),
+        inverseJoinColumns = @JoinColumn(name = "mlc_id"))
+    private Set<MultiLingualContent> documentNationalIdentifierName = new HashSet<>();
 }

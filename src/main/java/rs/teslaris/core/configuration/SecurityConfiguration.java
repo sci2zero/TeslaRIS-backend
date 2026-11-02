@@ -388,6 +388,10 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/publication-series-identifier/{publicationSeriesId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/project-identifier/{projectId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/funding-identifier/{fundingId}")
+                .permitAll()
 
                 // SSE
                 .requestMatchers(HttpMethod.GET, "/api/sse/progress/{exportId}").permitAll()

@@ -4,8 +4,10 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 
 /**
  * A fixator mutates the record's snapshot DTO in place, which the engine then writes back through
@@ -35,5 +37,9 @@ public interface DataQualityFixator {
     default void applyFix(PublisherDTO publisher) {
     }
 
-    // Project and funding overloads follow once their DTOs move to core.
+    default void applyFix(ProjectDTO project) {
+    }
+
+    default void applyFix(FundingDTO funding) {
+    }
 }

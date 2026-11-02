@@ -12,8 +12,10 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.revision.DataQualityFixator;
 import rs.teslaris.revisioner.util.fixators.IdentifierAffixRules;
 import rs.teslaris.revisioner.util.fixators.IdentifierAffixRules.Rule;
@@ -128,6 +130,29 @@ public class IdentifierAffixFixator implements DataQualityFixator {
         apply(IdentifierAffixRules.CONFERENCE_OPEN_ALEX_ID, conference::getOpenAlexId,
             conference::setOpenAlexId, sources);
         apply(IdentifierAffixRules.CONF_ID, conference::getConfId, conference::setConfId, sources);
+    }
+
+    /**
+     * The national identifier is left alone, as its pattern comes from the system configuration
+     * and a clean cannot be checked against it.
+     */
+    @Override
+    public void applyFix(ProjectDTO project) {
+        var sources = sources(project.getUris(), project.getDescription());
+
+        apply(IdentifierAffixRules.DOI, project::getDoi, project::setDoi, sources);
+        apply(IdentifierAffixRules.RAID, project::getRaid, project::setRaid, sources);
+    }
+
+    /**
+     * The grant agreement identifier is left alone, as the funding service stores it without a
+     * pattern and a clean cannot be checked against one.
+     */
+    @Override
+    public void applyFix(FundingDTO funding) {
+        var sources = sources(funding.getUris(), funding.getDescription());
+
+        apply(IdentifierAffixRules.DOI, funding::getDoi, funding::setDoi, sources);
     }
 
     private void apply(Rule rule, Supplier<String> getter, Consumer<String> setter,
