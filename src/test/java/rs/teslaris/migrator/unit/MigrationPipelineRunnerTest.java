@@ -104,7 +104,7 @@ public class MigrationPipelineRunnerTest {
 
         var resolved = new ResolvedPipeline<>(pipeline(
             pagedFetcher(List.of(List.of("a", "b"), List.of("c"))),
-            singleItemRouter((dto, index) -> {
+            singleItemRouter((dto, migrationRun) -> {
                 created.add(dto);
                 return created.size();
             }, FailureHandler.noOp())), MigrationEntityType.PERSON);
@@ -126,7 +126,7 @@ public class MigrationPipelineRunnerTest {
 
         var resolved = new ResolvedPipeline<>(pipeline(
             pagedFetcher(List.of(List.of("ok-1", "boom", "ok-2"))),
-            singleItemRouter((dto, index) -> {
+            singleItemRouter((dto, migrationRun) -> {
                 if ("boom".equals(dto)) {
                     throw new IllegalStateException("creation failed");
                 }
@@ -156,7 +156,7 @@ public class MigrationPipelineRunnerTest {
             default -> SourceBatch.empty(cursor.nextPage());
         };
 
-        var resolved = new ResolvedPipeline<>(pipeline(fetcher, singleItemRouter((dto, index) -> {
+        var resolved = new ResolvedPipeline<>(pipeline(fetcher, singleItemRouter((dto, migrationRun) -> {
             created.add(dto);
             return 1;
         }, FailureHandler.noOp())), MigrationEntityType.PERSON);
@@ -183,7 +183,7 @@ public class MigrationPipelineRunnerTest {
 
         var resolved = new ResolvedPipeline<>(pipeline(
             pagedFetcher(List.of(List.of("done", "fresh"))),
-            singleItemRouter((dto, index) -> {
+            singleItemRouter((dto, migrationRun) -> {
                 created.add(dto);
                 return 1;
             }, FailureHandler.noOp())), MigrationEntityType.PERSON);
@@ -205,7 +205,7 @@ public class MigrationPipelineRunnerTest {
 
         var pipeline = new MigrationPipeline<>(SOURCE, MigrationEntityType.PERSON, String.class,
             pagedFetcher(List.of(List.of("retry-me"))),
-            singleItemRouter((dto, index) -> {
+            singleItemRouter((dto, migrationRun) -> {
                 attempts.incrementAndGet();
                 throw new IllegalStateException("transient");
             }, (item, exception, attempt) -> FailureResolution.retry()),
@@ -226,7 +226,7 @@ public class MigrationPipelineRunnerTest {
 
         var pipeline = pipeline(
             pagedFetcher(List.of(List.of("duplicate"))),
-            singleItemRouter((dto, index) -> {
+            singleItemRouter((dto, migrationRun) -> {
                 throw new IllegalStateException("orcidIdExistsError");
             }, (item, exception, attempt) -> FailureResolution.resolved(42)));
 
@@ -250,7 +250,7 @@ public class MigrationPipelineRunnerTest {
         var run = newRun(MigrationEntityType.THESIS);
         var created = new ArrayList<String>();
 
-        EntityCreator<String> creator = (dto, index) -> {
+        EntityCreator<String> creator = (dto, migrationRun) -> {
             created.add(dto);
             return 1;
         };

@@ -104,6 +104,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/{personId}/person-user").permitAll()
 
+                // CURRENCY
+                .requestMatchers(HttpMethod.GET, "/api/currency/{currencyId}").permitAll()
+
                 // ORGANISATION UNIT
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/{organisationUnitId}")

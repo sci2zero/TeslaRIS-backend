@@ -1,5 +1,6 @@
 package rs.teslaris.migrator.model.hydrator;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
@@ -48,7 +49,8 @@ public class HydratorProjectModel {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Team(
         List<TeamMember> principalInvestigator,
-        TeamMember contact,
+        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        List<TeamMember> contact,
         List<TeamMember> members
     ) {
     }

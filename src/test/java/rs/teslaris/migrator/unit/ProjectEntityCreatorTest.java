@@ -37,6 +37,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
@@ -48,6 +49,8 @@ import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ProjectEntityCreatorTest {
+
+    private static final MigrationRun RUN = MigrationRun.builder().id("run-1").build();
 
     private static final HydratorCVModel.Institution COORDINATOR =
         new HydratorCVModel.Institution("Test University", null, null, null);
@@ -110,7 +113,7 @@ public class ProjectEntityCreatorTest {
                 new ProjectMigrationDTO.ConsortiumEntry(
                     OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
                 null),
-            true);
+            RUN);
 
         assertEquals(42, id);
         var linked = dto.getOrganisations().get(0);
@@ -133,7 +136,7 @@ public class ProjectEntityCreatorTest {
         assertThrows(InvalidSourceValueException.class, () -> creator.create(
             new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
                 "invalid date 'x'"),
-            true));
+            RUN));
         verify(projectMigrationWriter, never()).migrate(any(), any());
     }
 
@@ -151,7 +154,7 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
                 "Jane Smith", null, null, 2),
             new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER,
-                "Test Member", null, null, 3)), null), true);
+                "Test Member", null, null, 3)), null), RUN);
 
         var linked = dto.getPersons().get(0);
         assertEquals(9, linked.getPersonId());
@@ -176,7 +179,7 @@ public class ProjectEntityCreatorTest {
         creator.create(new ProjectMigrationDTO("TEST001", dto, List.of(
             new ProjectMigrationDTO.ConsortiumEntry(
                 OrganisationUnitProjectContributionType.PARTNER, PARTNER, 1,
-                new HydratorProjectModel.Amount("EUR", "1000"))), List.of(), null), true);
+                new HydratorProjectModel.Amount("EUR", "1000"))), List.of(), null), RUN);
 
         var parts = dto.getOrganisations().getFirst().getFundingParts();
         assertEquals(1, parts.size());
@@ -195,7 +198,7 @@ public class ProjectEntityCreatorTest {
             .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false));
 
         var id = creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(),
-            List.of(), null), true);
+            List.of(), null), RUN);
 
         assertEquals(7, id);
         verify(projectMigrationWriter).migrate(any(), eq(7));
@@ -207,11 +210,11 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
-            null), true);
+            null), RUN);
 
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101);
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, RUN);
         verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102);
+            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, RUN);
     }
 }

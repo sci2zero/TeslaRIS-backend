@@ -6,7 +6,6 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -58,23 +57,7 @@ public class ProjectDataInitializer {
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1,
                                              Thesis document1) {
-        var currencyEuro = new Currency();
-        currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
-        currencyEuro.setCode("EUR");
-        currencyEuro.setSymbol("€");
-
-        var currencyDollar = new Currency();
-        currencyDollar.setName(Set.of(new MultiLingualContent(englishTag, "Dollar", 1)));
-        currencyDollar.setCode("USD");
-        currencyDollar.setSymbol("$");
-
-        var currencySerbianDinar = new Currency();
-        currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
-        currencySerbianDinar.setCode("RSD");
-        currencySerbianDinar.setSymbol("RSD");
-
-        currencyRepository.saveAll(List.of(currencyEuro, currencyDollar, currencySerbianDinar));
+        var currencyEuro = currencyRepository.findByCode("EUR").orElseThrow();
 
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(

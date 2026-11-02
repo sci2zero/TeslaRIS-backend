@@ -24,13 +24,17 @@ public enum MigrationEntityType {
     PROCEEDINGS_PUBLICATION,
     THESIS,
     MONOGRAPH,
-    MONOGRAPH_PUBLICATION;
+    MONOGRAPH_PUBLICATION,
+    PERFORMANCE_RELATED_OUTPUT,
+
+    CONFERENCE,
+    PROCEEDINGS;
 
 
     public MigrationEntityType parent() {
         return switch (this) {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, THESIS, MONOGRAPH,
-                 MONOGRAPH_PUBLICATION -> DOCUMENT;
+                 MONOGRAPH_PUBLICATION, PERFORMANCE_RELATED_OUTPUT -> DOCUMENT;
             case PERSON_EMPLOYMENT, PERSON_PRIZE -> PERSON;
             case PROJECT_FUNDING, PROJECT_ORGANISATION -> PROJECT;
             default -> null;

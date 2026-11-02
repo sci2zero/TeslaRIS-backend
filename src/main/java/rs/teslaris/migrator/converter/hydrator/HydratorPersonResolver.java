@@ -1,12 +1,11 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Component;
@@ -105,41 +104,65 @@ public class HydratorPersonResolver implements RunScopedCache {
     }
 
     /**
-     * Match keys of every name form the owner gives in their curriculum - the citation names are
-     * the ones that show up in author lists.
+     * Every name form the owner gives in their curriculum - the citation names are the ones that
+     * show up in author lists.
      */
-    public Set<String> ownerNameKeys(HydratorCVModel.Curriculum record) {
+    public List<PersonNameDTO> ownerNames(HydratorCVModel.Curriculum record) {
+        var names = new ArrayList<PersonNameDTO>();
         var info = identifyingInfo(record);
 
         if (Objects.isNull(info)) {
-            return Set.of();
+            return names;
         }
 
-        var names = new ArrayList<PersonNameDTO>();
+        var personInfo = info.personInfo();
+
+        if (Objects.nonNull(personInfo) && Objects.nonNull(personInfo.names()) &&
+            Objects.nonNull(personInfo.surnames())) {
+            names.add(conversionUtil.personName(personInfo.names(), personInfo.surnames(), null));
+        }
+
+        ownerNameForms(info).forEach(form -> names.add(conversionUtil.splitName(form, null)));
+        names.removeIf(Objects::isNull);
+
+        return names;
+    }
+
+    // The owner's name forms read surname first ("Montillet Jean Philippe"), which some write
+    public List<PersonNameDTO> ownerSurnameFirstNames(HydratorCVModel.Curriculum record) {
+        var info = identifyingInfo(record);
+
+        if (Objects.isNull(info)) {
+            return List.of();
+        }
+
+        return ownerNameForms(info).stream()
+            .filter(form -> !form.contains(","))
+            .map(form -> form.trim().split("\\s+", 2))
+            .filter(words -> words.length == 2)
+            .map(words -> conversionUtil.personName(words[1], words[0], null))
+            .toList();
+    }
+
+    private List<String> ownerNameForms(HydratorCVModel.IdentifyingInfo info) {
+        var forms = new ArrayList<String>();
         var personInfo = info.personInfo();
 
         if (Objects.nonNull(personInfo)) {
-            names.add(conversionUtil.splitName(personInfo.fullName(), null));
-            names.add(conversionUtil.splitName(personInfo.displayName(), null));
-
-            if (Objects.nonNull(personInfo.names()) && Objects.nonNull(personInfo.surnames())) {
-                names.add(conversionUtil.personName(personInfo.names(), personInfo.surnames(),
-                    null));
-            }
+            forms.add(personInfo.fullName());
+            forms.add(personInfo.displayName());
         }
 
         if (Objects.nonNull(info.citationNames()) &&
             Objects.nonNull(info.citationNames().citationName())) {
             info.citationNames().citationName().stream()
                 .filter(Objects::nonNull)
-                .forEach(citationName ->
-                    names.add(conversionUtil.splitName(citationName.value(), null)));
+                .forEach(citationName -> forms.add(citationName.value()));
         }
 
-        return names.stream()
-            .map(conversionUtil::authorMatchKey)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+        forms.removeIf(form -> Objects.isNull(form) || form.isBlank());
+
+        return forms;
     }
 
     public Integer resolveByCienciaId(String cienciaId) {

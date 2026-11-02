@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -49,19 +51,23 @@ public class HydratorFundingExtractorTest {
     private HydratorFundingExtractor extractor;
 
     private static String funding(String id, String startDate) {
+        return funding(id, startDate, "FundingProgramme");
+    }
+
+    private static String funding(String id, String startDate, String type) {
         return """
             {"fundedBy": {"orgUnit": {"id": "OU1", "name": {"language": "en", "value": "Test Agency"},
                "rorId": "https://ror.org/00example",
                "identifiers": [{"type": "%sRingGold", "value": "12345"}]}},
              "fundedAs": {"funding": {"id": "%s", "grantId": "GA-1",
-               "type": {"value": "https://example.com/vocab#FundingProgramme"},
+               "type": {"value": "https://example.com/vocab#%s"},
                "name": {"language": "en", "value": "Test Programme 2020"},
                "amount": {"currency": "eur", "value": "1500.50"},
                "duration": {"startDate": "%s", "endDate": "2021-12-31"},
                "identifiers": [{"type": "%sDOI", "value": "10.1234/test"},
                                {"type": "%sProjectReference", "value": "TEST/0001/2020"},
                                {"type": "%sQREN", "value": "QREN-1"}]}}}
-            """.formatted(ID_TYPES, id, startDate, ID_TYPES, ID_TYPES, ID_TYPES);
+            """.formatted(ID_TYPES, id, type, startDate, ID_TYPES, ID_TYPES, ID_TYPES);
     }
 
     @BeforeEach
@@ -106,7 +112,7 @@ public class HydratorFundingExtractorTest {
         assertEquals(LocalDate.of(2021, 12, 31), dto.getDateTo());
         assertEquals(Boolean.TRUE, dto.getOaMandated());
         assertEquals("https://example.com/oa-policy", dto.getOaMandateUrl());
-        assertTrue(dto.getFundingTypes().isEmpty());
+        assertEquals(Set.of(FundingType.FUNDING_PROGRAMME), dto.getFundingTypes());
         assertEquals(Set.of("F1"), dto.getOldIds());
         assertEquals("SCIPROJ", dto.getImportSource());
     }
@@ -124,12 +130,29 @@ public class HydratorFundingExtractorTest {
     }
 
     @Test
-    void shouldLogMissingTypeVocabulary() throws Exception {
-        extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"));
+    void shouldMapKnownFundingTypes() throws Exception {
+        var result = extractor.extract(document("[" + funding("F1", "2020-01-01", "Contract") +
+            "," + funding("F2", "2020-01-01", "Gift") + "," +
+            funding("F3", "2020-01-01", "Call") + "," +
+            funding("F4", "2020-01-01", "Grant") + "]"));
 
+        assertEquals(Set.of(FundingType.CONTRACT), result.get(0).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.GIFT), result.get(1).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.CALL), result.get(2).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.GRANT), result.get(3).funding().getFundingTypes());
+        verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
+            eq("CW-002-MAP-000002"), anyString());
+    }
+
+    @Test
+    void shouldLogMissingTypeVocabulary() throws Exception {
+        var result =
+            extractor.extract(document("[" + funding("F1", "2020-01-01", "Tender") + "]"));
+
+        assertTrue(result.getFirst().funding().getFundingTypes().isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
             eq("TEST001#funding#F1"), eq("CW-002-MAP-000002"),
-            eq("funding type 'FundingProgramme' has no vocabulary"));
+            eq("funding type 'Tender' has no vocabulary"));
     }
 
     @Test

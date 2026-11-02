@@ -226,6 +226,7 @@ public class AuthorityDataInitializer {
         var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
         var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
         var manageDataQualityFixators = new Privilege("MANAGE_DATA_QUALITY_FIXATORS");
+        var editCurrencies = new Privilege("EDIT_CURRENCIES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -278,7 +279,7 @@ public class AuthorityDataInitializer {
                 deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-                saveModuleAccessConfiguration, manageDataQualityFixators
+                saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies
             ));
 
         return new Privileges(
@@ -338,7 +339,7 @@ public class AuthorityDataInitializer {
             editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-            saveModuleAccessConfiguration, manageDataQualityFixators);
+            saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies);
     }
 
     private Authority adminAuthority(Privileges p) {
@@ -423,7 +424,8 @@ public class AuthorityDataInitializer {
                 p.editProjects(),
                 p.deleteProjects(),
                 p.restoreEntityRevision(), p.backfillEntityRevision(), p.assessDataQuality(),
-                p.saveModuleAccessConfiguration(), p.manageDataQualityFixators()
+                p.saveModuleAccessConfiguration(), p.manageDataQualityFixators(),
+                p.editCurrencies()
             )));
     }
 
@@ -704,7 +706,8 @@ public class AuthorityDataInitializer {
         Privilege backfillEntityRevision,
         Privilege assessDataQuality,
         Privilege saveModuleAccessConfiguration,
-        Privilege manageDataQualityFixators
+        Privilege manageDataQualityFixators,
+        Privilege editCurrencies
     ) {
     }
 }

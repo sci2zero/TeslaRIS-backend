@@ -4,6 +4,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -22,7 +23,7 @@ public class PrizeEntityCreator implements EntityCreator<PrizeMigrationDTO> {
 
 
     @Override
-    public Integer create(PrizeMigrationDTO dto, boolean performIndex) {
+    public Integer create(PrizeMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
         var personId = idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON,

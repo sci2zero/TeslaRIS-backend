@@ -11,6 +11,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.core.migration.ProjectMigrationWriter;
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -36,7 +37,7 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
 
 
     @Override
-    public Integer create(ProjectMigrationDTO dto, boolean performIndex) {
+    public Integer create(ProjectMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
         dto.consortium().forEach(entry ->
@@ -74,7 +75,7 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
         // Fundings of the project link their parts to these contributions
         migrated.organisationContributionIds().forEach((orderNumber, contributionId) ->
             idResolver.remember(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
-                ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), orderNumber), contributionId));
+                ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), orderNumber), contributionId, run));
 
         return migrated.id();
     }

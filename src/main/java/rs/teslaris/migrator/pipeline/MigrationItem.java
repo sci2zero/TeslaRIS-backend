@@ -1,5 +1,6 @@
 package rs.teslaris.migrator.pipeline;
 
+import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.util.MigrationEntityType;
 
 /**
@@ -18,8 +19,8 @@ public record MigrationItem<D>(
     FailureHandler<D> failureHandler
 ) {
 
-    public Integer create(boolean performIndex) {
-        return creator.create(dto, performIndex);
+    public Integer create(MigrationRun run) {
+        return creator.create(dto, run);
     }
 
     public FailureResolution handleFailure(Exception exception, int attempt) {

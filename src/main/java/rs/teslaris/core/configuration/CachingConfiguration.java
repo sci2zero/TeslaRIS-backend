@@ -17,6 +17,8 @@ public class CachingConfiguration {
 
     public static final String LANGUAGE_TAGS_CACHE = "languageTags";
 
+    public static final String OU_HIERARCHY_CACHE = "organisationUnitHierarchy";
+
     public static final String GLOBAL_LEADERBOARDS_CACHE = "globalLeaderboards";
 
     // Global leaderboards are unparameterised, so this cache holds one entry per endpoint.
@@ -34,6 +36,7 @@ public class CachingConfiguration {
         cacheManager.setCaches(List.of(
             // Language tags are evicted explicitly on write so this cache stays unbounded.
             new CaffeineCache(LANGUAGE_TAGS_CACHE, Caffeine.newBuilder().build()),
+            new CaffeineCache(OU_HIERARCHY_CACHE, Caffeine.newBuilder().build()),
             new CaffeineCache(GLOBAL_LEADERBOARDS_CACHE, Caffeine.newBuilder()
                 .maximumSize(GLOBAL_LEADERBOARDS_MAX_ENTRIES)
                 .expireAfterWrite(leaderboardTtl)
