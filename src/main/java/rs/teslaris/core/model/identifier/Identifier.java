@@ -46,4 +46,8 @@ public class Identifier extends BaseEntity {
 
     @Column(name = "url_template")
     private String urlTemplate;
+
+    // Every set value of a featured identifier is shown in the landing page header.
+    @Column(name = "featured")
+    private Boolean featured = false;
 }

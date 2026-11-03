@@ -124,6 +124,7 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
         IdentifierUtil.validateUrlTemplate(identifierDTO.urlTemplate());
         identifier.setUrlTemplate(
             Objects.requireNonNullElse(identifierDTO.urlTemplate(), ""));
+        identifier.setFeatured(Objects.requireNonNullElse(identifierDTO.featured(), false));
     }
 
     @Override
