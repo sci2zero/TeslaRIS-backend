@@ -152,8 +152,13 @@ public class HydratorProjectConverter implements
             return entries;
         }
 
-        addTeam(key, entries, team.principalInvestigator(),
+        // The first principal investigator in the source leads, the others are co-principal
+        var investigators = Objects.requireNonNullElse(team.principalInvestigator(),
+            List.<HydratorProjectModel.TeamMember>of());
+        addTeam(key, entries, investigators.stream().limit(1).toList(),
             PersonProjectContributionType.PRINCIPLE_INVESTIGATOR);
+        addTeam(key, entries, investigators.stream().skip(1).toList(),
+            PersonProjectContributionType.CO_PRINCIPLE_INVESTIGATOR);
         addTeam(key, entries, team.contact(),
             PersonProjectContributionType.CONTACT);
         addTeam(key, entries, team.members(), PersonProjectContributionType.TEAM_MEMBER);

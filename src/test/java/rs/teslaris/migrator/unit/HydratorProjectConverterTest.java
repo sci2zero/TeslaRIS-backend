@@ -250,6 +250,26 @@ public class HydratorProjectConverterTest {
     }
 
     @Test
+    void shouldMakeOnlyFirstPrincipalInvestigatorPrincipal() throws Exception {
+        var result = converter.toDTO(document("""
+            {"projectId": "TEST009", "titles": [{"language": "en", "value": "Test"}],
+             "team": {"principalInvestigator": [
+               {"person": {"personName": "John Doe"}},
+               {"person": {"personName": "Jane Smith"}},
+               {"person": {"personName": "Mark Brown"}}]}}
+            """));
+
+        var team = result.team();
+        assertEquals(3, team.size());
+        assertEquals(PersonProjectContributionType.PRINCIPLE_INVESTIGATOR, team.get(0).type());
+        assertEquals("John Doe", team.get(0).name());
+        assertEquals(PersonProjectContributionType.CO_PRINCIPLE_INVESTIGATOR, team.get(1).type());
+        assertEquals("Jane Smith", team.get(1).name());
+        assertEquals(PersonProjectContributionType.CO_PRINCIPLE_INVESTIGATOR, team.get(2).type());
+        assertEquals(3, team.get(2).orderNumber());
+    }
+
+    @Test
     void shouldReadTeamInRoleOrderWithIdentifiers() throws Exception {
         var result = converter.toDTO(document("""
             {"projectId": "TEST007", "titles": [{"language": "en", "value": "Test"}],
