@@ -30,6 +30,8 @@ public record IdentifierDTO(
 
     String regularExpression,
 
-    String urlTemplate
+    String urlTemplate,
+
+    Boolean featured
 ) {
 }

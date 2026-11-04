@@ -18,6 +18,8 @@ public record IdentifierResponseDTO(
 
     String regularExpression,
 
-    String urlTemplate
+    String urlTemplate,
+
+    Boolean featured
 ) {
 }

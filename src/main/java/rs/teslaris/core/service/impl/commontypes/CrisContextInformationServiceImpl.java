@@ -100,8 +100,18 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         configuration.setMetadataLicense(dto.metadataLicense());
         configuration.setIdentifierConfiguration(
             toIdentifierConfiguration(dto.identifierConfiguration()));
-        configuration.setNationalIdentifierName(
-            multilingualContentService.getMultilingualContent(dto.nationalIdentifierName()));
+        configuration.setPersonNationalIdentifierName(
+            multilingualContentService.getMultilingualContent(
+                dto.personNationalIdentifierName()));
+        configuration.setOrganisationUnitNationalIdentifierName(
+            multilingualContentService.getMultilingualContent(
+                dto.organisationUnitNationalIdentifierName()));
+        configuration.setProjectNationalIdentifierName(
+            multilingualContentService.getMultilingualContent(
+                dto.projectNationalIdentifierName()));
+        configuration.setDocumentNationalIdentifierName(
+            multilingualContentService.getMultilingualContent(
+                dto.documentNationalIdentifierName()));
         configuration.setPersonNationalIdUrl(dto.personNationalIdUrl());
         configuration.setOrganisationUnitNationalIdUrl(dto.organisationUnitNationalIdUrl());
         configuration.setProjectNationalIdUrl(dto.projectNationalIdUrl());
@@ -145,6 +155,7 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_NATIONAL_ID_PATTERN,
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_METADATA_LICENSE,
             CrisContextInformationConverter.toIdentifierConfigurationDTO(null),
+            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), "", "", "", "", isOrcidLoginConfigured());
     }
 

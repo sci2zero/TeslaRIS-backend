@@ -26,5 +26,6 @@ public enum ApplicableEntityType {
     PROCEEDINGS,
     INTANGIBLE_PRODUCT,
     PERFORMANCE_RELATED_OUTPUT,
-    PROJECT
+    PROJECT,
+    FUNDING
 }

@@ -210,6 +210,8 @@ public class AuthorityDataInitializer {
         var editDocumentIdentifiers = new Privilege("EDIT_DOCUMENT_IDENTIFIERS");
         var editOrganisationUnitIdentifiers = new Privilege("EDIT_ORGANISATION_UNIT_IDENTIFIERS");
         var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
+        var editProjectIdentifiers = new Privilege("EDIT_PROJECT_IDENTIFIERS");
+        var editFundingIdentifiers = new Privilege("EDIT_FUNDING_IDENTIFIERS");
         var readFundingApplications = new Privilege("READ_FUNDING_APPLICATIONS");
         var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
         var readFunding = new Privilege("READ_FUNDING");
@@ -271,7 +273,8 @@ public class AuthorityDataInitializer {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications,
+                editPublicationSeriesIdentifiers, editProjectIdentifiers, editFundingIdentifiers,
+                readFundingApplications,
                 editFundingApplications, readFunding, editFunding, readProjects, editProjects,
                 deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
@@ -332,8 +335,8 @@ public class AuthorityDataInitializer {
             mergeOtherEvents, editIdentifiers, editEntityIdentifier,
             editEventIdentifiers, editPersonIdentifiers, editDocumentIdentifiers,
             editOrganisationUnitIdentifiers, editPublicationSeriesIdentifiers,
-            readFundingApplications, editFundingApplications, readFunding,
-            editFunding, readProjects, editProjects, deleteProjects,
+            editProjectIdentifiers, editFundingIdentifiers, readFundingApplications,
+            editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
             saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies);
@@ -415,7 +418,8 @@ public class AuthorityDataInitializer {
                 p.editEventIdentifiers(),
                 p.editPersonIdentifiers(), p.editDocumentIdentifiers(),
                 p.editOrganisationUnitIdentifiers(),
-                p.editPublicationSeriesIdentifiers(), p.readFundingApplications(),
+                p.editPublicationSeriesIdentifiers(), p.editProjectIdentifiers(),
+                p.editFundingIdentifiers(), p.readFundingApplications(),
                 p.editFundingApplications(), p.readFunding(), p.editFunding(), p.readProjects(),
                 p.editProjects(),
                 p.deleteProjects(),
@@ -687,6 +691,8 @@ public class AuthorityDataInitializer {
         Privilege editDocumentIdentifiers,
         Privilege editOrganisationUnitIdentifiers,
         Privilege editPublicationSeriesIdentifiers,
+        Privilege editProjectIdentifiers,
+        Privilege editFundingIdentifiers,
         Privilege readFundingApplications,
         Privilege editFundingApplications,
         Privilege readFunding,

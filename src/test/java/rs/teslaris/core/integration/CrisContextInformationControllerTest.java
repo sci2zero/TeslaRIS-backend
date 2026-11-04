@@ -40,7 +40,10 @@ public class CrisContextInformationControllerTest extends BaseTest {
             .andExpect(jsonPath("$.identifierConfiguration.DOCUMENT.doi.canBeUpdated").exists())
             .andExpect(
                 jsonPath("$.identifierConfiguration.ORGANISATION_UNIT.ror.featured").exists())
-            .andExpect(jsonPath("$.nationalIdentifierName").exists());
+            .andExpect(jsonPath("$.personNationalIdentifierName").exists())
+            .andExpect(jsonPath("$.organisationUnitNationalIdentifierName").exists())
+            .andExpect(jsonPath("$.projectNationalIdentifierName").exists())
+            .andExpect(jsonPath("$.documentNationalIdentifierName").exists());
     }
 
     @Test
@@ -49,7 +52,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(false, true, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            ".*", ".*", ".*", ".*", License.CC0, null,
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -70,7 +75,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(null, true, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            ".*", ".*", ".*", ".*", License.CC0, null,
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -88,7 +95,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateResearcherAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(false, false, false, false,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(), "", "", "", "",
+            ".*", ".*", ".*", ".*", License.CC0, null,
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -110,6 +119,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
             Map.of(ApplicableEntityType.PERSON,
                 Map.of("orcid", new IdentifierConfigurationDTO(false, true, false))),
             List.of(new MultilingualContentDTO(1, "EN", "National researcher number", 1)),
+            Collections.emptyList(),
+            List.of(new MultilingualContentDTO(1, "EN", "National project number", 1)),
+            Collections.emptyList(),
             "https://example.org/researchers/{ID}", "", "", "", false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -124,8 +136,12 @@ public class CrisContextInformationControllerTest extends BaseTest {
                 jsonPath("$.identifierConfiguration.PERSON.orcid.canBeUpdated").value("false"))
             .andExpect(jsonPath("$.identifierConfiguration.PERSON.scholarId.canBeUpdated")
                 .value("true"))
-            .andExpect(jsonPath("$.nationalIdentifierName[0].content")
+            .andExpect(jsonPath("$.personNationalIdentifierName[0].content")
                 .value("National researcher number"))
+            .andExpect(jsonPath("$.organisationUnitNationalIdentifierName").isEmpty())
+            .andExpect(jsonPath("$.projectNationalIdentifierName[0].content")
+                .value("National project number"))
+            .andExpect(jsonPath("$.documentNationalIdentifierName").isEmpty())
             .andExpect(jsonPath("$.personNationalIdUrl")
                 .value("https://example.org/researchers/{ID}"));
     }
@@ -139,7 +155,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0,
             Map.of(ApplicableEntityType.DOCUMENT,
                 Map.of("orcid", new IdentifierConfigurationDTO(true, false, true))),
-            Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -156,7 +173,9 @@ public class CrisContextInformationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         var configurationDTO = new CrisContextInformationDTO(true, true, true, true,
-            ".*", ".*", ".*", ".*", License.CC0, null, Collections.emptyList(),
+            ".*", ".*", ".*", ".*", License.CC0, null,
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(),
             "https://example.org/researchers/", "", "", "", false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);

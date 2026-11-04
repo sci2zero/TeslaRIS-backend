@@ -19,7 +19,8 @@ public class IdentifierConverter {
                 List.of(ApplicableEntityType.ALL)
             ).stream().toList(),
             identifier.getRegularExpression(),
-            identifier.getUrlTemplate()
+            identifier.getUrlTemplate(),
+            Objects.requireNonNullElse(identifier.getFeatured(), false)
         );
     }
 }

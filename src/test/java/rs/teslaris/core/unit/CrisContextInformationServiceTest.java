@@ -60,7 +60,7 @@ public class CrisContextInformationServiceTest {
             ".*", ".*",
             License.CC0, "", "",
             "", "",
-            new HashMap<>(), new HashSet<>()
+            new HashMap<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>()
         );
         configuration.setId(id);
         return configuration;
@@ -123,7 +123,8 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), "", "", "", "", true);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", true);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -197,7 +198,8 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(false, true, false, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -223,7 +225,8 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(true, false, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -251,7 +254,8 @@ public class CrisContextInformationServiceTest {
 
         var dto = new CrisContextInformationDTO(false, false, true, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
 
         // When
         service.saveConfiguration(dto);
@@ -290,7 +294,8 @@ public class CrisContextInformationServiceTest {
         Map<ApplicableEntityType, Map<String, IdentifierConfigurationDTO>> configuration) {
         return new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, configuration,
-            Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
     }
 
     private CrisContextInformation configurationWithStoredPolicy(ApplicableEntityType entityType,
@@ -471,7 +476,7 @@ public class CrisContextInformationServiceTest {
     }
 
     @Test
-    public void shouldPersistNationalIdentifierName() {
+    public void shouldPersistNationalIdentifierNamePerEntityType() {
         // Given
         var languageTag = new LanguageTag();
         languageTag.setId(1);
@@ -483,11 +488,12 @@ public class CrisContextInformationServiceTest {
             .thenReturn(Collections.emptyList());
         when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(resolved);
-
         var name = List.of(new MultilingualContentDTO(1, "EN", "National researcher number", 1));
+        when(multilingualContentService.getMultilingualContent(name)).thenReturn(resolved);
+
         var dto = new CrisContextInformationDTO(true, true, true, true,
-            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(), name,
+            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
+            name, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
             "", "", "", "", false);
 
         // When
@@ -496,10 +502,16 @@ public class CrisContextInformationServiceTest {
         // Then
         var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
         verify(crisContextInformationRepository).save(savedCaptor.capture());
-        assertEquals(resolved, savedCaptor.getValue().getNationalIdentifierName());
-        assertEquals(1, result.nationalIdentifierName().size());
+        assertEquals(resolved, savedCaptor.getValue().getPersonNationalIdentifierName());
+        assertTrue(savedCaptor.getValue().getOrganisationUnitNationalIdentifierName().isEmpty());
+        assertTrue(savedCaptor.getValue().getProjectNationalIdentifierName().isEmpty());
+        assertTrue(savedCaptor.getValue().getDocumentNationalIdentifierName().isEmpty());
+        assertEquals(1, result.personNationalIdentifierName().size());
         assertEquals("National researcher number",
-            result.nationalIdentifierName().getFirst().getContent());
+            result.personNationalIdentifierName().getFirst().getContent());
+        assertTrue(result.organisationUnitNationalIdentifierName().isEmpty());
+        assertTrue(result.projectNationalIdentifierName().isEmpty());
+        assertTrue(result.documentNationalIdentifierName().isEmpty());
     }
 
     private CrisContextInformationDTO dtoWithNationalIdUrls(String personUrl,
@@ -508,8 +520,9 @@ public class CrisContextInformationServiceTest {
                                                             String documentUrl) {
         return new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
-            Collections.emptyList(), personUrl, organisationUnitUrl, projectUrl, documentUrl,
-            false);
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(),
+            personUrl, organisationUnitUrl, projectUrl, documentUrl, false);
     }
 
     @Test
