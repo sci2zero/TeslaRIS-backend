@@ -18,8 +18,11 @@ public interface ProjectMigrationWriter {
      * @param project           the project to write
      * @param existingProjectId id a previous run produced for the same source record, or
      *                          {@code null} when this record has not been migrated yet
+     * @param otherIdentifiers  value per identifier code; a code with no definition or a value
+     *                          already taken is skipped, so a re-run adds nothing twice
      */
-    MigratedProject migrate(ProjectDTO project, @Nullable Integer existingProjectId);
+    MigratedProject migrate(ProjectDTO project, @Nullable Integer existingProjectId,
+                            Map<String, String> otherIdentifiers);
 
     /**
      * @param id                          the written project

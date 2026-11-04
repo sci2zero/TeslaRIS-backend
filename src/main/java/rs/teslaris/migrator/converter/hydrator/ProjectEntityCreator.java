@@ -67,7 +67,8 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, dto.sourceId())
             .orElse(null);
 
-        var migrated = projectMigrationWriter.migrate(dto.project(), existingId);
+        var migrated = projectMigrationWriter.migrate(dto.project(), existingId,
+            Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, dto.sourceId()));
         if (Objects.isNull(migrated)) {
             return null;
         }

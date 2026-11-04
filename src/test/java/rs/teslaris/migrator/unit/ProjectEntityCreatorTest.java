@@ -95,7 +95,7 @@ public class ProjectEntityCreatorTest {
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
             idResolver, migrationLog);
 
-        when(projectMigrationWriter.migrate(any(), any()))
+        when(projectMigrationWriter.migrate(any(), any(), any()))
             .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true));
     }
 
@@ -137,7 +137,7 @@ public class ProjectEntityCreatorTest {
             new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
                 "invalid date 'x'"),
             RUN));
-        verify(projectMigrationWriter, never()).migrate(any(), any());
+        verify(projectMigrationWriter, never()).migrate(any(), any(), any());
     }
 
     @Test
@@ -194,19 +194,28 @@ public class ProjectEntityCreatorTest {
     void shouldReuseTheProjectAPreviousRunCreated() {
         when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(Optional.of(7));
-        when(projectMigrationWriter.migrate(any(), eq(7)))
+        when(projectMigrationWriter.migrate(any(), eq(7), any()))
             .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false));
 
         var id = creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(),
             List.of(), null), RUN);
 
         assertEquals(7, id);
-        verify(projectMigrationWriter).migrate(any(), eq(7));
+        verify(projectMigrationWriter).migrate(any(), eq(7), any());
+    }
+
+    @Test
+    void shouldPassSourceIdAsSciprojIdentifier() {
+        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
+            null), RUN);
+
+        verify(projectMigrationWriter).migrate(any(), any(),
+            eq(Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, "TEST001")));
     }
 
     @Test
     void shouldRememberConsortiumContributions() {
-        when(projectMigrationWriter.migrate(any(), any())).thenReturn(
+        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
             new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
