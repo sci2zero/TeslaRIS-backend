@@ -14,7 +14,8 @@ import rs.teslaris.core.util.search.StringUtil;
 /**
  * Seeds the currencies monetary amounts can be expressed in.
  * <p>
- * The order of the {@code saveAll} list below determines the generated IDs.
+ * The order of the {@code saveAll} list below determines the generated IDs, so new currencies go
+ * at the end.
  */
 @Component
 @RequiredArgsConstructor
@@ -25,27 +26,26 @@ public class CurrencyDataInitializer {
 
 
     public void initializeCurrencies(LanguageTag englishTag) {
-        var currencyEuro = new Currency();
-        currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
-        currencyEuro.setCode("EUR");
-        currencyEuro.setSymbol("€");
-        currencyEuro.setProcessedName(" " + StringUtil.performSimpleLatinPreprocessing("Euro"));
+        currencyRepository.saveAll(List.of(
+            currency(englishTag, "Euro", "EUR", "€"),
+            currency(englishTag, "Dollar", "USD", "$"),
+            currency(englishTag, "Serbian Dinar", "RSD", "RSD"),
+            // Found in migrated curricula
+            currency(englishTag, "Brazilian Real", "BRL", "R$"),
+            currency(englishTag, "Pound Sterling", "GBP", "£"),
+            currency(englishTag, "Japanese Yen", "JPY", "¥"),
+            currency(englishTag, "Swedish Krona", "SEK", "kr"),
+            currency(englishTag, "Colombian Peso", "COP", "COP"),
+            currency(englishTag, "Cuban Peso", "CUP", "CUP")
+        ));
+    }
 
-        var currencyDollar = new Currency();
-        currencyDollar.setName(Set.of(new MultiLingualContent(englishTag, "Dollar", 1)));
-        currencyDollar.setCode("USD");
-        currencyDollar.setSymbol("$");
-        currencyDollar.setProcessedName(
-            " " + StringUtil.performSimpleLatinPreprocessing("Dollar"));
-
-        var currencySerbianDinar = new Currency();
-        currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
-        currencySerbianDinar.setCode("RSD");
-        currencySerbianDinar.setSymbol("RSD");
-        currencySerbianDinar.setProcessedName(
-            " " + StringUtil.performSimpleLatinPreprocessing("Serbian Dinar"));
-
-        currencyRepository.saveAll(List.of(currencyEuro, currencyDollar, currencySerbianDinar));
+    private Currency currency(LanguageTag englishTag, String name, String code, String symbol) {
+        var currency = new Currency();
+        currency.setName(Set.of(new MultiLingualContent(englishTag, name, 1)));
+        currency.setCode(code);
+        currency.setSymbol(symbol);
+        currency.setProcessedName(" " + StringUtil.performSimpleLatinPreprocessing(name));
+        return currency;
     }
 }
