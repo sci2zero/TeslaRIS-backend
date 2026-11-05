@@ -177,10 +177,10 @@ public class HydratorCvFundingExtractor
         dto.setCompetitive(flag(key, "competitive", funding.competitive()));
         dto.setRenewable(flag(key, "funding-renewable", funding.fundingRenewable()));
 
-        // CW-001-MAP-000003 as written: program-name names a programme, not the funder
-        // (displayProgram would fit), see cv-funding-patch-review.md
+        // CW-001-MAP-000003 says displayFunder, but program-name names a programme; keeping it apart
+        // leaves displayFunder to an unlinked funder
         if (StringUtil.valueExists(funding.programName())) {
-            dto.setDisplayFunder(
+            dto.setDisplayProgram(
                 conversionUtil.multilingualContent(funding.programName().trim(), language));
         }
 

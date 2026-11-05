@@ -119,7 +119,8 @@ public class HydratorCvFundingExtractorTest {
         var funding = item.funding();
         assertTrue(funding.getName().isEmpty());
         assertEquals(Set.of(FundingType.GRANT), funding.getFundingTypes());
-        assertEquals("Test Programme", funding.getDisplayFunder().getFirst().getContent());
+        assertEquals("Test Programme", funding.getDisplayProgram().getFirst().getContent());
+        assertTrue(funding.getDisplayFunder().isEmpty());
         assertEquals(LocalDate.of(2017, 1, 1), funding.getDateAwarded());
         assertEquals(1500.5, funding.getAmount().getAmount());
         assertEquals("EUR", funding.getAmount().getCurrencyCode());

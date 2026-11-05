@@ -233,19 +233,17 @@ public class CvFundingEntityCreatorTest {
     }
 
     @Test
-    void shouldKeepUnlinkedFunderAsDisplayFunderOnlyWithoutProgramme() {
-        var withoutProgramme = dto(null, List.of(), funding(), null);
-        creator.create(withoutProgramme, RUN);
-        assertEquals("Test Agency",
-            withoutProgramme.funding().getDisplayFunder().getFirst().getContent());
-
-        var withProgramme = funding();
-        withProgramme.setDisplayFunder(new ArrayList<>(List.of(
+    void shouldKeepUnlinkedFunderAsDisplayFunderNextToProgramme() {
+        var funding = funding();
+        funding.setDisplayProgram(new ArrayList<>(List.of(
             new MultilingualContentDTO(null, null, "Test Programme", 1))));
-        creator.create(dto(null, List.of(), withProgramme, null), RUN);
-        assertEquals("Test Programme", withProgramme.getDisplayFunder().getFirst().getContent());
+
+        creator.create(dto(null, List.of(), funding, null), RUN);
+
+        assertEquals("Test Agency", funding.getDisplayFunder().getFirst().getContent());
+        assertEquals("Test Programme", funding.getDisplayProgram().getFirst().getContent());
         verify(migrationLog).valueDropped(anyString(), eq("CV_FUNDING"), anyString(),
-            eq("CW-001-MAP-000002"), contains("not kept"));
+            eq("CW-001-MAP-000002"), contains("kept as display name"));
     }
 
     @Test

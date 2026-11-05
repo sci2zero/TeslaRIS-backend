@@ -191,7 +191,7 @@ public class CvFundingEntityCreator implements EntityCreator<CvFundingMigrationD
         return contribution;
     }
 
-    // CW-001-MAP-000002: an unlinked funder is the display funder only if no programme name took it
+    // CW-001-MAP-000002: linked by identifier, otherwise kept as display funder
     private void setFunder(String key, CvFundingMigrationDTO dto) {
         if (Objects.isNull(dto.funder())) {
             return;
@@ -203,17 +203,10 @@ public class CvFundingEntityCreator implements EntityCreator<CvFundingMigrationD
             return;
         }
 
-        if (dto.funding().getDisplayFunder().isEmpty()) {
-            dto.funding().setDisplayFunder(new ArrayList<>(
-                conversionUtil.multilingualContent(dto.funder().name(), null)));
-            dropped(key, HydratorMappingRule.cv(2),
-                "funder not linked, kept as display name: " + match.reason());
-            return;
-        }
-
-        dropped(key, HydratorMappingRule.cv(2), "funder '" + dto.funder().name() +
-            "' not linked and not kept, display funder is the programme name: " +
-            match.reason());
+        dto.funding().setDisplayFunder(new ArrayList<>(
+            conversionUtil.multilingualContent(dto.funder().name(), null)));
+        dropped(key, HydratorMappingRule.cv(2),
+            "funder not linked, kept as display name: " + match.reason());
     }
 
     private void setCurrency(String key, FundingDTO funding) {
