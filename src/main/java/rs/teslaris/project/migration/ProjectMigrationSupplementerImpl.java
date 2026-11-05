@@ -17,6 +17,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.ProjectRepository;
@@ -74,8 +75,10 @@ public class ProjectMigrationSupplementerImpl implements ProjectMigrationSupplem
             project.setDateTo(source.getDateTo());
         }
 
-        // National id is unique; it can only be missing here when the match was by QREN
-        if (Objects.isNull(project.getNationalId()) && Objects.nonNull(source.getNationalId()) &&
+        // National id is unique; it can only be missing here when the match was by QREN. Core
+        // stores a missing one as an empty string
+        if (!StringUtil.valueExists(project.getNationalId()) &&
+            StringUtil.valueExists(source.getNationalId()) &&
             !projectRepository.existsByNationalId(source.getNationalId(), project.getId())) {
             project.setNationalId(source.getNationalId());
         }

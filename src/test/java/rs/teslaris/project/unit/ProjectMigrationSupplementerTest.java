@@ -137,6 +137,15 @@ public class ProjectMigrationSupplementerTest {
     }
 
     @Test
+    void shouldFillEmptyStringNationalId() {
+        project.setNationalId("");
+
+        supplementer.supplement(9, source(), List.of());
+
+        assertEquals("PTDC/ABC/1234/2020", project.getNationalId());
+    }
+
+    @Test
     void shouldNotTakeNationalIdOfAnotherProject() {
         when(projectRepository.existsByNationalId("PTDC/ABC/1234/2020", 9)).thenReturn(true);
 
