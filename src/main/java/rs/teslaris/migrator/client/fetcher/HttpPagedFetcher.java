@@ -5,6 +5,7 @@ import rs.teslaris.migrator.client.MigrationCursor;
 import rs.teslaris.migrator.client.RestPage;
 import rs.teslaris.migrator.client.SourceBatch;
 import rs.teslaris.migrator.client.SourceRecordFetcher;
+import rs.teslaris.migrator.model.MigrationRun;
 
 /**
  * Fetcher for endpoints returning a Spring {@code Page} with page/size parameters.
@@ -16,8 +17,8 @@ public class HttpPagedFetcher<S> implements SourceRecordFetcher<S> {
 
 
     @Override
-    public SourceBatch<S> fetch(MigrationCursor cursor, int batchSize) {
-        var page = pageCall.fetch(cursor.page(), batchSize);
+    public SourceBatch<S> fetch(MigrationCursor cursor, int batchSize, MigrationRun run) {
+        var page = pageCall.fetch(run.getModifiedAfter(), cursor.page(), batchSize);
 
         if (page.content().isEmpty()) {
             return SourceBatch.empty(cursor.nextPage());
@@ -28,6 +29,6 @@ public class HttpPagedFetcher<S> implements SourceRecordFetcher<S> {
 
     @FunctionalInterface
     public interface PageCall<S> {
-        RestPage<S> fetch(int page, int size);
+        RestPage<S> fetch(String modifiedAfter, int page, int size);
     }
 }

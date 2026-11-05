@@ -1,5 +1,6 @@
 package rs.teslaris.migrator.pipeline;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,12 @@ public class MigrationPipelineRegistry {
 
     public List<String> listRegistered() {
         return pipelines.values().stream().map(MigrationPipeline::describe).sorted().toList();
+    }
+
+    public List<MigrationPipeline<?>> listPipelines() {
+        return pipelines.values().stream()
+            .sorted(Comparator.comparing(MigrationPipeline::describe))
+            .toList();
     }
 
     private String key(String source, MigrationEntityType entityType) {

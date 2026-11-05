@@ -1494,7 +1494,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var employmentsOther = new StringBuilder();
         for (var employment : currentEmployments) {
             var institutionNameSr = new StringBuilder();
-            var institutionNameOther = new StringBuilder();
 
             Set<MultiLingualContent> name;
             if (Objects.nonNull(employment.getOrganisationUnit())) {
@@ -1507,23 +1506,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
                 .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
-            name.stream()
+            var institutionNameOther = name.stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> {
-                    if (mc.getLanguage().getLanguageTag()
-                        .equals(LanguageAbbreviations.ENGLISH)) {
-                        institutionNameOther.insert(0, mc.getContent());
-                    } else {
-                        institutionNameOther.append(", ").append(mc.getContent());
-                    }
-                });
+                .sorted(Comparator.comparing(mc -> !LanguageAbbreviations.ENGLISH
+                    .equals(mc.getLanguage().getLanguageTag())))
+                .map(MultiLingualContent::getContent)
+                .collect(Collectors.joining(", "));
 
             employmentsSr.append(
-                institutionNameSr.toString().isEmpty() ? institutionNameOther :
+                institutionNameSr.isEmpty() ? institutionNameOther :
                     institutionNameSr);
             employmentsOther.append(
-                institutionNameOther.toString().isEmpty() ? institutionNameSr :
+                institutionNameOther.isEmpty() ? institutionNameSr :
                     institutionNameOther);
 
             Set<MultiLingualContent> abbreviation = null;

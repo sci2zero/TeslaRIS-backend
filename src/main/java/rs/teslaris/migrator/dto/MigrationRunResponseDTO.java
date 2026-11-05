@@ -15,6 +15,7 @@ public record MigrationRunResponseDTO(
     int currentPage,
     long recordsRead,
     long itemsCreated,
+    long itemsUpdated,
     long itemsResolved,
     long itemsSkipped,
     long itemsFailed,
@@ -25,7 +26,8 @@ public record MigrationRunResponseDTO(
         return new MigrationRunResponseDTO(
             run.getId(), run.getSource(), run.getEntityType(), run.getStatus(),
             run.getStartedAt(), run.getFinishedAt(), run.getCurrentPage(), run.getRecordsRead(),
-            run.getItemsCreated(), run.getItemsResolved(), run.getItemsSkipped(),
+            run.getItemsCreated(), run.getItemsUpdated(), run.getItemsResolved(),
+            run.getItemsSkipped(),
             run.getItemsFailed(), run.getBatchesFailed());
     }
 }

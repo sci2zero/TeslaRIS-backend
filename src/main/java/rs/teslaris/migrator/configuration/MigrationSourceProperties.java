@@ -1,8 +1,12 @@
 package rs.teslaris.migrator.configuration;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -38,8 +42,22 @@ public class MigrationSourceProperties {
 
         private RetryProperties retry = new RetryProperties();
 
+        private String modifiedAfterFormat;
+
         public int batchSizeOrDefault(int fallback) {
             return batchSize == null ? fallback : batchSize;
+        }
+
+        /**
+         * The source accepts the moment as a plain string, so the format stays configurable.
+         */
+        public String formatModifiedAfter(Instant moment) {
+            if (Objects.isNull(modifiedAfterFormat) || modifiedAfterFormat.isBlank()) {
+                return DateTimeFormatter.ISO_INSTANT.format(moment);
+            }
+
+            return DateTimeFormatter.ofPattern(modifiedAfterFormat).withZone(ZoneOffset.UTC)
+                .format(moment);
         }
     }
 

@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -24,16 +26,20 @@ import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
+import rs.teslaris.migrator.pipeline.EntityUpdater;
+import rs.teslaris.migrator.pipeline.ExistingReader;
 import rs.teslaris.migrator.pipeline.FailureHandler;
 import rs.teslaris.migrator.pipeline.ItemRouter;
 import rs.teslaris.migrator.pipeline.MigrationPipeline;
 import rs.teslaris.migrator.pipeline.RecordExtractor;
 import rs.teslaris.migrator.pipeline.SimpleMapping;
+import rs.teslaris.migrator.pipeline.UpdatePlan;
 import rs.teslaris.migrator.pipeline.failure.PersonMergeFailureHandler;
 import rs.teslaris.migrator.util.MigrationEntityType;
 
@@ -85,6 +91,8 @@ public class HydratorPipelineConfiguration {
 
     private final PrizeEntityCreator prizeEntityCreator;
 
+    private final PersonMigrationWriter personMigrationWriter;
+
     private final HydratorCvFundingExtractor cvFundingExtractor;
 
     private final CvFundingEntityCreator cvFundingEntityCreator;
@@ -126,19 +134,21 @@ public class HydratorPipelineConfiguration {
             HydratorSource.NAME,
             MigrationEntityType.PROJECT,
             HydratorProjectModel.ProjectDocument.class,
-            new HttpPagedFetcher<>((page, size) -> projectClient.getProjects(
-                null, page, size, HydratorSource.PROJECTS_SORT)),
+            new HttpPagedFetcher<>((modifiedAfter, page, size) -> projectClient.getProjects(
+                modifiedAfter, page, size, HydratorSource.PROJECTS_SORT)),
             ItemRouter.ordered(List.of(
                 new SimpleMapping<>(
                     MigrationEntityType.PROJECT,
                     RecordExtractor.of(projectConverter),
                     projectEntityCreator,
+                    UpdatePlan.of(projectEntityCreator),
                     FailureHandler.noOp(),
                     (record, dto) -> dto.sourceKey()),
                 new SimpleMapping<>(
                     MigrationEntityType.PROJECT_FUNDING,
                     fundingExtractor,
                     fundingEntityCreator,
+                    UpdatePlan.of(fundingEntityCreator),
                     FailureHandler.noOp(),
                     (record, dto) -> dto.sourceKey()))),
             sourceProperties.getRetry().toPolicy(),
@@ -172,8 +182,13 @@ public class HydratorPipelineConfiguration {
             organisationUnitExtractor,
             EntityCreator.of(
                 organisationUnitService::createOrganisationUnit, OrganisationUnitDTO::getId),
+            UpdatePlan.<OrganisationUnitRequestDTO>of(
+                ExistingReader.of(organisationUnitService::readOrganisationUnitById),
+                EntityUpdater.of(organisationUnitService::editOrganisationUnit),
+                organisationUnitExtractor::locate),
             FailureHandler.noOp(),
-            (record, dto) -> organisationUnitExtractor.keyOf(dto));
+            (record, dto) -> organisationUnitExtractor.keyOf(dto),
+            (record, dto) -> organisationUnitExtractor.legacyKeyOf(dto));
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> personRouter() {
@@ -186,6 +201,8 @@ public class HydratorPipelineConfiguration {
             RecordExtractor.of(personConverter),
             EntityCreator.of(
                 personService::importPersonWithBasicInfo, Person::getId),
+            UpdatePlan.<ImportPersonDTO>of(personMigrationWriter::read,
+                personMigrationWriter::update),
             personMergeFailureHandler,
             (record, dto) -> record.id());
     }
@@ -195,6 +212,7 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.PERSON_PRIZE,
             prizeExtractor,
             prizeEntityCreator,
+            UpdatePlan.of(prizeEntityCreator),
             FailureHandler.noOp(),
             (record, dto) -> dto.sourceKey());
     }
@@ -204,6 +222,7 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.PERSON_EMPLOYMENT,
             employmentExtractor,
             employmentEntityCreator,
+            UpdatePlan.of(employmentEntityCreator),
             FailureHandler.noOp(),
             (record, dto) -> dto.sourceKey());
     }
@@ -216,8 +235,8 @@ public class HydratorPipelineConfiguration {
             HydratorSource.NAME,
             entityType,
             HydratorCVModel.Curriculum.class,
-            new HttpPagedFetcher<>((page, size) -> cvClient.getCurricula(
-                null, page, size, HydratorSource.CURRICULA_SORT)),
+            new HttpPagedFetcher<>((modifiedAfter, page, size) -> cvClient.getCurricula(
+                modifiedAfter, page, size, HydratorSource.CURRICULA_SORT)),
             router,
             sourceProperties.getRetry().toPolicy(),
             HydratorCVModel.Curriculum::id,

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import rs.teslaris.migrator.client.MigrationCursor;
 import rs.teslaris.migrator.client.SourceBatch;
 import rs.teslaris.migrator.client.SourceRecordFetcher;
+import rs.teslaris.migrator.model.MigrationRun;
 
 /**
  * Fetcher for endpoints that return the whole collection as a plain list, with no paging.
@@ -18,7 +19,7 @@ public class SingleShotFetcher<S> implements SourceRecordFetcher<S> {
 
 
     @Override
-    public SourceBatch<S> fetch(MigrationCursor cursor, int batchSize) {
+    public SourceBatch<S> fetch(MigrationCursor cursor, int batchSize, MigrationRun run) {
         if (cursor.page() > 0) {
             return SourceBatch.empty(cursor);
         }

@@ -1,19 +1,29 @@
 package rs.teslaris.migrator.unit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.context.ApplicationEventPublisher;
+import rs.teslaris.core.applicationevent.MigrationRunFinishedEvent;
+import rs.teslaris.migrator.model.MigrationItemStatus;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.pipeline.MigrationPipeline;
@@ -79,5 +89,60 @@ public class MigrationRunExecutorTest {
         order.verify(firstCache).clearCache();
         order.verify(secondCache).clearCache();
         order.verify(pipelineRunner).run(any(), any());
+    }
+
+    @Test
+    public void shouldAnnounceTheUpdatedEntitiesOfAnUpdateRun() {
+        // given
+        var run = MigrationRun.builder()
+            .id("run-3")
+            .source("test-source")
+            .entityType(MigrationEntityType.PERSON)
+            .status(MigrationRunStatus.RUNNING)
+            .startedAt(Instant.now())
+            .batchSize(2)
+            .currentPage(0)
+            .isUpdate(true)
+            .build();
+        var resolved = new ResolvedPipeline<>(mock(MigrationPipeline.class),
+            MigrationEntityType.PERSON);
+
+        when(recordLogRepository.findCreatedEntityTypes("run-3")).thenReturn(Set.of("PERSON"));
+        when(recordLogRepository.findTargetIdsByType("run-3", MigrationItemStatus.UPDATED))
+            .thenReturn(Map.of("PERSON", List.of(5)));
+
+        // when
+        executor.execute(resolved, run);
+
+        // then
+        var event = ArgumentCaptor.forClass(MigrationRunFinishedEvent.class);
+        verify(eventPublisher).publishEvent(event.capture());
+
+        assertEquals(Map.of("PERSON", List.of(5)), event.getValue().updatedEntityIdsByType());
+        assertNull(event.getValue().createdEntityIdsByType());
+        verify(recordLogRepository, never())
+            .findTargetIdsByType("run-3", MigrationItemStatus.CREATED);
+    }
+
+    @Test
+    public void shouldRunTheSamePipelineWhenCalledSynchronously() {
+        // given
+        var run = MigrationRun.builder()
+            .id("run-2")
+            .source("test-source")
+            .entityType(MigrationEntityType.PERSON)
+            .status(MigrationRunStatus.RUNNING)
+            .startedAt(Instant.now())
+            .batchSize(2)
+            .currentPage(0)
+            .build();
+        var resolved = new ResolvedPipeline<>(mock(MigrationPipeline.class),
+            MigrationEntityType.PERSON);
+
+        // when
+        executor.executeSynchronous(resolved, run);
+
+        // then
+        verify(pipelineRunner).run(any(), any());
     }
 }

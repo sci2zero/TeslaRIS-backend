@@ -11,6 +11,9 @@ import rs.teslaris.core.migration.FundingMigrationWriter;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
+import rs.teslaris.migrator.pipeline.EntityUpdater;
+import rs.teslaris.migrator.pipeline.merge.MergeContext;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
@@ -20,7 +23,8 @@ import rs.teslaris.migrator.util.MigrationLog;
  */
 @Component
 @RequiredArgsConstructor
-public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> {
+public class FundingEntityCreator
+    implements EntityCreator<FundingMigrationDTO>, EntityUpdater<FundingMigrationDTO> {
 
     private final FundingMigrationWriter fundingMigrationWriter;
 
@@ -34,6 +38,10 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
 
     private final HydratorFundingPartFactory fundingPartFactory;
 
+    private final HydratorConsortiumKeyFactory consortiumKeyFactory;
+
+    private final MigrationMergePolicy mergePolicy;
+
     private final MigrationLog migrationLog;
 
 
@@ -41,6 +49,31 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
     public Integer create(FundingMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
+        var funding = prepare(dto);
+
+        // The id a previous run produced, so a re-run updates that funding instead of creating a
+        // second one for the same source record.
+        var existingId = idResolver
+            .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, dto.sourceKey())
+            .orElse(null);
+
+        var migrated = fundingMigrationWriter.migrate(funding, existingId);
+
+        return Objects.isNull(migrated) ? null : migrated.id();
+    }
+
+    @Override
+    public void update(Integer targetId, FundingMigrationDTO dto, MigrationRun run) {
+        dto.throwIfRejected();
+
+        var merged = mergePolicy.merge(prepare(dto), fundingMigrationWriter.read(targetId),
+            new MergeContext(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING.name(),
+                dto.sourceKey()));
+
+        fundingMigrationWriter.migrate(merged, targetId);
+    }
+
+    private FundingDTO prepare(FundingMigrationDTO dto) {
         var key = dto.sourceKey();
         var funding = dto.funding();
 
@@ -51,15 +84,7 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
         setCurrency(key, funding);
         setFundingParts(key, dto);
 
-        // The id a previous run produced, so a re-run updates that funding instead of creating a
-        // second one for the same source record.
-        var existingId = idResolver
-            .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, key)
-            .orElse(null);
-
-        var migrated = fundingMigrationWriter.migrate(funding, existingId);
-
-        return Objects.isNull(migrated) ? null : migrated.id();
+        return funding;
     }
 
     // Consortium amounts of the project's only funding, each linked to its member's contribution
@@ -67,9 +92,15 @@ public class FundingEntityCreator implements EntityCreator<FundingMigrationDTO> 
         var parts = new ArrayList<FundingPartDTO>();
 
         dto.consortiumAmounts().forEach(entry -> {
+            // The key format of this type changed, so a lookup falls back to the key of the
+            // earlier version.
             var contributionId = idResolver.resolve(HydratorSource.NAME,
-                MigrationEntityType.PROJECT_ORGANISATION,
-                ProjectMigrationDTO.consortiumKeyOf(dto.projectSourceKey(), entry.orderNumber()));
+                    MigrationEntityType.PROJECT_ORGANISATION,
+                    consortiumKeyFactory.keyOf(dto.projectSourceKey(), entry))
+                .or(() -> idResolver.resolve(HydratorSource.NAME,
+                    MigrationEntityType.PROJECT_ORGANISATION,
+                    consortiumKeyFactory.legacyKeyOf(dto.projectSourceKey(),
+                        entry.orderNumber())));
 
             if (contributionId.isEmpty()) {
                 dropped(key, HydratorMappingRule.sciproj(22), entry.type() + " #" +

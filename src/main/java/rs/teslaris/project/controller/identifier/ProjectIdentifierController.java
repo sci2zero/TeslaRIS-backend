@@ -36,11 +36,11 @@ public class ProjectIdentifierController {
 
     @GetMapping("/{projectId}")
     public Object getProjectIdentifiers(HttpServletRequest request,
-                                    @PathVariable Integer projectId,
-                                    @RequestHeader(value = "Authorization", required = false)
-                                    String bearerToken,
-                                    @CookieValue(value = "jwt-security-fingerprint", required = false)
-                                    String fingerprintCookie) {
+                                        @PathVariable Integer projectId,
+                                        @RequestHeader(value = "Authorization", required = false)
+                                        String bearerToken,
+                                        @CookieValue(value = "jwt-security-fingerprint", required = false)
+                                        String fingerprintCookie) {
         return EntityIdentifierController.fetchIdentifiers(
             request,
             bearerToken,

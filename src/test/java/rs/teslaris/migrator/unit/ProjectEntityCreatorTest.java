@@ -30,6 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.migrator.converter.hydrator.HydratorConsortiumKeyFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingPartFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
@@ -40,6 +41,7 @@ import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -74,6 +76,9 @@ public class ProjectEntityCreatorTest {
     private MigrationIdResolver idResolver;
 
     @Mock
+    private MigrationMergePolicy mergePolicy;
+
+    @Mock
     private MigrationLog migrationLog;
 
     private ProjectEntityCreator creator;
@@ -89,11 +94,15 @@ public class ProjectEntityCreatorTest {
     void setUp() {
         var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
             mock(LanguageService.class), mock(ResearchAreaService.class));
+        when(institutionResolver.resolve(any()))
+            .thenReturn(new HydratorInstitutionResolver.Match(null, "not found"));
+
         creator = new ProjectEntityCreator(projectMigrationWriter, institutionResolver,
             personResolver,
             conversionUtil,
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
-            idResolver, migrationLog);
+            new HydratorConsortiumKeyFactory(institutionResolver, conversionUtil),
+            idResolver, mergePolicy, migrationLog);
 
         when(projectMigrationWriter.migrate(any(), any(), any()))
             .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true, Map.of()));
@@ -205,27 +214,50 @@ public class ProjectEntityCreatorTest {
     }
 
     @Test
+    void shouldRememberConsortiumContributionsUnderTheIdentityOfTheMember() {
+        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true,
+                Map.of()));
+
+        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(
+            new ProjectMigrationDTO.ConsortiumEntry(
+                OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1, null),
+            new ProjectMigrationDTO.ConsortiumEntry(
+                OrganisationUnitProjectContributionType.PARTNER, PARTNER, 2, null)), List.of(),
+            null), RUN);
+
+        verify(idResolver).remember(HydratorSource.NAME,
+            MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#name-test university#COORDINATOR", 101, RUN);
+        verify(idResolver).remember(HydratorSource.NAME,
+            MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#name-test partner#PARTNER", 102, RUN);
+    }
+
+    @Test
+    void shouldRememberConsortiumContributionUnderTheOrganisationUnitWhenItResolves() {
+        when(institutionResolver.resolve(COORDINATOR))
+            .thenReturn(new HydratorInstitutionResolver.Match(77, null));
+        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101), true, Map.of()));
+
+        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(
+            new ProjectMigrationDTO.ConsortiumEntry(
+                OrganisationUnitProjectContributionType.COORDINATOR, COORDINATOR, 1, null)),
+            List.of(), null), RUN);
+
+        verify(idResolver).remember(HydratorSource.NAME,
+            MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#ou-77#COORDINATOR", 101, RUN);
+    }
+
+    @Test
     void shouldPassSourceIdAsSciprojIdentifier() {
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
             null), RUN);
 
         verify(projectMigrationWriter).migrate(any(), any(),
             eq(Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, "TEST001")));
-    }
-
-    @Test
-    void shouldRememberConsortiumContributions() {
-        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
-            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true,
-                Map.of()));
-
-        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
-            null), RUN);
-
-        verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, RUN);
-        verify(idResolver).remember(HydratorSource.NAME,
-            MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, RUN);
     }
 
     @Test

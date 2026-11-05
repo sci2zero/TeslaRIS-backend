@@ -11,8 +11,10 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.migrator.client.MigrationCursor;
 import rs.teslaris.migrator.client.SourceBatch;
 import rs.teslaris.migrator.client.SourceRecordFetcher;
@@ -37,6 +40,8 @@ import rs.teslaris.migrator.pipeline.MigrationPipeline;
 import rs.teslaris.migrator.pipeline.MigrationPipelineRunner;
 import rs.teslaris.migrator.pipeline.ResolvedPipeline;
 import rs.teslaris.migrator.pipeline.RetryPolicy;
+import rs.teslaris.migrator.pipeline.UpdatePlan;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -55,11 +60,21 @@ public class MigrationPipelineRunnerTest {
     private MigrationRecordLogRepository recordLogRepository;
 
     @Mock
+    private MigrationMergePolicy mergePolicy;
+
+    @Mock
     private MigrationLog migrationLog;
 
     @InjectMocks
     private MigrationPipelineRunner runner;
 
+
+    @BeforeEach
+    public void setUpLimits() {
+        // The limits come from the properties, which no mock injects.
+        ReflectionTestUtils.setField(runner, "batchFailureLimit", 25);
+        ReflectionTestUtils.setField(runner, "consecutiveBatchFailureLimit", 3);
+    }
 
     private MigrationRun newRun(MigrationEntityType entityType) {
         return MigrationRun.builder()
@@ -86,7 +101,7 @@ public class MigrationPipelineRunnerTest {
     }
 
     private SourceRecordFetcher<String> pagedFetcher(List<List<String>> pages) {
-        return (cursor, batchSize) -> {
+        return (cursor, batchSize, run) -> {
             if (cursor.page() >= pages.size()) {
                 return SourceBatch.empty(cursor.nextPage());
             }
@@ -150,16 +165,18 @@ public class MigrationPipelineRunnerTest {
         var run = newRun(MigrationEntityType.PERSON);
         var created = new ArrayList<String>();
 
-        SourceRecordFetcher<String> fetcher = (cursor, batchSize) -> switch (cursor.page()) {
-            case 0 -> throw new IllegalStateException("source unreachable");
-            case 1 -> new SourceBatch<>(List.of("recovered"), cursor.nextPage(), false);
-            default -> SourceBatch.empty(cursor.nextPage());
-        };
+        SourceRecordFetcher<String> fetcher =
+            (cursor, batchSize, migrationRun) -> switch (cursor.page()) {
+                case 0 -> throw new IllegalStateException("source unreachable");
+                case 1 -> new SourceBatch<>(List.of("recovered"), cursor.nextPage(), false);
+                default -> SourceBatch.empty(cursor.nextPage());
+            };
 
-        var resolved = new ResolvedPipeline<>(pipeline(fetcher, singleItemRouter((dto, migrationRun) -> {
-            created.add(dto);
-            return 1;
-        }, FailureHandler.noOp())), MigrationEntityType.PERSON);
+        var resolved =
+            new ResolvedPipeline<>(pipeline(fetcher, singleItemRouter((dto, migrationRun) -> {
+                created.add(dto);
+                return 1;
+            }, FailureHandler.noOp())), MigrationEntityType.PERSON);
 
         // when
         var result = runner.run(resolved, run);
@@ -173,13 +190,44 @@ public class MigrationPipelineRunnerTest {
     }
 
     @Test
+    public void shouldFailRunWhenSourceKeepsFailing() {
+        // given
+        var run = newRun(MigrationEntityType.PERSON);
+        var attempts = new AtomicInteger();
+
+        SourceRecordFetcher<String> fetcher = (cursor, batchSize, migrationRun) -> {
+            attempts.incrementAndGet();
+            throw new IllegalStateException("source unreachable");
+        };
+
+        var resolved = new ResolvedPipeline<>(
+            pipeline(fetcher, singleItemRouter((dto, migrationRun) -> 1, FailureHandler.noOp())),
+            MigrationEntityType.PERSON);
+
+        // when
+        var result = runner.run(resolved, run);
+
+        // then
+        assertEquals(MigrationRunStatus.FAILED, result.getStatus());
+        assertEquals(3, result.getBatchesFailed());
+
+        // Three pages, and the pipeline of the fixture gives one attempt to each of them.
+        assertEquals(3, attempts.get());
+
+        verify(migrationLog).runAbandoned(eq(run), any(String.class));
+    }
+
+    @Test
     public void shouldSkipItemsThatWereAlreadyProcessed() {
         // given
         var run = newRun(MigrationEntityType.PERSON);
         var created = new ArrayList<String>();
 
-        when(recordLogRepository.isAlreadyProcessed(SOURCE, MigrationEntityType.PERSON, "done"))
-            .thenReturn(true);
+        when(recordLogRepository.find(SOURCE, MigrationEntityType.PERSON, "done"))
+            .thenReturn(Optional.of(MigrationRecordLog.builder()
+                .status(MigrationItemStatus.CREATED)
+                .targetEntityId(7)
+                .build()));
 
         var resolved = new ResolvedPipeline<>(pipeline(
             pagedFetcher(List.of(List.of("done", "fresh"))),
@@ -195,6 +243,87 @@ public class MigrationPipelineRunnerTest {
         assertEquals(List.of("fresh"), created);
         assertEquals(1, result.getItemsSkipped());
         assertEquals(1, result.getItemsCreated());
+    }
+
+    @Test
+    public void shouldUpdateAlreadyWrittenItemWhenRunIsAnUpdate() {
+        // given
+        var run = newRun(MigrationEntityType.PERSON);
+        run.setUpdate(true);
+
+        var updated = new ArrayList<String>();
+
+        when(recordLogRepository.find(SOURCE, MigrationEntityType.PERSON, "changed"))
+            .thenReturn(Optional.of(MigrationRecordLog.builder()
+                .status(MigrationItemStatus.CREATED)
+                .targetEntityId(11)
+                .build()));
+
+        when(mergePolicy.merge(any(), any(), any())).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        ItemRouter<String> router = record -> List.of(new MigrationItem<>(
+            MigrationEntityType.PERSON, record, null, record,
+            (dto, migrationRun) -> 1,
+            UpdatePlan.of(targetId -> "stored",
+                (targetId, dto, migrationRun) -> updated.add(targetId + ":" + dto)),
+            FailureHandler.noOp()));
+
+        // when
+        var result = runner.run(new ResolvedPipeline<>(
+            pipeline(pagedFetcher(List.of(List.of("changed"))), router),
+            MigrationEntityType.PERSON), run);
+
+        // then
+        assertEquals(List.of("11:changed"), updated);
+        assertEquals(1, result.getItemsUpdated());
+        assertEquals(0, result.getItemsCreated());
+        assertEquals(0, result.getItemsSkipped());
+
+        var captor = ArgumentCaptor.forClass(MigrationRecordLog.class);
+        verify(recordLogRepository).record(captor.capture());
+
+        assertEquals(MigrationItemStatus.UPDATED, captor.getValue().getStatus());
+    }
+
+    @Test
+    public void shouldAdoptTheEntityOfTheLegacyKeyInsteadOfCreatingASecondOne() {
+        // given
+        var run = newRun(MigrationEntityType.PERSON);
+        var created = new ArrayList<String>();
+
+        when(recordLogRepository.find(SOURCE, MigrationEntityType.PERSON, "ror:123"))
+            .thenReturn(Optional.empty());
+        when(recordLogRepository.find(SOURCE, MigrationEntityType.PERSON, "old-name"))
+            .thenReturn(Optional.of(MigrationRecordLog.builder()
+                .status(MigrationItemStatus.CREATED)
+                .targetEntityId(5)
+                .build()));
+
+        ItemRouter<String> router = record -> List.of(new MigrationItem<>(
+            MigrationEntityType.PERSON, "ror:123", "old-name", record,
+            (dto, migrationRun) -> {
+                created.add(dto);
+                return 1;
+            },
+            UpdatePlan.none(),
+            FailureHandler.noOp()));
+
+        // when
+        var result = runner.run(new ResolvedPipeline<>(
+            pipeline(pagedFetcher(List.of(List.of("curriculum"))), router),
+            MigrationEntityType.PERSON), run);
+
+        // then
+        assertEquals(List.of(), created);
+        assertEquals(1, result.getItemsSkipped());
+
+        var captor = ArgumentCaptor.forClass(MigrationRecordLog.class);
+        verify(recordLogRepository).record(captor.capture());
+
+        assertEquals(MigrationItemStatus.CREATED, captor.getValue().getStatus());
+        assertEquals(5, captor.getValue().getTargetEntityId());
+        assertEquals("ror:123", captor.getValue().getSourceKey());
     }
 
     @Test
@@ -275,6 +404,6 @@ public class MigrationPipelineRunnerTest {
 
         verify(recordLogRepository, times(1)).record(any());
         verify(recordLogRepository, never())
-            .isAlreadyProcessed(SOURCE, MigrationEntityType.JOURNAL_PUBLICATION, "cv-journal");
+            .find(SOURCE, MigrationEntityType.JOURNAL_PUBLICATION, "cv-journal");
     }
 }

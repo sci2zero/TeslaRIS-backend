@@ -20,6 +20,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.PrizeMigrationDTO;
 import rs.teslaris.migrator.model.MigrationRun;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -35,6 +36,9 @@ public class PrizeEntityCreatorTest {
 
     @Mock
     private MigrationIdResolver idResolver;
+
+    @Mock
+    private MigrationMergePolicy mergePolicy;
 
     @InjectMocks
     private PrizeEntityCreator creator;

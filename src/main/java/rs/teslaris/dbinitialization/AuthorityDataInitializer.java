@@ -336,7 +336,8 @@ public class AuthorityDataInitializer {
             editEventIdentifiers, editPersonIdentifiers, editDocumentIdentifiers,
             editOrganisationUnitIdentifiers, editPublicationSeriesIdentifiers,
             editProjectIdentifiers, editFundingIdentifiers, readFundingApplications,
-            editFundingApplications, readFunding, editFunding, readProjects, editProjects, deleteProjects,
+            editFundingApplications, readFunding, editFunding, readProjects, editProjects,
+            deleteProjects,
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
             saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies);

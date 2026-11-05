@@ -1,7 +1,9 @@
 package rs.teslaris.migrator.controller;
 
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,10 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.migrator.dto.MigrationFailureDTO;
+import rs.teslaris.migrator.dto.MigrationPipelineResponseDTO;
 import rs.teslaris.migrator.dto.MigrationRequestDTO;
 import rs.teslaris.migrator.dto.MigrationRunResponseDTO;
+import rs.teslaris.migrator.dto.MigrationScheduleRequestDTO;
 import rs.teslaris.migrator.service.interfaces.MigrationService;
 import rs.teslaris.migrator.util.MigrationEntityType;
 
@@ -43,15 +48,39 @@ public class MigrationController {
                            String modifiedAfter,
                            @RequestParam(value = "backfillOnlyCreated", defaultValue = "false")
                            Boolean backfillOnlyCreated,
+                           @RequestParam(value = "isUpdate", defaultValue = "false")
+                           Boolean isUpdate,
                            @RequestHeader("Authorization") String bearerToken) {
         return migrationService.startRun(new MigrationRequestDTO(
             source, entityType, batchSize, performIndex, resume, modifiedAfter,
-            backfillOnlyCreated, tokenUtil.extractUserIdFromToken(bearerToken)));
+            backfillOnlyCreated, isUpdate, tokenUtil.extractUserIdFromToken(bearerToken)));
+    }
+
+    @PostMapping("/schedule")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'PERFORM_MIGRATION')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void scheduleRun(@RequestParam("source") String source,
+                            @RequestParam("entityType") MigrationEntityType entityType,
+                            @RequestParam(value = "batchSize", required = false) Integer batchSize,
+                            @RequestParam(value = "performIndex", defaultValue = "false")
+                            Boolean performIndex,
+                            @RequestParam(value = "modifiedAfterDays", defaultValue = "2")
+                            Integer modifiedAfterDays,
+                            @RequestParam(value = "backfillOnlyCreated", defaultValue = "false")
+                            Boolean backfillOnlyCreated,
+                            @RequestParam(value = "isUpdate", defaultValue = "false")
+                            Boolean isUpdate,
+                            @RequestParam("timestamp") Instant timestamp,
+                            @RequestParam("recurrence") RecurrenceType recurrence,
+                            @RequestHeader("Authorization") String bearerToken) {
+        migrationService.scheduleRun(timestamp, new MigrationScheduleRequestDTO(
+            source, entityType, batchSize, performIndex, modifiedAfterDays, backfillOnlyCreated,
+            isUpdate, tokenUtil.extractUserIdFromToken(bearerToken)), recurrence);
     }
 
     @GetMapping("/runs")
     @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
-    public List<MigrationRunResponseDTO> listRuns(
+    public Page<MigrationRunResponseDTO> listRuns(
         @RequestParam(value = "source", required = false) String source,
         @RequestParam(value = "entityType", required = false) MigrationEntityType entityType,
         @RequestParam(value = "page", defaultValue = "0") int page,
@@ -67,7 +96,7 @@ public class MigrationController {
 
     @GetMapping("/runs/{runId}/failures")
     @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
-    public List<MigrationFailureDTO> getFailures(@PathVariable String runId,
+    public Page<MigrationFailureDTO> getFailures(@PathVariable String runId,
                                                  @RequestParam(value = "page", defaultValue = "0")
                                                  int page,
                                                  @RequestParam(value = "size", defaultValue = "50")
@@ -85,7 +114,7 @@ public class MigrationController {
 
     @GetMapping("/pipelines")
     @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
-    public List<String> listPipelines() {
+    public List<MigrationPipelineResponseDTO> listPipelines() {
         return migrationService.listRegisteredPipelines();
     }
 }

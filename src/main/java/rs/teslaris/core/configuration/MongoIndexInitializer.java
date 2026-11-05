@@ -43,7 +43,7 @@ public class MongoIndexInitializer {
         for (var index : indexes) {
             if (!ensureIndex(index)) {
                 log.warn("Mongo is not reachable, so {} of {} Mongo indexes were not created. " +
-                    "The next startup tries again.",
+                        "The next startup tries again.",
                     indexes.size() - indexes.indexOf(index), indexes.size());
                 return;
             }

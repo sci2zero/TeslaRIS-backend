@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -35,7 +34,6 @@ import rs.teslaris.core.util.SchedulingTime;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class ScheduledTasksRestorer {
 
     public static final Object lock = new Object();
@@ -56,6 +54,8 @@ public class ScheduledTasksRestorer {
 
     private final ObjectMapper objectMapper;
 
+    private final ScheduledTaskRestoration taskRestoration;
+
 
     @EventListener(ApplicationReadyEvent.class)
     protected void restoreTasksOnStartup() {
@@ -74,7 +74,8 @@ public class ScheduledTasksRestorer {
                     SchedulingTime.restoreInZone(
                         SchedulingTime.zoneFromMetadata(metadata.getMetadata()),
                         metadata.getTimeToRun(),
-                        () -> restoreTaskFromMetadata(metadata));
+                        () -> taskRestoration.restoreOne(
+                            () -> restoreTaskFromMetadata(metadata)));
                 }
             } catch (Exception e) {
                 log.error("Failed to restore scheduled task: {}", metadata.getTaskId(), e);

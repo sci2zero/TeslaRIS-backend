@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,6 +67,32 @@ class TaskManagerServiceTest {
         // Then
         assertTrue(taskManagerService.isTaskScheduled(taskId));
         verify(taskScheduler, times(1)).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
+    public void shouldDropScheduledTaskWithoutTouchingTheDatabase() {
+        // Given
+        var taskId = "Migration_Sync-hydrator-PERSON-dropped";
+        var future = mock(ScheduledFuture.class);
+
+        when(future.cancel(false)).thenReturn(true);
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenReturn(future);
+
+        taskManagerService.scheduleTask(taskId, Instant.now().plus(10, ChronoUnit.MINUTES),
+            mock(Runnable.class), 1, RecurrenceType.DAILY);
+
+        // When
+        var isDropped = taskManagerService.dropScheduledTask(taskId);
+
+        // Then
+        assertTrue(isDropped);
+        assertFalse(taskManagerService.isTaskScheduled(taskId));
+        verify(scheduledTaskMetadataRepository, never()).deleteTaskForTaskId(taskId);
+    }
+
+    @Test
+    public void shouldReportNothingDroppedWhenTheTaskIsUnknown() {
+        assertFalse(taskManagerService.dropScheduledTask("Migration_Sync-unknown"));
     }
 
     @Test

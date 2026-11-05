@@ -191,15 +191,19 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             if (Objects.nonNull(currentUserInstitution)) {
                 var currentUserOus = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                     currentUserInstitution);
-                var currentTaskInstitution = Integer.parseInt(taskId.split("-")[1]);
+                var currentTaskInstitution = institutionIdOf(taskId);
 
-                if (!currentUserOus.contains(currentTaskInstitution)) {
+                // A task of no institution, a migration for instance, is left to its owner and to
+                // an administrator.
+                if (Objects.isNull(currentTaskInstitution) ||
+                    !currentUserOus.contains(currentTaskInstitution)) {
                     return false;
                 }
             }
         }
 
-        ScheduledFuture<?> scheduledFuture = tasks.get(taskId).task();
+        var scheduled = tasks.get(taskId);
+        ScheduledFuture<?> scheduledFuture = Objects.nonNull(scheduled) ? scheduled.task() : null;
         if (Objects.nonNull(scheduledFuture)) {
             boolean isCancelled =
                 scheduledFuture.cancel(false); // Cancel the task without interrupting
@@ -210,6 +214,17 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             return isCancelled;
         }
         return false; // Task not found
+    }
+
+    @Override
+    public boolean dropScheduledTask(String taskId) {
+        var scheduled = tasks.remove(taskId);
+
+        if (Objects.isNull(scheduled) || Objects.isNull(scheduled.task())) {
+            return false;
+        }
+
+        return scheduled.task().cancel(false);
     }
 
     @Override
@@ -261,6 +276,11 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledDataQualityFixTasks() {
         return listScheduledTasks(null, UserRole.ADMIN.name(), this::isDataQualityFixTask);
+    }
+
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledMigrationTasks() {
+        return listScheduledTasks(null, UserRole.ADMIN.name(), this::isMigrationTask);
     }
 
     private List<ScheduledTaskResponseDTO> listScheduledTasks(Integer userId, String role,
@@ -317,6 +337,27 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private boolean isDataQualityFixTask(String taskId) {
         return taskId.startsWith("Data_Quality_Fix-");
+    }
+
+    private boolean isMigrationTask(String taskId) {
+        return taskId.startsWith("Migration_Sync-");
+    }
+
+    /**
+     * The institution of a task id, or {@code null} when the id holds no institution.
+     */
+    private Integer institutionIdOf(String taskId) {
+        var parts = taskId.split("-");
+
+        if (parts.length < 2) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(parts[1]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private boolean isReportGenerationTask(String taskId) {

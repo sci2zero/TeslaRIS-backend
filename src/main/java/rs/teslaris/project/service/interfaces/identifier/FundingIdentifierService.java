@@ -11,9 +11,10 @@ import rs.teslaris.project.model.identifier.FundingIdentifier;
 public interface FundingIdentifierService {
 
     List<EntityIdentifierResponseDTO> getIdentifiersForFunding(Integer fundingId,
-                                                           AccessLevel accessLevel);
+                                                               AccessLevel accessLevel);
 
     FundingIdentifier createFundingIdentifier(FundingIdentifierDTO fundingIdentifierDTO);
 
-    void updateFundingIdentifier(Integer fundingIdentifierId, FundingIdentifierDTO fundingIdentifierDTO);
+    void updateFundingIdentifier(Integer fundingIdentifierId,
+                                 FundingIdentifierDTO fundingIdentifierDTO);
 }

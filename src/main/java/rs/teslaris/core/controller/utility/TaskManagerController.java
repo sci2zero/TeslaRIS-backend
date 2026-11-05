@@ -81,8 +81,14 @@ public class TaskManagerController {
         return taskManagerService.listScheduledDataQualityFixTasks();
     }
 
+    @GetMapping("/migration-sync")
+    @PreAuthorize("hasAuthority('PERFORM_MIGRATION')")
+    public List<ScheduledTaskResponseDTO> listScheduledMigrationTasks() {
+        return taskManagerService.listScheduledMigrationTasks();
+    }
+
     @DeleteMapping("/{taskId}")
-    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST', 'PERFORM_MIGRATION')")
     public void cancelTask(@PathVariable String taskId) {
         taskManagerService.cancelTask(taskId);
     }

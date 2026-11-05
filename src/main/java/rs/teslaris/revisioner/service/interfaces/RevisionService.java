@@ -15,6 +15,14 @@ public interface RevisionService {
     boolean createRevisionFromCurrentState(String entityType, Integer entityId,
                                            String profileName);
 
+    /**
+     * Records the present state as a revision of a new major line, for an entity that a migration
+     * run updated. It writes the baseline 1.0 of an entity that has no revision, and nothing at
+     * all when the state matches the newest revision.
+     */
+    boolean recordRevisionFromCurrentState(String entityType, Integer entityId,
+                                           String profileName);
+
     List<RevisionDTO> getRevisions(String entityType, Integer entityId);
 
     Optional<String> getRevisionAtTimestamp(String entityType, Integer entityId, Instant timestamp);

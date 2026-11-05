@@ -1,5 +1,7 @@
 package rs.teslaris.migrator.client;
 
+import rs.teslaris.migrator.model.MigrationRun;
+
 /**
  * Reads one batch of raw records from a source.
  * <p>
@@ -9,5 +11,5 @@ package rs.teslaris.migrator.client;
  */
 public interface SourceRecordFetcher<S> {
 
-    SourceBatch<S> fetch(MigrationCursor cursor, int batchSize);
+    SourceBatch<S> fetch(MigrationCursor cursor, int batchSize, MigrationRun run);
 }

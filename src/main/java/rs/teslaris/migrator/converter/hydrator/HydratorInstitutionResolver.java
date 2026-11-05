@@ -42,8 +42,7 @@ public class HydratorInstitutionResolver implements RunScopedCache {
         }
 
         for (var identifier : identifiers) {
-            var organisationUnitId =
-                organisationUnitIds.computeIfAbsent(identifier, this::lookUp);
+            var organisationUnitId = findByIdentifier(identifier);
 
             if (organisationUnitId.isPresent()) {
                 return new Match(organisationUnitId.get(), null);
@@ -51,6 +50,14 @@ public class HydratorInstitutionResolver implements RunScopedCache {
         }
 
         return Match.missing(NOT_FOUND);
+    }
+
+    public Optional<Integer> findByIdentifier(String identifier) {
+        if (Objects.isNull(identifier) || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
+        return organisationUnitIds.computeIfAbsent(identifier.trim(), this::lookUp);
     }
 
     @Override

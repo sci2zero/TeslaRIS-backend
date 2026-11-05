@@ -20,6 +20,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.search.CountryProcessedNameUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -75,7 +76,12 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     @Override
     @Nullable
     public Optional<Country> findCountryByName(String name) {
-        return countryRepository.findCountryByName(name, Limit.of(1));
+        var processedName = StringUtil.performSimpleLatinPreprocessing(name).trim();
+        if (processedName.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return countryRepository.findCountryByName(processedName, Limit.of(1));
     }
 
     @Override
@@ -108,10 +114,6 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
                 countryDTO.getName()));
         country.setCode(countryDTO.getCode());
 
-        country.setProcessedName("");
-        country.getName().forEach(name -> {
-            country.setProcessedName(country.getProcessedName() + " " +
-                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
-        });
+        country.setProcessedName(CountryProcessedNameUtil.build(country));
     }
 }

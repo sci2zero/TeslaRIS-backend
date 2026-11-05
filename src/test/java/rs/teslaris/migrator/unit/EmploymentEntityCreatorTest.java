@@ -23,6 +23,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
@@ -45,6 +46,9 @@ public class EmploymentEntityCreatorTest {
     private HydratorInstitutionResolver institutionResolver;
     @Mock
     private MigrationLog migrationLog;
+    @Mock
+    private MigrationMergePolicy mergePolicy;
+
     @InjectMocks
     private EmploymentEntityCreator creator;
 

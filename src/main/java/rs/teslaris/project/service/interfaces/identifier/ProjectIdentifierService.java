@@ -11,9 +11,10 @@ import rs.teslaris.project.model.identifier.ProjectIdentifier;
 public interface ProjectIdentifierService {
 
     List<EntityIdentifierResponseDTO> getIdentifiersForProject(Integer projectId,
-                                                           AccessLevel accessLevel);
+                                                               AccessLevel accessLevel);
 
     ProjectIdentifier createProjectIdentifier(ProjectIdentifierDTO projectIdentifierDTO);
 
-    void updateProjectIdentifier(Integer projectIdentifierId, ProjectIdentifierDTO projectIdentifierDTO);
+    void updateProjectIdentifier(Integer projectIdentifierId,
+                                 ProjectIdentifierDTO projectIdentifierDTO);
 }

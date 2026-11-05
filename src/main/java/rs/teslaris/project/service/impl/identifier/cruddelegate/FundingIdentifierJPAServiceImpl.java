@@ -14,7 +14,8 @@ public class FundingIdentifierJPAServiceImpl extends JPAServiceImpl<FundingIdent
 
 
     @Autowired
-    public FundingIdentifierJPAServiceImpl(FundingIdentifierRepository fundingIdentifierRepository) {
+    public FundingIdentifierJPAServiceImpl(
+        FundingIdentifierRepository fundingIdentifierRepository) {
         this.fundingIdentifierRepository = fundingIdentifierRepository;
     }
 

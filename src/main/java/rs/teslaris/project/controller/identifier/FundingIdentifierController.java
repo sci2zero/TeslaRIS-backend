@@ -35,11 +35,11 @@ public class FundingIdentifierController {
 
     @GetMapping("/{fundingId}")
     public Object getFundingIdentifiers(HttpServletRequest request,
-                                    @PathVariable Integer fundingId,
-                                    @RequestHeader(value = "Authorization", required = false)
-                                    String bearerToken,
-                                    @CookieValue(value = "jwt-security-fingerprint", required = false)
-                                    String fingerprintCookie) {
+                                        @PathVariable Integer fundingId,
+                                        @RequestHeader(value = "Authorization", required = false)
+                                        String bearerToken,
+                                        @CookieValue(value = "jwt-security-fingerprint", required = false)
+                                        String fingerprintCookie) {
         return EntityIdentifierController.fetchIdentifiers(
             request,
             bearerToken,
