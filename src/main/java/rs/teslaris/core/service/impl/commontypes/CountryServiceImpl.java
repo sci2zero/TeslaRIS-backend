@@ -75,7 +75,12 @@ public class CountryServiceImpl extends JPAServiceImpl<Country> implements Count
     @Override
     @Nullable
     public Optional<Country> findCountryByName(String name) {
-        return countryRepository.findCountryByName(name, Limit.of(1));
+        var processedName = StringUtil.performSimpleLatinPreprocessing(name).trim();
+        if (processedName.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return countryRepository.findCountryByName(processedName, Limit.of(1));
     }
 
     @Override

@@ -18,7 +18,8 @@ public interface CountryRepository extends JpaRepository<Country, Integer> {
         "WHERE p.personalInfo.professionalPostalAddress.country.id = :countryId")
     void unsetCountryForPersons(Integer countryId);
 
-    @Query("SELECT c FROM Country c JOIN c.name n WHERE LOWER(n.content) = LOWER(:name)")
+    @Query("SELECT c FROM Country c " +
+        "WHERE LOCATE(CONCAT(' ', :name, ' '), CONCAT(' ', c.processedName, ' ')) > 0")
     Optional<Country> findCountryByName(String name, Limit limit);
 
     Optional<Country> findFirstByCodeIgnoreCase(String code);
