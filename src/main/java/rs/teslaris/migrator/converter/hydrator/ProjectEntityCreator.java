@@ -73,6 +73,10 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             return null;
         }
 
+        migrated.droppedIdentifiers().forEach((code, reason) ->
+            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
+                dto.sourceId(), HydratorMappingRule.sciproj(19), reason));
+
         // Fundings of the project link their parts to these contributions
         migrated.organisationContributionIds().forEach((orderNumber, contributionId) ->
             idResolver.remember(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,

@@ -15,4 +15,7 @@ public interface ProjectIdentifierRepository extends JpaRepository<ProjectIdenti
         "ORDER BY i.code, pi.value")
     List<ProjectIdentifier> findIdentifiersForProjectAndIdentifierAccessLevel(Integer projectId,
         AccessLevel accessLevel);
+
+    boolean existsByProjectIdAndIdentifierIdAndValue(Integer projectId, Integer identifierId,
+                                                     String value);
 }

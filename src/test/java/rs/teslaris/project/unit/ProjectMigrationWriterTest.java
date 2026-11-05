@@ -2,6 +2,7 @@ package rs.teslaris.project.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -54,6 +55,12 @@ public class ProjectMigrationWriterTest {
         return project;
     }
 
+    private static Identifier identifier(Integer id) {
+        var identifier = new Identifier();
+        identifier.setId(id);
+        return identifier;
+    }
+
     @Test
     public void shouldAttachIdentifierToCreatedProject() {
         var project = project(1);
@@ -70,29 +77,47 @@ public class ProjectMigrationWriterTest {
         assertEquals(identifier, captor.getValue().getIdentifier());
         assertEquals("12345ABC", captor.getValue().getValue());
         verify(entityIdentifierRepository, never()).existsByValueForType(any(), any(), any());
+        assertTrue(migrated.droppedIdentifiers().isEmpty());
     }
 
     @Test
     public void shouldNotAttachIdentifierTwiceOnRerun() {
         when(projectService.findOne(1)).thenReturn(project(1));
-        when(identifierService.getIdentifierByCode(CODE)).thenReturn(new Identifier());
-        when(entityIdentifierRepository.existsByValueForType("12345ABC", ProjectIdentifier.class,
-            null)).thenReturn(true);
+        when(identifierService.getIdentifierByCode(CODE)).thenReturn(identifier(3));
+        when(projectIdentifierRepository.existsByProjectIdAndIdentifierIdAndValue(1, 3,
+            "12345ABC")).thenReturn(true);
 
         var migrated = writer.migrate(new ProjectDTO(), 1, Map.of(CODE, "12345ABC"));
 
         assertEquals(1, migrated.id());
+        assertTrue(migrated.droppedIdentifiers().isEmpty());
         verify(projectService).updateProject(any(), any());
         verify(projectIdentifierRepository, never()).save(any());
     }
 
     @Test
-    public void shouldSkipIdentifierWithoutDefinition() {
+    public void shouldDropIdentifierTakenByAnotherProject() {
+        when(projectService.findOne(1)).thenReturn(project(1));
+        when(identifierService.getIdentifierByCode(CODE)).thenReturn(identifier(3));
+        when(entityIdentifierRepository.existsByValueForType("12345ABC", ProjectIdentifier.class,
+            null)).thenReturn(true);
+
+        var migrated = writer.migrate(new ProjectDTO(), 1, Map.of(CODE, "12345ABC"));
+
+        assertEquals("value 12345ABC is already taken by another project",
+            migrated.droppedIdentifiers().get(CODE));
+        verify(projectIdentifierRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldDropIdentifierWithoutDefinition() {
         when(projectService.createProject(any())).thenReturn(project(1));
         when(identifierService.getIdentifierByCode(CODE)).thenReturn(null);
 
-        writer.migrate(new ProjectDTO(), null, Map.of(CODE, "12345ABC"));
+        var migrated = writer.migrate(new ProjectDTO(), null, Map.of(CODE, "12345ABC"));
 
+        assertEquals("no identifier is configured for code " + CODE,
+            migrated.droppedIdentifiers().get(CODE));
         verify(projectIdentifierRepository, never()).save(any());
     }
 

@@ -1,11 +1,11 @@
 package rs.teslaris.project.migration;
 
 import jakarta.annotation.Nullable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.project.ProjectDTO;
@@ -21,7 +21,6 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
 
     private final ProjectService projectService;
@@ -44,8 +43,8 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
             }
 
             // A new project holds no identifiers yet, so there is nothing to check against
-            setOtherIdentifiers(created, otherIdentifiers, false);
-            return new MigratedProject(created.getId(), contributionIds(created), true);
+            var dropped = setOtherIdentifiers(created, otherIdentifiers, false);
+            return new MigratedProject(created.getId(), contributionIds(created), true, dropped);
         }
 
         // Re-running a pass must not create a second project for the same source record, and the
@@ -53,15 +52,17 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
         projectService.updateProject(existingProjectId, project);
 
         var updated = projectService.findOne(existingProjectId);
-        setOtherIdentifiers(updated, otherIdentifiers, true);
-        return new MigratedProject(existingProjectId, contributionIds(updated), false);
+        var dropped = setOtherIdentifiers(updated, otherIdentifiers, true);
+        return new MigratedProject(existingProjectId, contributionIds(updated), false, dropped);
     }
 
     // Not through ProjectIdentifierService: it throws on a taken value, which a re-run always hits
-    private void setOtherIdentifiers(Project project, Map<String, String> otherIdentifiers,
-                                     boolean skipTaken) {
+    private Map<String, String> setOtherIdentifiers(Project project,
+                                                    Map<String, String> otherIdentifiers,
+                                                    boolean checkExisting) {
+        var dropped = new HashMap<String, String>();
         if (Objects.isNull(otherIdentifiers)) {
-            return;
+            return dropped;
         }
 
         otherIdentifiers.forEach((code, value) -> {
@@ -71,14 +72,22 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
 
             var identifier = identifierService.getIdentifierByCode(code);
             if (Objects.isNull(identifier)) {
-                log.warn("No identifier is configured for code '{}', so value '{}' of project ({}) "
-                    + "was skipped.", code, value, project.getId());
+                dropped.put(code, "no identifier is configured for code " + code);
                 return;
             }
 
-            if (skipTaken && entityIdentifierRepository.existsByValueForType(value,
-                ProjectIdentifier.class, null)) {
-                return;
+            if (checkExisting) {
+                // Already attached by a previous run
+                if (projectIdentifierRepository.existsByProjectIdAndIdentifierIdAndValue(
+                    project.getId(), identifier.getId(), value)) {
+                    return;
+                }
+
+                if (entityIdentifierRepository.existsByValueForType(value,
+                    ProjectIdentifier.class, null)) {
+                    dropped.put(code, "value " + value + " is already taken by another project");
+                    return;
+                }
             }
 
             var projectIdentifier = new ProjectIdentifier();
@@ -87,6 +96,8 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
             projectIdentifier.setValue(value);
             projectIdentifierRepository.save(projectIdentifier);
         });
+
+        return dropped;
     }
 
     /**

@@ -96,7 +96,7 @@ public class ProjectEntityCreatorTest {
             idResolver, migrationLog);
 
         when(projectMigrationWriter.migrate(any(), any(), any()))
-            .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true));
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(42, Map.of(), true, Map.of()));
     }
 
     @Test
@@ -195,7 +195,7 @@ public class ProjectEntityCreatorTest {
         when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(Optional.of(7));
         when(projectMigrationWriter.migrate(any(), eq(7), any()))
-            .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false));
+            .thenReturn(new ProjectMigrationWriter.MigratedProject(7, Map.of(), false, Map.of()));
 
         var id = creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(),
             List.of(), null), RUN);
@@ -216,7 +216,8 @@ public class ProjectEntityCreatorTest {
     @Test
     void shouldRememberConsortiumContributions() {
         when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
-            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true));
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(1, 101, 2, 102), true,
+                Map.of()));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
             null), RUN);
@@ -225,5 +226,18 @@ public class ProjectEntityCreatorTest {
             MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#1", 101, RUN);
         verify(idResolver).remember(HydratorSource.NAME,
             MigrationEntityType.PROJECT_ORGANISATION, "TEST001#consortium#2", 102, RUN);
+    }
+
+    @Test
+    void shouldReportDroppedIdentifiers() {
+        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(), true,
+                Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, "no identifier is configured")));
+
+        creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
+            null), RUN);
+
+        verify(migrationLog).valueDropped(HydratorSource.NAME, "PROJECT", "TEST001",
+            "CW-002-MAP-000019", "no identifier is configured");
     }
 }
