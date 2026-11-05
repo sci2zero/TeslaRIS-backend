@@ -153,7 +153,8 @@ public class MonographServiceTest {
     public void setUp() {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
-                ".*", ".*", ".*", ".*", License.CC0, null, List.of(), "", "", "", "", false));
+                ".*", ".*", ".*", ".*", License.CC0, null,
+                List.of(), List.of(), List.of(), List.of(), "", "", "", "", false));
         ReflectionTestUtils.setField(monographService, "documentApprovedByDefault", true);
 
         var authentication = mock(Authentication.class);

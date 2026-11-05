@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -180,9 +181,9 @@ public class DataQualityFixatorRunServiceTest {
     @Test
     public void shouldSkipRecordWithoutRestorer() {
         stubPipeline(pipeline(List.of("titleTooLong"), List.of("typographicCharacter"), false));
-        when(revisionRestorerRegistry.get("FUNDING")).thenReturn(Optional.empty());
+        when(revisionRestorerRegistry.get("PRIZE")).thenReturn(Optional.empty());
 
-        stubBatches(List.of(List.of(assessment("FUNDING", 1))));
+        stubBatches(List.of(List.of(assessment("PRIZE", 1))));
 
         dataQualityFixatorRunService.runPipeline("titles", USER_ID);
 
@@ -278,6 +279,20 @@ public class DataQualityFixatorRunServiceTest {
     }
 
     @Test
+    public void shouldFixProjectRecordThroughItsOwnOverload() {
+        stubPipeline(pipeline(List.of("titleTooLong"), List.of("typographicCharacter"), false));
+        when(revisionRestorerRegistry.get("PROJECT")).thenReturn(
+            Optional.of(new StubProjectRestorer()));
+
+        stubBatches(List.of(List.of(assessment("PROJECT", 1))));
+
+        dataQualityFixatorRunService.runPipeline("titles", USER_ID);
+
+        verify(revisionService).applyFixedState(eq("PROJECT"), any(), any(),
+            eq("revisionFixator:titles"));
+    }
+
+    @Test
     public void shouldDoNothingForUnknownPipeline() {
         when(dataQualityFixatorPipelineRepository.findByPipelineName("ghost")).thenReturn(
             Optional.empty());
@@ -357,6 +372,39 @@ public class DataQualityFixatorRunServiceTest {
                 publisher.setName(
                     List.of(new MultilingualContentDTO(1, "EN", "Fixed", 1)));
             }
+        }
+
+        @Override
+        public void applyFix(ProjectDTO project) {
+            if (mutate) {
+                project.setName(List.of(new MultilingualContentDTO(1, "EN", "Fixed", 1)));
+            }
+        }
+    }
+
+    private static final class StubProjectRestorer implements RevisionRestorer<ProjectDTO> {
+
+        @Override
+        public String entityType() {
+            return "PROJECT";
+        }
+
+        @Override
+        public Class<ProjectDTO> dtoClass() {
+            return ProjectDTO.class;
+        }
+
+        @Override
+        public void restore(Integer entityId, ProjectDTO dto) {
+        }
+
+        @Override
+        public Object readCurrentState(Integer entityId) {
+            var project = new ProjectDTO();
+            project.setId(entityId);
+            project.setName(List.of(new MultilingualContentDTO(1, "EN", "Unfixed", 1)));
+
+            return project;
         }
     }
 

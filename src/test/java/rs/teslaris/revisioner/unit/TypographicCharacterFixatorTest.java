@@ -9,8 +9,10 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.revisioner.util.fixators.impl.TypographicCharacterFixator;
 
 public class TypographicCharacterFixatorTest {
@@ -148,10 +150,39 @@ public class TypographicCharacterFixatorTest {
     }
 
     @Test
+    public void shouldNormaliseProjectTextFields() {
+        var project = new ProjectDTO();
+        project.setName(List.of(content("Projeto de Inovação \u2013 Fase I")));
+        project.setDescription(List.of(content("Financiado pela FCT\u00A0em 2020\u2026")));
+
+        typographicCharacterFixator.applyFix(project);
+
+        assertEquals("Projeto de Inovação - Fase I",
+            project.getName().getFirst().getContent());
+        assertEquals("Financiado pela FCT em 2020...",
+            project.getDescription().getFirst().getContent());
+    }
+
+    @Test
+    public void shouldNormaliseFundingTextFieldsIncludingItsDisplayValues() {
+        var funding = new FundingDTO();
+        funding.setName(List.of(content("Bolsa „Horizonte“")));
+        funding.setDisplayFunder(List.of(content("Comiss\u02DCao Europeia")));
+
+        typographicCharacterFixator.applyFix(funding);
+
+        assertEquals("Bolsa \"Horizonte\"", funding.getName().getFirst().getContent());
+        assertEquals("Comissão Europeia",
+            funding.getDisplayFunder().getFirst().getContent());
+    }
+
+    @Test
     public void shouldTolerateEntitiesWithoutTextFields() {
         assertDoesNotThrow(
             () -> typographicCharacterFixator.applyFix(new JournalPublicationDTO()));
         assertDoesNotThrow(() -> typographicCharacterFixator.applyFix(new PersonSnapshotDTO()));
         assertDoesNotThrow(() -> typographicCharacterFixator.applyFix(new ConferenceDTO()));
+        assertDoesNotThrow(() -> typographicCharacterFixator.applyFix(new ProjectDTO()));
+        assertDoesNotThrow(() -> typographicCharacterFixator.applyFix(new FundingDTO()));
     }
 }

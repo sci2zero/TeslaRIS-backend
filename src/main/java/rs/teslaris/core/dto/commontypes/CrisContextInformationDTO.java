@@ -44,7 +44,16 @@ public record CrisContextInformationDTO(
     Map<ApplicableEntityType, Map<String, IdentifierConfigurationDTO>> identifierConfiguration,
 
     @Valid
-    List<MultilingualContentDTO> nationalIdentifierName,
+    List<MultilingualContentDTO> personNationalIdentifierName,
+
+    @Valid
+    List<MultilingualContentDTO> organisationUnitNationalIdentifierName,
+
+    @Valid
+    List<MultilingualContentDTO> projectNationalIdentifierName,
+
+    @Valid
+    List<MultilingualContentDTO> documentNationalIdentifierName,
 
     String personNationalIdUrl,
 

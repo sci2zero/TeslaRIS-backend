@@ -34,7 +34,13 @@ public class CrisContextInformationConverter {
                 defaultMetadataLicense),
             toIdentifierConfigurationDTO(configuration.getIdentifierConfiguration()),
             MultilingualContentConverter.getMultilingualContentDTO(
-                configuration.getNationalIdentifierName()),
+                configuration.getPersonNationalIdentifierName()),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                configuration.getOrganisationUnitNationalIdentifierName()),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                configuration.getProjectNationalIdentifierName()),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                configuration.getDocumentNationalIdentifierName()),
             Objects.requireNonNullElse(configuration.getPersonNationalIdUrl(), ""),
             Objects.requireNonNullElse(configuration.getOrganisationUnitNationalIdUrl(), ""),
             Objects.requireNonNullElse(configuration.getProjectNationalIdUrl(), ""),

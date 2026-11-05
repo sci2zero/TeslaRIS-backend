@@ -8,11 +8,13 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.revisioner.util.fixators.impl.IdentifierAffixFixator;
 
 public class IdentifierAffixFixatorTest {
@@ -128,6 +130,74 @@ public class IdentifierAffixFixatorTest {
 
         assertEquals("0317-847X", publicationSeries.getEissn());
         assertNull(publicationSeries.getPrintISSN());
+    }
+
+    @Test
+    public void shouldCleanProjectDoiAndRaid() {
+        var project = new ProjectDTO();
+        project.setDoi("(https://doi.org/10.1234/proj-1)");
+        project.setRaid("https://raid.org/10.5678/raid-1.");
+
+        identifierAffixFixator.applyFix(project);
+
+        assertEquals("10.1234/proj-1", project.getDoi());
+        assertEquals("10.5678/raid-1", project.getRaid());
+    }
+
+    @Test
+    public void shouldHarvestProjectDoiAndRaidOnlyThroughTheirOwnResolvers() {
+        var project = new ProjectDTO();
+        project.setUris(
+            Set.of("https://doi.org/10.1234/proj-1", "https://raid.org/10.5678/raid-1"));
+
+        identifierAffixFixator.applyFix(project);
+
+        assertEquals("10.1234/proj-1", project.getDoi());
+        assertEquals("10.5678/raid-1", project.getRaid());
+    }
+
+    /**
+     * A RAID carries the shape of a DOI, so only the resolver keeps one out of the other's field.
+     */
+    @Test
+    public void shouldNotHarvestProjectRaidFromADoiResolver() {
+        var project = new ProjectDTO();
+        project.setUris(Set.of("https://doi.org/10.1234/proj-1"));
+
+        identifierAffixFixator.applyFix(project);
+
+        assertEquals("10.1234/proj-1", project.getDoi());
+        assertNull(project.getRaid());
+    }
+
+    @Test
+    public void shouldLeaveProjectNationalIdentifierUntouched() {
+        var project = new ProjectDTO();
+        project.setNationalId("  12345/678  ");
+
+        identifierAffixFixator.applyFix(project);
+
+        assertEquals("  12345/678  ", project.getNationalId());
+    }
+
+    @Test
+    public void shouldHarvestFundingDoiFromItsDescription() {
+        var funding = new FundingDTO();
+        funding.setDescription(List.of(content("Awarded under doi:10.4321/grant-9.")));
+
+        identifierAffixFixator.applyFix(funding);
+
+        assertEquals("10.4321/grant-9", funding.getDoi());
+    }
+
+    @Test
+    public void shouldLeaveFundingGrantAgreementIdentifierUntouched() {
+        var funding = new FundingDTO();
+        funding.setGrantAgreementId("  GA-2020/01  ");
+
+        identifierAffixFixator.applyFix(funding);
+
+        assertEquals("  GA-2020/01  ", funding.getGrantAgreementId());
     }
 
     @Test

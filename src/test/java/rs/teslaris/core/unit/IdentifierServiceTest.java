@@ -239,7 +239,7 @@ class IdentifierServiceTest {
         // Given
         var dto = new IdentifierDTO(null, "DOI",
             List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
-            null, null);
+            null, null, false);
 
         when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
         when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(any()))
@@ -256,11 +256,49 @@ class IdentifierServiceTest {
     }
 
     @Test
+    void shouldStoreFeaturedFlag() {
+        // Given
+        var dto = new IdentifierDTO(null, "DOI",
+            List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
+            null, null, true);
+
+        when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(any()))
+            .thenReturn(new HashSet<>());
+        when(identifierRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // When
+        var result = identifierService.createIdentifier(dto);
+
+        // Then
+        assertTrue(result.getFeatured());
+    }
+
+    @Test
+    void shouldStoreNotFeaturedWhenFlagIsMissing() {
+        // Given
+        var dto = new IdentifierDTO(null, "DOI",
+            List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
+            null, null, null);
+
+        when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
+        when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(any()))
+            .thenReturn(new HashSet<>());
+        when(identifierRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // When
+        var result = identifierService.createIdentifier(dto);
+
+        // Then
+        assertFalse(result.getFeatured());
+    }
+
+    @Test
     void shouldStoreUrlTemplateWhenItCarriesPlaceholder() {
         // Given
         var dto = new IdentifierDTO(null, "ORCID",
             List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.PERSON),
-            null, "https://orcid.org/{ID}");
+            null, "https://orcid.org/{ID}", false);
 
         when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
         when(multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(any()))
@@ -279,7 +317,7 @@ class IdentifierServiceTest {
         // Given
         var dto = new IdentifierDTO(null, "ORCID",
             List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.PERSON),
-            null, "https://orcid.org/");
+            null, "https://orcid.org/", false);
 
         when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
 
@@ -294,7 +332,7 @@ class IdentifierServiceTest {
         // Given
         var dto = new IdentifierDTO(null, "ISSN",
             List.of(), List.of(), AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
-            null, "urn:issn:{ID}");
+            null, "urn:issn:{ID}", false);
 
         when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(false);
 
@@ -309,7 +347,7 @@ class IdentifierServiceTest {
         // Given
         var dto = new IdentifierDTO(null, "DOI", List.of(), List.of(),
             AccessLevel.OPEN, List.of(ApplicableEntityType.DOCUMENT),
-            null, null);
+            null, null, false);
 
         when(identifierRepository.identifierCodeInUse(dto.code(), null)).thenReturn(true);
 
@@ -328,7 +366,7 @@ class IdentifierServiceTest {
         identifier.setId(identifierId);
         var dto = new IdentifierDTO(1, "ISSN",
             List.of(), List.of(), AccessLevel.OPEN,
-            List.of(ApplicableEntityType.DOCUMENT), null, null);
+            List.of(ApplicableEntityType.DOCUMENT), null, null, false);
 
         when(identifierRepository.findById(identifierId)).thenReturn(Optional.of(identifier));
         when(identifierRepository.identifierCodeInUse(dto.code(), identifierId)).thenReturn(false);
@@ -351,7 +389,7 @@ class IdentifierServiceTest {
         var identifier = new Identifier();
         identifier.setId(identifierId);
         var dto = new IdentifierDTO(1, "DOI", List.of(), List.of(),
-            AccessLevel.OPEN, null, null, null);
+            AccessLevel.OPEN, null, null, null, false);
 
         when(identifierRepository.findById(identifierId)).thenReturn(Optional.of(identifier));
         when(identifierRepository.identifierCodeInUse(dto.code(), identifierId)).thenReturn(true);

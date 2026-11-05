@@ -21,6 +21,9 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
     @Value("${mongo.database}")
     private String database;
 
+    @Value("${mongo.server-selection-timeout-seconds:30}")
+    private Integer serverSelectionTimeoutSeconds;
+
 
     @NotNull
     @Override
@@ -41,7 +44,7 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
                         TimeUnit.SECONDS)  // TCP connect
                     .readTimeout(30, TimeUnit.SECONDS))   // Query execution
             .applyToClusterSettings(builder ->
-                builder.serverSelectionTimeout(30,
+                builder.serverSelectionTimeout(serverSelectionTimeoutSeconds,
                     TimeUnit.SECONDS)) // Choosing node, if deployed in cloud
             .applyToConnectionPoolSettings(pool -> pool
                 .maxSize(50)

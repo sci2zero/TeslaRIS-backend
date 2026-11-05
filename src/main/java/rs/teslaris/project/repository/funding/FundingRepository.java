@@ -11,4 +11,7 @@ public interface FundingRepository extends JpaRepository<Funding, Integer> {
     @Query("SELECT CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Funding f WHERE f.doi = :doi AND (:id IS NULL OR f.id <> :id)")
     boolean existsByDoi(String doi, Integer id);
+
+    @Query("SELECT COUNT(f) > 0 FROM Funding f WHERE f.amount.currency.id = :currencyId")
+    boolean isCurrencyInUse(Integer currencyId);
 }

@@ -103,6 +103,13 @@ public final class IdentifierAffixRules {
         rule("S\\d{4,10}", Casing.UPPER, "https://openalex.org/",
             "https://api.openalex.org/sources/");
 
+    // A RAID is DOI shaped and the project service validates both against one pattern, thus a
+    // resolver prefix is the only thing that tells a harvested RAID apart from a harvested DOI.
+    public static final Rule RAID =
+        rule("10\\.\\d{4,9}/[-,._;()/:A-Za-z0-9]+", Casing.AS_IS, "https://raid.org/",
+            "http://raid.org/", "https://www.raid.org/", "https://app.raid.org.au/raids/",
+            "raid:");
+
     public static final Rule CONF_ID = rule(
         "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         Casing.LOWER);
@@ -126,7 +133,10 @@ public final class IdentifierAffixRules {
             return storedValue;
         }
 
-        var candidate = trimAffixes(stripResolverPrefix(rule, storedValue));
+        // Trimmed before the prefix as well as after it, because a pasted value is wrapped
+        // around the resolver and the prefix would otherwise never match.
+        var candidate =
+            trimAffixes(stripResolverPrefix(rule, trimAffixes(storedValue)));
         return rule.value().matcher(candidate).matches() ? rule.casing().apply(candidate) :
             storedValue;
     }

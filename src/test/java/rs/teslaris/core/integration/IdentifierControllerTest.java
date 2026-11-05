@@ -28,7 +28,7 @@ public class IdentifierControllerTest extends BaseTest {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
         return new IdentifierDTO(null, code, dummyMC, dummyMC, AccessLevel.OPEN, List.of(
-            ApplicableEntityType.ALL), "[0-9]{5,6}", null);
+            ApplicableEntityType.ALL), "[0-9]{5,6}", null, false);
     }
 
     @Test
