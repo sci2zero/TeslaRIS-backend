@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -53,19 +55,6 @@ public class MigrationRecordLogRepository {
             keyQuery(source, entityType, sourceKey), MigrationRecordLog.class));
     }
 
-    /**
-     * An item counts as processed when it was created or resolved. Failures and skips are retried on
-     * the next run.
-     */
-    public boolean isAlreadyProcessed(String source, MigrationEntityType entityType,
-                                      String sourceKey) {
-        var query = keyQuery(source, entityType, sourceKey)
-            .addCriteria(Criteria.where("status")
-                .in(MigrationItemStatus.CREATED.name(), MigrationItemStatus.RESOLVED.name()));
-
-        return mongoTemplate.exists(query, MigrationRecordLog.class);
-    }
-
     public Optional<Integer> findTargetEntityId(String source, MigrationEntityType entityType,
                                                 String sourceKey) {
         return find(source, entityType, sourceKey)
@@ -73,26 +62,34 @@ public class MigrationRecordLogRepository {
             .filter(Objects::nonNull);
     }
 
-    public List<MigrationRecordLog> findFailures(String runId, Pageable pageable) {
-        var query = new Query()
-            .addCriteria(Criteria.where("run_id").is(runId))
-            .addCriteria(Criteria.where("status").is(MigrationItemStatus.FAILED.name()))
-            .with(pageable);
+    public Page<MigrationRecordLog> findFailures(String runId, Pageable pageable) {
+        var query = failureQuery(runId).with(pageable);
 
-        return mongoTemplate.find(query, MigrationRecordLog.class);
+        // The count is asked over a query of its own, so the page of the listing does not limit it.
+        var total = mongoTemplate.count(failureQuery(runId), MigrationRecordLog.class);
+
+        return new PageImpl<>(mongoTemplate.find(query, MigrationRecordLog.class), pageable,
+            total);
+    }
+
+    private Query failureQuery(String runId) {
+        return new Query()
+            .addCriteria(Criteria.where("run_id").is(runId))
+            .addCriteria(Criteria.where("status").is(MigrationItemStatus.FAILED.name()));
     }
 
     /**
-     * Entity types the run actually created something of. Only the types are returned, not the
+     * Entity types the run actually wrote something of. Only the types are returned, not the
      * identifiers: the backfill works per type over the whole repository, so a run that created a
      * single person is enough to warrant a person backfill, and the identifiers would be a large
-     * payload for no gain. Resolved items are left out, they point at entities that already
-     * existed and are therefore already accounted for.
+     * payload for no gain. Updated items are included, because an update needs the same follow-up
+     * as a create. Resolved items are left out, they point at entities that already existed and
+     * are therefore already accounted for.
      */
     public Set<String> findCreatedEntityTypes(String runId) {
         var query = new Query()
             .addCriteria(Criteria.where("run_id").is(runId))
-            .addCriteria(Criteria.where("status").is(MigrationItemStatus.CREATED.name()));
+            .addCriteria(Criteria.where("status").in(writtenStatuses()));
 
         return new HashSet<>(
             mongoTemplate.findDistinct(query, "entity_type", MigrationRecordLog.class,
@@ -100,14 +97,16 @@ public class MigrationRecordLogRepository {
     }
 
     /**
-     * Identifiers of the entities a run created, grouped by entity type. Only worth asking for
-     * when the run is small enough that the precise set is cheaper than a sweep of every entity of
-     * those types - see {@code backfillOnlyCreated} on the run.
+     * Identifiers of the entities a run wrote with the given status, grouped by entity type. For
+     * the created ones this is only worth asking for when the run is small enough that the precise
+     * set is cheaper than a sweep of every entity of those types - see {@code backfillOnlyCreated}
+     * on the run.
      */
-    public Map<String, List<Integer>> findCreatedTargetIdsByType(String runId) {
+    public Map<String, List<Integer>> findTargetIdsByType(String runId,
+                                                          MigrationItemStatus status) {
         var query = new Query()
             .addCriteria(Criteria.where("run_id").is(runId))
-            .addCriteria(Criteria.where("status").is(MigrationItemStatus.CREATED.name()))
+            .addCriteria(Criteria.where("status").is(status.name()))
             .addCriteria(Criteria.where("target_entity_id").ne(null));
 
         // Only two of the eight fields are of interest, the rest stay in the database.
@@ -125,6 +124,10 @@ public class MigrationRecordLogRepository {
             .addCriteria(Criteria.where("status").is(MigrationItemStatus.FAILED.name()));
 
         return mongoTemplate.remove(query, MigrationRecordLog.class).getDeletedCount();
+    }
+
+    private List<String> writtenStatuses() {
+        return List.of(MigrationItemStatus.CREATED.name(), MigrationItemStatus.UPDATED.name());
     }
 
     private Query keyQuery(String source, MigrationEntityType entityType, String sourceKey) {

@@ -19,18 +19,23 @@ public class MigrationLog {
 
     public void runStarted(MigrationRun run) {
         log.info("runId={} | source={} | entity={} | status=RUN_STARTED | batchSize={} | " +
-                "performIndex={} | modifiedAfter={}",
+                "performIndex={} | modifiedAfter={} | isUpdate={}",
             run.getId(), run.getSource(), run.getEntityType(), run.getBatchSize(),
-            run.isPerformIndex(), run.getModifiedAfter());
+            run.isPerformIndex(), run.getModifiedAfter(), run.isUpdate());
     }
 
     public void runFinished(MigrationRun run) {
         log.info(
             "runId={} | source={} | entity={} | status=RUN_FINISHED | read={} | created={} | " +
-                "resolved={} | skipped={} | failed={} | batchesFailed={}",
+                "updated={} | resolved={} | skipped={} | failed={} | batchesFailed={}",
             run.getId(), run.getSource(), run.getEntityType(), run.getRecordsRead(),
-            run.getItemsCreated(), run.getItemsResolved(), run.getItemsSkipped(),
-            run.getItemsFailed(), run.getBatchesFailed());
+            run.getItemsCreated(), run.getItemsUpdated(), run.getItemsResolved(),
+            run.getItemsSkipped(), run.getItemsFailed(), run.getBatchesFailed());
+    }
+
+    public void runAbandoned(MigrationRun run, String reason) {
+        log.error("runId={} | source={} | entity={} | status=RUN_FAILED | reason={}",
+            run.getId(), run.getSource(), run.getEntityType(), reason);
     }
 
     public void runAborted(MigrationRun run, Exception exception) {
@@ -53,6 +58,11 @@ public class MigrationLog {
 
     public void itemCreated(MigrationRun run, MigrationItem<?> item, Integer targetId) {
         log.info("runId={} | source={} | entity={} | key={} | status=CREATED | targetId={}",
+            run.getId(), run.getSource(), item.type(), item.sourceKey(), targetId);
+    }
+
+    public void itemUpdated(MigrationRun run, MigrationItem<?> item, Integer targetId) {
+        log.info("runId={} | source={} | entity={} | key={} | status=UPDATED | targetId={}",
             run.getId(), run.getSource(), item.type(), item.sourceKey(), targetId);
     }
 

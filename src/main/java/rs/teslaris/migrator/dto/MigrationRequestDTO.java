@@ -10,6 +10,7 @@ public record MigrationRequestDTO(
     Boolean resume,
     String modifiedAfter,
     Boolean backfillOnlyCreated,
+    Boolean isUpdate,
     Integer triggeredByUserId
 ) {
 
@@ -19,6 +20,14 @@ public record MigrationRequestDTO(
 
     public boolean shouldPerformIndex() {
         return Boolean.TRUE.equals(performIndex);
+    }
+
+    /**
+     * Whether a record the migration already wrote is updated from the source, instead of skipped.
+     * A run with {@code modifiedAfter} and without this flag creates the new records only.
+     */
+    public boolean shouldUpdate() {
+        return Boolean.TRUE.equals(isUpdate);
     }
 
     /**

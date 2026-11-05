@@ -1,6 +1,7 @@
 package rs.teslaris.revisioner.util;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,7 +21,9 @@ import rs.teslaris.revisioner.service.interfaces.RevisionService;
  * <p>
  * A run that enumerated what it created is backfilled exactly; one that did not is backfilled per
  * type over the whole repository, which skips whatever already has a revision and so also catches
- * entities an earlier run left behind.
+ * entities an earlier run left behind. An entity the run updated already has a revision, so a
+ * backfill would pass over it: it gets a revision of a new major line instead, which also carries
+ * its reassessment.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,6 +38,10 @@ public class MigrationRevisionBackfillListener {
     @Async
     @EventListener
     public void handle(MigrationRunFinishedEvent event) {
+        if (event.hasUpdatedEntities()) {
+            recordUpdated(event);
+        }
+
         if (event.hasEnumeratedEntities()) {
             backfillEnumerated(event);
             return;
@@ -44,11 +51,31 @@ public class MigrationRevisionBackfillListener {
     }
 
     private void backfillEnumerated(MigrationRunFinishedEvent event) {
+        var tally = applyToEnumerated(event, event.createdEntityIdsByType(),
+            revisionService::createRevisionFromCurrentState, "created");
+
+        log.info("Backfilled {} revision(s) of the entities created by migration run {} of " +
+                "source '{}', {} skipped, {} failed.", tally.recorded(), event.runId(),
+            event.source(), tally.skipped(), tally.failed());
+    }
+
+    private void recordUpdated(MigrationRunFinishedEvent event) {
+        var tally = applyToEnumerated(event, event.updatedEntityIdsByType(),
+            revisionService::recordRevisionFromCurrentState, "updated");
+
+        log.info("Recorded {} revision(s) of the entities updated by migration run {} of " +
+                "source '{}', {} unchanged, {} failed.", tally.recorded(), event.runId(),
+            event.source(), tally.skipped(), tally.failed());
+    }
+
+    private Tally applyToEnumerated(MigrationRunFinishedEvent event,
+                                    Map<String, List<Integer>> entityIdsByType,
+                                    RevisionWrite write, String outcome) {
         var recorded = 0;
         var skipped = 0;
         var failed = 0;
 
-        for (var entry : event.createdEntityIdsByType().entrySet()) {
+        for (var entry : entityIdsByType.entrySet()) {
             var entityType = entry.getKey();
 
             for (var entityId : entry.getValue()) {
@@ -57,10 +84,9 @@ public class MigrationRevisionBackfillListener {
                 }
 
                 try {
-                    // Entity types without a revision restorer, and entities that already have a
-                    // revision, are reported as not recorded rather than as a failure.
-                    if (revisionService.createRevisionFromCurrentState(entityType, entityId,
-                        null)) {
+                    // Entity types without a revision restorer, and entities whose state is
+                    // already recorded, are reported as not recorded rather than as a failure.
+                    if (write.apply(entityType, entityId, null)) {
                         recorded++;
                     } else {
                         skipped++;
@@ -68,16 +94,14 @@ public class MigrationRevisionBackfillListener {
                 } catch (Exception e) {
                     // One unreadable entity must not cost the rest of the run its history.
                     failed++;
-                    log.warn("Unable to backfill a revision of entity '{}' (ID={}) created by " +
-                            "migration run {}. Reason: {}", entityType, entityId, event.runId(),
-                        e.getMessage());
+                    log.warn("Unable to record a revision of entity '{}' (ID={}) {} by " +
+                            "migration run {}. Reason: {}", entityType, entityId, outcome,
+                        event.runId(), e.getMessage());
                 }
             }
         }
 
-        log.info("Backfilled {} revision(s) of the entities created by migration run {} of " +
-                "source '{}', {} skipped, {} failed.", recorded, event.runId(), event.source(),
-            skipped, failed);
+        return new Tally(recorded, skipped, failed);
     }
 
     private void backfillEveryEntityOfCreatedTypes(MigrationRunFinishedEvent event) {
@@ -119,5 +143,14 @@ public class MigrationRevisionBackfillListener {
                  "MONOGRAPH", "MONOGRAPH_PUBLICATION" -> QualityAssessmentTarget.DOCUMENT;
             default -> null;
         };
+    }
+
+    @FunctionalInterface
+    private interface RevisionWrite {
+
+        boolean apply(String entityType, Integer entityId, String profileName);
+    }
+
+    private record Tally(int recorded, int skipped, int failed) {
     }
 }

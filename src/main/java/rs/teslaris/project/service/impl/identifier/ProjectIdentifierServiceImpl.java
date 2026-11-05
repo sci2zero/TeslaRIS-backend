@@ -32,10 +32,10 @@ public class ProjectIdentifierServiceImpl extends EntityIdentifierServiceImpl
 
     @Autowired
     public ProjectIdentifierServiceImpl(EntityIdentifierRepository entityIdentifierRepository,
-                                    IdentifierService identifierService,
-                                    ProjectIdentifierRepository projectIdentifierRepository,
-                                    ProjectIdentifierJPAServiceImpl projectIdentifierJPAService,
-                                    ProjectService projectService) {
+                                        IdentifierService identifierService,
+                                        ProjectIdentifierRepository projectIdentifierRepository,
+                                        ProjectIdentifierJPAServiceImpl projectIdentifierJPAService,
+                                        ProjectService projectService) {
         super(entityIdentifierRepository, identifierService);
         this.projectIdentifierRepository = projectIdentifierRepository;
         this.projectIdentifierJPAService = projectIdentifierJPAService;
@@ -45,8 +45,9 @@ public class ProjectIdentifierServiceImpl extends EntityIdentifierServiceImpl
     @Override
     @Transactional(readOnly = true)
     public List<EntityIdentifierResponseDTO> getIdentifiersForProject(Integer projectId,
-                                                                  AccessLevel accessLevel) {
-        return projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(projectId,
+                                                                      AccessLevel accessLevel) {
+        return projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(
+            projectId,
             accessLevel).stream().map(EntityIdentifierConverter::toDTO).toList();
     }
 
@@ -57,7 +58,8 @@ public class ProjectIdentifierServiceImpl extends EntityIdentifierServiceImpl
 
         setCommonFields(newProjectIdentifier, projectIdentifierDTO);
 
-        newProjectIdentifier.setProject(projectService.findOne(projectIdentifierDTO.getProjectId()));
+        newProjectIdentifier.setProject(
+            projectService.findOne(projectIdentifierDTO.getProjectId()));
 
         return projectIdentifierJPAService.save(newProjectIdentifier);
     }
@@ -65,12 +67,13 @@ public class ProjectIdentifierServiceImpl extends EntityIdentifierServiceImpl
     @Override
     @Transactional
     public void updateProjectIdentifier(Integer projectIdentifierId,
-                                    ProjectIdentifierDTO projectIdentifierDTO) {
+                                        ProjectIdentifierDTO projectIdentifierDTO) {
         var projectIdentifierToUpdate = projectIdentifierJPAService.findOne(projectIdentifierId);
 
         setCommonFields(projectIdentifierToUpdate, projectIdentifierDTO);
 
-        projectIdentifierToUpdate.setProject(projectService.findOne(projectIdentifierDTO.getProjectId()));
+        projectIdentifierToUpdate.setProject(
+            projectService.findOne(projectIdentifierDTO.getProjectId()));
 
         projectIdentifierJPAService.save(projectIdentifierToUpdate);
     }

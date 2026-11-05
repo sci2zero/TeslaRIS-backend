@@ -134,13 +134,8 @@ public class RevisionServiceImpl implements RevisionService {
 
             revision.setAdminNote(getAdminNote(event.revisionType()));
 
-            latestRevision.ifPresent(latest -> {
-                    revision.setMajorVersion(
-                        latest.getMajorVersion() +
-                            (event.revisionType().equals(RevisionType.ENRICHMENT) ? 1 : 0));
-                    revision.setMinorVersion(latest.getMinorVersion() + 1);
-                }
-            );
+            latestRevision.ifPresent(
+                latest -> applyNextVersion(revision, latest, event.revisionType()));
 
             applicationEventPublisher.publishEvent(
                 new DataQualityAssessmentEvent(revision, newJson));
@@ -192,35 +187,9 @@ public class RevisionServiceImpl implements RevisionService {
             return false;
         }
 
-        var restorer = revisionRestorerRegistry.get(entityType);
+        var json = currentStateJson(entityType, entityId);
 
-        if (restorer.isEmpty()) {
-            log.warn("No revision restorer registered for entity type '{}', unable to capture " +
-                "current state of entity with ID {}.", entityType, entityId);
-            return false;
-        }
-
-        Object currentState;
-
-        try {
-            currentState = restorer.get().readCurrentState(entityId);
-        } catch (Exception e) {
-            log.warn("Unable to read current state of entity '{}' (ID={}). Reason: {}",
-                entityType, entityId, e.getMessage());
-            return false;
-        }
-
-        if (Objects.isNull(currentState)) {
-            return false;
-        }
-
-        String json;
-
-        try {
-            json = canonicalize(objectMapper.writeValueAsString(currentState), entityType);
-        } catch (JsonProcessingException e) {
-            log.error("Unable to serialize current state of entity '{}' (ID={}).",
-                entityType, entityId, e);
+        if (Objects.isNull(json)) {
             return false;
         }
 
@@ -263,6 +232,115 @@ public class RevisionServiceImpl implements RevisionService {
             entityType, entityId);
 
         return true;
+    }
+
+    /**
+     * Records the state an entity has now as a revision of a new major line, which is what an
+     * update from a migration source produces. An entity without a revision gets its 1.0 instead,
+     * and an entity whose state matches its newest revision gets nothing.
+     */
+    @Override
+    public boolean recordRevisionFromCurrentState(String entityType, Integer entityId,
+                                                  String profileName) {
+        var json = currentStateJson(entityType, entityId);
+
+        if (Objects.isNull(json)) {
+            return false;
+        }
+
+        var hash = sha256(json);
+
+        // The assessment listener reacts after commit, so the write needs a transaction of its own.
+        var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
+            revisionRepository.lockForRevisionWrite(entityType, entityId);
+
+            var latestRevision = revisionRepository
+                .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
+
+            if (latestRevision.isPresent() &&
+                hash.equals(latestRevision.get().getContentHash())) {
+                return false;
+            }
+
+            var revision =
+                EntityRevision.builder()
+                    .majorVersion(1)
+                    .minorVersion(0)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .revisionTimestamp(Instant.now())
+                    .contentHash(hash)
+                    .compressedContent(CompressionUtil.compress(json))
+                    .build();
+
+            revision.setAdminNote(latestRevision.isPresent() ? "revisionMigrationUpdate"
+                : "revisionBackfill");
+
+            latestRevision.ifPresent(
+                latest -> applyNextVersion(revision, latest, RevisionType.ENRICHMENT));
+
+            revisionRepository.save(revision);
+
+            applicationEventPublisher.publishEvent(
+                new DataQualityAssessmentEvent(revision, json, profileName));
+
+            log.info("Recorded current state of entity '{}' (ID={}) as revision {}.{}.",
+                entityType, entityId, revision.getMajorVersion(), revision.getMinorVersion());
+
+            return true;
+        }));
+
+        return written;
+    }
+
+    /**
+     * The canonical JSON of the state an entity has now, or {@code null} when it cannot be read.
+     */
+    private String currentStateJson(String entityType, Integer entityId) {
+        var restorer = revisionRestorerRegistry.get(entityType);
+
+        if (restorer.isEmpty()) {
+            log.warn("No revision restorer registered for entity type '{}', unable to capture " +
+                "current state of entity with ID {}.", entityType, entityId);
+            return null;
+        }
+
+        Object currentState;
+
+        try {
+            currentState = restorer.get().readCurrentState(entityId);
+        } catch (Exception e) {
+            log.warn("Unable to read current state of entity '{}' (ID={}). Reason: {}",
+                entityType, entityId, e.getMessage());
+            return null;
+        }
+
+        if (Objects.isNull(currentState)) {
+            return null;
+        }
+
+        try {
+            return canonicalize(objectMapper.writeValueAsString(currentState), entityType);
+        } catch (JsonProcessingException e) {
+            log.error("Unable to serialize current state of entity '{}' (ID={}).",
+                entityType, entityId, e);
+            return null;
+        }
+    }
+
+    /**
+     * An enrichment, and an update from a migration source, open a new major line.
+     */
+    private void applyNextVersion(EntityRevision revision, EntityRevision latest,
+                                  RevisionType revisionType) {
+        if (RevisionType.ENRICHMENT.equals(revisionType)) {
+            revision.setMajorVersion(latest.getMajorVersion() + 1);
+            revision.setMinorVersion(0);
+            return;
+        }
+
+        revision.setMajorVersion(latest.getMajorVersion());
+        revision.setMinorVersion(latest.getMinorVersion() + 1);
     }
 
     private TransactionTemplate newTransaction() {

@@ -23,9 +23,9 @@ import rs.teslaris.core.model.identifier.Identifier;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.dto.identifier.ProjectIdentifierDTO;
 import rs.teslaris.project.model.identifier.ProjectIdentifier;
+import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.identifier.ProjectIdentifierRepository;
 import rs.teslaris.project.service.impl.identifier.ProjectIdentifierServiceImpl;
 import rs.teslaris.project.service.impl.identifier.cruddelegate.ProjectIdentifierJPAServiceImpl;
@@ -69,8 +69,9 @@ public class ProjectIdentifierServiceTest {
         var projectIdentifier2 = new ProjectIdentifier();
         projectIdentifier2.setIdentifier(identifier);
 
-        when(projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(projectId,
-            accessLevel)).thenReturn(List.of(projectIdentifier1, projectIdentifier2));
+        when(
+            projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(projectId,
+                accessLevel)).thenReturn(List.of(projectIdentifier1, projectIdentifier2));
 
         // When
         var response = projectIdentifierService.getIdentifiersForProject(projectId, accessLevel);
@@ -87,11 +88,13 @@ public class ProjectIdentifierServiceTest {
         // Given
         var projectId = 1;
 
-        when(projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(projectId,
-            AccessLevel.OPEN)).thenReturn(List.of());
+        when(
+            projectIdentifierRepository.findIdentifiersForProjectAndIdentifierAccessLevel(projectId,
+                AccessLevel.OPEN)).thenReturn(List.of());
 
         // When
-        var response = projectIdentifierService.getIdentifiersForProject(projectId, AccessLevel.OPEN);
+        var response =
+            projectIdentifierService.getIdentifiersForProject(projectId, AccessLevel.OPEN);
 
         // Then
         assertNotNull(response);
@@ -180,7 +183,8 @@ public class ProjectIdentifierServiceTest {
 
         // When & Then
         assertThrows(NotFoundException.class, () ->
-            projectIdentifierService.updateProjectIdentifier(projectIdentifierId, projectIdentifierDTO));
+            projectIdentifierService.updateProjectIdentifier(projectIdentifierId,
+                projectIdentifierDTO));
 
         verify(projectIdentifierJPAService, never()).save(any());
     }

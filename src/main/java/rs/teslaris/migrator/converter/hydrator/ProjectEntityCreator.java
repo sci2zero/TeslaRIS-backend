@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -13,13 +14,17 @@ import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
+import rs.teslaris.migrator.pipeline.EntityUpdater;
+import rs.teslaris.migrator.pipeline.merge.MergeContext;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 @Component
 @RequiredArgsConstructor
-public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> {
+public class ProjectEntityCreator
+    implements EntityCreator<ProjectMigrationDTO>, EntityUpdater<ProjectMigrationDTO> {
 
     private final ProjectMigrationWriter projectMigrationWriter;
 
@@ -31,7 +36,11 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
 
     private final HydratorFundingPartFactory fundingPartFactory;
 
+    private final HydratorConsortiumKeyFactory consortiumKeyFactory;
+
     private final MigrationIdResolver idResolver;
+
+    private final MigrationMergePolicy mergePolicy;
 
     private final MigrationLog migrationLog;
 
@@ -72,12 +81,50 @@ public class ProjectEntityCreator implements EntityCreator<ProjectMigrationDTO> 
             return null;
         }
 
-        // Fundings of the project link their parts to these contributions
-        migrated.organisationContributionIds().forEach((orderNumber, contributionId) ->
-            idResolver.remember(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
-                ProjectMigrationDTO.consortiumKeyOf(dto.sourceId(), orderNumber), contributionId, run));
+        rememberConsortium(dto, migrated, run);
 
         return migrated.id();
+    }
+
+    /**
+     * The source adds no contribution here: the merge keeps the consortium and the team of the
+     * project, which an editor may have corrected.
+     */
+    @Override
+    public void update(Integer targetId, ProjectMigrationDTO dto, MigrationRun run) {
+        dto.throwIfRejected();
+
+        var merged = mergePolicy.merge(dto.project(), projectMigrationWriter.read(targetId),
+            new MergeContext(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
+                dto.sourceId()));
+
+        var migrated = projectMigrationWriter.migrate(merged, targetId);
+
+        if (Objects.isNull(migrated)) {
+            return;
+        }
+
+        rememberConsortium(dto, migrated, run);
+    }
+
+    private void rememberConsortium(ProjectMigrationDTO dto,
+                                    ProjectMigrationWriter.MigratedProject migrated,
+                                    MigrationRun run) {
+        var membersByOrderNumber = dto.consortium().stream()
+            .collect(Collectors.toMap(ProjectMigrationDTO.ConsortiumEntry::orderNumber,
+                entry -> entry, (first, second) -> first));
+
+        // Fundings of the project link their parts to these contributions
+        migrated.organisationContributionIds().forEach((orderNumber, contributionId) -> {
+            var member = membersByOrderNumber.get(orderNumber);
+
+            if (Objects.isNull(member)) {
+                return;
+            }
+
+            idResolver.remember(HydratorSource.NAME, MigrationEntityType.PROJECT_ORGANISATION,
+                consortiumKeyFactory.keyOf(dto.sourceId(), member), contributionId, run);
+        });
     }
 
     // CW-002-MAP-000022: linked by identifier, otherwise kept as display name

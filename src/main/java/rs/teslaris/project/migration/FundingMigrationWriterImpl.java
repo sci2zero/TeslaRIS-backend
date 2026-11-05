@@ -17,6 +17,11 @@ public class FundingMigrationWriterImpl implements FundingMigrationWriter {
 
 
     @Override
+    public FundingDTO read(Integer fundingId) {
+        return fundingService.readFunding(fundingId);
+    }
+
+    @Override
     @Transactional
     public MigratedFunding migrate(FundingDTO funding, @Nullable Integer existingFundingId) {
         if (Objects.isNull(existingFundingId)) {

@@ -39,6 +39,11 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
             contributionIds(projectService.findOne(existingProjectId)), false);
     }
 
+    @Override
+    public ProjectDTO read(Integer projectId) {
+        return projectService.readProject(projectId);
+    }
+
     /**
      * Keyed by order number, which is what identifies a consortium member in the source - the
      * members have no identifier of their own.

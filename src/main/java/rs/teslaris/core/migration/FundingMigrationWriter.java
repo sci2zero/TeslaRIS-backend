@@ -20,6 +20,11 @@ public interface FundingMigrationWriter {
     MigratedFunding migrate(FundingDTO funding, @Nullable Integer existingFundingId);
 
     /**
+     * The written funding as it stands now, which a sync run merges the changed source record into.
+     */
+    FundingDTO read(Integer fundingId);
+
+    /**
      * @param id      the written funding
      * @param created false when an existing funding was updated instead
      */

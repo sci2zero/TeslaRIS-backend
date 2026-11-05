@@ -32,6 +32,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.FundingMigrationDTO;
+import rs.teslaris.migrator.converter.hydrator.HydratorConsortiumKeyFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingPartFactory;
 import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
@@ -40,6 +41,7 @@ import rs.teslaris.migrator.converter.hydrator.ProjectMigrationDTO;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
+import rs.teslaris.migrator.pipeline.merge.MigrationMergePolicy;
 import rs.teslaris.migrator.service.impl.MigrationIdResolver;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
@@ -69,6 +71,9 @@ public class FundingEntityCreatorTest {
     private HydratorInstitutionResolver institutionResolver;
 
     @Mock
+    private MigrationMergePolicy mergePolicy;
+
+    @Mock
     private MigrationLog migrationLog;
 
     private FundingEntityCreator creator;
@@ -93,9 +98,13 @@ public class FundingEntityCreatorTest {
     void setUp() {
         var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
             mock(LanguageService.class), mock(ResearchAreaService.class));
+        when(institutionResolver.resolve(any()))
+            .thenReturn(new HydratorInstitutionResolver.Match(null, "not found"));
+
         creator = new FundingEntityCreator(fundingMigrationWriter, currencyService, idResolver,
             institutionResolver, conversionUtil,
             new HydratorFundingPartFactory(currencyService, conversionUtil, migrationLog),
+            new HydratorConsortiumKeyFactory(institutionResolver, conversionUtil), mergePolicy,
             migrationLog);
 
         when(fundingMigrationWriter.migrate(any(), any()))

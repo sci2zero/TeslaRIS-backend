@@ -49,6 +49,9 @@ public class MigrationRun {
     @Field("modified_after")
     private String modifiedAfter;
 
+    @Field("is_update")
+    private boolean isUpdate;
+
     @Field("backfill_only_created")
     private boolean backfillOnlyCreated;
 
@@ -57,6 +60,9 @@ public class MigrationRun {
 
     @Field("items_created")
     private long itemsCreated;
+
+    @Field("items_updated")
+    private long itemsUpdated;
 
     @Field("items_resolved")
     private long itemsResolved;

@@ -11,10 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.service.impl.commontypes.ScheduledTaskRestoration;
 import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.SchedulingTime;
@@ -25,7 +25,6 @@ import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillServic
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class ScheduledRevisionerTasksRestorer {
 
     private final QualityAssessmentBackfillService qualityAssessmentBackfillService;
@@ -37,6 +36,8 @@ public class ScheduledRevisionerTasksRestorer {
     private final TaskManagerService taskManagerService;
 
     private final ObjectMapper objectMapper;
+
+    private final ScheduledTaskRestoration taskRestoration;
 
 
     @EventListener(ApplicationReadyEvent.class)
@@ -53,7 +54,8 @@ public class ScheduledRevisionerTasksRestorer {
                     SchedulingTime.restoreInZone(
                         SchedulingTime.zoneFromMetadata(metadata.getMetadata()),
                         metadata.getTimeToRun(),
-                        () -> restoreTaskFromMetadata(metadata));
+                        () -> taskRestoration.restoreOne(
+                            () -> restoreTaskFromMetadata(metadata)));
                 }
             } catch (Exception e) {
                 log.error("Failed to restore revisioner scheduled task: {}", metadata.getTaskId(),

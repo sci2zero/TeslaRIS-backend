@@ -10,6 +10,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -19,9 +20,12 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
+import rs.teslaris.migrator.pipeline.EntityUpdater;
+import rs.teslaris.migrator.pipeline.ExistingReader;
 import rs.teslaris.migrator.pipeline.FailureHandler;
 import rs.teslaris.migrator.pipeline.ItemRouter;
 import rs.teslaris.migrator.pipeline.MigrationItem;
+import rs.teslaris.migrator.pipeline.UpdatePlan;
 import rs.teslaris.migrator.pipeline.failure.DocumentDuplicateFailureHandler;
 import rs.teslaris.migrator.util.MigrationEntityType;
 
@@ -90,13 +94,20 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
             return Objects.isNull(dto) ? null : new MigrationItem<JournalPublicationDTO>(
                 MigrationEntityType.JOURNAL_PUBLICATION,
                 converters.outputKey(record, output),
+                null,
                 dto,
                 (article, run) -> {
-                    requireUnusedIdentifiers(article);
+                    requireUnusedIdentifiers(article, null);
                     article.setJournalId(converters.journalId(record, output));
                     return journalPublicationService.createJournalPublication(article,
                         run.isPerformIndex()).getId();
                 },
+                UpdatePlan.<JournalPublicationDTO>of(
+                    ExistingReader.of(journalPublicationService::readJournalPublicationById),
+                    (targetId, article, run) -> {
+                        requireUnusedIdentifiers(article, targetId);
+                        journalPublicationService.editJournalPublication(targetId, article);
+                    }),
                 duplicateFailureHandler.forType(JournalPublicationDTO.class));
         }
 
@@ -107,9 +118,10 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
             return Objects.isNull(dto) ? null : new MigrationItem<ProceedingsPublicationDTO>(
                 MigrationEntityType.PROCEEDINGS_PUBLICATION,
                 converters.outputKey(record, output),
+                null,
                 dto,
                 (publication, run) -> {
-                    requireUnusedIdentifiers(publication);
+                    requireUnusedIdentifiers(publication, null);
                     var container =
                         proceedingsResolver.resolveOrCreate(record, output, run.isPerformIndex());
                     publication.setProceedingsId(container.proceedingsId());
@@ -117,6 +129,16 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                     return proceedingsPublicationService.createProceedingsPublication(
                         publication, run.isPerformIndex()).getId();
                 },
+                // The merge keeps the present proceedings and event, so an update creates no
+                // second container for the same paper.
+                UpdatePlan.<ProceedingsPublicationDTO>of(
+                    ExistingReader.of(
+                        proceedingsPublicationService::readProceedingsPublicationById),
+                    (targetId, publication, run) -> {
+                        requireUnusedIdentifiers(publication, targetId);
+                        proceedingsPublicationService.editProceedingsPublication(targetId,
+                            publication);
+                    }),
                 duplicateFailureHandler.forType(ProceedingsPublicationDTO.class));
         }
 
@@ -126,8 +148,11 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
             return Objects.isNull(dto) ? null : new MigrationItem<>(
                 MigrationEntityType.THESIS,
                 converters.outputKey(record, output),
+                null,
                 dto,
                 EntityCreator.of(thesisService::createThesis, Thesis::getId),
+                UpdatePlan.<ThesisDTO>of(ExistingReader.of(thesisService::readThesisById),
+                    EntityUpdater.of(thesisService::editThesis)),
                 FailureHandler.noOp());
         }
 
@@ -148,6 +173,7 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
         return Objects.isNull(dto) ? null : new MigrationItem<PerformanceRelatedOutputDTO>(
             MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             converters.outputKey(record, output),
+            null,
             dto,
             (slides, run) -> {
                 slides.setEventId(
@@ -156,13 +182,20 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 return performanceRelatedOutputService.createPerformanceRelatedOutput(slides,
                     run.isPerformIndex()).getId();
             },
+            // The merge keeps the present event, so an update creates no second event.
+            UpdatePlan.<PerformanceRelatedOutputDTO>of(
+                ExistingReader.of(
+                    performanceRelatedOutputService::readPerformanceRelatedOutputById),
+                EntityUpdater.of(performanceRelatedOutputService::editPerformanceRelatedOutput)),
             FailureHandler.noOp());
     }
 
     // A duplicate fails before its container is resolved, so it leaves no stubs behind
-    private void requireUnusedIdentifiers(DocumentDTO dto) {
-        if (documentPublicationService.findDocumentByCommonIdentifier(dto.getDoi(),
-            dto.getOpenAlexId(), dto.getScopusId(), dto.getWebOfScienceId()).isPresent()) {
+    private void requireUnusedIdentifiers(DocumentDTO dto, Integer targetId) {
+        var owner = documentPublicationService.findDocumentByCommonIdentifier(dto.getDoi(),
+            dto.getOpenAlexId(), dto.getScopusId(), dto.getWebOfScienceId());
+
+        if (owner.isPresent() && !Objects.equals(owner.get().getId(), targetId)) {
             throw new IdentifierException("identifierExistsError");
         }
     }

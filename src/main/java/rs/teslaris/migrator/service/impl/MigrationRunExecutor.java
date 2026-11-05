@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.applicationevent.MigrationRunFinishedEvent;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.migrator.model.MigrationItemStatus;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.model.MigrationRunStatus;
 import rs.teslaris.migrator.pipeline.MigrationPipelineRunner;
@@ -41,6 +42,13 @@ public class MigrationRunExecutor {
 
     private final Map<String, ReentrantLock> runLocks = new ConcurrentHashMap<>();
 
+
+    /**
+     * Runs on the calling thread: an internal call does not pass through the async proxy.
+     */
+    public <S> void executeSynchronous(ResolvedPipeline<S> resolved, MigrationRun run) {
+        execute(resolved, run);
+    }
 
     @Async("migrationExecutor")
     public <S> void execute(ResolvedPipeline<S> resolved, MigrationRun run) {
@@ -87,11 +95,17 @@ public class MigrationRunExecutor {
             // Enumerating is only asked for when the run is small enough to be worth it, as the
             // identifiers are proportional to what the run created.
             var createdEntityIdsByType = run.isBackfillOnlyCreated()
-                ? recordLogRepository.findCreatedTargetIdsByType(run.getId())
+                ? recordLogRepository.findTargetIdsByType(run.getId(), MigrationItemStatus.CREATED)
+                : null;
+
+            // An updated entity is reachable by its identifier alone, so it is always enumerated.
+            var updatedEntityIdsByType = run.isUpdate()
+                ? recordLogRepository.findTargetIdsByType(run.getId(), MigrationItemStatus.UPDATED)
                 : null;
 
             applicationEventPublisher.publishEvent(new MigrationRunFinishedEvent(
-                run.getId(), run.getSource(), createdEntityTypes, createdEntityIdsByType));
+                run.getId(), run.getSource(), createdEntityTypes, createdEntityIdsByType,
+                updatedEntityIdsByType));
         } catch (Exception e) {
             // The run itself is already finished and recorded, losing the follow-up must not
             // change that.

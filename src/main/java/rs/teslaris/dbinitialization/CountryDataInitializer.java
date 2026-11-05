@@ -13,7 +13,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
-import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.search.CountryProcessedNameUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 
 /**
@@ -41,6 +41,7 @@ public class CountryDataInitializer {
         yugoslavia.setCode("YU");
         yugoslavia.setName(Set.of(new MultiLingualContent(serbianTag, "Jugoslavija", 1),
             new MultiLingualContent(englishTag, "Yugoslavia", 2)));
+        yugoslavia.setProcessedName(CountryProcessedNameUtil.build(yugoslavia));
         countryRepository.save(yugoslavia);
     }
 
@@ -70,11 +71,7 @@ public class CountryDataInitializer {
             }
         }
         country.setName(names);
-        country.setProcessedName("");
-        country.getName().forEach(name -> {
-            country.setProcessedName(country.getProcessedName() + " " +
-                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
-        });
+        country.setProcessedName(CountryProcessedNameUtil.build(country));
         countryRepository.save(country);
     }
 

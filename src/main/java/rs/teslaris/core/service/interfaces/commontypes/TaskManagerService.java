@@ -15,6 +15,12 @@ public interface TaskManagerService {
 
     boolean cancelTask(String taskId);
 
+    /**
+     * Drops a task from the schedule without the authorisation checks and the row deletion of a
+     * cancellation by a user.
+     */
+    boolean dropScheduledTask(String taskId);
+
     boolean isTaskScheduled(String taskId);
 
     List<ScheduledTaskResponseDTO> listScheduledTasks();
@@ -35,6 +41,8 @@ public interface TaskManagerService {
     List<ScheduledTaskResponseDTO> listScheduledMaintenanceTasks();
 
     List<ScheduledTaskResponseDTO> listScheduledDataQualityFixTasks();
+
+    List<ScheduledTaskResponseDTO> listScheduledMigrationTasks();
 
     Instant findNextFreeExecutionTime();
 

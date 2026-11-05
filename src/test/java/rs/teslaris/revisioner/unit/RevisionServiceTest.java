@@ -12,6 +12,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -246,7 +247,7 @@ public class RevisionServiceTest {
             verify(revisionRepository).save(captor.capture());
 
             assertEquals(3, captor.getValue().getMajorVersion());
-            assertEquals(4, captor.getValue().getMinorVersion());
+            assertEquals(0, captor.getValue().getMinorVersion());
         }
     }
 
@@ -358,6 +359,92 @@ public class RevisionServiceTest {
         verifyNoInteractions(transactionManager, revisionRestorerRegistry);
         verify(revisionRepository, never()).save(any());
         verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    public void shouldRecordAnUpdatedEntityOnANewMajorLine() {
+        // given
+        stubRestorerReturning(new DummyDTO(1, "Synced title"));
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 2, 3)));
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var recorded = revisionService.recordRevisionFromCurrentState(ENTITY_TYPE, 1, null);
+
+            // then
+            assertTrue(recorded);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            var savedRevision = captor.getValue();
+            assertEquals(3, savedRevision.getMajorVersion());
+            assertEquals(0, savedRevision.getMinorVersion());
+            assertEquals("revisionMigrationUpdate", savedRevision.getAdminNote());
+
+            var savedContent = CompressionUtil.decompress(savedRevision.getCompressedContent());
+            assertTrue(savedContent.contains("Synced title"));
+
+            var eventCaptor = ArgumentCaptor.forClass(DataQualityAssessmentEvent.class);
+            verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+            assertEquals(savedRevision, eventCaptor.getValue().entityRevision());
+        }
+    }
+
+    @Test
+    public void shouldRecordTheBaselineWhenAnUpdatedEntityHasNoRevision() {
+        // given
+        stubRestorerReturning(new DummyDTO(1, "Synced title"));
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            // when
+            var recorded = revisionService.recordRevisionFromCurrentState(ENTITY_TYPE, 1, null);
+
+            // then
+            assertTrue(recorded);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            assertEquals(1, captor.getValue().getMajorVersion());
+            assertEquals(0, captor.getValue().getMinorVersion());
+            assertEquals("revisionBackfill", captor.getValue().getAdminNote());
+        }
+    }
+
+    @Test
+    public void shouldRecordNothingWhenTheUpdateChangedNothing() {
+        // given
+        stubRestorerReturning(new DummyDTO(1, "Synced title"));
+
+        when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+            ENTITY_TYPE, 1)).thenReturn(Optional.empty());
+
+        try (var ignored = mockConfigurationLoader()) {
+            revisionService.recordRevisionFromCurrentState(ENTITY_TYPE, 1, null);
+
+            var captor = ArgumentCaptor.forClass(EntityRevision.class);
+            verify(revisionRepository).save(captor.capture());
+
+            // The state of the entity is now what the newest revision holds.
+            when(revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
+                ENTITY_TYPE, 1)).thenReturn(Optional.of(revisionWithContent("{}", 1, 0,
+                captor.getValue().getContentHash())));
+
+            // when
+            var recorded = revisionService.recordRevisionFromCurrentState(ENTITY_TYPE, 1, null);
+
+            // then
+            assertFalse(recorded);
+            verify(revisionRepository, times(1)).save(any());
+            verify(applicationEventPublisher, times(1))
+                .publishEvent(any(DataQualityAssessmentEvent.class));
+        }
     }
 
     @Test

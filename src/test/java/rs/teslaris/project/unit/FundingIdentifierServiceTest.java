@@ -23,8 +23,8 @@ import rs.teslaris.core.model.identifier.Identifier;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.dto.identifier.FundingIdentifierDTO;
+import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.identifier.FundingIdentifier;
 import rs.teslaris.project.repository.identifier.FundingIdentifierRepository;
 import rs.teslaris.project.service.impl.identifier.FundingIdentifierServiceImpl;
@@ -69,8 +69,9 @@ public class FundingIdentifierServiceTest {
         var fundingIdentifier2 = new FundingIdentifier();
         fundingIdentifier2.setIdentifier(identifier);
 
-        when(fundingIdentifierRepository.findIdentifiersForFundingAndIdentifierAccessLevel(fundingId,
-            accessLevel)).thenReturn(List.of(fundingIdentifier1, fundingIdentifier2));
+        when(
+            fundingIdentifierRepository.findIdentifiersForFundingAndIdentifierAccessLevel(fundingId,
+                accessLevel)).thenReturn(List.of(fundingIdentifier1, fundingIdentifier2));
 
         // When
         var response = fundingIdentifierService.getIdentifiersForFunding(fundingId, accessLevel);
@@ -87,11 +88,13 @@ public class FundingIdentifierServiceTest {
         // Given
         var fundingId = 1;
 
-        when(fundingIdentifierRepository.findIdentifiersForFundingAndIdentifierAccessLevel(fundingId,
-            AccessLevel.OPEN)).thenReturn(List.of());
+        when(
+            fundingIdentifierRepository.findIdentifiersForFundingAndIdentifierAccessLevel(fundingId,
+                AccessLevel.OPEN)).thenReturn(List.of());
 
         // When
-        var response = fundingIdentifierService.getIdentifiersForFunding(fundingId, AccessLevel.OPEN);
+        var response =
+            fundingIdentifierService.getIdentifiersForFunding(fundingId, AccessLevel.OPEN);
 
         // Then
         assertNotNull(response);
@@ -180,7 +183,8 @@ public class FundingIdentifierServiceTest {
 
         // When & Then
         assertThrows(NotFoundException.class, () ->
-            fundingIdentifierService.updateFundingIdentifier(fundingIdentifierId, fundingIdentifierDTO));
+            fundingIdentifierService.updateFundingIdentifier(fundingIdentifierId,
+                fundingIdentifierDTO));
 
         verify(fundingIdentifierJPAService, never()).save(any());
     }

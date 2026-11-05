@@ -19,7 +19,8 @@ public record ProjectMigrationDTO(
     String rejection
 ) implements MigrationDTO {
 
-    // Consortium members have no id of their own; their position identifies them
+    // The key format of an earlier version, which a run still resolves; see
+    // HydratorConsortiumKeyFactory
     public static String consortiumKeyOf(String projectId, Integer orderNumber) {
         return projectId + "#consortium#" + orderNumber;
     }

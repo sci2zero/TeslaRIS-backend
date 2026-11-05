@@ -14,5 +14,5 @@ public interface ProjectIdentifierRepository extends JpaRepository<ProjectIdenti
         "WHERE pi.project.id = :projectId AND i.accessLevel <= :accessLevel " +
         "ORDER BY i.code, pi.value")
     List<ProjectIdentifier> findIdentifiersForProjectAndIdentifierAccessLevel(Integer projectId,
-        AccessLevel accessLevel);
+                                                                              AccessLevel accessLevel);
 }

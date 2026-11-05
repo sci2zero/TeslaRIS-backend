@@ -23,14 +23,10 @@ import rs.teslaris.core.configuration.MongoIndexInitializer;
 
 public class MongoIndexInitializerTest {
 
-    private MongoTemplate mongoTemplate;
-
-    private IndexOperations indexOperations;
-
-    private MongoIndexInitializer initializer;
-
     private final Index firstIndex = new Index().on("first", Sort.Direction.ASC);
-
+    private MongoTemplate mongoTemplate;
+    private IndexOperations indexOperations;
+    private MongoIndexInitializer initializer;
 
     @BeforeEach
     @SuppressWarnings("unchecked")

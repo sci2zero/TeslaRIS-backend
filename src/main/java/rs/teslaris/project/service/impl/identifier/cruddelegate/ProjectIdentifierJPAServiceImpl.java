@@ -14,7 +14,8 @@ public class ProjectIdentifierJPAServiceImpl extends JPAServiceImpl<ProjectIdent
 
 
     @Autowired
-    public ProjectIdentifierJPAServiceImpl(ProjectIdentifierRepository projectIdentifierRepository) {
+    public ProjectIdentifierJPAServiceImpl(
+        ProjectIdentifierRepository projectIdentifierRepository) {
         this.projectIdentifierRepository = projectIdentifierRepository;
     }
 

@@ -14,5 +14,5 @@ public interface FundingIdentifierRepository extends JpaRepository<FundingIdenti
         "WHERE fi.funding.id = :fundingId AND i.accessLevel <= :accessLevel " +
         "ORDER BY i.code, fi.value")
     List<FundingIdentifier> findIdentifiersForFundingAndIdentifierAccessLevel(Integer fundingId,
-        AccessLevel accessLevel);
+                                                                              AccessLevel accessLevel);
 }

@@ -24,6 +24,10 @@ import java.util.Set;
  *                               precise but proportional to the size of the run, sweeping is
  *                               constant in the size of the run but proportional to the size of
  *                               the repository.
+ * @param updatedEntityIdsByType the exact entities updated, always enumerated: an entity that the
+ *                               run updated already has a revision, so a sweep would pass over it
+ *                               and the identifier is the only way to reach it. Their number is
+ *                               what one sync window changed, not what the source holds.
  */
 public record MigrationRunFinishedEvent(
     String runId,
@@ -31,11 +35,19 @@ public record MigrationRunFinishedEvent(
     Set<String> createdEntityTypes,
 
     @Nullable
-    Map<String, List<Integer>> createdEntityIdsByType
+    Map<String, List<Integer>> createdEntityIdsByType,
+
+    @Nullable
+    Map<String, List<Integer>> updatedEntityIdsByType
 ) {
 
     public boolean hasEnumeratedEntities() {
         return Objects.nonNull(createdEntityIdsByType) &&
             !createdEntityIdsByType.isEmpty();
+    }
+
+    public boolean hasUpdatedEntities() {
+        return Objects.nonNull(updatedEntityIdsByType) &&
+            !updatedEntityIdsByType.isEmpty();
     }
 }

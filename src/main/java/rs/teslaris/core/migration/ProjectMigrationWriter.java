@@ -22,6 +22,11 @@ public interface ProjectMigrationWriter {
     MigratedProject migrate(ProjectDTO project, @Nullable Integer existingProjectId);
 
     /**
+     * The written project as it stands now, which a sync run merges the changed source record into.
+     */
+    ProjectDTO read(Integer projectId);
+
+    /**
      * @param id                          the written project
      * @param organisationContributionIds contribution id per consortium member order number, which
      *                                    the project's fundings need to attach their parts to
