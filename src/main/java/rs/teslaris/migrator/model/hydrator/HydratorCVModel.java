@@ -406,6 +406,8 @@ public class HydratorCVModel {
         String programName,
         InvestigationRole investigationRole,
         String yearAwarded,
+        String competitive,
+        String fundingRenewable,
         TotalAmount totalAmount,
         FundingIdentifiers fundingIdentifiers,
         FundingInvestigators investigators,

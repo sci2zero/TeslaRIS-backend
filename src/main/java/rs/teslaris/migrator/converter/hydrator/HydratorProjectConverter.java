@@ -315,8 +315,8 @@ public class HydratorProjectConverter implements
             reason -> dropped(key, HydratorMappingRule.sciproj(32), reason));
     }
 
-    // Missing dateFrom counts as started, missing dateTo as open-ended
-    private ProjectStatus status(LocalDate dateFrom, LocalDate dateTo) {
+    // Missing dateFrom counts as started, missing dateTo as open-ended; also for curricula
+    static ProjectStatus status(LocalDate dateFrom, LocalDate dateTo) {
         var today = LocalDate.now();
 
         if (Objects.nonNull(dateFrom) && dateFrom.isAfter(today)) {

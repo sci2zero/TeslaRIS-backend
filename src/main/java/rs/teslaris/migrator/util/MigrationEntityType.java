@@ -18,6 +18,7 @@ public enum MigrationEntityType {
     PROJECT,
     PROJECT_FUNDING,
     PROJECT_ORGANISATION,
+    CV_FUNDING,
 
     DOCUMENT,
     JOURNAL_PUBLICATION,
