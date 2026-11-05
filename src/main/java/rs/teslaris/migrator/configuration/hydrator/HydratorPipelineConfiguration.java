@@ -12,8 +12,10 @@ import rs.teslaris.migrator.client.fetcher.HttpPagedFetcher;
 import rs.teslaris.migrator.client.hydrator.HydratorCVClient;
 import rs.teslaris.migrator.client.hydrator.HydratorProjectClient;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
+import rs.teslaris.migrator.converter.hydrator.CvFundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.HydratorCvFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
@@ -46,6 +48,8 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     traversal; a request for {@code PERSON_PRIZE} or {@code PERSON_EMPLOYMENT} alone runs this
  *     pipeline filtered to that type;</li>
  *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
+ *     <li>{@code CV_FUNDING} - curriculum fundings, matched against the projects of the previous
+ *     pass and created only when not found;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
  * </ol>
  */
@@ -81,6 +85,10 @@ public class HydratorPipelineConfiguration {
 
     private final PrizeEntityCreator prizeEntityCreator;
 
+    private final HydratorCvFundingExtractor cvFundingExtractor;
+
+    private final CvFundingEntityCreator cvFundingEntityCreator;
+
     private final PersonMergeFailureHandler personMergeFailureHandler;
 
     private final OrganisationUnitService organisationUnitService;
@@ -95,6 +103,7 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.ORGANISATION_UNIT,
             MigrationEntityType.PERSON,
             MigrationEntityType.PROJECT,
+            MigrationEntityType.CV_FUNDING,
             MigrationEntityType.DOCUMENT
         );
     }
@@ -135,6 +144,16 @@ public class HydratorPipelineConfiguration {
             sourceProperties.getRetry().toPolicy(),
             HydratorProjectModel.ProjectDocument::id,
             sourceProperties.batchSizeOrDefault(properties.getDefaultBatchSize()));
+    }
+
+    @Bean
+    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorCvFundingPipeline() {
+        return pipeline(MigrationEntityType.CV_FUNDING, new SimpleMapping<>(
+            MigrationEntityType.CV_FUNDING,
+            cvFundingExtractor,
+            cvFundingEntityCreator,
+            FailureHandler.resolvedToExisting(),
+            (record, dto) -> dto.sourceKey()));
     }
 
     /**
