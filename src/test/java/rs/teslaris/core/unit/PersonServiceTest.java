@@ -1787,8 +1787,13 @@ public class PersonServiceTest {
         verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(eq(personId));
     }
 
-    @Test
-    public void shouldReindexPersonEmploymentDetailsWhenPersonIndexExists() {
+    @ParameterizedTest
+    @CsvSource({
+        "true, 'University of Belgrade, Université de Belgrade'",
+        "false, Université de Belgrade"
+    })
+    public void shouldReindexPersonEmploymentDetailsWhenPersonIndexExists(
+        boolean includeEnglish, String expectedOtherName) {
         // Given
         Person savedPerson = new Person();
         savedPerson.setId(1);
@@ -1807,9 +1812,16 @@ public class PersonServiceTest {
             "Univerzitet u Beogradu", 1));
         orgName.add(new MultiLingualContent(
             new LanguageTag() {{
-                setLanguageTag(LanguageAbbreviations.ENGLISH);
+                setLanguageTag("FR");
             }},
-            "University of Belgrade", 2));
+            "Université de Belgrade", 2));
+        if (includeEnglish) {
+            orgName.add(new MultiLingualContent(
+                new LanguageTag() {{
+                    setLanguageTag(LanguageAbbreviations.ENGLISH);
+                }},
+                "University of Belgrade", 3));
+        }
         orgUnit.setName(orgName);
         orgUnit.setNameAbbreviation(Set.of(
             new MultiLingualContent(
@@ -1843,7 +1855,7 @@ public class PersonServiceTest {
         assertThat(personIndex.getEmploymentInstitutionsIdHierarchy())
             .containsExactly(100, 50, 25);
         assertThat(personIndex.getEmploymentsSr()).contains("Univerzitet u Beogradu | UB");
-        assertThat(personIndex.getEmploymentsOther()).contains("University of Belgrade");
+        assertThat(personIndex.getEmploymentsOther()).isEqualTo(expectedOtherName);
     }
 
     @Test
