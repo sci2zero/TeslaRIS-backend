@@ -32,16 +32,17 @@ public class HydratorProjectResolver {
 
         return switch (projectIds.size()) {
             case 0 -> Match.missing("no project with reference " + reference.lookupValue());
-            case 1 -> new Match(projectIds.getFirst(), null);
-            default -> Match.missing("ambiguous reference " + reference.lookupValue() +
-                ": matches " + projectIds.size() + " projects");
+            case 1 -> new Match(projectIds.getFirst(), null, false);
+            default -> new Match(null, "ambiguous reference " + reference.lookupValue() +
+                ": matches " + projectIds.size() + " projects", true);
         };
     }
 
-    public record Match(Integer projectId, String reason) {
+    // ambiguous: several projects match, so the caller must neither pick one nor create another
+    public record Match(Integer projectId, String reason, boolean ambiguous) {
 
         static Match missing(String reason) {
-            return new Match(null, reason);
+            return new Match(null, reason, false);
         }
 
         public boolean found() {

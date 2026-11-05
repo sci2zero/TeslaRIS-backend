@@ -2,6 +2,7 @@ package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,6 +58,7 @@ public class HydratorProjectResolverTest {
         var match = resolver.resolve(HydratorFundingReference.of("PTDC/ABC/1234/2020"));
 
         assertFalse(match.found());
+        assertTrue(match.ambiguous());
         assertEquals("ambiguous reference PTDC/ABC/1234/2020: matches 2 projects",
             match.reason());
     }
@@ -69,6 +71,7 @@ public class HydratorProjectResolverTest {
         var match = resolver.resolve(HydratorFundingReference.of("PTDC/ABC/1234/2020"));
 
         assertFalse(match.found());
+        assertFalse(match.ambiguous());
         assertEquals("no project with reference PTDC/ABC/1234/2020", match.reason());
     }
 
