@@ -19,7 +19,7 @@ import org.mockito.quality.Strictness;
 import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.model.identifier.Identifier;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
-import rs.teslaris.core.repository.identifier.IdentifierRepository;
+import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.project.migration.ProjectMigrationWriterImpl;
 import rs.teslaris.project.model.identifier.ProjectIdentifier;
 import rs.teslaris.project.model.project.Project;
@@ -36,7 +36,7 @@ public class ProjectMigrationWriterTest {
     private ProjectService projectService;
 
     @Mock
-    private IdentifierRepository identifierRepository;
+    private IdentifierService identifierService;
 
     @Mock
     private EntityIdentifierRepository entityIdentifierRepository;
@@ -59,7 +59,7 @@ public class ProjectMigrationWriterTest {
         var project = project(1);
         var identifier = new Identifier();
         when(projectService.createProject(any())).thenReturn(project);
-        when(identifierRepository.findByCode(CODE)).thenReturn(identifier);
+        when(identifierService.getIdentifierByCode(CODE)).thenReturn(identifier);
 
         var migrated = writer.migrate(new ProjectDTO(), null, Map.of(CODE, "12345ABC"));
 
@@ -74,7 +74,7 @@ public class ProjectMigrationWriterTest {
     @Test
     public void shouldNotAttachIdentifierTwiceOnRerun() {
         when(projectService.findOne(1)).thenReturn(project(1));
-        when(identifierRepository.findByCode(CODE)).thenReturn(new Identifier());
+        when(identifierService.getIdentifierByCode(CODE)).thenReturn(new Identifier());
         when(entityIdentifierRepository.existsByValueForType("12345ABC", ProjectIdentifier.class,
             null)).thenReturn(true);
 
@@ -88,7 +88,7 @@ public class ProjectMigrationWriterTest {
     @Test
     public void shouldSkipIdentifierWithoutDefinition() {
         when(projectService.createProject(any())).thenReturn(project(1));
-        when(identifierRepository.findByCode(CODE)).thenReturn(null);
+        when(identifierService.getIdentifierByCode(CODE)).thenReturn(null);
 
         writer.migrate(new ProjectDTO(), null, Map.of(CODE, "12345ABC"));
 

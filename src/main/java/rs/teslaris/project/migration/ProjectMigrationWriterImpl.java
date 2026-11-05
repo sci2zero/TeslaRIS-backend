@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
-import rs.teslaris.core.repository.identifier.IdentifierRepository;
+import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.model.identifier.ProjectIdentifier;
 import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
@@ -26,7 +26,7 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
 
     private final ProjectService projectService;
 
-    private final IdentifierRepository identifierRepository;
+    private final IdentifierService identifierService;
 
     private final EntityIdentifierRepository entityIdentifierRepository;
 
@@ -67,7 +67,7 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
                 return;
             }
 
-            var identifier = identifierRepository.findByCode(code);
+            var identifier = identifierService.getIdentifierByCode(code);
             if (Objects.isNull(identifier)) {
                 log.warn("No identifier is configured for code '{}', so value '{}' of project ({}) "
                     + "was skipped.", code, value, project.getId());

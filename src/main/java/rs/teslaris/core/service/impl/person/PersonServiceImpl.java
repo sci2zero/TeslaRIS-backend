@@ -87,7 +87,6 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
-import rs.teslaris.core.repository.identifier.IdentifierRepository;
 import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -105,6 +104,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -148,7 +148,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final PersonIdentifierRepository personIdentifierRepository;
 
-    private final IdentifierRepository identifierRepository;
+    private final IdentifierService identifierService;
 
     private final CrisContextInformationService crisContextInformationService;
 
@@ -368,7 +368,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 return;
             }
 
-            var identifier = identifierRepository.findByCode(code);
+            var identifier = identifierService.getIdentifierByCode(code);
 
             if (Objects.isNull(identifier)) {
                 log.warn("No identifier is configured for code '{}', so the harvested value for " +

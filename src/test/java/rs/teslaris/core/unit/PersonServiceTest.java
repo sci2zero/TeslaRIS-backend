@@ -86,7 +86,6 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
-import rs.teslaris.core.repository.identifier.IdentifierRepository;
 import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
@@ -102,6 +101,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -124,7 +124,7 @@ public class PersonServiceTest {
     private PersonIdentifierRepository personIdentifierRepository;
 
     @Mock
-    private IdentifierRepository identifierRepository;
+    private IdentifierService identifierService;
 
     @Mock
     private LanguageTagService languageTagService;
@@ -464,7 +464,7 @@ public class PersonServiceTest {
         identifier.setCode("apvnt");
 
         stubPersonSave(savedPersonStub());
-        when(identifierRepository.findByCode("apvnt")).thenReturn(identifier);
+        when(identifierService.getIdentifierByCode("apvnt")).thenReturn(identifier);
         when(personIdentifierRepository.existsByValue("12345", 7)).thenReturn(false);
 
         // when
@@ -485,7 +485,7 @@ public class PersonServiceTest {
         personDTO.getAdditionalIdentifiers().put("unconfigured", "12345");
 
         stubPersonSave(savedPersonStub());
-        when(identifierRepository.findByCode("unconfigured")).thenReturn(null);
+        when(identifierService.getIdentifierByCode("unconfigured")).thenReturn(null);
 
         // when
         personService.importPersonWithBasicInfo(personDTO, false);
@@ -504,7 +504,7 @@ public class PersonServiceTest {
         identifier.setCode("apvnt");
 
         stubPersonSave(savedPersonStub());
-        when(identifierRepository.findByCode("apvnt")).thenReturn(identifier);
+        when(identifierService.getIdentifierByCode("apvnt")).thenReturn(identifier);
         when(personIdentifierRepository.existsByValue("12345", 7)).thenReturn(true);
 
         // when
