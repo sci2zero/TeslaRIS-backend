@@ -69,6 +69,7 @@ public class ProjectMigrationWriterTest {
         assertEquals(project, captor.getValue().getProject());
         assertEquals(identifier, captor.getValue().getIdentifier());
         assertEquals("12345ABC", captor.getValue().getValue());
+        verify(entityIdentifierRepository, never()).existsByValueForType(any(), any(), any());
     }
 
     @Test

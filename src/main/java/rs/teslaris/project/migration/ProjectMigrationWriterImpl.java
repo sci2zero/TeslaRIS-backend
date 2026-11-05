@@ -43,7 +43,8 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
                 return null;
             }
 
-            setOtherIdentifiers(created, otherIdentifiers);
+            // A new project holds no identifiers yet, so there is nothing to check against
+            setOtherIdentifiers(created, otherIdentifiers, false);
             return new MigratedProject(created.getId(), contributionIds(created), true);
         }
 
@@ -52,12 +53,13 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
         projectService.updateProject(existingProjectId, project);
 
         var updated = projectService.findOne(existingProjectId);
-        setOtherIdentifiers(updated, otherIdentifiers);
+        setOtherIdentifiers(updated, otherIdentifiers, true);
         return new MigratedProject(existingProjectId, contributionIds(updated), false);
     }
 
     // Not through ProjectIdentifierService: it throws on a taken value, which a re-run always hits
-    private void setOtherIdentifiers(Project project, Map<String, String> otherIdentifiers) {
+    private void setOtherIdentifiers(Project project, Map<String, String> otherIdentifiers,
+                                     boolean skipTaken) {
         if (Objects.isNull(otherIdentifiers)) {
             return;
         }
@@ -74,8 +76,8 @@ public class ProjectMigrationWriterImpl implements ProjectMigrationWriter {
                 return;
             }
 
-            if (entityIdentifierRepository.existsByValueForType(value, ProjectIdentifier.class,
-                null)) {
+            if (skipTaken && entityIdentifierRepository.existsByValueForType(value,
+                ProjectIdentifier.class, null)) {
                 return;
             }
 
