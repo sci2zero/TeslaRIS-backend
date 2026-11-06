@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -113,8 +114,21 @@ public class HydratorProjectConverterTest {
         var dto = converter.toDTO(document(FULL_PROJECT)).project();
 
         assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());
+    }
+
+    @Test
+    void shouldDropFundingProgramOnlyWithoutFundings() throws Exception {
+        converter.toDTO(document(FULL_PROJECT));
+
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("CW-002-MAP-000019"), eq("identifier type 'FundingProgram' not mapped"));
+            eq("CW-002-MAP-000019"), eq("funding program not kept: project has no funding"));
+
+        clearInvocations(migrationLog);
+        converter.toDTO(document(FULL_PROJECT.replace("\"acronym\"",
+            "\"funded\": [{\"fundedAs\": {\"funding\": {\"id\": \"F1\"}}}], \"acronym\"")));
+
+        verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), anyString());
     }
 
     @Test

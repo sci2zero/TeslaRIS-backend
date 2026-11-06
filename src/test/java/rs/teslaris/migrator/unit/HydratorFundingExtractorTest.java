@@ -118,6 +118,49 @@ public class HydratorFundingExtractorTest {
     }
 
     @Test
+    void shouldSetFundingProgramOnEveryFundingOfTheProject() throws Exception {
+        var record = MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": {
+              "projectId": "TEST001",
+              "identifiers": [{"type": "%sFundingProgram", "value": " Test Programme "}],
+              "funded": [%s, %s]}}}}
+            """.formatted(ID_TYPES, funding("F1", "2020-01-01"), funding("F2", "2020-01-01")),
+            HydratorProjectModel.ProjectDocument.class);
+
+        var result = extractor.extract(record);
+
+        assertEquals(2, result.size());
+        result.forEach(item -> assertEquals("Test Programme",
+            item.funding().getDisplayProgram().getFirst().getContent()));
+    }
+
+    @Test
+    void shouldLeaveFundingProgramEmptyWhenProjectHasNone() throws Exception {
+        var result = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"));
+
+        assertTrue(result.getFirst().funding().getDisplayProgram().isEmpty());
+    }
+
+    @Test
+    void shouldReportFurtherFundingPrograms() throws Exception {
+        var record = MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": {
+              "projectId": "TEST001",
+              "identifiers": [{"type": "%sFundingProgram", "value": "Test Programme"},
+                              {"type": "%sFundingProgram", "value": "Other Programme"}],
+              "funded": [%s]}}}}
+            """.formatted(ID_TYPES, ID_TYPES, funding("F1", "2020-01-01")),
+            HydratorProjectModel.ProjectDocument.class);
+
+        var result = extractor.extract(record);
+
+        assertEquals("Test Programme",
+            result.getFirst().funding().getDisplayProgram().getFirst().getContent());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), eq("1 further funding program(s) not carried over"));
+    }
+
+    @Test
     void shouldPassFunderIdentifiersToResolver() throws Exception {
         var funder = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"))
             .getFirst().funder();

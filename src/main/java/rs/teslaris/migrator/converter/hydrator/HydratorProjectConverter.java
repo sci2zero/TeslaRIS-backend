@@ -37,6 +37,8 @@ public class HydratorProjectConverter implements
 
     private static final String URL_TYPE = "URL";
 
+    static final String FUNDING_PROGRAM_TYPE = "FundingProgram";
+
     private static final String ENGLISH = "en";
 
     // Wikidata property used by SciPROJ for the Ciência ID
@@ -84,7 +86,7 @@ public class HydratorProjectConverter implements
             dto.setNameAbbreviation(conversionUtil.multilingualContent(project.acronym(), null));
         }
 
-        dto.setInternalIdentifiers(identifiers(key, project.identifiers()));
+        dto.setInternalIdentifiers(identifiers(key, project));
         dto.setNationalId(fctReference(project.identifiers()));
         dto.setUris(uris(project.identifiers()));
         dto.setResearchAreasId(new HashSet<>(researchAreas(key, project.subjects())));
@@ -250,20 +252,25 @@ public class HydratorProjectConverter implements
         return result;
     }
 
-    // CW-002-MAP-000019; the FundingProgram identifier belongs to the funding
-    private Set<String> identifiers(String key, List<HydratorProjectModel.TypedValue> identifiers) {
+    // CW-002-MAP-000019; the FundingProgram identifier goes to the project's fundings
+    private Set<String> identifiers(String key, HydratorProjectModel.Project project) {
         var result = new LinkedHashSet<String>();
 
-        if (Objects.isNull(identifiers)) {
+        if (Objects.isNull(project.identifiers())) {
             return result;
         }
 
-        identifiers.stream()
+        project.identifiers().stream()
             .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()))
             .forEach(identifier -> {
                 var type = typeName(identifier.type());
                 if (PROJECT_IDENTIFIER_TYPES.contains(type)) {
                     result.add(identifier.value().trim());
+                } else if (FUNDING_PROGRAM_TYPE.equals(type)) {
+                    if (fundingCount(project) == 0) {
+                        dropped(key, HydratorMappingRule.sciproj(19),
+                            "funding program not kept: project has no funding");
+                    }
                 } else if (!URL_TYPE.equals(type)) {
                     dropped(key, HydratorMappingRule.sciproj(19),
                         "identifier type '" + typeName(identifier.type()) + "' not mapped");

@@ -52,6 +52,7 @@ public class HydratorFundingExtractor
         }
 
         var result = new ArrayList<FundingMigrationDTO>();
+        var fundingProgram = fundingProgram(project);
         var consortiumAmounts = HydratorProjectConverter.fundingCount(project) == 1 ?
             projectConverter.consortiumEntries(project.consortium()).stream()
                 .filter(entry -> Objects.nonNull(entry.amount()))
@@ -87,6 +88,11 @@ public class HydratorFundingExtractor
                 }
             }
 
+            // Named on the project, so every funding of the project gets the same programme
+            if (Objects.nonNull(fundingProgram)) {
+                dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgram, null));
+            }
+
             setIdentifiers(dto, funding.identifiers());
             if (!isBlank(funding.grantId())) {
                 dto.setGrantAgreementId(funding.grantId().trim());
@@ -110,6 +116,27 @@ public class HydratorFundingExtractor
         });
 
         return result;
+    }
+
+    // CW-002-MAP-000019: the source keeps the programme name in a project identifier
+    private String fundingProgram(HydratorProjectModel.Project project) {
+        if (Objects.isNull(project.identifiers())) {
+            return null;
+        }
+
+        var programs = project.identifiers().stream()
+            .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()) &&
+                HydratorProjectConverter.FUNDING_PROGRAM_TYPE.equals(typeName(identifier.type())))
+            .map(identifier -> identifier.value().trim())
+            .distinct()
+            .toList();
+
+        if (programs.size() > 1) {
+            dropped(project.projectId(), HydratorMappingRule.sciproj(19),
+                (programs.size() - 1) + " further funding program(s) not carried over");
+        }
+
+        return programs.isEmpty() ? null : programs.getFirst();
     }
 
     // DOI is the funding's strong id; project references and QREN codes are internal ids
