@@ -1,5 +1,6 @@
 package rs.teslaris.migrator.converter.hydrator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -121,6 +122,8 @@ public class HydratorOutputConverters {
     private final HydratorJournalResolver journalResolver;
 
     private final HydratorPersonResolver personResolver;
+
+    private final HydratorInstitutionResolver institutionResolver;
 
     private final CountryService countryService;
 
@@ -261,13 +264,24 @@ public class HydratorOutputConverters {
             dissertation.authors(), null);
         applyIdentifiers(dto, record, output, entityType,
             dissertation.identifiers(), null);
+
+        var classifications = researchClassifications(dissertation.researchClassifications());
         applyPublicationFields(dto, record, output, entityType, language, dissertation.keywords(),
-            null, dissertation.researchClassifications());
+            null, new HydratorCVModel.ResearchClassifications(null,
+                classifications.stream().skip(1).toList()));
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
+        dto.setThesisDefenceDate(defenceDate(dissertation.completionDate()));
         dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
             institutionName(record, output, dissertation.institutions()), language));
+        applyThesisInstitution(dto, record, output, dissertation.institutions());
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
         dto.getContributions().addAll(supervisorContributions(dissertation.supervisors()));
+
+        if (!classifications.isEmpty()) {
+            applyScientificArea(dto, classifications.getFirst().value());
+        }
 
         if (!isBlank(dissertation.numberOfVolumes())) {
             dto.setDescription(conversionUtil.multilingualContent(
@@ -304,6 +318,68 @@ public class HydratorOutputConverters {
             "only one institution is kept: '" + name + "'"));
 
         return names.getFirst();
+    }
+
+    private void applyThesisInstitution(ThesisDTO dto, HydratorCVModel.Curriculum record,
+                                        HydratorCVModel.Output output,
+                                        HydratorCVModel.Institutions institutions) {
+        var institution = Objects.isNull(institutions) ||
+            Objects.isNull(institutions.institution()) ? null :
+            institutions.institution().stream()
+                .filter(Objects::nonNull)
+                .filter(candidate -> !isBlank(candidate.name()))
+                .findFirst()
+                .orElse(null);
+
+        if (Objects.isNull(institution)) {
+            return;
+        }
+
+        var match = institutionResolver.resolve(institution);
+
+        if (match.found()) {
+            dto.setOrganisationUnitId(match.organisationUnitId());
+        } else {
+            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.THESIS.name(),
+                outputKey(record, output), HydratorMappingRule.cv(209),
+                "organisation unit not linked, institution kept as display name: " +
+                    match.reason());
+        }
+    }
+
+    private LocalDate defenceDate(HydratorCVModel.DateInfo date) {
+        var flexibleDate = conversionUtil.flexibleDate(date);
+
+        if (Objects.isNull(flexibleDate)) {
+            return null;
+        }
+
+        return LocalDate.of(flexibleDate.year(),
+            Objects.requireNonNullElse(flexibleDate.month(), 1),
+            Objects.requireNonNullElse(flexibleDate.day(), 1));
+    }
+
+    private List<HydratorCVModel.ResearchClassification> researchClassifications(
+        HydratorCVModel.ResearchClassifications classifications) {
+        if (Objects.isNull(classifications) ||
+            Objects.isNull(classifications.researchClassification())) {
+            return List.of();
+        }
+
+        return classifications.researchClassification().stream()
+            .filter(Objects::nonNull)
+            .filter(classification -> !isBlank(classification.value()))
+            .toList();
+    }
+
+    private void applyScientificArea(ThesisDTO dto, String label) {
+        var parts = label.trim().split("\\s+-\\s+", 2);
+
+        dto.setScientificArea(conversionUtil.multilingualContent(parts[0], "en"));
+
+        if (parts.length > 1) {
+            dto.setScientificSubArea(conversionUtil.multilingualContent(parts[1], "en"));
+        }
     }
 
     // CW-001-MAP-000216: supervisors and co-supervisors alike, after the author
