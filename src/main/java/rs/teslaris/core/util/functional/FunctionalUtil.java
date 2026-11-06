@@ -158,7 +158,7 @@ public class FunctionalUtil {
                 try {
                     itemProcessor.accept(entity);
                 } catch (Exception e) {
-                    log.warn("Skipping due to indexing error: {}", e.getMessage());
+                    log.warn("Skipping due to indexing error: {}", e.getMessage(), e);
                 }
             });
 

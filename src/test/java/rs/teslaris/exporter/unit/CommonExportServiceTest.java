@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import rs.teslaris.core.export.ProjectExportSource;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
 import rs.teslaris.core.model.document.Exhibition;
@@ -51,8 +52,10 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportEvent;
+import rs.teslaris.exporter.model.common.ExportFunding;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.service.impl.CommonExportServiceImpl;
 import rs.teslaris.exporter.service.impl.CommonExportWorkerImpl;
@@ -121,6 +124,9 @@ public class CommonExportServiceTest {
     private MaterialProductRepository materialProductRepository;
 
     @Mock
+    private ProjectExportSource projectExportSource;
+
+    @Mock
     private CommonExportWorkerImpl commonExportWorker;
 
     @InjectMocks
@@ -170,6 +176,28 @@ public class CommonExportServiceTest {
         // Then
         verify(commonExportWorker, times(1)).exportEntities(
             any(), any(), eq(ExportPerson.class), any(), eq(allTime), eq(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldExportProjects(boolean allTime) {
+        // When
+        commonExportService.exportProjectsToCommonModel(allTime);
+
+        // Then
+        verify(commonExportWorker, times(1)).exportEntities(
+            any(), any(), eq(ExportProject.class), any(), eq(allTime), eq(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldExportFundings(boolean allTime) {
+        // When
+        commonExportService.exportFundingsToCommonModel(allTime);
+
+        // Then
+        verify(commonExportWorker, times(1)).exportEntities(
+            any(), any(), eq(ExportFunding.class), any(), eq(allTime), eq(null));
     }
 
     @ParameterizedTest

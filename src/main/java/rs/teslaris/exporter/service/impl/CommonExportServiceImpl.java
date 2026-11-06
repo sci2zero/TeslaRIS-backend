@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.export.ProjectExportSource;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
@@ -57,13 +58,17 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportEvent;
+import rs.teslaris.exporter.model.common.ExportFunding;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.exporter.model.converter.ExportEventConverter;
+import rs.teslaris.exporter.model.converter.ExportFundingConverter;
 import rs.teslaris.exporter.model.converter.ExportOrganisationUnitConverter;
 import rs.teslaris.exporter.model.converter.ExportPersonConverter;
+import rs.teslaris.exporter.model.converter.ExportProjectConverter;
 import rs.teslaris.exporter.model.converter.ExportPublicationSeriesConverter;
 import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
@@ -113,6 +118,8 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private final MaterialProductRepository materialProductRepository;
 
+    private final ProjectExportSource projectExportSource;
+
     private final ReentrantLock organisationUnitExportLock = new ReentrantLock();
 
     private final ReentrantLock personExportLock = new ReentrantLock();
@@ -120,6 +127,10 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ReentrantLock eventExportLock = new ReentrantLock();
 
     private final ReentrantLock documentExportLock = new ReentrantLock();
+
+    private final ReentrantLock projectExportLock = new ReentrantLock();
+
+    private final ReentrantLock fundingExportLock = new ReentrantLock();
 
     @Value("${export-to-common.allowed}")
     private Boolean exportAllowed;
@@ -254,6 +265,54 @@ public class CommonExportServiceImpl implements CommonExportService {
             log.error("Document export set not completed due to an error.", e);
         } finally {
             documentExportLock.unlock();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void exportProjectsToCommonModel(boolean allTime) {
+        if (!projectExportLock.tryLock()) {
+            log.info("Project export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            commonExportWorker.exportEntities(
+                projectExportSource::findAllModifiedProjects,
+                ExportProjectConverter::toCommonExportModel,
+                ExportProject.class,
+                ProjectExportSource.ProjectRecord::id,
+                allTime,
+                null
+            );
+        } catch (Exception e) {
+            log.error("Project export set not completed due to an error.", e);
+        } finally {
+            projectExportLock.unlock();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void exportFundingsToCommonModel(boolean allTime) {
+        if (!fundingExportLock.tryLock()) {
+            log.info("Funding export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            commonExportWorker.exportEntities(
+                projectExportSource::findAllModifiedFundings,
+                ExportFundingConverter::toCommonExportModel,
+                ExportFunding.class,
+                ProjectExportSource.FundingRecord::id,
+                allTime,
+                null
+            );
+        } catch (Exception e) {
+            log.error("Funding export set not completed due to an error.", e);
+        } finally {
+            fundingExportLock.unlock();
         }
     }
 
@@ -439,5 +498,23 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
 
         exportOrganisationUnitsToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.project}")
+    protected void performScheduledProjectExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportProjectsToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.funding}")
+    protected void performScheduledFundingExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportFundingsToCommonModel(false);
     }
 }

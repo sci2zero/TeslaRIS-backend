@@ -1,5 +1,7 @@
 package rs.teslaris.project.repository.project;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -22,4 +24,9 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     @Query("SELECT COUNT(p) > 0 FROM Project p WHERE p.costs.currency.id = :currencyId")
     boolean isCurrencyInUse(Integer currencyId);
+
+    @Query(value = "SELECT * FROM projects p WHERE " +
+        "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
+        " ORDER BY p.id", nativeQuery = true)
+    Page<Project> findAllModified(Pageable pageable, boolean allTime);
 }
