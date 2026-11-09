@@ -83,7 +83,10 @@ public class HydratorFundingExtractor
         }
 
         var result = new ArrayList<FundingMigrationDTO>();
-        var fundingProgram = fundingProgram(project);
+        var fundingProgram = identifierValue(project,
+            HydratorProjectConverter.FUNDING_PROGRAM_TYPE, "funding program");
+        var fundingProgramType = identifierValue(project,
+            HydratorProjectConverter.FUNDING_PROGRAM_TYPE_TYPE, "funding program type");
         var consortiumAmounts = HydratorProjectConverter.fundingCount(project) == 1 ?
             projectConverter.consortiumEntries(project.consortium()).stream()
                 .filter(entry -> Objects.nonNull(entry.amount()))
@@ -122,10 +125,7 @@ public class HydratorFundingExtractor
                 }
             }
 
-            // Named on the project, so every funding of the project gets the same programme
-            if (Objects.nonNull(fundingProgram)) {
-                dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgram, null));
-            }
+            setProgramAndCall(dto, funding, fundingProgram, fundingProgramType);
 
             setIdentifiers(dto, funding.identifiers());
             if (!isBlank(funding.grantId())) {
@@ -168,25 +168,48 @@ public class HydratorFundingExtractor
         return type;
     }
 
-    // CW-002-MAP-000019: the source keeps the programme name in a project identifier
-    private String fundingProgram(HydratorProjectModel.Project project) {
+    // PT rule: the type is the programme; the program name is the call unless it repeats the name
+    private void setProgramAndCall(FundingDTO dto, HydratorProjectModel.Funding funding,
+                                   String fundingProgram, String fundingProgramType) {
+        var repeatsName = Objects.nonNull(fundingProgram) &&
+            Objects.nonNull(funding.name()) && !isBlank(funding.name().value()) &&
+            normalised(fundingProgram).equalsIgnoreCase(normalised(funding.name().value()));
+
+        if (Objects.nonNull(fundingProgramType)) {
+            dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgramType, null));
+        } else if (repeatsName) {
+            dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgram, null));
+        }
+
+        if (Objects.nonNull(fundingProgram) && !repeatsName) {
+            dto.setDisplayCall(conversionUtil.multilingualContent(fundingProgram, null));
+        }
+    }
+
+    private String normalised(String value) {
+        return value.trim().replaceAll("\\s+", " ");
+    }
+
+    // CW-002-MAP-000019: the source keeps programme names in project identifiers
+    private String identifierValue(HydratorProjectModel.Project project, String identifierType,
+                                   String label) {
         if (Objects.isNull(project.identifiers())) {
             return null;
         }
 
-        var programs = project.identifiers().stream()
+        var values = project.identifiers().stream()
             .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()) &&
-                HydratorProjectConverter.FUNDING_PROGRAM_TYPE.equals(typeName(identifier.type())))
+                identifierType.equals(typeName(identifier.type())))
             .map(identifier -> identifier.value().trim())
             .distinct()
             .toList();
 
-        if (programs.size() > 1) {
+        if (values.size() > 1) {
             dropped(project.projectId(), HydratorMappingRule.sciproj(19),
-                (programs.size() - 1) + " further funding program(s) not carried over");
+                (values.size() - 1) + " further " + label + "(s) not carried over");
         }
 
-        return programs.isEmpty() ? null : programs.getFirst();
+        return values.isEmpty() ? null : values.getFirst();
     }
 
     // DOI is the funding's strong id; project references and QREN codes are internal ids

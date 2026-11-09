@@ -39,6 +39,8 @@ public class HydratorProjectConverter implements
 
     static final String FUNDING_PROGRAM_TYPE = "FundingProgram";
 
+    static final String FUNDING_PROGRAM_TYPE_TYPE = "FundingProgramType";
+
     private static final String ENGLISH = "en";
 
     // Wikidata property used by SciPROJ for the Ciência ID
@@ -252,7 +254,7 @@ public class HydratorProjectConverter implements
         return result;
     }
 
-    // CW-002-MAP-000019; the FundingProgram identifier goes to the project's fundings
+    // CW-002-MAP-000019; the FundingProgram(Type) identifiers go to the project's fundings
     private Set<String> identifiers(String key, HydratorProjectModel.Project project) {
         var result = new LinkedHashSet<String>();
 
@@ -266,7 +268,8 @@ public class HydratorProjectConverter implements
                 var type = typeName(identifier.type());
                 if (PROJECT_IDENTIFIER_TYPES.contains(type)) {
                     result.add(identifier.value().trim());
-                } else if (FUNDING_PROGRAM_TYPE.equals(type)) {
+                } else if (FUNDING_PROGRAM_TYPE.equals(type) ||
+                    FUNDING_PROGRAM_TYPE_TYPE.equals(type)) {
                     if (fundingCount(project) == 0) {
                         dropped(key, HydratorMappingRule.sciproj(19),
                             "funding program not kept: project has no funding");

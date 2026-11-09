@@ -10,7 +10,10 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -118,28 +122,85 @@ public class HydratorFundingExtractorTest {
         assertEquals("SCIPROJ", dto.getImportSource());
     }
 
-    @Test
-    void shouldSetFundingProgramOnEveryFundingOfTheProject() throws Exception {
-        var record = MAPPER.readValue("""
+    private HydratorProjectModel.ProjectDocument documentWithProgram(String program, String type,
+                                                                     String funded)
+        throws Exception {
+        var identifiers = new ArrayList<String>();
+        if (Objects.nonNull(program)) {
+            identifiers.add("{\"type\": \"%sFundingProgram\", \"value\": \"%s\"}"
+                .formatted(ID_TYPES, program));
+        }
+        if (Objects.nonNull(type)) {
+            identifiers.add("{\"type\": \"%sFundingProgramType\", \"value\": \"%s\"}"
+                .formatted(ID_TYPES, type));
+        }
+
+        return MAPPER.readValue("""
             {"id": "doc-1", "record": {"metadata": {"project": {
-              "projectId": "TEST001",
-              "identifiers": [{"type": "%sFundingProgram", "value": " Test Programme "}],
-              "funded": [%s, %s]}}}}
-            """.formatted(ID_TYPES, funding("F1", "2020-01-01"), funding("F2", "2020-01-01")),
+              "projectId": "TEST001", "identifiers": [%s], "funded": [%s]}}}}
+            """.formatted(String.join(",", identifiers), funded),
             HydratorProjectModel.ProjectDocument.class);
+    }
 
-        var result = extractor.extract(record);
-
-        assertEquals(2, result.size());
-        result.forEach(item -> assertEquals("Test Programme",
-            item.funding().getDisplayProgram().getFirst().getContent()));
+    private static List<String> contents(List<MultilingualContentDTO> values) {
+        return values.stream().map(MultilingualContentDTO::getContent).toList();
     }
 
     @Test
-    void shouldLeaveFundingProgramEmptyWhenProjectHasNone() throws Exception {
-        var result = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"));
+    void shouldSetProgramFromTypeAndCallWhenProgramDiffersFromName() throws Exception {
+        var dto = extractor.extract(documentWithProgram(" Other Call ", "Test Type",
+            funding("F1", "2020-01-01"))).getFirst().funding();
 
-        assertTrue(result.getFirst().funding().getDisplayProgram().isEmpty());
+        assertEquals(List.of("Test Type"), contents(dto.getDisplayProgram()));
+        assertEquals(List.of("Other Call"), contents(dto.getDisplayCall()));
+    }
+
+    @Test
+    void shouldSkipCallWhenProgramRepeatsNameAndTypeExists() throws Exception {
+        var dto = extractor.extract(documentWithProgram(" test  PROGRAMME 2020 ", "Test Type",
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertEquals(List.of("Test Type"), contents(dto.getDisplayProgram()));
+        assertTrue(dto.getDisplayCall().isEmpty());
+    }
+
+    @Test
+    void shouldSetCallOnlyWhenTypeIsMissingAndProgramDiffersFromName() throws Exception {
+        var dto = extractor.extract(documentWithProgram("Other Call", null,
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertTrue(dto.getDisplayProgram().isEmpty());
+        assertEquals(List.of("Other Call"), contents(dto.getDisplayCall()));
+    }
+
+    @Test
+    void shouldSetProgramWhenTypeIsMissingAndProgramRepeatsName() throws Exception {
+        var dto = extractor.extract(documentWithProgram("Test Programme 2020", null,
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertEquals(List.of("Test Programme 2020"), contents(dto.getDisplayProgram()));
+        assertTrue(dto.getDisplayCall().isEmpty());
+    }
+
+    @Test
+    void shouldApplyProgramRulesToEveryFundingOfTheProject() throws Exception {
+        var result = extractor.extract(documentWithProgram("Other Call", "Test Type",
+            funding("F1", "2020-01-01") + "," + funding("F2", "2020-01-01")));
+
+        assertEquals(2, result.size());
+        result.forEach(item -> {
+            assertEquals(List.of("Test Type"), contents(item.funding().getDisplayProgram()));
+            assertEquals(List.of("Other Call"), contents(item.funding().getDisplayCall()));
+        });
+    }
+
+    @Test
+    void shouldLeaveProgramAndCallEmptyWhenProjectHasNone() throws Exception {
+        var dto = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"))
+            .getFirst().funding();
+
+        assertTrue(dto.getDisplayProgram().isEmpty());
+        assertTrue(dto.getDisplayCall().isEmpty());
     }
 
     @Test
@@ -156,7 +217,7 @@ public class HydratorFundingExtractorTest {
         var result = extractor.extract(record);
 
         assertEquals("Test Programme",
-            result.getFirst().funding().getDisplayProgram().getFirst().getContent());
+            result.getFirst().funding().getDisplayCall().getFirst().getContent());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"), eq("TEST001"),
             eq("CW-002-MAP-000019"), eq("1 further funding program(s) not carried over"));
     }
