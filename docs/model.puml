@@ -1613,8 +1613,10 @@ package project {
     SUBMITTED
     UNDER_EVALUATION
     ONGOING
-    CANCELLED 
-    CONCLUDED 
+    CANCELLED
+    CONCLUDED
+    CLOSED
+    INACTIVE
   }
   
   class FundingApplication {
