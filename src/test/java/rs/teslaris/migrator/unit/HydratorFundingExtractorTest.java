@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -203,6 +204,49 @@ public class HydratorFundingExtractorTest {
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
             eq("TEST001#funding#F1"), eq("CW-002-MAP-000002"),
             eq("funding type 'Unknown' has no vocabulary"));
+    }
+
+    @Test
+    void shouldMapFundingTypeFromIdSuffix() throws Exception {
+        var expected = new LinkedHashMap<String, FundingType>();
+        expected.put("100DFA", FundingType.GRANT);
+        expected.put("100FAC", FundingType.GRANT);
+        expected.put("100PRJ", FundingType.PROJECT);
+        expected.put("100FP7", FundingType.PROJECT);
+        expected.put("100H20", FundingType.PROJECT);
+        expected.put("100B30", FundingType.PROJECT);
+        expected.put("100EEC", FundingType.EMPLOYMENT);
+        expected.put("100UID", FundingType.INSTITUTIONAL_FUNDING);
+        expected.put("100COL", FundingType.INSTITUTIONAL_FUNDING);
+
+        for (var entry : expected.entrySet()) {
+            var result = extractor.extract(
+                document("[" + funding(entry.getKey(), "2020-01-01") + "]"));
+
+            assertEquals(Set.of(entry.getValue()), result.getFirst().funding().getFundingTypes(),
+                entry.getKey());
+        }
+        verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
+            eq("CW-002-MAP-000002"), anyString());
+    }
+
+    @Test
+    void shouldPreferIdSuffixOverSourceType() throws Exception {
+        var result =
+            extractor.extract(document("[" + funding("100EEC", "2020-01-01", "Contract") + "]"));
+
+        assertEquals(Set.of(FundingType.EMPLOYMENT), result.getFirst().funding().getFundingTypes());
+    }
+
+    @Test
+    void shouldLogUnknownIdSuffixAndUseSourceType() throws Exception {
+        var result =
+            extractor.extract(document("[" + funding("100XYZ", "2020-01-01", "Contract") + "]"));
+
+        assertEquals(Set.of(FundingType.CONTRACT), result.getFirst().funding().getFundingTypes());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
+            eq("TEST001#funding#100XYZ"), eq("CW-002-MAP-000002"),
+            eq("funding id suffix 'XYZ' has no funding type"));
     }
 
     @Test
