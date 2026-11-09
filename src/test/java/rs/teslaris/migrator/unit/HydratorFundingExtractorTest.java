@@ -112,7 +112,7 @@ public class HydratorFundingExtractorTest {
         assertEquals(LocalDate.of(2021, 12, 31), dto.getDateTo());
         assertEquals(Boolean.TRUE, dto.getOaMandated());
         assertEquals("https://example.com/oa-policy", dto.getOaMandateUrl());
-        assertEquals(Set.of(FundingType.FUNDING_PROGRAMME), dto.getFundingTypes());
+        assertEquals(Set.of(FundingType.FUNDING_PROGRAM), dto.getFundingTypes());
         assertEquals(Set.of("F1"), dto.getOldIds());
         assertEquals("SCIPROJ", dto.getImportSource());
     }
@@ -177,12 +177,19 @@ public class HydratorFundingExtractorTest {
         var result = extractor.extract(document("[" + funding("F1", "2020-01-01", "Contract") +
             "," + funding("F2", "2020-01-01", "Gift") + "," +
             funding("F3", "2020-01-01", "Call") + "," +
-            funding("F4", "2020-01-01", "Grant") + "]"));
+            funding("F4", "2020-01-01", "Grant") + "," +
+            funding("F5", "2020-01-01", "Tender") + "," +
+            funding("F6", "2020-01-01", "InternalFunding") + "," +
+            funding("F7", "2020-01-01", "Award") + "]"));
 
         assertEquals(Set.of(FundingType.CONTRACT), result.get(0).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.GIFT), result.get(1).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.CALL), result.get(2).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.GRANT), result.get(3).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.TENDER), result.get(4).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.INTERNAL_FUNDING),
+            result.get(5).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.AWARD), result.get(6).funding().getFundingTypes());
         verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
             eq("CW-002-MAP-000002"), anyString());
     }
@@ -190,12 +197,12 @@ public class HydratorFundingExtractorTest {
     @Test
     void shouldLogMissingTypeVocabulary() throws Exception {
         var result =
-            extractor.extract(document("[" + funding("F1", "2020-01-01", "Tender") + "]"));
+            extractor.extract(document("[" + funding("F1", "2020-01-01", "Unknown") + "]"));
 
         assertTrue(result.getFirst().funding().getFundingTypes().isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
             eq("TEST001#funding#F1"), eq("CW-002-MAP-000002"),
-            eq("funding type 'Tender' has no vocabulary"));
+            eq("funding type 'Unknown' has no vocabulary"));
     }
 
     @Test

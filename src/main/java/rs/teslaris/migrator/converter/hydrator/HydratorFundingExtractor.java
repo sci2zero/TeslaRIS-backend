@@ -25,13 +25,16 @@ import rs.teslaris.migrator.util.MigrationLog;
 public class HydratorFundingExtractor
     implements RecordExtractor<HydratorProjectModel.ProjectDocument, FundingMigrationDTO> {
 
-    // OpenAIRE funding types seen in the source; any other type is dropped
+    // OpenAIRE funding types; any other type is dropped
     private static final Map<String, FundingType> FUNDING_TYPES = Map.of(
-        "FundingProgramme", FundingType.FUNDING_PROGRAMME,
+        "FundingProgramme", FundingType.FUNDING_PROGRAM,
         "Grant", FundingType.GRANT,
         "Contract", FundingType.CONTRACT,
         "Gift", FundingType.GIFT,
-        "Call", FundingType.CALL);
+        "Call", FundingType.CALL,
+        "Tender", FundingType.TENDER,
+        "InternalFunding", FundingType.INTERNAL_FUNDING,
+        "Award", FundingType.AWARD);
 
     private final HydratorConversionUtil conversionUtil;
 
