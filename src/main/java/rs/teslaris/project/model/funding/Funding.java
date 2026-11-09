@@ -25,6 +25,7 @@ import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.funding.FundingLocationType;
 import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Involvement;
@@ -106,6 +107,9 @@ public class Funding extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "funding_types")
     private Set<FundingType> fundingTypes = new HashSet<>();
+
+    @Column(name = "funding_location_type")
+    private FundingLocationType fundingLocationType;
 
     @Embedded
     private MonetaryAmount amount;

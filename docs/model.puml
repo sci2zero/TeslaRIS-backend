@@ -1680,7 +1680,8 @@ package project {
     Boolean OAMandated
     String OAMandateUrl
     Boolean internalInvestment
-    Set<DocumentFile> documents 
+    FundingLocationType fundingLocationType
+    Set<DocumentFile> documents
   }
   
   Funding "*" -- "0..1" FundingCall : funding / call
@@ -1728,6 +1729,12 @@ package project {
     INSTITUTIONAL_FUNDING
     RESOURCE_ALLOCATION
     OTHER
+  }
+
+  enum FundingLocationType {
+    NATIONAL
+    ABROAD
+    MIXED
   }
 
   enum FundingCallContributionType {

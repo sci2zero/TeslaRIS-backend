@@ -47,6 +47,7 @@ import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.funding.FundingLocationType;
 import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
@@ -245,6 +246,7 @@ public class FundingServiceTest extends BaseTest {
         fundingDTO.setProjectId(1);
         fundingDTO.setFundingCallId(1);
         fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setFundingLocationType(FundingLocationType.ABROAD);
         fundingDTO.setDateFrom(LocalDate.now());
         fundingDTO.setDateTo(LocalDate.now().plusYears(1));
         fundingDTO.setUris(Set.of("https://example.com"));
@@ -292,7 +294,8 @@ public class FundingServiceTest extends BaseTest {
         verify(researchAreaService).getResearchAreasByIds(anyList());
         verify(projectService).findOne(1);
         verify(fundingCallService).findOne(1);
-        verify(fundingRepository).save(any(Funding.class));
+        verify(fundingRepository).save(argThat(
+            funding -> FundingLocationType.ABROAD.equals(funding.getFundingLocationType())));
     }
 
     @Test
