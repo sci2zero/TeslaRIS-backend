@@ -613,6 +613,9 @@ package institution {
     INSTITUTION
     GOVERNMENT
     OTHER
+    RESEARCH_INSTITUTE
+    SME
+    PRIVATE_NON_PROFIT
   }
 
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
