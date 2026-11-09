@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -15,6 +16,7 @@ import rs.teslaris.core.model.identifier.Identifier;
 import rs.teslaris.core.repository.identifier.IdentifierRepository;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 
 /**
@@ -26,15 +28,22 @@ import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 @Slf4j
 public class HydratorIdentifierInitializer {
 
+    private static final String SCIPROJ_URL_TEMPLATE =
+        "https://sciproj.ptcris.pt/" + IdentifierUtil.ID_PLACEHOLDER + "/";
+
+    private static final String SCIPROJ_DESCRIPTION = "Identifier of the project in SciPROJ";
+
     private final IdentifierRepository identifierRepository;
 
     private final LanguageTagService languageTagService;
 
 
+    @Transactional
     @EventListener(ApplicationReadyEvent.class)
     public void ensureIdentifiers() {
-        if (Objects.nonNull(
-            identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))) {
+        var existing = identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+        if (Objects.nonNull(existing)) {
+            addMissingValues(existing);
             return;
         }
 
@@ -49,10 +58,38 @@ public class HydratorIdentifierInitializer {
         var identifier = new Identifier();
         identifier.setCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE);
         identifier.setTitle(new HashSet<>(Set.of(new MultiLingualContent(english, "SciPROJ ID", 1))));
+        identifier.setDescription(new HashSet<>(Set.of(
+            new MultiLingualContent(english, SCIPROJ_DESCRIPTION, 1))));
         identifier.setAccessLevel(AccessLevel.OPEN);
         identifier.setApplicableTypes(new HashSet<>(Set.of(ApplicableEntityType.PROJECT)));
+        identifier.setUrlTemplate(SCIPROJ_URL_TEMPLATE);
 
         identifierRepository.save(identifier);
         log.info("Created identifier '{}'.", HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+    }
+
+    // Values set by an admin are left as they are
+    private void addMissingValues(Identifier identifier) {
+        var changed = false;
+
+        if (Objects.isNull(identifier.getUrlTemplate()) || identifier.getUrlTemplate().isBlank()) {
+            identifier.setUrlTemplate(SCIPROJ_URL_TEMPLATE);
+            changed = true;
+        }
+
+        if (identifier.getDescription().isEmpty()) {
+            var english = languageTagService.findLanguageTagByValue(LanguageAbbreviations.ENGLISH);
+            if (Objects.nonNull(english.getId())) {
+                identifier.getDescription()
+                    .add(new MultiLingualContent(english, SCIPROJ_DESCRIPTION, 1));
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            identifierRepository.save(identifier);
+            log.info("Added missing values to identifier '{}'.",
+                HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+        }
     }
 }
