@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.applicationevent.PublicationCandidacyChangedEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
+import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
 import rs.teslaris.revisioner.repository.DataQualityAssessmentRepository;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
@@ -28,6 +31,8 @@ public class DataQualityAssessmentListener {
     private final EntityRevisionRepository entityRevisionRepository;
 
     private final DataQualityAssessmentRepository repository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     public static List<String> resolveTargetTypes(String entityType) {
@@ -84,6 +89,33 @@ public class DataQualityAssessmentListener {
             }
 
             entityRevisionRepository.save(event.entityRevision());
+
+            publishPublicationCandidacy(event.entityRevision(), assessment);
         });
+    }
+
+    /**
+     * Only the latest revision sets the candidacy, because assessments can finish out of order.
+     */
+    private void publishPublicationCandidacy(EntityRevision revision,
+                                             DataQualityAssessment assessment) {
+        if (!DataQualityAssessmentConfigurationLoader.derivesPublicVisibility(
+            assessment.getProfileName(), assessment.getProfileVersion())) {
+            return;
+        }
+
+        var latestRevisionId = entityRevisionRepository.findLatestRevisionId(
+            revision.getEntityType(), revision.getEntityId());
+
+        if (latestRevisionId.isEmpty() ||
+            !Objects.equals(latestRevisionId.get(), revision.getId())) {
+            return;
+        }
+
+        applicationEventPublisher.publishEvent(new PublicationCandidacyChangedEvent(
+            revision.getEntityType(),
+            revision.getEntityId(),
+            Boolean.TRUE.equals(assessment.getPublicationCandidate())
+        ));
     }
 }

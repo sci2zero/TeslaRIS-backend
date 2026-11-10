@@ -25,6 +25,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.CollaborationLink;
 import rs.teslaris.reporting.dto.CollaborationNetworkDTO;
 import rs.teslaris.reporting.dto.PersonNode;
@@ -90,6 +91,7 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
         var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildCollaborationQuery(sourcePersonId, targetPersonId,
                 CollaborationType.valueOf(collaborationType), yearFrom, yearTo));
+            b.must(PublicVisibilityQueries.documentVisibilityForCurrentUser());
             return b;
         })))._toQuery();
 

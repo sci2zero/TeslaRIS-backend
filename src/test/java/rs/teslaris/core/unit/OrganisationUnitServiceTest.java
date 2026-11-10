@@ -50,7 +50,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -61,6 +63,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -586,6 +589,27 @@ public class OrganisationUnitServiceTest {
 
         verify(organisationUnitRepository, times(1)).save(organisationUnit);
         assertEquals(approveStatus, result.getApproveStatus());
+        verify(organisationUnitIndexRepository).save(any(OrganisationUnitIndex.class));
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            EntityType.ORGANISATION_UNIT.name(), organisationUnitId, true));
+    }
+
+    @Test
+    public void shouldNotIndexDeclinedOrganisationalUnit() {
+        Integer organisationUnitId = 1;
+        OrganisationUnit organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(organisationUnitId);
+        organisationUnit.setApproveStatus(ApproveStatus.REQUESTED);
+
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(
+            organisationUnitId)).thenReturn(Optional.of(organisationUnit));
+
+        organisationUnitService.editOrganisationalUnitApproveStatus(ApproveStatus.DECLINED,
+            organisationUnitId);
+
+        verify(organisationUnitIndexRepository, never()).save(any(OrganisationUnitIndex.class));
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            EntityType.ORGANISATION_UNIT.name(), organisationUnitId, false));
     }
 
     @Test
@@ -664,6 +688,7 @@ public class OrganisationUnitServiceTest {
     @Test
     public void shouldGetOUCount() {
         // Given
+        RequestContextHolder.resetRequestAttributes();
         var expectedCount = 42L;
         when(organisationUnitIndexRepository.count()).thenReturn(expectedCount);
 
@@ -673,6 +698,21 @@ public class OrganisationUnitServiceTest {
         // Then
         assertEquals(expectedCount, actualCount);
         verify(organisationUnitIndexRepository, times(1)).count();
+    }
+
+    @Test
+    public void shouldGetPubliclyVisibleOUCountForAnonymousRequest() {
+        // Given
+        var expectedCount = 40L;
+        when(organisationUnitIndexRepository.countByIsPubliclyVisibleTrue())
+            .thenReturn(expectedCount);
+
+        // When
+        long actualCount = organisationUnitService.getOrganisationUnitsCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(organisationUnitIndexRepository, never()).count();
     }
 
     @Test

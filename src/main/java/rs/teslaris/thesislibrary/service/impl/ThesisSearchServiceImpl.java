@@ -25,6 +25,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -161,7 +162,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
             }
 
             if (!SessionUtil.isUserLoggedIn()) {
-                b.must(q -> q.term(t -> t.field("is_approved").value(true)));
+                b.must(PublicVisibilityQueries.publiclyVisible());
             }
 
             if (!SessionUtil.isUserLoggedInAndAdmin() &&

@@ -56,6 +56,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @Slf4j
@@ -113,7 +115,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Override
     public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
                                              Integer institutionId, Integer commissionId) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId, commissionId),
+        return searchService.runQuery(PublicVisibilityQueries.restrictForAnonymous(
+                buildSimpleSearchQuery(tokens, institutionId, commissionId)),
             pageable, JournalIndex.class, "journal");
     }
 
@@ -127,6 +130,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journalIndexRepository.findJournalIndexByDatabaseId(journalId)
                 .ifPresent(journalIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(journal.getPublicationCandidate())) {
+            throw new NotFoundException("Journal with given ID does not exist.");
         }
 
         return PublicationSeriesConverter.toDTO(journal);
@@ -347,6 +354,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setActivitiesCount(0);
 
         index.setDatabaseId(journal.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(journal.getPublicationCandidate()));
         indexCommonFields(journal, index);
         reindexJournalVolatileInformation(journal.getId());
 

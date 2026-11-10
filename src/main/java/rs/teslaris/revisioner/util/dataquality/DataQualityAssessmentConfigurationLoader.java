@@ -143,6 +143,7 @@ public class DataQualityAssessmentConfigurationLoader {
 
         return new DataQualityProfile(
             version,
+            Boolean.TRUE.equals(config.derivesPublicVisibility()),
             Objects.requireNonNullElse(config.name(), Map.of()),
             config.minimumRequiredScore(),
             Objects.requireNonNullElse(config.dimensionDefinitions(), Map.of()),
@@ -153,6 +154,16 @@ public class DataQualityAssessmentConfigurationLoader {
             totalPointsByTargetFair,
             totalPointsByTargetAndDimension
         );
+    }
+
+    public static boolean derivesPublicVisibility(String profileName, String version) {
+        var versions = dataQualityProfiles.get(profileName.toLowerCase());
+
+        if (Objects.isNull(versions) || Objects.isNull(versions.get(version))) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(versions.get(version).derivesPublicVisibility());
     }
 
     public static DataQualityProfile getProfile(String profileName, String version) {
@@ -311,6 +322,7 @@ public class DataQualityAssessmentConfigurationLoader {
             .getOrDefault(version,
                 new DataQualityProfile(
                     "1.0.0",
+                    false,
                     Collections.emptyMap(),
                     100.0,
                     Collections.emptyMap(),
@@ -523,6 +535,9 @@ public class DataQualityAssessmentConfigurationLoader {
     public record DataQualityProfile(
         @JsonProperty(value = "version")
         String version,
+
+        @JsonProperty(value = "derivesPublicVisibility")
+        Boolean derivesPublicVisibility,
 
         @JsonProperty(value = "name")
         Map<String, String> name,

@@ -27,6 +27,6 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     @Query(value = "SELECT * FROM projects p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        " ORDER BY p.id", nativeQuery = true)
+        "AND p.publication_candidate IS NOT FALSE ORDER BY p.id", nativeQuery = true)
     Page<Project> findAllModified(Pageable pageable, boolean allTime);
 }

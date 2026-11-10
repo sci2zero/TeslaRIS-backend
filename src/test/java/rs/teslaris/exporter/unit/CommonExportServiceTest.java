@@ -4,13 +4,16 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
@@ -327,5 +330,53 @@ public class CommonExportServiceTest {
         // Then
         verify(commonExportWorker, times(1)).exportEntities(
             any(), any(), eq(ExportDocument.class), any(), eq(true), eq(exportPublicationType));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "PERSON, PERSON",
+        "ORGANISATION_UNIT, ORGANISATION_UNIT",
+        "CONFERENCE, EVENT",
+        "OTHER_EVENT, EVENT",
+        "PROJECT, PROJECT",
+        "FUNDING, FUNDING"
+    })
+    void shouldDeleteHiddenNonDocumentRecordFromCommonModel(String entityType,
+                                                            String exportKind) {
+        // Given
+        var exportClass = switch (exportKind) {
+            case "PERSON" -> ExportPerson.class;
+            case "ORGANISATION_UNIT" -> ExportOrganisationUnit.class;
+            case "EVENT" -> ExportEvent.class;
+            case "PROJECT" -> ExportProject.class;
+            default -> ExportFunding.class;
+        };
+
+        // When
+        commonExportService.deleteHiddenRecordFromCommonModel(entityType, 5);
+
+        // Then
+        verify(commonExportWorker).deleteExportEntity(5, exportClass, null);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExportPublicationType.class)
+    void shouldDeleteHiddenDocumentRecordFromCommonModel(
+        ExportPublicationType exportPublicationType) {
+        // When
+        commonExportService.deleteHiddenRecordFromCommonModel(exportPublicationType.name(), 5);
+
+        // Then
+        verify(commonExportWorker).deleteExportEntity(5, ExportDocument.class,
+            exportPublicationType);
+    }
+
+    @Test
+    void shouldIgnoreUnknownEntityTypeWhenDeletingHiddenRecord() {
+        // When
+        commonExportService.deleteHiddenRecordFromCommonModel("PRIZE", 5);
+
+        // Then
+        verify(commonExportWorker, never()).deleteExportEntity(any(), any(), any());
     }
 }

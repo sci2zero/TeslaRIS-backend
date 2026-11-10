@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -121,6 +122,10 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
             eventIndexRepository.findByEventTypeAndDatabaseId(EventType.EXHIBITION, exhibitionId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(exhibition.getPublicationCandidate())) {
+            throw new NotFoundException("Exhibition with given ID does not exist.");
         }
 
         return ExhibitionConverter.toDTO(exhibition);
@@ -253,6 +258,8 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
 
     private void indexExhibition(Exhibition exhibition, EventIndex index) {
         index.setDatabaseId(exhibition.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(exhibition.getPublicationCandidate()));
         index.setEventType(EventType.EXHIBITION);
 
         indexEventCommonFields(index, exhibition);

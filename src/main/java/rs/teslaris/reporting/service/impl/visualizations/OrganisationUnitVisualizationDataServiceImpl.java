@@ -30,6 +30,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
@@ -98,7 +99,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                         .size(0)
                         .query(q -> q
                             .bool(b -> b
-                                .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                 .must(QueryUtil.organisationUnitMatchQuery(institutionIds,
                                     searchFields))
                                 .must(m -> m.range(
@@ -402,7 +403,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
-                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                        .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                         .must(m -> m.range(r -> r.field("year")
                             .gte(JsonData.of(yearRange.a))
                             .lte(JsonData.of(yearRange.b))))
@@ -508,7 +509,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                             .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                 searchFields))
                             .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
@@ -550,7 +551,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
-                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                        .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                         .must(m -> m.range(r -> r.field("year")
                             .gte(JsonData.of(yearRange.a))
                             .lte(JsonData.of(yearRange.b))))

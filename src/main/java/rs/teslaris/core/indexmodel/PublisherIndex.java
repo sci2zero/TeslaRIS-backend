@@ -16,7 +16,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "publisher")
 @Setting(settingPath = "/configuration/index-config.json")
-public class PublisherIndex {
+public class PublisherIndex implements PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -71,4 +71,7 @@ public class PublisherIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

@@ -24,9 +24,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -62,6 +64,9 @@ public class OrganisationUnitTrustConfigurationServiceTest {
 
     @Mock
     private SearchService<DocumentPublicationIndex> searchService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private OrganisationUnitTrustConfigurationServiceImpl service;
@@ -170,9 +175,12 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         assertTrue(document.getIsMetadataValid());
         assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
         assertTrue(index.getIsApproved());
+        assertTrue(index.getIsPubliclyVisible());
 
         verify(documentRepository).save(document);
         verify(documentPublicationIndexRepository).save(index);
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            DocumentPublicationType.INTANGIBLE_PRODUCT.name(), 1, true));
     }
 
     @Test

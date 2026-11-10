@@ -9,6 +9,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -123,6 +125,41 @@ class RoCrateExportServiceTest {
     }
 
     @Test
+    void shouldReturnSilentlyWhenDocumentIsHiddenFromAnonymousUser() throws Exception {
+        var documentId = 1;
+        var hiddenIndex = new DocumentPublicationIndex();
+        hiddenIndex.setIsPubliclyVisible(false);
+
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.of(hiddenIndex));
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+
+        var path = service.createRoCrateZip(documentId, exportId);
+
+        assertTrue(Files.exists(path));
+        verify(documentLookupService, never())
+            .fastDocumentLookup(any(DocumentPublicationIndex.class));
+        Files.deleteIfExists(path);
+    }
+
+    @Test
+    void shouldReturnSilentlyWhenPersonIsHiddenFromAnonymousUser() throws Exception {
+        var personId = 3;
+        when(personService.findOne(personId)).thenReturn(new Person() {{
+            setName(new PersonName());
+            setApproveStatus(ApproveStatus.APPROVED);
+            setPublicationCandidate(false);
+        }});
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+
+        var path = service.createRoCrateBibliographyZip(personId, exportId);
+
+        assertTrue(Files.exists(path));
+        verify(documentPublicationIndexRepository, never()).findByAuthorIds(any(), any());
+        Files.deleteIfExists(path);
+    }
+
+    @Test
     void shouldCreateZipWithMetadataAndPreviewOnlyWhenNoFiles() throws Exception {
         var documentId = 2;
         var document = mock(IntangibleProduct.class);
@@ -229,6 +266,7 @@ class RoCrateExportServiceTest {
         var personId = 1;
 
         var docIndex = mock(DocumentPublicationIndex.class);
+        when(docIndex.getIsPubliclyVisible()).thenReturn(true);
         when(docIndex.getDatabaseId()).thenReturn(10);
         when(docIndex.getTitleOther()).thenReturn("Title");
 
@@ -245,6 +283,7 @@ class RoCrateExportServiceTest {
         when(documentService.findOne(any())).thenReturn(mock(IntangibleProduct.class));
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
+            setApproveStatus(ApproveStatus.APPROVED);
         }});
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
@@ -275,6 +314,7 @@ class RoCrateExportServiceTest {
         var personId = 2;
 
         var docIndex = mock(DocumentPublicationIndex.class);
+        when(docIndex.getIsPubliclyVisible()).thenReturn(true);
         when(docIndex.getDatabaseId()).thenReturn(20);
         when(docIndex.getTitleOther()).thenReturn("Missing doc");
 
@@ -291,6 +331,7 @@ class RoCrateExportServiceTest {
         when(documentService.findOne(20)).thenReturn(null);
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
+            setApproveStatus(ApproveStatus.APPROVED);
         }});
 
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");

@@ -219,8 +219,8 @@ public class CitationServiceImpl implements CitationService {
                 .orElseThrow(() -> new NotFoundException(
                     "Document with id " + documentId + " does not exist."));
 
-        if (!SessionUtil.isUserLoggedIn() && (Objects.isNull(documentIndex.getIsApproved()) ||
-            !documentIndex.getIsApproved())) {
+        if (!SessionUtil.isUserLoggedIn() &&
+            !Boolean.TRUE.equals(documentIndex.getIsPubliclyVisible())) {
             throw new NotFoundException("Document with id " + documentId + " does not exist.");
         }
 

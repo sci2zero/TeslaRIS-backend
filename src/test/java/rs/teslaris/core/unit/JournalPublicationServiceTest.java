@@ -240,6 +240,23 @@ public class JournalPublicationServiceTest {
         // Then (NotFoundException should be thrown)
     }
 
+    @Test
+    public void shouldNotReadApprovedPublicationThatIsNotPublicationCandidate() {
+        // Given
+        var publicationId = 1;
+        var publication = new JournalPublication();
+        publication.setApproveStatus(ApproveStatus.APPROVED);
+        publication.setPublicationCandidate(false);
+
+        when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publication);
+
+        // When
+        assertThrows(NotFoundException.class,
+            () -> journalPublicationService.readJournalPublicationById(publicationId));
+
+        // Then (NotFoundException should be thrown)
+    }
+
     @ParameterizedTest
     @MethodSource("argumentSources")
     public void shouldReadJournalPublication(DocumentContributionType type, Boolean isMainAuthor,
@@ -329,7 +346,7 @@ public class JournalPublicationServiceTest {
         var expectedPublications = new PageImpl<>(Arrays.asList(publication1, publication2));
         var pageable = PageRequest.of(0, 10);
 
-        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
+        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndIsPubliclyVisibleTrue(
             publicationType.name(), journalId, pageable))
             .thenReturn(expectedPublications);
 

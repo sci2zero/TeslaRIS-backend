@@ -48,6 +48,7 @@ import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 import rs.teslaris.exporter.model.converter.RoCrateConverter;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
 import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
@@ -102,7 +103,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                     documentId);
 
-            if (documentIndex.isEmpty()) {
+            if (documentIndex.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+                !Boolean.TRUE.equals(documentIndex.get().getIsPubliclyVisible()))) {
                 progressService.send(exportId, 100,
                     getStatusMessage("statusMessage.notFound"));
                 progressService.complete(exportId);
@@ -197,6 +199,17 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             tempFile = Files.createTempFile(
                 "ro-crate-bibliography-" + personId + "-", ".zip");
 
+            var anonymous = !SessionUtil.isUserLoggedIn();
+            var person = personService.findOne(personId);
+
+            if (anonymous && !PublicVisibility.isPubliclyVisible(person.getApproveStatus(),
+                person.getPublicationCandidate())) {
+                progressService.send(exportId, 100,
+                    getStatusMessage("statusMessage.notFound"));
+                progressService.complete(exportId);
+                return tempFile;
+            }
+
             var pageNumber = 0;
             var chunkSize = 500;
             var hasNextPage = true;
@@ -216,6 +229,11 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 PublicPersonIdentifiers.prime(chunkAuthorIds);
 
                 chunk.forEach(documentIndex -> {
+                    if (anonymous &&
+                        !Boolean.TRUE.equals(documentIndex.getIsPubliclyVisible())) {
+                        return;
+                    }
+
                     progressService.send(
                         exportId,
                         5,
@@ -235,9 +253,7 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 hasNextPage = chunk.hasNext();
             }
 
-            addRequiredMetadataDescriptor(
-                roCrate,
-                personService.findOne(personId));
+            addRequiredMetadataDescriptor(roCrate, person);
 
             var metadataJsonBytes = objectMapper
                 .writerWithDefaultPrettyPrinter()

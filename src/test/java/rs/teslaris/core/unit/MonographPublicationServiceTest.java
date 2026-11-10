@@ -433,7 +433,7 @@ public class MonographPublicationServiceTest {
         var pageable = PageRequest.of(0, 10);
         var mockPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
 
-        when(documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
+        when(documentPublicationIndexRepository.findByTypeAndMonographIdAndIsPubliclyVisibleTrue(
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable))
             .thenReturn(mockPage);
 
@@ -445,7 +445,7 @@ public class MonographPublicationServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         verify(documentPublicationIndexRepository, times(1))
-            .findByTypeAndMonographIdAndIsApprovedTrue(
+            .findByTypeAndMonographIdAndIsPubliclyVisibleTrue(
                 DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
     }
 

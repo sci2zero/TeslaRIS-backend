@@ -28,6 +28,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.util.deduplication.Accounted;
@@ -48,7 +49,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_person_name_id", columnList = "name_id")
 })
 @SQLRestriction("deleted=false")
-public class Person extends BaseEntity implements Mergeable, Accounted {
+public class Person extends BaseEntity implements Mergeable, Accounted, PublicationCandidacyHolder {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;
@@ -117,6 +118,12 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "person_employment_hierarchy",

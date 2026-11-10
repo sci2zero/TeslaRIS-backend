@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.configuration.CachingConfiguration;
@@ -102,6 +103,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @RequiredArgsConstructor
@@ -174,7 +177,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             throw e;
         }
 
-        if (!ou.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!ou.getApproveStatus().equals(ApproveStatus.APPROVED) ||
+            PublicVisibility.isHiddenFromCurrentUser(ou.getPublicationCandidate())) {
             throw new NotFoundException("OrganisationUnit with given ID does not exist.");
         }
 
@@ -248,15 +252,18 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Boolean registryBookRelevant) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
-                buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
-                    onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType,
-                    onlyClientInstitutionsCris, onlyClientInstitutionsDl, registryBookRelevant),
+                PublicVisibilityQueries.restrictForAnonymous(
+                    buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
+                        onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType,
+                        onlyClientInstitutionsCris, onlyClientInstitutionsDl,
+                        registryBookRelevant)),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
 
         return searchService.runQuery(
-            expressionTransformer.parseAdvancedQuery(tokens), pageable,
+            PublicVisibilityQueries.restrictForAnonymous(
+                expressionTransformer.parseAdvancedQuery(tokens)), pageable,
             OrganisationUnitIndex.class, "organisation_unit");
     }
 
@@ -506,6 +513,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     @Transactional
     public Long getOrganisationUnitsCount() {
+        if (PublicVisibility.isAnonymousRequest()) {
+            return organisationUnitIndexRepository.countByIsPubliclyVisibleTrue();
+        }
+
         return organisationUnitIndexRepository.count();
     }
 
@@ -1027,6 +1038,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                        OrganisationUnitIndex index) {
         index.setDatabaseId(organisationUnit.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(organisationUnit.getApproveStatus(),
+                organisationUnit.getPublicationCandidate()));
 
         indexCommonFields(organisationUnit, index);
         organisationUnitIndexRepository.save(index);
@@ -1146,11 +1160,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     () -> new NotFoundException(
                         "Organisation units relation with given ID does not exist."));
 
-        if (organisationUnit.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
-            organisationUnit.setApproveStatus(approveStatus);
+        if (!organisationUnit.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            this.save(organisationUnit);
+            return organisationUnit;
         }
 
+        organisationUnit.setApproveStatus(approveStatus);
         this.save(organisationUnit);
+
+        if (ApproveStatus.APPROVED.equals(approveStatus)) {
+            indexOrganisationUnit(organisationUnit);
+        }
+
+        applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+            EntityType.ORGANISATION_UNIT.name(), organisationUnitId,
+            PublicVisibility.isPubliclyVisible(organisationUnit.getApproveStatus(),
+                organisationUnit.getPublicationCandidate())));
         return organisationUnit;
     }
 

@@ -32,6 +32,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -46,7 +47,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 })
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Document extends BaseEntity implements Mergeable {
+public abstract class Document extends BaseEntity implements Mergeable, PublicationCandidacyHolder {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
@@ -142,6 +143,12 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "is_archived")
     private Boolean isArchived = false;
 
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
+
     @Column(name = "peer_reviewed")
     private Boolean peerReviewed;
 
@@ -196,6 +203,7 @@ public abstract class Document extends BaseEntity implements Mergeable {
         this.isMetadataValid = other.isMetadataValid;
         this.areFilesValid = other.areFilesValid;
         this.isArchived = other.isArchived;
+        this.publicationCandidate = other.publicationCandidate;
         this.authorReprint = other.authorReprint;
 
         this.title = other.title.stream()

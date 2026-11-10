@@ -49,6 +49,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
@@ -745,6 +746,7 @@ public class PersonServiceTest {
     @Test
     public void shouldFindAll() {
         // Given
+        RequestContextHolder.resetRequestAttributes();
         var pageable = Pageable.ofSize(10).withPage(0);
         var expected = new PageImpl<>(List.of(new PersonIndex(), new PersonIndex()));
 
@@ -755,6 +757,23 @@ public class PersonServiceTest {
 
         // Then
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldFindOnlyPubliclyVisiblePersonsForAnonymousRequest() {
+        // Given
+        var pageable = Pageable.ofSize(10).withPage(0);
+        var expected = new PageImpl<>(List.of(new PersonIndex()));
+
+        when(searchService.runQuery(any(), eq(pageable), eq(PersonIndex.class), eq("person")))
+            .thenReturn(expected);
+
+        // When
+        var actual = personService.findAllIndex(pageable);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(personIndexRepository, never()).findAll(any(Pageable.class));
     }
 
     @ParameterizedTest
@@ -818,6 +837,7 @@ public class PersonServiceTest {
     @Test
     public void shouldGetResearcherCount() {
         // Given
+        RequestContextHolder.resetRequestAttributes();
         var expectedCount = 42L;
         when(personIndexRepository.count()).thenReturn(expectedCount);
 
@@ -827,6 +847,20 @@ public class PersonServiceTest {
         // Then
         assertEquals(expectedCount, actualCount);
         verify(personIndexRepository, times(1)).count();
+    }
+
+    @Test
+    public void shouldGetPubliclyVisibleResearcherCountForAnonymousRequest() {
+        // Given
+        var expectedCount = 40L;
+        when(personIndexRepository.countByIsPubliclyVisibleTrue()).thenReturn(expectedCount);
+
+        // When
+        long actualCount = personService.getResearcherCount();
+
+        // Then
+        assertEquals(expectedCount, actualCount);
+        verify(personIndexRepository, never()).count();
     }
 
     @ParameterizedTest

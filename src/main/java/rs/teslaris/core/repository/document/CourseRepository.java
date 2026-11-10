@@ -12,6 +12,6 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
 
     @Query(value = "SELECT * FROM courses c WHERE " +
         "(:allTime = TRUE OR c.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        " ORDER BY c.id", nativeQuery = true)
+        "AND c.publication_candidate IS NOT FALSE ORDER BY c.id", nativeQuery = true)
     Page<Course> findAllModified(Pageable pageable, boolean allTime);
 }

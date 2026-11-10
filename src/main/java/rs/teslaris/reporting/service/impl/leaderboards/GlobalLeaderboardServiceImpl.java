@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.NamedValue;
@@ -28,12 +29,20 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.service.interfaces.leaderboards.GlobalLeaderboardService;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
+
+    private static final String DOCUMENT_INDEX = "document_publication";
+
+    private static final String AUDIENCE_KEY_SUFFIX =
+        " + ':' + T(rs.teslaris.core.util.session.SessionUtil).isUserLoggedIn()";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -42,10 +51,18 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
+    private static Optional<Query> visibilityFilter(String indexName) {
+        if (DOCUMENT_INDEX.equals(indexName)) {
+            return Optional.of(PublicVisibilityQueries.documentVisibilityForCurrentUser());
+        }
+
+        return SessionUtil.isUserLoggedIn() ? Optional.empty() :
+            Optional.of(PublicVisibilityQueries.publiclyVisible());
+    }
 
     @Override
     @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
-        key = "'personsWithMostCitations'",
+        key = "'personsWithMostCitations'" + AUDIENCE_KEY_SUFFIX,
         unless = "#result.isEmpty()")
     public List<Pair<PersonIndex, Long>> getPersonsWithMostCitations() {
         var eligibleOUIds = getEligibleOrganisationUnitIds(false);
@@ -64,7 +81,7 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     @Override
     @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
-        key = "'institutionsWithMostCitations'",
+        key = "'institutionsWithMostCitations'" + AUDIENCE_KEY_SUFFIX,
         unless = "#result.isEmpty()")
     public List<Pair<OrganisationUnitIndex, Long>> getInstitutionsWithMostCitations() {
         var eligibleOUIds = getEligibleOrganisationUnitIds(true);
@@ -82,11 +99,11 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     @Override
     @Cacheable(cacheNames = CachingConfiguration.GLOBAL_LEADERBOARDS_CACHE,
-        key = "'documentsWithMostCitations'",
+        key = "'documentsWithMostCitations'" + AUDIENCE_KEY_SUFFIX,
         unless = "#result.isEmpty()")
     public List<Pair<DocumentPublicationIndex, Long>> getDocumentsWithMostCitations() {
         return getTopCitations(
-            "document_publication",
+            DOCUMENT_INDEX,
             "by_publication",
             DocumentPublicationIndex.class,
             "employment_institutions_id_hierarchy",
@@ -108,6 +125,8 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
                     .index(indexName)
                     .size(0)
                     .query(q -> q.bool(b -> {
+                            visibilityFilter(indexName).ifPresent(filter -> b.filter(filter));
+
                             if (eligibleOUIds.isEmpty()) {
                                 return b;
                             }
@@ -184,6 +203,8 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
                     .index(indexName)
                     .size(0)
                     .query(q -> q.bool(b -> {
+                            visibilityFilter(indexName).ifPresent(filter -> b.filter(filter));
+
                             if (eligibleOUIds.isEmpty()) {
                                 return b;
                             }
@@ -236,6 +257,7 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
         var entityMap = new HashMap<Integer, T>();
         ids.forEach(id -> lookupFn
             .apply(id)
+            .filter(PublicVisibility::isVisibleToCurrentUser)
             .ifPresent(entity -> entityMap.put(id, entity)
             )
         );

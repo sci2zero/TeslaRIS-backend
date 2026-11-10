@@ -32,6 +32,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
@@ -59,6 +62,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
@@ -307,6 +311,50 @@ public class ProjectServiceTest {
         assertNotNull(result);
         assertEquals(projectId, result.getId());
         verify(projectRepository).findById(any());
+    }
+
+    @Test
+    public void shouldHideNonCandidateProjectFromAnonymousRequest() {
+        // given
+        var projectId = 1;
+        var project = new Project();
+        project.setId(projectId);
+        project.setPublicationCandidate(false);
+
+        when(projectRepository.findById(projectId))
+            .thenReturn(Optional.of(project));
+        RequestContextHolder.setRequestAttributes(
+            new ServletRequestAttributes(new MockHttpServletRequest()));
+
+        // when & then
+        try {
+            assertThrows(NotFoundException.class, () ->
+                projectService.readProject(projectId));
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+    @Test
+    public void shouldReadNonCandidateProjectOutsideOfRequest() {
+        // given
+        RequestContextHolder.resetRequestAttributes();
+        var projectId = 1;
+        var project = new Project();
+        project.setId(projectId);
+        project.setPublicationCandidate(false);
+        project.setStatus(ProjectStatus.ONGOING);
+        project.setCollaborationType(ProjectCollaborationType.INTERNAL);
+        project.setResearchType(ProjectResearchType.INNOVATION);
+
+        when(projectRepository.findById(projectId))
+            .thenReturn(Optional.of(project));
+
+        // when
+        var result = projectService.readProject(projectId);
+
+        // then
+        assertEquals(projectId, result.getId());
     }
 
     @Test

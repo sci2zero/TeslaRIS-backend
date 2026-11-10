@@ -32,6 +32,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.service.interfaces.visualizations.DocumentVisualizationDataService;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -261,6 +262,7 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
         var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildPublicationMetadataQuery(type, subType, yearFrom, yearTo, personId,
                 institutionId));
+            b.must(PublicVisibilityQueries.documentVisibilityForCurrentUser());
             return b;
         })))._toQuery();
 

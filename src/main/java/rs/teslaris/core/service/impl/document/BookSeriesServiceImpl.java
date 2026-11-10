@@ -46,6 +46,9 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @Traceable
@@ -99,7 +102,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     @Override
     public Page<BookSeriesIndex> searchBookSeries(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable,
+        return searchService.runQuery(
+            PublicVisibilityQueries.restrictForAnonymous(buildSimpleSearchQuery(tokens)), pageable,
             BookSeriesIndex.class,
             "book_series");
     }
@@ -107,9 +111,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public Page<DocumentPublicationIndex> findPublicationsForBookSeries(Integer bookSeriesId,
                                                                         Pageable pageable) {
-        return documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
-            List.of(DocumentPublicationType.PROCEEDINGS.name(),
-                DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable);
+        var types = List.of(DocumentPublicationType.PROCEEDINGS.name(),
+            DocumentPublicationType.MONOGRAPH.name());
+
+        if (!SessionUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository
+                .findByTypeInAndPublicationSeriesIdAndIsPubliclyVisibleTrue(types, bookSeriesId,
+                    pageable);
+        }
+
+        return documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(types,
+            bookSeriesId, pageable);
     }
 
     @Override
@@ -122,6 +134,10 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
                 .ifPresent(bookSeriesIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(bookSeries.getPublicationCandidate())) {
+            throw new NotFoundException("Book series with given ID does not exist.");
         }
 
         return PublicationSeriesConverter.toDTO(bookSeries);
@@ -300,6 +316,8 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         index.setActivitiesCount(0);
 
         index.setDatabaseId(bookSeries.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(bookSeries.getPublicationCandidate()));
         indexCommonFields(bookSeries, index);
 
         index.setRelatedInstitutionIds(

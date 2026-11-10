@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.ThesisUnarchivedEvent;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.service.interfaces.CommonExportService;
@@ -27,6 +28,22 @@ public class ExportEventListener {
         } catch (Exception e) {
             log.error("Unable to delete export record for unarchived thesis with ID {}. Reason: {}",
                 event.thesisId(), e.getMessage(), e);
+        }
+    }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    protected void handlePublicVisibilityChanged(PublicVisibilityChangedEvent event) {
+        if (event.publiclyVisible()) {
+            return;
+        }
+
+        try {
+            commonExportService.deleteHiddenRecordFromCommonModel(event.entityType(),
+                event.entityId());
+        } catch (Exception e) {
+            log.error("Unable to delete export record for hidden {} with ID {}. Reason: {}",
+                event.entityType(), event.entityId(), e.getMessage(), e);
         }
     }
 }

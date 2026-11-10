@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -96,6 +97,10 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
             eventIndexRepository.findByEventTypeAndDatabaseId(EventType.OTHER_EVENT, id)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(event.getPublicationCandidate())) {
+            throw new NotFoundException("Event with given ID does not exist.");
         }
 
         return OtherEventConverter.toDTO(event);
@@ -197,6 +202,8 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
 
     private void indexOtherEvent(OtherEvent event, EventIndex index) {
         index.setDatabaseId(event.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(event.getPublicationCandidate()));
         index.setEventType(EventType.OTHER_EVENT);
         index.setOtherEventType(event.getType());
 

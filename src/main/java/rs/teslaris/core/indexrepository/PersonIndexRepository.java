@@ -16,6 +16,10 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
 
     Optional<PersonIndex> findByDatabaseId(Integer databaseId);
 
+    long countByIsPubliclyVisibleTrue();
+
+    Page<PersonIndex> findByIsPubliclyVisibleTrue(Pageable pageable);
+
     Page<PersonIndex> findByDatabaseIdIn(List<Integer> databaseIds, Pageable pageable);
 
     @Query("""
