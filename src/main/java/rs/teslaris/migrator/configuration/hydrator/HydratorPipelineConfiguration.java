@@ -18,6 +18,7 @@ import rs.teslaris.migrator.converter.hydrator.CvFundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.HydratorCvFundingExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorDegreeRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
@@ -56,7 +57,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
  *     <li>{@code CV_FUNDING} - curriculum fundings, matched against the projects of the previous
  *     pass and created only when not found;</li>
- *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
+ *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve;</li>
+ *     <li>{@code PERSON_EDUCATION} - each degree's thesis, unless the {@code DOCUMENT} pass already
+ *     created it from a dissertation of the same title, followed by the education.</li>
  * </ol>
  */
 @Configuration
@@ -87,6 +90,8 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorOutputRouter outputRouter;
 
+    private final HydratorDegreeRouter degreeRouter;
+
     private final EmploymentEntityCreator employmentEntityCreator;
 
     private final PrizeEntityCreator prizeEntityCreator;
@@ -112,7 +117,8 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.PERSON,
             MigrationEntityType.PROJECT,
             MigrationEntityType.CV_FUNDING,
-            MigrationEntityType.DOCUMENT
+            MigrationEntityType.DOCUMENT,
+            MigrationEntityType.PERSON_EDUCATION
         );
     }
 
@@ -174,6 +180,11 @@ public class HydratorPipelineConfiguration {
     @Bean
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorDocumentPipeline() {
         return pipeline(MigrationEntityType.DOCUMENT, outputRouter);
+    }
+
+    @Bean
+    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorEducationPipeline() {
+        return pipeline(MigrationEntityType.PERSON_EDUCATION, degreeRouter);
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> organisationUnitRouter() {
