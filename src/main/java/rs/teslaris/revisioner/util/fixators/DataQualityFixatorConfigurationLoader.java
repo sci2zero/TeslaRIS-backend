@@ -119,6 +119,11 @@ public class DataQualityFixatorConfigurationLoader {
         @JsonProperty(value = "matchedRemarkKeys", required = true)
         List<String> matchedRemarkKeys,
 
+        // Not required, because an override file written before this field existed has no such
+        // key.
+        @JsonProperty("explicitlySkippedRemarkKeys")
+        List<String> explicitlySkippedRemarkKeys,
+
         @JsonProperty(value = "appliedFixators", required = true)
         List<String> appliedFixators,
 

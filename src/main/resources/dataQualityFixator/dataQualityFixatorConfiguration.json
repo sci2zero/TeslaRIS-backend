@@ -4,6 +4,7 @@
     "profileName" : "ptcris",
     "version" : 1,
     "matchedRemarkKeys" : [ "doiNotResolvable", "doiTooLong", "doiTooShort" ],
+    "explicitlySkippedRemarkKeys" : [ "noIdentifierPresent" ],
     "appliedFixators" : [ "identifierAffix", "typographicCharacter" ],
     "createVersionOnEveryStep" : false
   } ]

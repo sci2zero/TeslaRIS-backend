@@ -17,6 +17,8 @@ public record DataQualityFixatorPipelineDTO(
     @NotNull
     List<String> matchedRemarkKeys,
 
+    List<String> explicitlySkippedRemarkKeys,
+
     @NotNull
     List<String> appliedFixators,
 

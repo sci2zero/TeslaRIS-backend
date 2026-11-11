@@ -15,6 +15,7 @@ public class DataQualityFixatorPipelineConverter {
             pipeline.getProfileName(),
             pipeline.getVersion(),
             new ArrayList<>(nullSafe(pipeline.getMatchedRemarkKeys())),
+            new ArrayList<>(nullSafe(pipeline.getExplicitlySkippedRemarkKeys())),
             new ArrayList<>(nullSafe(pipeline.getAppliedFixators())),
             Objects.requireNonNullElse(pipeline.getCreateVersionOnEveryStep(), false)
         );
@@ -26,6 +27,7 @@ public class DataQualityFixatorPipelineConverter {
             pipeline.getProfileName(),
             pipeline.getVersion(),
             new ArrayList<>(nullSafe(pipeline.getMatchedRemarkKeys())),
+            new ArrayList<>(nullSafe(pipeline.getExplicitlySkippedRemarkKeys())),
             new ArrayList<>(nullSafe(pipeline.getAppliedFixators())),
             Objects.requireNonNullElse(pipeline.getCreateVersionOnEveryStep(), false)
         );

@@ -199,6 +199,9 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
         pipeline.setPipelineName(dto.pipelineName());
         pipeline.setProfileName(dto.profileName());
         pipeline.setMatchedRemarkKeys(new ArrayList<>(dto.matchedRemarkKeys()));
+        pipeline.setExplicitlySkippedRemarkKeys(
+            new ArrayList<>(Objects.requireNonNullElse(dto.explicitlySkippedRemarkKeys(),
+                List.<String>of())));
         pipeline.setAppliedFixators(new ArrayList<>(dto.appliedFixators()));
         pipeline.setCreateVersionOnEveryStep(dto.createVersionOnEveryStep());
     }
@@ -216,6 +219,9 @@ public class DataQualityFixatorServiceImpl implements DataQualityFixatorService 
         pipeline.setVersion(Objects.requireNonNullElse(configuredPipeline.version(), 1));
         pipeline.setMatchedRemarkKeys(
             new ArrayList<>(Objects.requireNonNullElse(configuredPipeline.matchedRemarkKeys(),
+                List.of())));
+        pipeline.setExplicitlySkippedRemarkKeys(new ArrayList<>(
+            Objects.requireNonNullElse(configuredPipeline.explicitlySkippedRemarkKeys(),
                 List.of())));
         pipeline.setAppliedFixators(
             new ArrayList<>(Objects.requireNonNullElse(configuredPipeline.appliedFixators(),

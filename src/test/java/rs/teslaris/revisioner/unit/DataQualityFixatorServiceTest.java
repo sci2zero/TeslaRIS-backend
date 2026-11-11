@@ -47,6 +47,7 @@ public class DataQualityFixatorServiceTest {
         pipeline.setProfileName(PROFILE);
         pipeline.setVersion(version);
         pipeline.setMatchedRemarkKeys(List.of("titleTooLong"));
+        pipeline.setExplicitlySkippedRemarkKeys(List.of("noIdentifierPresent"));
         pipeline.setAppliedFixators(List.of());
         pipeline.setCreateVersionOnEveryStep(false);
 
@@ -54,15 +55,15 @@ public class DataQualityFixatorServiceTest {
     }
 
     private FixatorPipeline configured(String name, int version) {
-        return new FixatorPipeline(name, PROFILE, version, List.of("titleTooLong"), List.of(),
-            true);
+        return new FixatorPipeline(name, PROFILE, version, List.of("titleTooLong"),
+            List.of("noIdentifierPresent"), List.of(), true);
     }
 
     private DataQualityFixatorPipelineDTO dto(String name, Integer version, String profileName,
                                               List<String> remarkKeys,
                                               List<String> appliedFixators) {
         return new DataQualityFixatorPipelineDTO(name, profileName, version, remarkKeys,
-            appliedFixators, false);
+            List.of("noIdentifierPresent"), appliedFixators, false);
     }
 
     @Test
@@ -108,6 +109,30 @@ public class DataQualityFixatorServiceTest {
         assertEquals(3, captor.getValue().getVersion());
         assertEquals(PROFILE, captor.getValue().getProfileName());
         assertEquals(List.of("titleTooLong"), captor.getValue().getMatchedRemarkKeys());
+        assertEquals(List.of("noIdentifierPresent"),
+            captor.getValue().getExplicitlySkippedRemarkKeys());
+    }
+
+    @Test
+    public void shouldSeedPipelineWithoutSkippedRemarkKeysAsEmptyList() {
+        var configuredPipeline =
+            new FixatorPipeline("titles", PROFILE, 1, List.of("titleTooLong"), null, List.of(),
+                false);
+
+        when(dataQualityFixatorPipelineRepository.findByPipelineName("titles")).thenReturn(
+            Optional.empty());
+
+        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class)) {
+            loader.when(DataQualityFixatorConfigurationLoader::listPipelines)
+                .thenReturn(List.of(configuredPipeline));
+
+            dataQualityFixatorService.synchroniseWithConfiguration();
+        }
+
+        var captor = ArgumentCaptor.forClass(DataQualityFixatorPipeline.class);
+        verify(dataQualityFixatorPipelineRepository).save(captor.capture());
+
+        assertEquals(List.of(), captor.getValue().getExplicitlySkippedRemarkKeys());
     }
 
     @Test
@@ -205,6 +230,31 @@ public class DataQualityFixatorServiceTest {
 
         assertEquals(8, result.version());
         assertEquals(List.of("titleTooShort"), result.matchedRemarkKeys());
+        assertEquals(List.of("noIdentifierPresent"), result.explicitlySkippedRemarkKeys());
+    }
+
+    @Test
+    public void shouldAcceptPipelineWithoutSkippedRemarkKeys() {
+        when(dataQualityFixatorPipelineRepository.findByPipelineName("titles")).thenReturn(
+            Optional.empty());
+        when(dataQualityFixatorPipelineRepository.save(any())).thenAnswer(
+            invocation -> invocation.getArgument(0));
+        when(dataQualityFixatorPipelineRepository.findAllByOrderByPipelineNameAsc()).thenReturn(
+            List.of());
+
+        DataQualityFixatorPipelineDTO result;
+
+        try (var loader = mockStatic(DataQualityFixatorConfigurationLoader.class);
+             var profiles = mockStatic(DataQualityAssessmentConfigurationLoader.class)) {
+            profiles.when(DataQualityAssessmentConfigurationLoader::listAvailableProfiles)
+                .thenReturn(Set.of(PROFILE));
+
+            result = dataQualityFixatorService.createPipeline(
+                new DataQualityFixatorPipelineDTO("titles", PROFILE, null,
+                    List.of("titleTooLong"), null, List.of(), false));
+        }
+
+        assertEquals(List.of(), result.explicitlySkippedRemarkKeys());
     }
 
     @Test
