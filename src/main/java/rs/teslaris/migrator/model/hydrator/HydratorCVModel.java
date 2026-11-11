@@ -26,6 +26,7 @@ public class HydratorCVModel {
         String language,
         String lastModifiedDate,
         IdentifyingInfo identifyingInfo,
+        Degrees degrees,
         Employments employments,
         Distinctions distinctions,
         Fundings fundings,
@@ -312,6 +313,46 @@ public class HydratorCVModel {
     public record DistinctionType(
         String code,
         String type
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degrees(
+        Integer total,
+        List<Degree> degree
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degree(
+        String id,
+        DegreeType degreeType,
+        String degreeName,
+        String degreeMajor,
+        String description,
+        String classification,
+        Institutions institutions,
+        DegreeStatus degreeStatus,
+        DateInfo startDate,
+        DateInfo endDate,
+        DegreeThesis thesis,
+        ResearchClassifications researchClassifications
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeStatus(
+        String code,
+        String status
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeThesis(
+        String tid,
+        String title,
+        Institution institution,
+        Supervisors supervisors
     ) {
     }
 
