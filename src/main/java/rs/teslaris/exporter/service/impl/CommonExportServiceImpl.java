@@ -329,6 +329,34 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
     }
 
+    @Override
+    public void deleteHiddenRecordFromCommonModel(String entityType, Integer entityId) {
+        var deletedCount = switch (entityType) {
+            case "PERSON" -> commonExportWorker.deleteExportEntity(entityId, ExportPerson.class,
+                null);
+            case "ORGANISATION_UNIT" ->
+                commonExportWorker.deleteExportEntity(entityId, ExportOrganisationUnit.class,
+                    null);
+            case "CONFERENCE", "EXHIBITION", "COURSE", "OTHER_EVENT" ->
+                commonExportWorker.deleteExportEntity(entityId, ExportEvent.class, null);
+            case "PROJECT" -> commonExportWorker.deleteExportEntity(entityId, ExportProject.class,
+                null);
+            case "FUNDING" -> commonExportWorker.deleteExportEntity(entityId, ExportFunding.class,
+                null);
+            default -> Arrays.stream(ExportPublicationType.values())
+                .filter(type -> type.name().equals(entityType))
+                .findFirst()
+                .map(type -> commonExportWorker.deleteExportEntity(entityId,
+                    ExportDocument.class, type))
+                .orElse(0L);
+        };
+
+        if (deletedCount > 0) {
+            log.info("Deleted {} export record(s) of hidden {} with ID {}.", deletedCount,
+                entityType, entityId);
+        }
+    }
+
     private CompletableFuture<Void> createExportFuture(ExportPublicationType exportType,
                                                        boolean allTime) {
         try {

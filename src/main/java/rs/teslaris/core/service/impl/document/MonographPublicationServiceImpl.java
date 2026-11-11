@@ -54,6 +54,7 @@ import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -116,7 +117,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublication =
             monographPublicationRepository.findMonographPublicationByOldIdsContains(oldId);
         if (monographPublication.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
-            !monographPublication.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            !PublicVisibility.isPubliclyVisible(monographPublication.get()))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -139,7 +140,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !monographPublication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(monographPublication)) {
             throw new NotFoundException(
                 "Monograph with ID " + monographPublicationId + " does not exist.");
         }
@@ -197,8 +198,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                           Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
-            return documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
-                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
+            return documentPublicationIndexRepository
+                .findByTypeAndMonographIdAndIsPubliclyVisibleTrue(
+                    DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
         }
 
         return documentPublicationIndexRepository.findByTypeAndMonographId(

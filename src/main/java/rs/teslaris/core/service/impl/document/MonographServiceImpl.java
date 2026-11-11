@@ -25,7 +25,6 @@ import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
@@ -67,6 +66,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -159,7 +159,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public MonographDTO readMonographByOldId(Integer oldId) {
         var monograph = monographRepository.findMonographByOldIdsContains(oldId);
         if (monograph.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
-            !monograph.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            !PublicVisibility.isPubliclyVisible(monograph.get()))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -195,7 +195,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !monograph.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(monograph)) {
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");
         }
 

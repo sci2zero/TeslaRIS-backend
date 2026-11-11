@@ -23,6 +23,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.funding.FundingLocationType;
@@ -38,7 +39,7 @@ import rs.teslaris.project.model.project.Project;
 @Entity
 @Table(name = "fundings")
 @SQLRestriction("deleted=false")
-public class Funding extends BaseEntity {
+public class Funding extends BaseEntity implements PublicationCandidacyHolder {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
@@ -144,4 +145,10 @@ public class Funding extends BaseEntity {
 
     @Column(name = "internal_investment")
     private Boolean internalInvestment;
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 }

@@ -97,7 +97,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
 
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
         "(:allTime = TRUE OR ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
-        "ou.approve_status = 1 ORDER BY ou.id",
+        "ou.approve_status = 1 AND ou.publication_candidate IS NOT FALSE " +
+        "ORDER BY ou.id",
         nativeQuery = true)
     Page<OrganisationUnit> findAllModified(Pageable pageable, boolean allTime);
 

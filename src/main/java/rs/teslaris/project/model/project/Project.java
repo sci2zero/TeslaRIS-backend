@@ -26,6 +26,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.core.model.project.ProjectCollaborationType;
@@ -42,7 +43,7 @@ import rs.teslaris.project.model.funding.FundingApplication;
 @DynamicUpdate
 @Table(name = "projects")
 @SQLRestriction("deleted=false")
-public class Project extends BaseEntity {
+public class Project extends BaseEntity implements PublicationCandidacyHolder {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
@@ -131,6 +132,12 @@ public class Project extends BaseEntity {
 
     @Embedded
     private MonetaryAmount costs;
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 
     public Optional<OrganisationUnitProjectContribution> getCoordinator() {
         return organisations.stream()

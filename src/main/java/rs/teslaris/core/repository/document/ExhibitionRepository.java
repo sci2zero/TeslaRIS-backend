@@ -20,6 +20,6 @@ public interface ExhibitionRepository extends JpaRepository<Exhibition, Integer>
 
     @Query(value = "SELECT * FROM exhibitions e WHERE " +
         "(:allTime = TRUE OR e.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        " ORDER BY e.id", nativeQuery = true)
+        "AND e.publication_candidate IS NOT FALSE ORDER BY e.id", nativeQuery = true)
     Page<Exhibition> findAllModified(Pageable pageable, boolean allTime);
 }

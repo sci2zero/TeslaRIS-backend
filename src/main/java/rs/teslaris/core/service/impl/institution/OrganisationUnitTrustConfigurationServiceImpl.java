@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -45,6 +47,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +74,8 @@ public class OrganisationUnitTrustConfigurationServiceImpl
     private final NotificationRepository notificationRepository;
 
     private final UserService userService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -126,6 +131,9 @@ public class OrganisationUnitTrustConfigurationServiceImpl
                     document.setApproveStatus(ApproveStatus.APPROVED);
                     updateDocumentIndex(document);
                     documentRepository.save(document);
+                    applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+                        document.getDocumentType().name(), documentId,
+                        PublicVisibility.isPubliclyVisible(document)));
                 } finally {
                     locks.remove(documentId);
                 }
@@ -195,6 +203,7 @@ public class OrganisationUnitTrustConfigurationServiceImpl
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             document.getId()).ifPresent(index -> {
             index.setIsApproved(document.getIsMetadataValid());
+            index.setIsPubliclyVisible(PublicVisibility.isPubliclyVisible(document));
             index.setAreFilesValid(document.getAreFilesValid());
             documentPublicationIndexRepository.save(index);
         });

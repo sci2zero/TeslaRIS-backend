@@ -26,6 +26,8 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.CommissionAssessmentPointsPersonLeaderboard;
 import rs.teslaris.reporting.service.interfaces.leaderboards.PersonLeaderboardService;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -64,7 +66,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                             .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
                                 searchFields))
                             .must(m -> m.terms(t -> t.field("author_ids").terms(ts -> ts
@@ -108,9 +110,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
             var personMap = new HashMap<Integer, PersonIndex>();
             topPersonIds.forEach(personId -> {
-                personIndexRepository.findByDatabaseId(personId.intValue()).ifPresent(index ->
-                    personMap.put(personId.intValue(), index)
-                );
+                personIndexRepository.findByDatabaseId(personId.intValue())
+                    .filter(PublicVisibility::isVisibleToCurrentUser)
+                    .ifPresent(index -> personMap.put(personId.intValue(), index));
             });
 
             return byPersonAgg.buckets()
@@ -119,8 +121,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                 .map(b -> {
                     Integer personId = Math.toIntExact(b.key());
                     PersonIndex person = personMap.get(personId);
-                    return new Pair<>(person, b.docCount());
+                    return Objects.nonNull(person) ? new Pair<>(person, b.docCount()) : null;
                 })
+                .filter(Objects::nonNull)
                 .toList();
         } catch (IOException e) {
             log.error("Error while fetching person publication count leaderboard. Reason: {}",
@@ -198,9 +201,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
         var personMap = new HashMap<Integer, PersonIndex>();
         topPersonIds.forEach(id ->
-            personIndexRepository.findByDatabaseId(id).ifPresent(person ->
-                personMap.put(id, person)
-            )
+            personIndexRepository.findByDatabaseId(id)
+                .filter(PublicVisibility::isVisibleToCurrentUser)
+                .ifPresent(person -> personMap.put(id, person))
         );
 
         return buckets.stream()
@@ -254,7 +257,8 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .size(0)
                             .query(q -> q
                                 .bool(b -> b
-                                    .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                    .must(
+                                        PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                     .must(QueryUtil.organisationUnitMatchQuery(
                                         allMergedOrganisationUnitIds,
                                         searchFields)
@@ -363,9 +367,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
                 var personMap = new HashMap<Integer, PersonIndex>();
                 topPersonIds.forEach(personId -> {
-                    personIndexRepository.findByDatabaseId(personId).ifPresent(index ->
-                        personMap.put(personId, index)
-                    );
+                    personIndexRepository.findByDatabaseId(personId)
+                        .filter(PublicVisibility::isVisibleToCurrentUser)
+                        .ifPresent(index -> personMap.put(personId, index));
                 });
 
                 var leaderboardData = personPoints.stream()
@@ -444,7 +448,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
         var personMap = new HashMap<Integer, PersonIndex>();
         topPersonIds.forEach(id ->
-            personIndexRepository.findByDatabaseId(id).ifPresent(p -> personMap.put(id, p))
+            personIndexRepository.findByDatabaseId(id)
+                .filter(PublicVisibility::isVisibleToCurrentUser)
+                .ifPresent(p -> personMap.put(id, p))
         );
 
         return buckets.stream()

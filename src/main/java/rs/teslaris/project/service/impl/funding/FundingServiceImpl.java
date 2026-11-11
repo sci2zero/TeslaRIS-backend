@@ -38,11 +38,14 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
@@ -101,15 +104,22 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                                             LocalDate dateTo, Integer projectId,
                                             Integer fundingCallId, Integer funderId,
                                             Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, projectId,
-                fundingCallId, funderId),
+        return searchService.runQuery(PublicVisibilityQueries.restrictForAnonymous(
+                buildSimpleSearchQuery(tokens, dateFrom, dateTo, projectId, fundingCallId,
+                    funderId)),
             pageable, FundingIndex.class, "funding");
     }
 
     @Override
     @Transactional(readOnly = true)
     public FundingDTO readFunding(Integer fundingId) {
-        return FundingConverter.toDTO(findOne(fundingId));
+        var funding = findOne(fundingId);
+
+        if (PublicVisibility.isHiddenFromCurrentUser(funding.getPublicationCandidate())) {
+            throw new NotFoundException("Funding with given ID does not exist.");
+        }
+
+        return FundingConverter.toDTO(funding);
     }
 
     @Override
@@ -435,6 +445,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         }
 
         index.setDatabaseId(funding.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(funding.getPublicationCandidate()));
         index.setDateFrom(funding.getDateFrom());
         index.setDateTo(funding.getDateTo());
         index.setActivitiesCount(countActivities(funding));

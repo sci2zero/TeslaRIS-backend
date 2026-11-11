@@ -43,6 +43,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -125,6 +126,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             eventIndexRepository.findByEventTypeAndDatabaseId(EventType.CONFERENCE, conferenceId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(conference.getPublicationCandidate())) {
+            throw new NotFoundException("Conference with given ID does not exist.");
         }
 
         return ConferenceConverter.toDTO(conference);
@@ -314,6 +319,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     private void indexConference(Conference conference, EventIndex index) {
         index.setDatabaseId(conference.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(conference.getPublicationCandidate()));
         index.setEventType(EventType.CONFERENCE);
 
         indexEventCommonFields(index, conference);

@@ -19,7 +19,6 @@ import rs.teslaris.core.dto.document.IntellectualPropertyDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.IntellectualProperty;
 import rs.teslaris.core.model.document.IntellectualPropertyApplicationStatus;
 import rs.teslaris.core.model.document.IntellectualPropertyType;
@@ -51,6 +50,7 @@ import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -123,7 +123,7 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !intellectualProperty.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(intellectualProperty)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -136,7 +136,7 @@ public class IntellectualPropertyServiceImpl extends DocumentPublicationServiceI
         var intellectualProperty =
             intellectualPropertyRepository.findIntellectualPropertyByOldIdsContains(oldId);
         if (intellectualProperty.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
-            !intellectualProperty.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            !PublicVisibility.isPubliclyVisible(intellectualProperty.get()))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 

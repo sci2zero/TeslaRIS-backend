@@ -18,6 +18,8 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Page<DocumentPublicationIndex> findByIsPubliclyVisibleTrue(Pageable pageable);
+
     Optional<DocumentPublicationIndex> findByDoi(String doi);
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdAndType(
@@ -31,12 +33,14 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndEventId(String type, Integer eventId,
                                                         Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeAndEventIdAndIsPubliclyVisibleTrue(
+        String type, Integer eventId, Pageable pageable);
+
     Page<DocumentPublicationIndex> findByTypeAndProceedingsId(String type, Integer proceedingsId,
                                                               Pageable pageable);
 
-    Page<DocumentPublicationIndex> findByTypeAndProceedingsIdAndIsApprovedTrue(String type,
-                                                                               Integer proceedingsId,
-                                                                               Pageable pageable);
+    Page<DocumentPublicationIndex> findByTypeAndProceedingsIdAndIsPubliclyVisibleTrue(
+        String type, Integer proceedingsId, Pageable pageable);
 
     List<DocumentPublicationIndex> findByTypeAndJournalIdAndAuthorIds(String type,
                                                                       Integer journalId,
@@ -119,22 +123,26 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
 
-    Page<DocumentPublicationIndex> findByTypeAndJournalIdAndIsApprovedTrue(String type,
-                                                                           Integer journalId,
-                                                                           Pageable pageable);
+    Page<DocumentPublicationIndex> findByTypeAndJournalIdAndIsPubliclyVisibleTrue(
+        String type, Integer journalId, Pageable pageable);
 
     Page<DocumentPublicationIndex> findByTypeInAndPublicationSeriesId(List<String> types,
                                                                       Integer publicationSeriesId,
                                                                       Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeInAndPublicationSeriesIdAndIsPubliclyVisibleTrue(
+        List<String> types, Integer publicationSeriesId, Pageable pageable);
+
     Page<DocumentPublicationIndex> findByTypeAndMonographId(String type, Integer monographId,
                                                             Pageable pageable);
 
-    Page<DocumentPublicationIndex> findByTypeAndMonographIdAndIsApprovedTrue(String type,
-                                                                             Integer monographId,
-                                                                             Pageable pageable);
+    Page<DocumentPublicationIndex> findByTypeAndMonographIdAndIsPubliclyVisibleTrue(
+        String type, Integer monographId, Pageable pageable);
 
     Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
+
+    Page<DocumentPublicationIndex> findByPublisherIdAndIsPubliclyVisibleTrue(Integer publisherId,
+                                                                             Pageable pageable);
 
     Page<DocumentPublicationIndex> findByTypeIn(List<String> types, Pageable pageable);
 
@@ -431,7 +439,7 @@ public interface DocumentPublicationIndexRepository extends
         {
           "bool": {
             "must": [
-              { "term": { "is_approved": "true" } }
+              { "term": { "is_publicly_visible": "true" } }
             ],
             "must_not": [
               { "term": { "type": "PROCEEDINGS" } }
@@ -439,7 +447,7 @@ public interface DocumentPublicationIndexRepository extends
           }
         }
         """)
-    long countApprovedPublications();
+    long countPubliclyVisiblePublications();
 
     @CountQuery("""
         {

@@ -38,6 +38,37 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
 
     private final ProjectScopeCalculator projectScopeCalculator;
 
+    private static PersonContributionRecord toRecord(PersonProjectContribution contribution) {
+        var displayName = Objects.nonNull(contribution.getAffiliationStatement()) &&
+            Objects.nonNull(contribution.getAffiliationStatement().getDisplayPersonName()) ?
+            contribution.getAffiliationStatement().getDisplayPersonName().toString() : null;
+
+        List<Integer> institutionIds = Objects.nonNull(contribution.getInstitutions()) ?
+            contribution.getInstitutions().stream().map(BaseEntity::getId).toList() : List.of();
+
+        return new PersonContributionRecord(contribution.getPerson(), displayName,
+            contribution.getOrderNumber(), contribution.getContributionType(),
+            contribution.getInvestigationRole(), institutionIds, contribution.getDateFrom(),
+            contribution.getDateTo());
+    }
+
+    private static OrganisationContributionRecord toRecord(
+        OrganisationUnitProjectContribution contribution) {
+        return new OrganisationContributionRecord(contribution.getOrganisationUnit(),
+            contribution.getDisplayOrganisationUnit(), contribution.getOrderNumber(),
+            contribution.getContributionType(), contribution.getDateFrom(),
+            contribution.getDateTo());
+    }
+
+    private static IdentifierRecord toRecord(ProjectIdentifier identifier) {
+        return new IdentifierRecord(identifier.getIdentifier().getCode(), identifier.getValue(),
+            identifier.getIdentifier().getUrlTemplate());
+    }
+
+    private static IdentifierRecord toRecord(FundingIdentifier identifier) {
+        return new IdentifierRecord(identifier.getIdentifier().getCode(), identifier.getValue(),
+            identifier.getIdentifier().getUrlTemplate());
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -162,37 +193,5 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
         }
 
         return builder.institutionIds(institutionIds).build();
-    }
-
-    private static PersonContributionRecord toRecord(PersonProjectContribution contribution) {
-        var displayName = Objects.nonNull(contribution.getAffiliationStatement()) &&
-            Objects.nonNull(contribution.getAffiliationStatement().getDisplayPersonName()) ?
-            contribution.getAffiliationStatement().getDisplayPersonName().toString() : null;
-
-        List<Integer> institutionIds = Objects.nonNull(contribution.getInstitutions()) ?
-            contribution.getInstitutions().stream().map(BaseEntity::getId).toList() : List.of();
-
-        return new PersonContributionRecord(contribution.getPerson(), displayName,
-            contribution.getOrderNumber(), contribution.getContributionType(),
-            contribution.getInvestigationRole(), institutionIds, contribution.getDateFrom(),
-            contribution.getDateTo());
-    }
-
-    private static OrganisationContributionRecord toRecord(
-        OrganisationUnitProjectContribution contribution) {
-        return new OrganisationContributionRecord(contribution.getOrganisationUnit(),
-            contribution.getDisplayOrganisationUnit(), contribution.getOrderNumber(),
-            contribution.getContributionType(), contribution.getDateFrom(),
-            contribution.getDateTo());
-    }
-
-    private static IdentifierRecord toRecord(ProjectIdentifier identifier) {
-        return new IdentifierRecord(identifier.getIdentifier().getCode(), identifier.getValue(),
-            identifier.getIdentifier().getUrlTemplate());
-    }
-
-    private static IdentifierRecord toRecord(FundingIdentifier identifier) {
-        return new IdentifierRecord(identifier.getIdentifier().getCode(), identifier.getValue(),
-            identifier.getIdentifier().getUrlTemplate());
     }
 }

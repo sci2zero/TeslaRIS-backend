@@ -27,7 +27,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.PublicationStatus;
@@ -61,6 +60,7 @@ import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -141,7 +141,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(publication)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -174,8 +174,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     public Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
                                                                         Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
-            return documentPublicationIndexRepository.findByTypeAndProceedingsIdAndIsApprovedTrue(
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId, pageable);
+            return documentPublicationIndexRepository
+                .findByTypeAndProceedingsIdAndIsPubliclyVisibleTrue(
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId,
+                    pageable);
         }
 
         return documentPublicationIndexRepository.findByTypeAndProceedingsId(
@@ -386,6 +388,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Transactional
     public Page<DocumentPublicationIndex> findProceedingsPublicationsForEvent(Integer eventId,
                                                                               Pageable pageable) {
+        if (!SessionUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository
+                .findByTypeAndEventIdAndIsPubliclyVisibleTrue(
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
+        }
+
         return documentPublicationIndexRepository.findByTypeAndEventId(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
     }

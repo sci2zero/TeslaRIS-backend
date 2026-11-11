@@ -42,6 +42,8 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @RequiredArgsConstructor
@@ -82,12 +84,17 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             throw e;
         }
 
+        if (PublicVisibility.isHiddenFromCurrentUser(publisher.getPublicationCandidate())) {
+            throw new NotFoundException("Publisher with given ID does not exist.");
+        }
+
         return PublisherConverter.toDTO(publisher);
     }
 
     @Override
     public Page<PublisherIndex> searchPublishers(List<String> tokens, Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens), pageable,
+        return searchService.runQuery(
+            PublicVisibilityQueries.restrictForAnonymous(buildSimpleSearchQuery(tokens)), pageable,
             PublisherIndex.class, "publisher");
     }
 
@@ -248,6 +255,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Transactional(readOnly = true)
     private void indexPublisher(Publisher publisher, PublisherIndex index) {
         index.setDatabaseId(publisher.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(publisher.getPublicationCandidate()));
 
         indexCommonFields(publisher, index);
         publisherIndexRepository.save(index);

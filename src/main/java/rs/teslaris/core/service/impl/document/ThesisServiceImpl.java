@@ -34,6 +34,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
@@ -52,12 +53,12 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.LibraryFormat;
@@ -115,6 +116,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
@@ -246,7 +248,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(thesis)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -266,7 +268,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
         var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
         if (thesis.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
-            !thesis.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            !PublicVisibility.isPubliclyVisible(thesis.get()))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -645,6 +647,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         indexThesis(thesis,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
                 .orElse(new DocumentPublicationIndex()));
+        publishVisibilityChange(thesis);
     }
 
     private void validateThesisForPublicReview(Thesis thesis) {
@@ -716,6 +719,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         indexThesis(thesis,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
                 .orElse(new DocumentPublicationIndex()));
+        publishVisibilityChange(thesis);
     }
 
     @Override
@@ -723,9 +727,26 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void archiveThesis(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getThesisDefenceDate()) ||
+        if (thesis.getTitle().isEmpty() || Boolean.TRUE.equals(thesis.getIsOnPublicReview()) ||
+            Boolean.TRUE.equals(thesis.getIsShortenedReview()) ||
+            Boolean.TRUE.equals(thesis.getIsOnPublicReviewPause()) ||
+            Objects.isNull(thesis.getThesisDefenceDate()) ||
             !FlexibleDate.isDatePresentAndValid(thesis.getDocumentDate())) {
             throw new ThesisException("missingDataToArchiveMessage");
+        }
+
+        if (!thesis.getPublicReviewEndDates().isEmpty()) {
+            var dissertationExistsAndIsOpen = thesis.getFileItems().stream().anyMatch(
+                file -> file.getResourceType() == ResourceType.OFFICIAL_PUBLICATION &&
+                    file.getAccessRights() == AccessRights.OPEN_ACCESS);
+
+            var reportExistsAndIsOpen = thesis.getCommissionReports().stream().anyMatch(
+                file -> file.getResourceType() == ResourceType.STATEMENT &&
+                    file.getAccessRights() == AccessRights.OPEN_ACCESS);
+
+            if (!dissertationExistsAndIsOpen || !reportExistsAndIsOpen) {
+                throw new ThesisException("missingDataToArchiveMessage");
+            }
         }
 
         thesis.setIsArchived(true);
@@ -1154,8 +1175,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 index.setIsOnPublicReviewShortened(false);
                 index.setIsPublicReviewCompleted(true);
                 index.getPublicReviewEndDates().add(publicReviewEndDate);
+                index.setIsPubliclyVisible(PublicVisibility.isPubliclyVisible(thesis));
                 documentPublicationIndexRepository.save(index);
             });
+        publishVisibilityChange(thesis);
+    }
+
+    private void publishVisibilityChange(Thesis thesis) {
+        applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+            DocumentPublicationType.THESIS.name(), thesis.getId(),
+            PublicVisibility.isPubliclyVisible(thesis)));
     }
 
     private String getAuthorName(Thesis thesis) {

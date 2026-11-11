@@ -64,6 +64,7 @@ import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -164,7 +165,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (!SessionUtil.isUserLoggedIn() &&
             Objects.nonNull(SecurityContextHolder.getContext().getAuthentication()) &&
-            !proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(proceedings)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
 

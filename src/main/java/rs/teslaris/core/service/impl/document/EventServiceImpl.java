@@ -66,6 +66,7 @@ import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @Primary
@@ -222,9 +223,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Integer commissionId, Boolean emptyEventsOnly,
                                          Boolean noContributionEventsOnly) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, eventTypes, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId,
-                emptyEventsOnly, noContributionEventsOnly),
+            PublicVisibilityQueries.restrictForAnonymous(
+                buildSimpleSearchQuery(tokens, eventTypes, returnOnlyNonSerialEvents,
+                    returnOnlySerialEvents, commissionInstitutionId, commissionId,
+                    emptyEventsOnly, noContributionEventsOnly)),
             pageable, EventIndex.class, "events");
     }
 

@@ -46,7 +46,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -180,6 +184,7 @@ public class DocumentPublicationServiceTest {
         // given
         var expected = new MonographPublication();
         expected.setId(1);
+        expected.setApproveStatus(ApproveStatus.APPROVED);
         when(documentLookupService.fastDocumentLookup(1)).thenReturn(expected);
 
         // when
@@ -187,6 +192,23 @@ public class DocumentPublicationServiceTest {
 
         // then
         assertEquals(expected.getId(), result.getId());
+    }
+
+    @Test
+    public void shouldNotReadHiddenDocumentPublicationWhenAnonymous() {
+        // given
+        var hidden = new MonographPublication();
+        hidden.setId(1);
+        hidden.setApproveStatus(ApproveStatus.APPROVED);
+        hidden.setPublicationCandidate(false);
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(hidden);
+
+        // when / then
+        assertThrows(NotFoundException.class,
+            () -> documentPublicationService.readDocumentPublication(1));
+        assertThrows(NotFoundException.class,
+            () -> documentPublicationService.readBibliographicMetadataById(1,
+                BibliographicFormat.BIBTEX));
     }
 
     @Test
@@ -313,15 +335,43 @@ public class DocumentPublicationServiceTest {
         var isApproved = true;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
+        var index = new DocumentPublicationIndex();
+        index.setIsApproved(false);
+        index.setIsPubliclyVisible(false);
 
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.of(index));
 
         // When
         documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
 
         // Then
         assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
+        assertTrue(index.getIsApproved());
+        assertTrue(index.getIsPubliclyVisible());
         verify(documentRepository, times(1)).save(document);
+        verify(documentPublicationIndexRepository).save(index);
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), documentId, true));
+    }
+
+    @Test
+    public void shouldNotChangeApprovalStatusThatIsNotRequested() {
+        // Given
+        var documentId = 1;
+        var document = new JournalPublication();
+        document.setApproveStatus(ApproveStatus.DECLINED);
+
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
+
+        // When
+        documentPublicationService.updateDocumentApprovalStatus(documentId, true);
+
+        // Then
+        assertEquals(ApproveStatus.DECLINED, document.getApproveStatus());
+        verify(documentPublicationIndexRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
     }
 
     @Test
@@ -340,6 +390,8 @@ public class DocumentPublicationServiceTest {
         // Then
         assertEquals(ApproveStatus.DECLINED, document.getApproveStatus());
         verify(documentRepository, times(1)).save(document);
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), documentId, false));
     }
 
     @ParameterizedTest
@@ -389,7 +441,7 @@ public class DocumentPublicationServiceTest {
     public void shouldGetDocumentPublicationCount() {
         // Given
         var expectedCount = 42L;
-        when(documentPublicationIndexRepository.countApprovedPublications()).thenReturn(
+        when(documentPublicationIndexRepository.countPubliclyVisiblePublications()).thenReturn(
             expectedCount);
 
         // When
@@ -397,7 +449,7 @@ public class DocumentPublicationServiceTest {
 
         // Then
         assertEquals(expectedCount, actualCount);
-        verify(documentPublicationIndexRepository, times(1)).countApprovedPublications();
+        verify(documentPublicationIndexRepository, times(1)).countPubliclyVisiblePublications();
     }
 
     @Test
@@ -468,18 +520,39 @@ public class DocumentPublicationServiceTest {
     }
 
     @Test
-    public void shouldReadDocumentForPublisherWhenItExists() {
+    public void shouldReadPubliclyVisibleDocumentsForPublisherWhenAnonymous() {
         // given
         var expected = new DocumentPublicationIndex();
         var pageable = Pageable.ofSize(5);
-        when(documentPublicationIndexRepository.findByPublisherId(1, pageable)).thenReturn(
-            new PageImpl<>(List.of(expected)));
+        when(documentPublicationIndexRepository.findByPublisherIdAndIsPubliclyVisibleTrue(1,
+            pageable)).thenReturn(new PageImpl<>(List.of(expected)));
 
         // when
         var result = documentPublicationService.findPublicationsForPublisher(1, pageable);
 
         // then
         assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    public void shouldReadAllDocumentsForPublisherWhenLoggedIn() {
+        // given
+        var expected = new DocumentPublicationIndex();
+        var pageable = Pageable.ofSize(5);
+        when(documentPublicationIndexRepository.findByPublisherId(1, pageable)).thenReturn(
+            new PageImpl<>(List.of(expected)));
+        SecurityContextHolder.setContext(new SecurityContextImpl(
+            new TestingAuthenticationToken("user", "password", "ROLE_USER")));
+
+        // when
+        try {
+            var result = documentPublicationService.findPublicationsForPublisher(1, pageable);
+
+            // then
+            assertEquals(1, result.getTotalElements());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Test
@@ -1114,6 +1187,8 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 1;
         var documentPublication = mock(Document.class);
+        when(documentPublication.getApproveStatus()).thenReturn(ApproveStatus.APPROVED);
+        when(documentPublication.getPublicationCandidate()).thenReturn(true);
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
@@ -1144,6 +1219,8 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 2;
         var documentPublication = mock(Document.class);
+        when(documentPublication.getApproveStatus()).thenReturn(ApproveStatus.APPROVED);
+        when(documentPublication.getPublicationCandidate()).thenReturn(true);
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
@@ -1169,6 +1246,8 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 3;
         var documentPublication = mock(Document.class);
+        when(documentPublication.getApproveStatus()).thenReturn(ApproveStatus.APPROVED);
+        when(documentPublication.getPublicationCandidate()).thenReturn(true);
         when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(

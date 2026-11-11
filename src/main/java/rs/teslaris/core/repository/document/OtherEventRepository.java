@@ -12,6 +12,6 @@ public interface OtherEventRepository extends JpaRepository<OtherEvent, Integer>
 
     @Query(value = "SELECT * FROM other_events oe WHERE " +
         "(:allTime = TRUE OR oe.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        " ORDER BY oe.id", nativeQuery = true)
+        "AND oe.publication_candidate IS NOT FALSE ORDER BY oe.id", nativeQuery = true)
     Page<OtherEvent> findAllModified(Pageable pageable, boolean allTime);
 }

@@ -103,9 +103,16 @@ public class FileController {
             var isVerifiedDocument = documentFile.getIsVerifiedData();
             var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
             var isOpenAccess = isOpenAccess(documentFile);
-            var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
-                documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
-                    .getType().equals(DocumentPublicationType.THESIS.name());
+            var documentIndex = Objects.nonNull(documentFile.getDocument()) ?
+                documentLookupService.getDocumentIndex(documentFile.getDocument().getId()) : null;
+            var isThesisDocument = Objects.nonNull(documentIndex) &&
+                documentIndex.getType().equals(DocumentPublicationType.THESIS.name());
+
+            if (Objects.nonNull(documentIndex) && !authenticatedUser &&
+                !Boolean.TRUE.equals(documentIndex.getIsPubliclyVisible())) {
+                return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                    "loginToViewDocumentMessage");
+            }
 
             if (isThesisDocument) {
                 if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&

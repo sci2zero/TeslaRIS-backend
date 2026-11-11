@@ -29,6 +29,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.identifier.OrganisationUnitIdentifier;
 import rs.teslaris.core.model.person.Contact;
@@ -47,7 +48,8 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid")
 })
 @SQLRestriction("deleted=false")
-public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted {
+public class OrganisationUnit extends BaseEntity
+    implements Mergeable, Accounted, PublicationCandidacyHolder {
 
     @Transient
     private static final String CRIS_KEY = "cris";
@@ -112,6 +114,12 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")

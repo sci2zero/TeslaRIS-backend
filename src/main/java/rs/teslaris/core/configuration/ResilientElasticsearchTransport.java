@@ -76,7 +76,8 @@ public class ResilientElasticsearchTransport implements ElasticsearchTransport {
      */
     @Override
     public <RequestT, ResponseT, ErrorT> CompletableFuture<ResponseT> performRequestAsync(
-        RequestT request, Endpoint<RequestT, ResponseT, ErrorT> endpoint, TransportOptions options) {
+        RequestT request, Endpoint<RequestT, ResponseT, ErrorT> endpoint,
+        TransportOptions options) {
         return liveDelegate().transport().performRequestAsync(request, endpoint, options);
     }
 

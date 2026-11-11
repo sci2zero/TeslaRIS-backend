@@ -31,9 +31,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
@@ -330,12 +332,12 @@ public class ProceedingsPublicationServiceTest {
     }
 
     @Test
-    public void shouldFindDocumentPublicationsForEvent() {
+    public void shouldFindPubliclyVisibleDocumentPublicationsForEventWhenAnonymous() {
         // Given
         var eventId = 1;
         var pageable = Pageable.ofSize(5);
 
-        when(documentPublicationIndexRepository.findByTypeAndEventId(
+        when(documentPublicationIndexRepository.findByTypeAndEventIdAndIsPubliclyVisibleTrue(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable)).thenReturn(
             new PageImpl<>(
                 List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
@@ -346,6 +348,31 @@ public class ProceedingsPublicationServiceTest {
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
+    }
+
+    @Test
+    public void shouldFindAllDocumentPublicationsForEventWhenLoggedIn() {
+        // Given
+        var eventId = 1;
+        var pageable = Pageable.ofSize(5);
+
+        when(documentPublicationIndexRepository.findByTypeAndEventId(
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable)).thenReturn(
+            new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+        SecurityContextHolder.setContext(new SecurityContextImpl(
+            new TestingAuthenticationToken("user", "password", "ROLE_USER")));
+
+        // When
+        try {
+            var result = proceedingsPublicationService.findProceedingsPublicationsForEvent(
+                eventId, pageable);
+
+            // Then
+            assertEquals(2L, result.getTotalElements());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Test

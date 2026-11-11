@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
@@ -104,7 +105,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                         .size(0)
                         .query(q -> q
                             .bool(b -> b
-                                .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                 .must(m -> m.term(t -> t.field("author_ids").value(personId)))
                                 .must(m -> m.range(
                                     t -> t.field("year").gte(JsonData.of(startYear))
@@ -467,7 +468,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                 .size(0) // no hits, only aggregations
                 .query(q -> q
                     .bool(b -> b
-                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                        .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                         .must(m -> m.term(t -> t.field("year").value(year)))
                         .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
@@ -500,7 +501,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
-                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                        .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                         .must(m -> m.term(t -> t.field("year").value(year)))
                         .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
                         .must(m -> m.bool(sb -> sb
@@ -541,7 +542,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                             .must(m -> m.bool(sb -> {
                                 for (String field : contributionFields) {
                                     sb.should(sc -> sc.term(t -> t.field(field).value(authorId)));

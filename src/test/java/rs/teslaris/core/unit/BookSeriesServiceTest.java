@@ -27,6 +27,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -278,14 +281,15 @@ public class BookSeriesServiceTest {
     }
 
     @Test
-    void shouldFindPublicationsForBookSeries() {
+    void shouldFindPubliclyVisiblePublicationsForBookSeriesWhenAnonymous() {
         // Given
         var bookSeriesId = 123;
         var pageable = Pageable.ofSize(10).withPage(0);
 
-        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
-            List.of(DocumentPublicationType.PROCEEDINGS.name(),
-                DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable))
+        when(documentPublicationIndexRepository
+            .findByTypeInAndPublicationSeriesIdAndIsPubliclyVisibleTrue(
+                List.of(DocumentPublicationType.PROCEEDINGS.name(),
+                    DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable))
             .thenReturn(new PageImpl<>(
                 List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
 
@@ -295,6 +299,31 @@ public class BookSeriesServiceTest {
         // Then
         assertNotNull(result);
         assertTrue(result.getSize() >= 2);
+    }
+
+    @Test
+    void shouldFindAllPublicationsForBookSeriesWhenLoggedIn() {
+        // Given
+        var bookSeriesId = 123;
+        var pageable = Pageable.ofSize(10).withPage(0);
+
+        when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
+            List.of(DocumentPublicationType.PROCEEDINGS.name(),
+                DocumentPublicationType.MONOGRAPH.name()), bookSeriesId, pageable))
+            .thenReturn(new PageImpl<>(
+                List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
+        SecurityContextHolder.setContext(new SecurityContextImpl(
+            new TestingAuthenticationToken("user", "password", "ROLE_USER")));
+
+        // When
+        try {
+            var result = bookSeriesService.findPublicationsForBookSeries(bookSeriesId, pageable);
+
+            // Then
+            assertTrue(result.getSize() >= 2);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Test

@@ -44,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonResearchAreasChangedEvent;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
@@ -122,6 +123,8 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @RequiredArgsConstructor
@@ -268,6 +271,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             throw new NotFoundException("Person with given ID does not exist.");
         }
 
+        if (PublicVisibility.isHiddenFromCurrentUser(person.get().getPublicationCandidate())) {
+            throw new NotFoundException("Person with given ID does not exist.");
+        }
+
         return PersonConverter.toDTO(person.get());
     }
 
@@ -282,7 +289,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId) {
         var personToReturn = findPersonByOldId(oldId);
 
-        if (Objects.isNull(personToReturn)) {
+        if (Objects.isNull(personToReturn) ||
+            PublicVisibility.isHiddenFromCurrentUser(personToReturn.getPublicationCandidate())) {
             throw new NotFoundException("Person with given 'OLD ID' does not exist.");
         }
 
@@ -293,6 +301,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Transactional(readOnly = true)
     public PersonUserResponseDTO readPersonWithUser(Integer id) {
         var person = personRepository.findApprovedPersonByIdWithUser(id)
+            .filter(found -> !PublicVisibility.isHiddenFromCurrentUser(
+                found.getPublicationCandidate()))
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
         return PersonConverter.toDTOWithUser(person);
     }
@@ -985,7 +995,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var personToBeApproved = findOne(personId);
 
         var approveStatus = approve ? ApproveStatus.APPROVED : ApproveStatus.DECLINED;
-        if (personToBeApproved.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+        var statusChanged =
+            personToBeApproved.getApproveStatus().equals(ApproveStatus.REQUESTED);
+        if (statusChanged) {
             personToBeApproved.setApproveStatus(approveStatus);
         }
 
@@ -993,6 +1005,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         if (approve) {
             indexPerson(approvedPerson);
+        }
+
+        if (statusChanged) {
+            applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+                EntityType.PERSON.name(), personId,
+                PublicVisibility.isPubliclyVisible(approvedPerson.getApproveStatus(),
+                    approvedPerson.getPublicationCandidate())));
         }
     }
 
@@ -1401,6 +1420,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         personIndex.setDatabaseId(savedPerson.getId());
+        personIndex.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(savedPerson.getApproveStatus(),
+                savedPerson.getPublicationCandidate()));
 
         personIndex.setOrcid(
             (Objects.nonNull(savedPerson.getOrcid()) && !savedPerson.getOrcid().isBlank()) ?
@@ -1588,7 +1610,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public Page<PersonIndex> findAllIndex(Pageable pageable) {
-        var page = personIndexRepository.findAll(pageable);
+        var page = PublicVisibility.isAnonymousRequest()
+            ? searchService.runQuery(PublicVisibilityQueries.publiclyVisible(), pageable,
+            PersonIndex.class, "person")
+            : personIndexRepository.findAll(pageable);
 
         filterSensitiveInformation(page);
 
@@ -1598,6 +1623,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Transactional
     public Long getResearcherCount() {
+        if (PublicVisibility.isAnonymousRequest()) {
+            return personIndexRepository.countByIsPubliclyVisibleTrue();
+        }
+
         return personIndexRepository.count();
     }
 
@@ -1610,8 +1639,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                                                            boolean withoutInvolvements,
                                                            boolean withoutContributions) {
         var page = searchService.runQuery(
-            buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable,
-                withoutInvolvements, withoutContributions),
+            PublicVisibilityQueries.restrictForAnonymous(
+                buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable,
+                    withoutInvolvements, withoutContributions)),
             pageable,
             PersonIndex.class, "person");
 
@@ -1685,7 +1715,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .must(institutionFilter)
         )._toQuery();
 
-        var page = searchService.runQuery(combinedQuery, pageable, PersonIndex.class, "person");
+        var page = searchService.runQuery(
+            PublicVisibilityQueries.restrictForAnonymous(combinedQuery), pageable,
+            PersonIndex.class, "person");
 
         filterSensitiveInformation(page);
 
@@ -1697,7 +1729,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Page<PersonIndex> advancedSearch(List<String> tokens,
                                             Pageable pageable) {
         var query = expressionTransformer.parseAdvancedQuery(tokens);
-        var page = searchService.runQuery(query, pageable, PersonIndex.class, "person");
+        var page = searchService.runQuery(PublicVisibilityQueries.restrictForAnonymous(query),
+            pageable, PersonIndex.class, "person");
 
         filterSensitiveInformation(page);
 
