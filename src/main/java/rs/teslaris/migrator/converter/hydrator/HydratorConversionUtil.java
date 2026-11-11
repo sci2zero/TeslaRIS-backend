@@ -76,6 +76,9 @@ public class HydratorConversionUtil implements RunScopedCache {
     // CV labels use " - " between levels, SciPROJ subjects use "/"
     private static final String RESEARCH_AREA_LEVEL_SEPARATOR = "\\s+-\\s+|\\s*/\\s*";
 
+    private static final Set<String> NO_VALUE_KEYS = Set.of("na", "none", "notapplicable",
+        "naoseaplica", "naoaplicavel", "naoaplicable", "didnothaveacosupervisor");
+
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
     // Bibliographic initials trailing a surname ("Nikolaev AR", "Watanabe MA.", "METZ K J")
@@ -544,6 +547,18 @@ public class HydratorConversionUtil implements RunScopedCache {
     public String fullNameKey(PersonNameDTO name) {
         return foldCase(Objects.toString(name.getFirstname(), "") + "|" +
             Objects.toString(name.getLastname(), "")).replaceAll("[^\\p{L}|]", "");
+    }
+
+    // "n/a", "none", "Não se aplica" and the like, written where the source has no value
+    public boolean isNoValue(String value) {
+        var key = titleKey(value);
+
+        return key.isEmpty() || NO_VALUE_KEYS.contains(key);
+    }
+
+    // A title folded to letters and digits, so the same work entered twice compares equal
+    public String titleKey(String title) {
+        return Objects.isNull(title) ? "" : foldCase(title).replaceAll("[^\\p{L}\\p{N}]", "");
     }
 
     private String foldCase(String value) {
