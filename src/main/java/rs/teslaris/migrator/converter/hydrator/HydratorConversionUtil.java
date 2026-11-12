@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -559,6 +560,25 @@ public class HydratorConversionUtil implements RunScopedCache {
     // A title folded to letters and digits, so the same work entered twice compares equal
     public String titleKey(String title) {
         return Objects.isNull(title) ? "" : foldCase(title).replaceAll("[^\\p{L}\\p{N}]", "");
+    }
+
+    // Folded name parts of three letters or more, without surname particles ("dos", "van")
+    public Set<String> nameTokens(String name) {
+        if (Objects.isNull(name)) {
+            return Set.of();
+        }
+
+        return Arrays.stream(foldCase(name).split("[^\\p{L}]+"))
+            .filter(token -> token.length() >= 3 && !SURNAME_PARTICLES.contains(token))
+            .collect(Collectors.toSet());
+    }
+
+    // Two name parts in common, or one when either name has a single part; a shared first name
+    // alone ("Maria", "Joana") does not make two people the same
+    public boolean namesMatch(Set<String> first, Set<String> second) {
+        var common = first.stream().filter(second::contains).count();
+
+        return common > 0 && common >= Math.min(2, Math.min(first.size(), second.size()));
     }
 
     private String foldCase(String value) {
