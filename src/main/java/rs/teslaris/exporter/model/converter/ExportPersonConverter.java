@@ -81,7 +81,7 @@ public class ExportPersonConverter extends ExportConverterBase {
                     involvement.getOrganisationUnit(),
                     false), involvement.getDateFrom(), involvement.getDateTo(),
                 StringUtil.getStringContent(involvement.getRole(),
-                    LanguageAbbreviations.ENGLISH))));
+                    LanguageAbbreviations.ENGLISH), involvement.getId())));
 
         if (computeRelations) {
             commonExportPerson.getRelatedInstitutionIds()

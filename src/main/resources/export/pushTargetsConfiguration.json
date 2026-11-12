@@ -1,0 +1,27 @@
+{
+  "targets": [
+    {
+      "identifier": "vivo-local",
+      "profile": "vivo",
+      "enabled": true,
+      "endpointUrl": "http://localhost:8080/vivo/api/sparqlUpdate",
+      "graph": "http://vitro.mannlib.cornell.edu/default/vitro-kb-2",
+      "namespace": "http://vivo.mydomain.edu/individual/",
+      "auth": {
+        "type": "VIVO_FORM",
+        "username": "vivo_root@mydomain.edu",
+        "passwordEnv": "VIVO_LOCAL_PUSH_PASSWORD"
+      },
+      "batchSize": 5000,
+      "requestTimeoutSeconds": 120,
+      "supportedLanguages": [
+        "EN",
+        "SR"
+      ],
+      "entityTypes": [
+        "org_units",
+        "persons"
+      ]
+    }
+  ]
+}

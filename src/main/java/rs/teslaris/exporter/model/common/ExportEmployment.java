@@ -24,4 +24,7 @@ public class ExportEmployment {
 
     @Field("role")
     private String role;
+
+    @Field("involvement_id")
+    private Integer involvementId;
 }

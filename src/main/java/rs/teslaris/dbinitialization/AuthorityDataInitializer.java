@@ -227,6 +227,7 @@ public class AuthorityDataInitializer {
         var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
         var manageDataQualityFixators = new Privilege("MANAGE_DATA_QUALITY_FIXATORS");
         var editCurrencies = new Privilege("EDIT_CURRENCIES");
+        var pushExportData = new Privilege("PUSH_EXPORT_DATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -279,7 +280,8 @@ public class AuthorityDataInitializer {
                 deleteProjects,
                 unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-                saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies
+                saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies,
+                pushExportData
             ));
 
         return new Privileges(
@@ -340,7 +342,8 @@ public class AuthorityDataInitializer {
             deleteProjects,
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
-            saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies);
+            saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies,
+            pushExportData);
     }
 
     private Authority adminAuthority(Privileges p) {
@@ -426,7 +429,7 @@ public class AuthorityDataInitializer {
                 p.deleteProjects(),
                 p.restoreEntityRevision(), p.backfillEntityRevision(), p.assessDataQuality(),
                 p.saveModuleAccessConfiguration(), p.manageDataQualityFixators(),
-                p.editCurrencies()
+                p.editCurrencies(), p.pushExportData()
             )));
     }
 
@@ -708,7 +711,8 @@ public class AuthorityDataInitializer {
         Privilege assessDataQuality,
         Privilege saveModuleAccessConfiguration,
         Privilege manageDataQualityFixators,
-        Privilege editCurrencies
+        Privilege editCurrencies,
+        Privilege pushExportData
     ) {
     }
 }
