@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +57,18 @@ public class PrizeEntityCreatorTest {
         var id = creator.create(new PrizeMigrationDTO("cv-1", "7", prize, null), RUN);
 
         assertEquals(42, id);
+    }
+
+    @Test
+    void shouldMergeIntoPrizeReadFromServiceAndUpdateIt() {
+        var source = new PrizeDTO();
+        var existing = new PrizeResponseDTO();
+        when(prizeService.readPrize(42)).thenReturn(existing);
+        when(mergePolicy.merge(eq(source), eq(existing), any())).thenReturn(existing);
+
+        creator.update(42, new PrizeMigrationDTO("cv-1", "7", source, null), RUN);
+
+        verify(prizeService).updatePrize(42, existing);
     }
 
     @Test
