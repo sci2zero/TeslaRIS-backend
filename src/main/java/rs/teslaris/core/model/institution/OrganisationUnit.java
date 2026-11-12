@@ -40,7 +40,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Entity
 @DynamicUpdate
 @Table(name = "organisation_units", indexes = {
@@ -56,6 +56,7 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     private static final String DL_KEY = "digital_library";
 
 
+    @EqualsAndHashCode.Include
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
@@ -71,36 +72,47 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
 
+    @EqualsAndHashCode.Include
     @Column(name = "scopus_afid")
     private String scopusAfid;
 
+    @EqualsAndHashCode.Include
     @Column(name = "open_alex_id")
     private String openAlexId;
 
+    @EqualsAndHashCode.Include
     @Column(name = "ror")
     private String ror;
 
+    @EqualsAndHashCode.Include
     @Column(name = "ringgold")
     private String ringgold;
 
+    @EqualsAndHashCode.Include
     @Column(name = "fundref")
     private String fundref; // https://bioregistry.io/registry/funderregistry
 
+    @EqualsAndHashCode.Include
     @Column(name = "isni")
     private String isni; // https://bioregistry.io/registry/isni
 
+    @EqualsAndHashCode.Include
     @Column(name = "fct_id")
     private String fctId;
 
+    @EqualsAndHashCode.Include
     @Column(name = "grid")
     private String grid;
 
+    @EqualsAndHashCode.Include
     @Column(name = "wikidata")
     private String wikidata;
 
+    @EqualsAndHashCode.Include
     @Column(name = "national_id")
     private String nationalId;
 
+    @EqualsAndHashCode.Include
     @Column(name = "tax_number")
     private String taxNumber;
 
