@@ -2332,7 +2332,8 @@ public class DataQualityServiceTest {
     private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileHolding(
         Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.0.0", Map.of(), 0.0, Map.of(), Map.of(), Map.of(), remarks, Map.of(), Map.of(),
+            "1.0.0", false, Map.of(), 0.0, Map.of(), Map.of(), Map.of(), remarks, Map.of(),
+            Map.of(),
             Map.of());
     }
 
@@ -2565,7 +2566,8 @@ public class DataQualityServiceTest {
     private DataQualityAssessmentConfigurationLoader.DataQualityProfile profileWith(
         Map<String, DataQualityAssessmentConfigurationLoader.DataQualityRemark> remarks) {
         return new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.0.0", Map.of(), 60.0, Map.of(), Map.of(), Map.of("Document.title", 5.0), remarks,
+            "1.0.0", false, Map.of(), 60.0, Map.of(), Map.of(), Map.of("Document.title", 5.0),
+            remarks,
             Map.of(), Map.of(), Map.of());
     }
 
@@ -2775,7 +2777,8 @@ public class DataQualityServiceTest {
     public void shouldReturnAllConfiguredDataQualityProfiles() {
         // given
         var profile = new DataQualityAssessmentConfigurationLoader.DataQualityProfile(
-            "1.3", Map.of(), 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+            "1.3", false, Map.of(), 70.0, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+            Map.of(),
             Map.of("DOCUMENT", new EnumMap<>(QualityDimension.class)));
 
         try (var configurationLoader = mockStatic(

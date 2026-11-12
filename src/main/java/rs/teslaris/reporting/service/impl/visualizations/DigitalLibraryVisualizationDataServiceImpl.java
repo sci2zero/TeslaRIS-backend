@@ -27,6 +27,7 @@ import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.leaderboards.DocumentLeaderboardService;
@@ -253,7 +254,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                     .size(0)
                     .query(q -> q
                         .bool(b -> {
-                                b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                b.must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                     .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                     .must(m -> m.term(t -> t.field("type").value("THESIS")))
                                     .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
@@ -292,7 +293,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                 .size(0)
                 .query(q -> q
                     .bool(b -> {
-                            b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            b.must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                 .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                 .must(m -> m.range(r -> r.field("year")
                                     .gte(JsonData.of(yearRange.a))

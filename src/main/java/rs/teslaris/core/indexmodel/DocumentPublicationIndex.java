@@ -25,7 +25,7 @@ import rs.teslaris.core.util.functional.Triple;
 @AllArgsConstructor
 @Document(indexName = "document_publication")
 @Setting(settingPath = "/configuration/index-config.json")
-public class DocumentPublicationIndex implements ExternallyEnrichable {
+public class DocumentPublicationIndex implements ExternallyEnrichable, PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -307,4 +307,7 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
 
     @Field(type = FieldType.Integer, name = "activities_count", store = true)
     private Integer activitiesCount;
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

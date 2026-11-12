@@ -23,7 +23,6 @@ import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -54,6 +53,7 @@ import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -129,7 +129,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(publication)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -150,8 +150,9 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                                                     DocumentPublicationType publicationType,
                                                                     Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
-            return documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
-                publicationType.name(), journalId, pageable);
+            return documentPublicationIndexRepository
+                .findByTypeAndJournalIdAndIsPubliclyVisibleTrue(
+                    publicationType.name(), journalId, pageable);
         }
 
         return documentPublicationIndexRepository.findByTypeAndJournalId(publicationType.name(),

@@ -1,0 +1,488 @@
+databaseChangeLog:
+- changeSet:
+    id: 1794137584752-23
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: cris_national_identifier_name
+        constraintName: fk88valkw3mi6t2hnfxxqre65nr
+- changeSet:
+    id: 1794137584752-24
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: cris_national_identifier_name
+        constraintName: fkel2mvq3xwtm2xcjfvnqddk2lx
+- changeSet:
+    id: 1794137584752-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_document_national_identifier_name_pkey
+            name: cris_context_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_document_national_identifier_name_pkey
+            name: mlc_id
+            type: INTEGER
+        tableName: cris_document_national_identifier_name
+- changeSet:
+    id: 1794137584752-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_ou_national_identifier_name_pkey
+            name: cris_context_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_ou_national_identifier_name_pkey
+            name: mlc_id
+            type: INTEGER
+        tableName: cris_ou_national_identifier_name
+- changeSet:
+    id: 1794137584752-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_person_national_identifier_name_pkey
+            name: cris_context_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_person_national_identifier_name_pkey
+            name: mlc_id
+            type: INTEGER
+        tableName: cris_person_national_identifier_name
+- changeSet:
+    id: 1794137584752-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_project_national_identifier_name_pkey
+            name: cris_context_information_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: cris_project_national_identifier_name_pkey
+            name: mlc_id
+            type: INTEGER
+        tableName: cris_project_national_identifier_name
+- changeSet:
+    id: 1794137584752-5
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: cris_document_national_identifier_name_mlc_id_key
+        tableName: cris_document_national_identifier_name
+- changeSet:
+    id: 1794137584752-6
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: cris_ou_national_identifier_name_mlc_id_key
+        tableName: cris_ou_national_identifier_name
+- changeSet:
+    id: 1794137584752-7
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: cris_person_national_identifier_name_mlc_id_key
+        tableName: cris_person_national_identifier_name
+- changeSet:
+    id: 1794137584752-8
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: cris_project_national_identifier_name_mlc_id_key
+        tableName: cris_project_national_identifier_name
+- changeSet:
+    id: 1794137584752-9
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: featured
+            type: BOOLEAN
+        tableName: identifiers
+- changeSet:
+    id: 1794137584752-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: funding_id
+            type: INTEGER
+        tableName: entity_identifiers
+- changeSet:
+    id: 1794137584752-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: processed_name
+            type: VARCHAR(2048)
+        tableName: currencies
+- changeSet:
+    id: 1794137584752-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: project_id
+            type: INTEGER
+        tableName: entity_identifiers
+- changeSet:
+    id: 1794137584752-13
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: cris_context_information_id
+        baseTableName: cris_document_national_identifier_name
+        constraintName: fk10kkh8iqci1a9bph76yjqc1an
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: cris_context_information
+        validate: true
+- changeSet:
+    id: 1794137584752-14
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: cris_document_national_identifier_name
+        constraintName: fk582kid5kqqha1lisgxsd0v7i6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1794137584752-15
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: cris_project_national_identifier_name
+        constraintName: fk6vpyr3wk3axg8n8hhya4uehyi
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1794137584752-16
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: cris_person_national_identifier_name
+        constraintName: fkb9cl0f6cvy4m4gtuetubb1mit
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1794137584752-17
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: cris_context_information_id
+        baseTableName: cris_person_national_identifier_name
+        constraintName: fkgvtw4iyoc9snc9e8mf86yrfqp
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: cris_context_information
+        validate: true
+- changeSet:
+    id: 1794137584752-18
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_id
+        baseTableName: entity_identifiers
+        constraintName: fkhfgx3ofwm7tb42vbd24td34w7
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: fundings
+        validate: true
+- changeSet:
+    id: 1794137584752-19
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: project_id
+        baseTableName: entity_identifiers
+        constraintName: fkiqnlmehcojowt9xru7rbgr569
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: projects
+        validate: true
+- changeSet:
+    id: 1794137584752-20
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: cris_context_information_id
+        baseTableName: cris_ou_national_identifier_name
+        constraintName: fkon9kbn9riba5ecsadsfmthbyo
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: cris_context_information
+        validate: true
+- changeSet:
+    id: 1794137584752-21
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: cris_context_information_id
+        baseTableName: cris_project_national_identifier_name
+        constraintName: fkqfxqxmr54pb82uq8kraoh9po6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: cris_context_information
+        validate: true
+- changeSet:
+    id: 1794137584752-22
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: cris_ou_national_identifier_name
+        constraintName: fkrpnxhagkyma0sxmln0vrpsobf
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1794137584752-25
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: cris_national_identifier_name_mlc_id_key
+        tableName: cris_national_identifier_name
+- changeSet:
+    id: 1794137584752-26
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: educations_degree_code_degree_code_id_key
+        tableName: educations_degree_code
+- changeSet:
+    id: 1794137584752-27
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: involvements_affiliation_statement_affiliation_statement_id_key
+        tableName: involvements_affiliation_statement
+- changeSet:
+    id: 1794137584752-28
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: organisation_unit_project_contributions_co_contact_point_id_key
+        tableName: organisation_unit_project_contributions_contact_point
+- changeSet:
+    id: 1794137584752-29
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: organisation_unit_project_contributions_desc_description_id_key
+        tableName: organisation_unit_project_contributions_description
+- changeSet:
+    id: 1794137584752-30
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: organisation_unit_project_contributions_displa_displayou_id_key
+        tableName: organisation_unit_project_contributions_displayou
+- changeSet:
+    id: 1794137584752-31
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: organisation_unit_project_contributions_fu_funding_parts_id_key
+        tableName: organisation_unit_project_contributions_funding_parts
+- changeSet:
+    id: 1794137584752-32
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: projects_funding_applications_funding_applications_id_key
+        tableName: projects_funding_applications
+- changeSet:
+    id: 1794137584752-33
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: projects_funding_funding_id_key
+        tableName: projects_funding
+- changeSet:
+    id: 1794137584752-34
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: projects_related_projects_related_projects_id_key
+        tableName: projects_related_projects
+- changeSet:
+    id: 1794137584752-35
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: cris_national_identifier_name
+- changeSet:
+    id: 1794137584752-36
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: datasets
+- changeSet:
+    id: 1794137584752-37
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: educations_degree_code
+- changeSet:
+    id: 1794137584752-38
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: educations_research_areas
+- changeSet:
+    id: 1794137584752-39
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: feature_module_toggles
+- changeSet:
+    id: 1794137584752-40
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: involvements_affiliation_statement
+- changeSet:
+    id: 1794137584752-41
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: organisation_unit_project_contributions_contact_point
+- changeSet:
+    id: 1794137584752-42
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: organisation_unit_project_contributions_description
+- changeSet:
+    id: 1794137584752-43
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: organisation_unit_project_contributions_displayou
+- changeSet:
+    id: 1794137584752-44
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: organisation_unit_project_contributions_funding_parts
+- changeSet:
+    id: 1794137584752-45
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: patents
+- changeSet:
+    id: 1794137584752-46
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: projects_funding
+- changeSet:
+    id: 1794137584752-47
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: projects_funding_applications
+- changeSet:
+    id: 1794137584752-48
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: projects_related_projects
+- changeSet:
+    id: 1794137584752-49
+    author: milospopovic (generated)
+    changes:
+    - dropSequence:
+        sequenceName: feature_module_toggles_seq
+- changeSet:
+    id: 1794137584752-50
+    author: milospopovic (generated)
+    changes:
+    - dropSequence:
+        sequenceName: organisation_unit_project_contributions_seq
+

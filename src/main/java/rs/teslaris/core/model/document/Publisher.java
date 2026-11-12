@@ -19,6 +19,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -27,7 +28,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @DynamicUpdate
 @Table(name = "publishers")
 @SQLRestriction("deleted=false")
-public class Publisher extends BaseEntity implements Mergeable {
+public class Publisher extends BaseEntity implements Mergeable, PublicationCandidacyHolder {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -49,4 +50,10 @@ public class Publisher extends BaseEntity implements Mergeable {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 }

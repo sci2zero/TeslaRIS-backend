@@ -13,6 +13,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.core.indexmodel.PubliclyVisibleIndex;
 import rs.teslaris.core.model.project.ProjectStatus;
 
 @Getter
@@ -21,7 +22,7 @@ import rs.teslaris.core.model.project.ProjectStatus;
 @AllArgsConstructor
 @Document(indexName = "project")
 @Setting(settingPath = "/configuration/index-config.json")
-public class ProjectIndex {
+public class ProjectIndex implements PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -78,4 +79,7 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Integer, name = "activities_count", store = true)
     private Integer activitiesCount;
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

@@ -20,6 +20,7 @@ public class FundingConverter {
         dto.setGrantAgreementId(funding.getGrantAgreementId());
         dto.setUris(funding.getUris());
         dto.setFundingTypes(funding.getFundingTypes());
+        dto.setFundingLocationType(funding.getFundingLocationType());
         dto.setCompetitive(funding.getCompetitive());
         dto.setRenewable(funding.getRenewable());
         dto.setDateSubmitted(funding.getDateSubmitted());

@@ -39,6 +39,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -89,6 +90,10 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
             eventIndexRepository.findByEventTypeAndDatabaseId(EventType.COURSE, courseId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
+        }
+
+        if (PublicVisibility.isHiddenFromCurrentUser(course.getPublicationCandidate())) {
+            throw new NotFoundException("Course with given ID does not exist.");
         }
 
         return CourseConverter.toDTO(course);
@@ -246,6 +251,8 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
 
     private void indexCourse(Course course, EventIndex index) {
         index.setDatabaseId(course.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(course.getPublicationCandidate()));
         index.setEventType(EventType.COURSE);
 
         indexEventCommonFields(index, course);

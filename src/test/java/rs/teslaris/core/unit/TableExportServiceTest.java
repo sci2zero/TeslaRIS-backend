@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.never;
@@ -19,6 +20,10 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
@@ -90,7 +95,33 @@ class TableExportServiceTest {
 
     @ParameterizedTest
     @EnumSource(ExportFileType.class)
-    void shouldExportCSVForMaxPossibleAmount(ExportFileType exportFileType) {
+    void shouldExportOnlyPubliclyVisibleDocumentsForMaxPossibleAmountWhenAnonymous(
+        ExportFileType exportFileType) {
+        // Given
+        request.setExportMaxPossibleAmount(true);
+        request.setBulkExportOffset(0);
+        request.setExportFileType(exportFileType);
+        var page = new PageImpl<>(List.of(mockDocument));
+
+        when(documentPublicationIndexRepository.findByIsPubliclyVisibleTrue(
+            PageRequest.of(0, 500))).thenReturn(page);
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct() {{
+            setId(1);
+        }});
+
+        // When
+        var result = csvExportService.exportDocumentsToFile(request);
+
+        // Then
+        assertNotNull(result);
+        verify(documentPublicationIndexRepository, times(1))
+            .findByIsPubliclyVisibleTrue(PageRequest.of(0, 500));
+        verify(documentPublicationIndexRepository, never()).findAll(any(Pageable.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExportFileType.class)
+    void shouldExportCSVForMaxPossibleAmountWhenLoggedIn(ExportFileType exportFileType) {
         // Given
         request.setExportMaxPossibleAmount(true);
         request.setBulkExportOffset(0);
@@ -102,14 +133,20 @@ class TableExportServiceTest {
         when(documentPublicationService.findOne(anyInt())).thenReturn(new IntangibleProduct() {{
             setId(1);
         }});
+        SecurityContextHolder.setContext(new SecurityContextImpl(
+            new TestingAuthenticationToken("user", "password", "ROLE_USER")));
 
         // When
-        var result = csvExportService.exportDocumentsToFile(request);
+        try {
+            var result = csvExportService.exportDocumentsToFile(request);
 
-        // Then
-        assertNotNull(result);
-        verify(documentPublicationIndexRepository, times(1))
-            .findAll(PageRequest.of(0, 500));
+            // Then
+            assertNotNull(result);
+            verify(documentPublicationIndexRepository, times(1))
+                .findAll(PageRequest.of(0, 500));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @ParameterizedTest

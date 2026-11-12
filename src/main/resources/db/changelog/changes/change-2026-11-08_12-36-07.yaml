@@ -1,0 +1,624 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 1794137768-1
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.theses
+              ADD CONSTRAINT theses_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+
+  - changeSet:
+      id: 1794137768-50
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.scheduled_tasks
+              DROP CONSTRAINT scheduled_tasks_task_type_check;
+
+  - changeSet:
+      id: 1794137768-51
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.indicator_applicable_types
+              DROP CONSTRAINT indicator_applicable_types_applicable_types_check;
+
+  - changeSet:
+      id: 1794137768-52
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.assessment_classification_applicable_types
+              DROP CONSTRAINT assessment_classification_applicable_typ_applicable_types_check;
+
+
+  - changeSet:
+      id: 1794137768-2
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.scheduled_tasks
+              ADD CONSTRAINT scheduled_tasks_task_type_check
+              CHECK (task_type >= 0 AND task_type <= 20);
+
+  - changeSet:
+      id: 1794137768-3
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.scheduled_tasks
+              ADD CONSTRAINT scheduled_tasks_recurrence_type_check
+              CHECK (recurrence_type >= 0 AND recurrence_type <= 5);
+
+  - changeSet:
+      id: 1794137768-4
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.registry_book_entries
+              ADD CONSTRAINT registry_book_entries_academic_title_check
+              CHECK (academic_title >= 0 AND academic_title <= 4);
+
+  - changeSet:
+      id: 1794137768-5
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.public_review_page_configuration
+              ADD CONSTRAINT public_review_page_configuration_page_type_check
+              CHECK (page_type >= 0 AND page_type <= 3);
+
+  - changeSet:
+      id: 1794137768-6
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.public_review_page_configuration
+              ADD CONSTRAINT public_review_page_configuration_content_type_check
+              CHECK (content_type >= 0 AND content_type <= 2);
+
+  - changeSet:
+      id: 1794137768-7
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings
+              ADD CONSTRAINT proceedings_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-8
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.proceedings_publications
+              ADD CONSTRAINT proceedings_publications_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-9
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.persons
+              ADD CONSTRAINT persons_sex_check
+              CHECK (sex >= 0 AND sex <= 1);
+
+  - changeSet:
+      id: 1794137768-10
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.persons
+              ADD CONSTRAINT persons_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-11
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_project_contribution
+              ADD CONSTRAINT person_project_contribution_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-12
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_journal_contributions
+              ADD CONSTRAINT person_journal_contributions_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-13
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_event_contributions
+              ADD CONSTRAINT person_event_contributions_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-14
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_document_contribution
+              ADD CONSTRAINT person_document_contribution_personal_title_check
+              CHECK (personal_title >= 0 AND personal_title <= 4);
+
+  - changeSet:
+      id: 1794137768-15
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_document_contribution
+              ADD CONSTRAINT person_document_contribution_employment_title_check
+              CHECK (employment_title >= 0 AND employment_title <= 9);
+
+  - changeSet:
+      id: 1794137768-16
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_document_contribution
+              ADD CONSTRAINT person_document_contribution_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-17
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_contributions
+              ADD CONSTRAINT person_contributions_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-18
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_units
+              ADD CONSTRAINT organisation_units_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-19
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_units_relations
+              ADD CONSTRAINT organisation_units_relations_relation_type_check
+              CHECK (relation_type >= 0 AND relation_type <= 1);
+
+  - changeSet:
+      id: 1794137768-20
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_units_relations
+              ADD CONSTRAINT organisation_units_relations_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-21
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.notification
+              ADD CONSTRAINT notification_sentiment_check
+              CHECK (sentiment::text = ANY (ARRAY['INFO'::character varying, 'WARNING'::character varying, 'ERROR'::character varying, 'SUCCESS'::character varying]::text[]));
+
+  - changeSet:
+      id: 1794137768-22
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.notification
+              ADD CONSTRAINT notification_notification_type_check
+              CHECK (notification_type >= 0 AND notification_type <= 15);
+
+  - changeSet:
+      id: 1794137768-23
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monographs
+              ADD CONSTRAINT monographs_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-24
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.monograph_publications
+              ADD CONSTRAINT monograph_publications_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-25
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.memberships
+              ADD CONSTRAINT memberships_involvement_type_check
+              CHECK (involvement_type >= 0 AND involvement_type <= 6);
+
+  - changeSet:
+      id: 1794137768-26
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.memberships
+              ADD CONSTRAINT memberships_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-27
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.journal_publications
+              ADD CONSTRAINT journal_publications_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-28
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.involvements
+              ADD CONSTRAINT involvements_involvement_type_check
+              CHECK (involvement_type >= 0 AND involvement_type <= 6);
+
+  - changeSet:
+      id: 1794137768-29
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.involvements
+              ADD CONSTRAINT involvements_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-30
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.informative_attachments
+              ADD CONSTRAINT informative_attachments_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-31
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.indicators
+              ADD CONSTRAINT indicators_content_type_check
+              CHECK (content_type >= 0 AND content_type <= 3);
+
+  - changeSet:
+      id: 1794137768-32
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.indicators
+              ADD CONSTRAINT indicators_access_level_check
+              CHECK (access_level >= 0 AND access_level <= 2);
+
+  - changeSet:
+      id: 1794137768-33
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.indicator_applicable_types
+              ADD CONSTRAINT indicator_applicable_types_applicable_types_check
+              CHECK (applicable_types >= 0 AND applicable_types <= 26);
+
+  - changeSet:
+      id: 1794137768-34
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.events_relation
+              ADD CONSTRAINT events_relation_events_relation_type_check
+              CHECK (events_relation_type >= 0 AND events_relation_type <= 2);
+
+  - changeSet:
+      id: 1794137768-35
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.entity_indicators
+              ADD CONSTRAINT entity_indicators_source_check
+              CHECK (source >= 0 AND source <= 7);
+
+  - changeSet:
+      id: 1794137768-36
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.encyclopedic_contributions
+              ADD CONSTRAINT encyclopedic_contributions_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-37
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.employments
+              ADD CONSTRAINT employments_involvement_type_check
+              CHECK (involvement_type >= 0 AND involvement_type <= 6);
+
+  - changeSet:
+      id: 1794137768-38
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.employments
+              ADD CONSTRAINT employments_employment_position_check
+              CHECK (employment_position >= 0 AND employment_position <= 30);
+
+  - changeSet:
+      id: 1794137768-39
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.employments
+              ADD CONSTRAINT employments_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-40
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.educations
+              ADD CONSTRAINT educations_involvement_type_check
+              CHECK (involvement_type >= 0 AND involvement_type <= 6);
+
+  - changeSet:
+      id: 1794137768-41
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.educations
+              ADD CONSTRAINT educations_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-42
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.documents_relations
+              ADD CONSTRAINT documents_relations_relation_type_check
+              CHECK (relation_type >= 0 AND relation_type <= 3);
+
+  - changeSet:
+      id: 1794137768-43
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.document_files
+              ADD CONSTRAINT document_files_cc_license_check
+              CHECK (cc_license >= 0 AND cc_license <= 6);
+
+  - changeSet:
+      id: 1794137768-44
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.document_files
+              ADD CONSTRAINT document_files_approve_status_check
+              CHECK (approve_status >= 0 AND approve_status <= 2);
+
+  - changeSet:
+      id: 1794137768-45
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.document_files
+              ADD CONSTRAINT document_files_access_rights_check
+              CHECK (access_rights >= 0 AND access_rights <= 4);
+
+  - changeSet:
+      id: 1794137768-46
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.branding_information
+              ADD CONSTRAINT branding_information_hero_theme_check
+              CHECK (hero_theme::text = ANY (ARRAY['LIGHT'::character varying, 'DARK'::character varying]::text[]));
+
+  - changeSet:
+      id: 1794137768-47
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.branding_information
+              ADD CONSTRAINT branding_information_chrome_theme_check
+              CHECK (chrome_theme::text = ANY (ARRAY['LIGHT'::character varying, 'DARK'::character varying]::text[]));
+
+  - changeSet:
+      id: 1794137768-48
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.assessment_classification_applicable_types
+              ADD CONSTRAINT assessment_classification_applicable_typ_applicable_types_check
+              CHECK (applicable_types >= 0 AND applicable_types <= 26);
+
+  - changeSet:
+      id: 1794137768-49
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.api_keys
+              ADD CONSTRAINT api_keys_usage_type_check
+              CHECK (usage_type >= 0 AND usage_type <= 0);

@@ -21,7 +21,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "person")
 @Setting(settingPath = "/configuration/index-config.json")
-public class PersonIndex implements ExternallyEnrichable {
+public class PersonIndex implements ExternallyEnrichable, PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -117,4 +117,7 @@ public class PersonIndex implements ExternallyEnrichable {
      */
     @Field(type = FieldType.Integer, name = "activities_count", store = true)
     private Integer activitiesCount = 0;
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

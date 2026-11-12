@@ -24,6 +24,7 @@ import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -34,7 +35,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @Table(name = "events")
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Event extends BaseEntity implements Mergeable {
+public abstract class Event extends BaseEntity implements Mergeable, PublicationCandidacyHolder {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -87,6 +88,12 @@ public abstract class Event extends BaseEntity implements Mergeable {
 
     @Column(name = "event_type")
     private EventType eventType;
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 
 
     public void addContribution(PersonEventContribution contribution) {

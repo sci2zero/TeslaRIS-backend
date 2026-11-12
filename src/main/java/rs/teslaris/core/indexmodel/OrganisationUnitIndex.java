@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "organisation_unit")
 @Setting(settingPath = "/configuration/index-config.json")
-public class OrganisationUnitIndex {
+public class OrganisationUnitIndex implements PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -100,4 +100,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "tax_number")
     private String taxNumber;
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

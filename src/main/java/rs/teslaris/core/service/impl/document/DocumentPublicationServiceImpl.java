@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonContributionsChangeEvent;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -109,6 +110,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 
 @Service
 @Primary
@@ -177,7 +180,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     @Transactional(readOnly = true)
     public DocumentDTO readDocumentPublication(Integer documentId) {
-        return DocumentPublicationConverter.toDTO(findOne(documentId));
+        return DocumentPublicationConverter.toDTO(findPubliclyReadable(documentId));
     }
 
     @Override
@@ -186,10 +189,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return documentLookupService.fastDocumentLookup(documentId);
     }
 
+    private Document findPubliclyReadable(Integer documentId) {
+        var document = findOne(documentId);
+
+        if (!SessionUtil.isUserLoggedIn() && !PublicVisibility.isPubliclyVisible(document)) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return document;
+    }
+
     @Override
     @Transactional
     public String readBibliographicMetadataById(Integer documentId, BibliographicFormat format) {
-        var document = findOne(documentId);
+        var document = findPubliclyReadable(documentId);
 
         return switch (format) {
             case BIBTEX -> StringUtil.bibTexEntryToString(
@@ -294,6 +307,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
                                                                        Pageable pageable) {
+        if (!SessionUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.findByPublisherIdAndIsPubliclyVisibleTrue(
+                publisherId, pageable);
+        }
+
         return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
     }
 
@@ -384,7 +402,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             return documentPublicationIndexRepository.countPublications();
         }
 
-        return documentPublicationIndexRepository.countApprovedPublications();
+        return documentPublicationIndexRepository.countPubliclyVisiblePublications();
     }
 
     @Override
@@ -392,12 +410,25 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findOne(documentId);
 
-        if (documentToUpdate.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
-            documentToUpdate.setApproveStatus(
-                isApproved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
+        if (!documentToUpdate.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
+            documentRepository.save(documentToUpdate);
+            return;
         }
 
+        documentToUpdate.setApproveStatus(
+            isApproved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
         documentRepository.save(documentToUpdate);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(index -> {
+                index.setIsApproved(isApproved);
+                index.setIsPubliclyVisible(PublicVisibility.isPubliclyVisible(documentToUpdate));
+                documentPublicationIndexRepository.save(index);
+            });
+
+        applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+            documentToUpdate.getDocumentType().name(), documentId,
+            PublicVisibility.isPubliclyVisible(documentToUpdate)));
     }
 
     @Override
@@ -550,6 +581,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
+        index.setIsPubliclyVisible(PublicVisibility.isPubliclyVisible(document));
         index.setAreFilesValid(document.getAreFilesValid());
 
         if (isOldIndex && (!index.getYear().equals(oldYear) ||
@@ -1815,7 +1847,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             }
 
             if (!SessionUtil.isUserLoggedIn()) {
-                b.must(q -> q.term(t -> t.field("is_approved").value(true)));
+                b.must(PublicVisibilityQueries.publiclyVisible());
             }
 
             if (!SessionUtil.isUserLoggedInAndAdmin() &&

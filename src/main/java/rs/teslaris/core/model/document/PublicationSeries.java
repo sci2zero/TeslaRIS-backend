@@ -23,6 +23,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 
@@ -36,7 +37,8 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 })
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class PublicationSeries extends BaseEntity implements Mergeable {
+public abstract class PublicationSeries extends BaseEntity
+    implements Mergeable, PublicationCandidacyHolder {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
@@ -73,6 +75,12 @@ public abstract class PublicationSeries extends BaseEntity implements Mergeable 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
+
+    /**
+     * Do not add this field to a DTO, because a change to it must not make a new revision.
+     */
+    @Column(name = "publication_candidate")
+    private Boolean publicationCandidate = true;
 
 
     public void addContribution(PersonPublicationSeriesContribution contribution) {

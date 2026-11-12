@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "book_series")
 @Setting(settingPath = "/configuration/index-config.json")
-public class BookSeriesIndex implements PublicationSeriesIndex {
+public class BookSeriesIndex implements PublicationSeriesIndex, PubliclyVisibleIndex {
 
     @Id
     private String id;
@@ -52,4 +52,7 @@ public class BookSeriesIndex implements PublicationSeriesIndex {
 
     @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
     private List<Integer> relatedInstitutionIds = new ArrayList<>();
+
+    @Field(type = FieldType.Boolean, name = "is_publicly_visible", store = true)
+    private Boolean isPubliclyVisible = true;
 }

@@ -25,6 +25,8 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.reporting.dto.CommissionAssessmentPointsOULeaderboard;
 import rs.teslaris.reporting.service.interfaces.leaderboards.OrganisationUnitLeaderboardService;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -60,7 +62,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            .must(PublicVisibilityQueries.documentVisibilityForCurrentUser())
                             .must(QueryUtil.organisationUnitMatchQuery(eligibleOUIds,
                                 searchFields))
                             .must(m -> m.range(
@@ -108,8 +110,10 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                 .map(b -> {
                     var organisationUnitId = Math.toIntExact(b.key());
                     var organisationUnit = organisationUnitMap.get(organisationUnitId);
-                    return new Pair<>(organisationUnit, b.docCount());
+                    return Objects.nonNull(organisationUnit) ?
+                        new Pair<>(organisationUnit, b.docCount()) : null;
                 })
+                .filter(Objects::nonNull)
                 .toList();
         } catch (IOException e) {
             log.error("Error while fetching OU publication count leaderboard. Reason: {}",
@@ -243,7 +247,8 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                             .size(0)
                             .query(q -> q
                                 .bool(b -> b
-                                    .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                    .must(
+                                        PublicVisibilityQueries.documentVisibilityForCurrentUser())
                                     .must(QueryUtil.organisationUnitMatchQuery(eligibleOUIds,
                                         searchFields))
                                     .must(m -> m.term(
@@ -338,6 +343,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
             .getContent()
             .stream()
             .filter(index -> Objects.nonNull(index.getDatabaseId()))
+            .filter(PublicVisibility::isVisibleToCurrentUser)
             .collect(Collectors.toMap(OrganisationUnitIndex::getDatabaseId, index -> index,
                 (first, second) -> first));
     }

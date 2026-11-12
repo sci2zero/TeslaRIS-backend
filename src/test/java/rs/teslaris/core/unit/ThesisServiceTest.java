@@ -52,12 +52,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.commontypes.CrisContextInformationDTO;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -67,6 +69,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -388,6 +391,7 @@ public class ThesisServiceTest {
         // then
         verify(thesisJPAService).findOne(thesisId);
         verify(thesisJPAService).save(thesis);
+        verify(applicationEventPublisher).publishEvent(any(PublicVisibilityChangedEvent.class));
     }
 
     @Test
@@ -430,6 +434,9 @@ public class ThesisServiceTest {
         // Given
         var thesisId = 1;
         var thesis = new Thesis();
+        thesis.setId(thesisId);
+        thesis.setApproveStatus(ApproveStatus.APPROVED);
+        thesis.setPublicationCandidate(false);
         thesis.setThesisType(ThesisType.BACHELOR);
         thesis.setOrganisationUnit(new OrganisationUnit());
         thesis.setIsOnPublicReview(true);
@@ -446,6 +453,8 @@ public class ThesisServiceTest {
         assertEquals(2, thesis.getPublicReviewStartDates().size());
         assertTrue(thesis.getPublicReviewStartDates().contains(LocalDate.of(2024, 1, 10)));
         verify(thesisJPAService).findOne(thesisId);
+        verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
+            DocumentPublicationType.THESIS.name(), thesisId, false));
     }
 
     @Test
@@ -668,6 +677,114 @@ public class ThesisServiceTest {
         thesis.setTitle(new HashSet<>(Set.of(new MultiLingualContent())));
         thesis.setThesisDefenceDate(LocalDate.now());
         thesis.setDocumentDate(new FlexibleDate(thesis.getThesisDefenceDate().getYear()));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When
+        thesisService.archiveThesis(thesisId);
+
+        // Then
+        assertTrue(thesis.getIsArchived());
+        verify(thesisJPAService).save(thesis);
+    }
+
+    private Thesis createArchivableThesis() {
+        var thesis = new Thesis();
+        thesis.setTitle(new HashSet<>(Set.of(new MultiLingualContent())));
+        thesis.setThesisDefenceDate(LocalDate.now());
+        thesis.setDocumentDate(new FlexibleDate(thesis.getThesisDefenceDate().getYear()));
+        return thesis;
+    }
+
+    private DocumentFile createDocumentFile(ResourceType resourceType,
+                                            AccessRights accessRights) {
+        var file = new DocumentFile();
+        file.setResourceType(resourceType);
+        file.setAccessRights(accessRights);
+        return file;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "true, false, false",
+        "false, true, false",
+        "false, false, true"
+    })
+    void shouldNotArchiveThesisWhileOnPublicReview(Boolean isOnPublicReview,
+                                                   Boolean isShortenedReview,
+                                                   Boolean isOnPublicReviewPause) {
+        // Given
+        var thesisId = 1;
+        var thesis = createArchivableThesis();
+        thesis.setIsOnPublicReview(isOnPublicReview);
+        thesis.setIsShortenedReview(isShortenedReview);
+        thesis.setIsOnPublicReviewPause(isOnPublicReviewPause);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        var exception = assertThrows(ThesisException.class,
+            () -> thesisService.archiveThesis(thesisId));
+        assertEquals("missingDataToArchiveMessage", exception.getMessage());
+        assertFalse(thesis.getIsArchived());
+        verify(thesisJPAService, never()).save(any());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "false, false",
+        "true, false",
+        "false, true"
+    })
+    void shouldNotArchiveThesisWithCompletedPublicReviewWithoutOpenAccessFiles(
+        Boolean dissertationIsOpen, Boolean reportIsOpen) {
+        // Given
+        var thesisId = 1;
+        var thesis = createArchivableThesis();
+        thesis.getPublicReviewEndDates().add(LocalDate.now().minusDays(1));
+        thesis.getFileItems().add(createDocumentFile(ResourceType.OFFICIAL_PUBLICATION,
+            dissertationIsOpen ? AccessRights.OPEN_ACCESS : AccessRights.RESTRICTED_ACCESS));
+        thesis.getCommissionReports().add(createDocumentFile(ResourceType.STATEMENT,
+            reportIsOpen ? AccessRights.OPEN_ACCESS : AccessRights.RESTRICTED_ACCESS));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        var exception = assertThrows(ThesisException.class,
+            () -> thesisService.archiveThesis(thesisId));
+        assertEquals("missingDataToArchiveMessage", exception.getMessage());
+        assertFalse(thesis.getIsArchived());
+        verify(thesisJPAService, never()).save(any());
+    }
+
+    @Test
+    void shouldNotArchiveThesisWithCompletedPublicReviewWhenOpenFileIsNotOfficial() {
+        // Given
+        var thesisId = 1;
+        var thesis = createArchivableThesis();
+        thesis.getPublicReviewEndDates().add(LocalDate.now().minusDays(1));
+        thesis.getFileItems()
+            .add(createDocumentFile(ResourceType.SUPPLEMENT, AccessRights.OPEN_ACCESS));
+        thesis.getCommissionReports()
+            .add(createDocumentFile(ResourceType.STATEMENT, AccessRights.OPEN_ACCESS));
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+
+        // When / Then
+        assertThrows(ThesisException.class, () -> thesisService.archiveThesis(thesisId));
+        verify(thesisJPAService, never()).save(any());
+    }
+
+    @Test
+    void shouldArchiveThesisWithCompletedPublicReviewAndOpenAccessFiles() {
+        // Given
+        var thesisId = 1;
+        var thesis = createArchivableThesis();
+        thesis.getPublicReviewEndDates().add(LocalDate.now().minusDays(1));
+        thesis.getFileItems().add(
+            createDocumentFile(ResourceType.OFFICIAL_PUBLICATION, AccessRights.OPEN_ACCESS));
+        thesis.getCommissionReports()
+            .add(createDocumentFile(ResourceType.STATEMENT, AccessRights.OPEN_ACCESS));
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 

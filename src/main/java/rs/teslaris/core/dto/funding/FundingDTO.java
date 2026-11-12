@@ -16,6 +16,7 @@ import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.model.funding.FundingLocationType;
 import rs.teslaris.core.model.funding.FundingType;
 
 @Getter
@@ -74,6 +75,8 @@ public class FundingDTO {
 
     @NotNull(message = "You have to provide funding types.")
     private Set<FundingType> fundingTypes = new HashSet<>();
+
+    private FundingLocationType fundingLocationType;
 
     private MonetaryAmountDTO amount;
 

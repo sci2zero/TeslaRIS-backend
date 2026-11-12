@@ -9,4 +9,6 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 public interface ProjectIndexRepository extends ElasticsearchRepository<ProjectIndex, String> {
 
     Optional<ProjectIndex> findProjectIndexByDatabaseId(Integer databaseId);
+
+    long countByIsPubliclyVisibleTrue();
 }

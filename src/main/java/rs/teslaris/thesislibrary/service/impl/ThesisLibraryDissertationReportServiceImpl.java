@@ -27,6 +27,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.model.PublicReviewType;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
@@ -53,12 +54,7 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         List<Query> mustQueries = new ArrayList<>();
 
         if (!SessionUtil.isUserLoggedIn()) {
-            mustQueries.add(
-                TermQuery.of(t -> t
-                    .field("is_approved")
-                    .value(true)
-                )._toQuery()
-            );
+            mustQueries.add(PublicVisibilityQueries.publiclyVisible());
         }
 
         mustQueries.add(buildTypeQuery());

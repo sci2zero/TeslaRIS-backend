@@ -18,7 +18,6 @@ import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
@@ -49,6 +48,7 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Traceable
@@ -125,7 +125,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         }
 
         if (!SessionUtil.isUserLoggedIn() &&
-            !performanceRelatedOutput.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            !PublicVisibility.isPubliclyVisible(performanceRelatedOutput)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -260,7 +260,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         var performanceRelatedOutput =
             performanceRelatedOutputRepository.findPerformanceRelatedOutputByOldIdsContains(oldId);
         if (performanceRelatedOutput.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
-            !performanceRelatedOutput.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            !PublicVisibility.isPubliclyVisible(performanceRelatedOutput.get()))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 

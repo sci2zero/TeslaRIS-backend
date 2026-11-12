@@ -41,11 +41,14 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.migration.MigrationContext;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.restoration.RestorationSupport;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
+import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 import rs.teslaris.project.converter.project.OrganisationUnitProjectContributionConverter;
 import rs.teslaris.project.converter.project.PersonProjectContributionConverter;
 import rs.teslaris.project.converter.project.ProjectConverter;
@@ -124,8 +127,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                                              List<ProjectStatus> allowedStatuses,
                                              Pageable pageable) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive, onlyWithoutContributions,
-                allowedStatuses),
+            PublicVisibilityQueries.restrictForAnonymous(
+                buildSimpleSearchQuery(tokens, dateFrom, dateTo, onlyActive,
+                    onlyWithoutContributions, allowedStatuses)),
             pageable, ProjectIndex.class, "project");
     }
 
@@ -179,19 +183,30 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
             .must(contributionFilter)
         )._toQuery();
 
-        return searchService.runQuery(combinedQuery, pageable, ProjectIndex.class, "project");
+        return searchService.runQuery(PublicVisibilityQueries.restrictForAnonymous(combinedQuery),
+            pageable, ProjectIndex.class, "project");
     }
 
     @Override
     @Transactional
     public Long getProjectCount() {
+        if (PublicVisibility.isAnonymousRequest()) {
+            return projectIndexRepository.countByIsPubliclyVisibleTrue();
+        }
+
         return projectIndexRepository.count();
     }
 
     @Override
     @Transactional(readOnly = true)
     public ProjectDTO readProject(Integer projectId) {
-        return ProjectConverter.toDTO(findOne(projectId));
+        var project = findOne(projectId);
+
+        if (PublicVisibility.isHiddenFromCurrentUser(project.getPublicationCandidate())) {
+            throw new NotFoundException("Project with given ID does not exist.");
+        }
+
+        return ProjectConverter.toDTO(project);
     }
 
     @Override
@@ -615,6 +630,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         index.setDateFrom(project.getDateFrom());
         index.setDateTo(project.getDateTo());
         index.setDatabaseId(project.getId());
+        index.setIsPubliclyVisible(
+            PublicVisibility.isPubliclyVisible(project.getPublicationCandidate()));
         index.setStatus(project.getStatus());
         index.setHasContributions(project.hasContributions());
 

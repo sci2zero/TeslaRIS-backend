@@ -40,6 +40,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.visibility.PublicVisibility;
 
 @Service
 @Slf4j
@@ -106,6 +108,7 @@ public class TableExportServiceImpl implements TableExportService {
                 documentPublicationIndexRepository,
                 documentFieldsConfigurationFile,
                 DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
+                DocumentPublicationIndexRepository::findByIsPubliclyVisibleTrue,
                 (rowData, entity, req) -> TableExportHelper.addCitationData(rowData, entity,
                     (DocumentExportRequestDTO) req, citationService),
                 documentFieldsConfigurationFile, request.getOnlyUnmanaged()
@@ -123,6 +126,7 @@ public class TableExportServiceImpl implements TableExportService {
             personIndexRepository,
             personFieldsConfigurationFile,
             PersonIndexRepository::findByDatabaseId,
+            PersonIndexRepository::findByIsPubliclyVisibleTrue,
             (rowData, entity, req) -> {
             },
             personFieldsConfigurationFile,
@@ -138,6 +142,7 @@ public class TableExportServiceImpl implements TableExportService {
             organisationUnitIndexRepository,
             ouFieldsConfigurationFile,
             OrganisationUnitIndexRepository::findOrganisationUnitIndexByDatabaseId,
+            OrganisationUnitIndexRepository::findByIsPubliclyVisibleTrue,
             (rowData, entity, req) -> {
             },
             ouFieldsConfigurationFile,
@@ -161,14 +166,19 @@ public class TableExportServiceImpl implements TableExportService {
                 request.getEndpointTokenParameters(),
                 PageRequest.of(request.getBulkExportOffset(), maximumExportAmount),
                 documentPublicationIndexRepository,
+                DocumentPublicationIndexRepository::findByIsPubliclyVisibleTrue,
                 documentSpecificFilters, onlyUnmanaged)
+                .filter(PublicVisibility::isVisibleToCurrentUser)
                 .forEach(entity -> exportedEntities.add(
                     DocumentPublicationConverter.getBibliographicExportEntity(request,
                         documentPublicationService.findOne(entity.getDatabaseId()))));
         } else {
-            request.getExportEntityIds().forEach(entityId -> exportedEntities.add(
-                DocumentPublicationConverter.getBibliographicExportEntity(request,
-                    documentPublicationService.findOne(entityId))));
+            request.getExportEntityIds().stream()
+                .map(documentPublicationService::findOne)
+                .filter(document -> SessionUtil.isUserLoggedIn() ||
+                    PublicVisibility.isPubliclyVisible(document))
+                .forEach(document -> exportedEntities.add(
+                    DocumentPublicationConverter.getBibliographicExportEntity(request, document)));
         }
 
         return TableExportHelper.createExportFile(exportedEntities, request.getExportFileType());
@@ -179,6 +189,7 @@ public class TableExportServiceImpl implements TableExportService {
         R repository,
         String fieldsConfig,
         BiFunction<R, Integer, Optional<T>> findByDatabaseId,
+        BiFunction<R, Pageable, Page<T>> findAllPubliclyVisible,
         TriConsumer<List<String>, T, TableExportRequestDTO> additionalProcessing,
         String configurationFile, Boolean onlyUnmanaged) {
 
@@ -192,7 +203,8 @@ public class TableExportServiceImpl implements TableExportService {
             returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
                 request.getEndpointTokenParameters(),
                 PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository,
-                documentSpecificFilters, onlyUnmanaged)
+                findAllPubliclyVisible, documentSpecificFilters, onlyUnmanaged)
+                .filter(PublicVisibility::isVisibleToCurrentUser)
                 .forEach(entity -> {
                     var rowData =
                         TableExportHelper.constructRowData(entity, request.getColumns(),
@@ -204,6 +216,7 @@ public class TableExportServiceImpl implements TableExportService {
         } else {
             request.getExportEntityIds().forEach(entityId -> {
                 findByDatabaseId.apply(repository, entityId)
+                    .filter(PublicVisibility::isVisibleToCurrentUser)
                     .ifPresent(entity -> {
                         var rowData =
                             TableExportHelper.constructRowData(entity, request.getColumns(),
@@ -241,11 +254,13 @@ public class TableExportServiceImpl implements TableExportService {
         List<String> endpointTokenParameters,
         Pageable pageable,
         R repository,
+        BiFunction<R, Pageable, Page<T>> findAllPubliclyVisible,
         Triple<ArrayList<DocumentPublicationType>, Integer, Integer> documentSpecificFilters,
         Boolean onlyUnmanaged
     ) {
         if (endpointType == null) {
-            return repository.findAll(pageable);
+            return SessionUtil.isUserLoggedIn() ? repository.findAll(pageable) :
+                findAllPubliclyVisible.apply(repository, pageable);
         }
 
         return switch (endpointType) {

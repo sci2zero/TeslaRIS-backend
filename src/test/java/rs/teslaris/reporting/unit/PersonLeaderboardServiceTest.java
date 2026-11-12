@@ -141,12 +141,19 @@ public class PersonLeaderboardServiceTest {
                 eq(Void.class)
             )).thenReturn(mockPublicationResponse);
 
+            when(personIndexRepository.findByDatabaseId(1))
+                .thenReturn(Optional.of(mockDetailedPerson1));
+            when(personIndexRepository.findByDatabaseId(2))
+                .thenReturn(Optional.of(mockDetailedPerson2));
+
             // When
             var result =
                 service.getTopResearchersByPublicationCount(institutionId, fromYear, toYear);
 
             // Then
             assertEquals(2, result.size());
+            assertEquals("John Doe", result.getFirst().a.getName());
+            assertEquals(15L, result.getFirst().b);
         }
     }
 
