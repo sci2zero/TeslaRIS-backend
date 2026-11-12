@@ -75,7 +75,7 @@ public class HydratorDegreeRouter implements ItemRouter<HydratorCVModel.Curricul
                 MigrationEntityType.PERSON_EDUCATION,
                 key,
                 null,
-                educationExtractor.toEducation(record, degree, Objects.nonNull(thesis)),
+                educationExtractor.toEducation(record, degree),
                 educationEntityCreator,
                 UpdatePlan.of(educationEntityCreator),
                 FailureHandler.noOp()));

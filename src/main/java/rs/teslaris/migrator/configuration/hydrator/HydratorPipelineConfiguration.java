@@ -27,9 +27,11 @@ import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.HydratorSupervisionExtractor;
 import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.SupervisionEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -59,7 +61,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     pass and created only when not found;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve;</li>
  *     <li>{@code PERSON_EDUCATION} - each degree's thesis, unless the {@code DOCUMENT} pass already
- *     created it from a dissertation of the same title, followed by the education.</li>
+ *     created it from a dissertation of the same title, followed by the education;</li>
+ *     <li>{@code THESIS_SUPERVISION} - the thesis of each completed supervision with the owner as
+ *     advisor, or the owner added to an earlier thesis of the same title and student.</li>
  * </ol>
  */
 @Configuration
@@ -92,6 +96,10 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorDegreeRouter degreeRouter;
 
+    private final HydratorSupervisionExtractor supervisionExtractor;
+
+    private final SupervisionEntityCreator supervisionEntityCreator;
+
     private final EmploymentEntityCreator employmentEntityCreator;
 
     private final PrizeEntityCreator prizeEntityCreator;
@@ -118,7 +126,8 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.PROJECT,
             MigrationEntityType.CV_FUNDING,
             MigrationEntityType.DOCUMENT,
-            MigrationEntityType.PERSON_EDUCATION
+            MigrationEntityType.PERSON_EDUCATION,
+            MigrationEntityType.THESIS_SUPERVISION
         );
     }
 
@@ -185,6 +194,16 @@ public class HydratorPipelineConfiguration {
     @Bean
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorEducationPipeline() {
         return pipeline(MigrationEntityType.PERSON_EDUCATION, degreeRouter);
+    }
+
+    @Bean
+    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorSupervisionPipeline() {
+        return pipeline(MigrationEntityType.THESIS_SUPERVISION, new SimpleMapping<>(
+            MigrationEntityType.THESIS_SUPERVISION,
+            supervisionExtractor,
+            supervisionEntityCreator,
+            FailureHandler.resolvedToExisting(),
+            (record, dto) -> dto.sourceKey()));
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> organisationUnitRouter() {

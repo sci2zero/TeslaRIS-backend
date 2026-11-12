@@ -38,8 +38,7 @@ public class HydratorEducationExtractor {
 
 
     public EducationMigrationDTO toEducation(HydratorCVModel.Curriculum record,
-                                             HydratorCVModel.Degree degree,
-                                             boolean hasDegreeThesis) {
+                                             HydratorCVModel.Degree degree) {
         var key = outputConverters.degreeKey(record, degree);
         var language = record.curriculum().language();
         var institution = primaryInstitution(degree);
@@ -76,21 +75,22 @@ public class HydratorEducationExtractor {
         }
 
         return new EducationMigrationDTO(record.id(), key, institution, dto,
-            thesisSourceKeys(record, degree, key, hasDegreeThesis), rejection);
+            thesisSourceKeys(record, degree, key), rejection);
     }
 
     // The dissertation output with the same title wins over a thesis of the degree's own
     private List<String> thesisSourceKeys(HydratorCVModel.Curriculum record,
-                                          HydratorCVModel.Degree degree, String key,
-                                          boolean hasDegreeThesis) {
+                                          HydratorCVModel.Degree degree, String key) {
         var dissertationKey = outputConverters.dissertationKey(record, degree);
 
         if (Objects.nonNull(dissertationKey)) {
             return List.of(dissertationKey);
         }
 
-        if (hasDegreeThesis) {
-            return List.of(key);
+        var degreeThesisKey = outputConverters.degreeThesisKey(record, degree);
+
+        if (Objects.nonNull(degreeThesisKey)) {
+            return List.of(degreeThesisKey);
         }
 
         if (outputConverters.hasThesisTitle(degree)) {
