@@ -14,15 +14,18 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEvent;
+import rs.teslaris.exporter.model.common.ExportEventRelation;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 
 @Component
@@ -32,13 +35,17 @@ public class ExportEventConverter extends ExportConverterBase {
 
     private static EventIndexRepository eventIndexRepository;
 
+    private static EventsRelationRepository eventsRelationRepository;
+
 
     @Autowired
     public ExportEventConverter(
         EventRepository eventRepository,
-        EventIndexRepository eventIndexRepository) {
+        EventIndexRepository eventIndexRepository,
+        EventsRelationRepository eventsRelationRepository) {
         ExportEventConverter.eventRepository = eventRepository;
         ExportEventConverter.eventIndexRepository = eventIndexRepository;
+        ExportEventConverter.eventsRelationRepository = eventsRelationRepository;
     }
 
     public static ExportEvent toCommonExportModel(Conference event, boolean computeRelations) {
@@ -79,6 +86,10 @@ public class ExportEventConverter extends ExportConverterBase {
         commonExportEvent.setKeywords(
             ExportMultilingualContentConverter.toCommonExportModel(event.getKeywords()));
         commonExportEvent.setSerialEvent(event.getSerialEvent());
+        commonExportEvent.setEventType(event.getEventType());
+        if (event instanceof OtherEvent otherEvent) {
+            commonExportEvent.setOtherEventType(otherEvent.getType());
+        }
         commonExportEvent.setDateFrom(event.getDateFrom());
         commonExportEvent.setDateTo(event.getDateTo());
         commonExportEvent.setPlace(
@@ -88,6 +99,7 @@ public class ExportEventConverter extends ExportConverterBase {
             commonExportEvent.setState(
                 ExportMultilingualContentConverter.toCommonExportModel(
                     event.getCountry().getName()));
+            commonExportEvent.setCountryCode(event.getCountry().getCode());
         }
 
         if (computeRelations) {
@@ -97,6 +109,11 @@ public class ExportEventConverter extends ExportConverterBase {
         }
 
         commonExportEvent.getOldIds().addAll(event.getOldIds());
+
+        eventsRelationRepository.getRelationsForOneTimeEvent(event.getId()).stream()
+            .filter(relation -> Objects.nonNull(relation.getTarget()))
+            .forEach(relation -> commonExportEvent.getRelations().add(new ExportEventRelation(
+                relation.getEventsRelationType(), relation.getTarget().getId())));
     }
 
     private static Set<Integer> getRelatedInstitutions(Event event) {

@@ -4,21 +4,14 @@ import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.FOAF
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.OBO;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VIVO;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.Link;
@@ -29,21 +22,8 @@ import rs.teslaris.exporter.util.push.RdfMapper;
 @RequiredArgsConstructor
 public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationUnit> {
 
-    private static final Map<String, String> COUNTRY_URIS = loadCountryUris();
-
     private final VivoTeslarisLinks teslarisLinks;
 
-
-    // The country URIs come from the geopolitical data that VIVO installs.
-    private static Map<String, String> loadCountryUris() {
-        try (var input = new ClassPathResource("export/vivo/vivoCountries.json")
-            .getInputStream()) {
-            return new ObjectMapper().readValue(input, new TypeReference<>() {
-            });
-        } catch (IOException e) {
-            throw new UncheckedIOException("Cannot load VIVO country URIs.", e);
-        }
-    }
 
     @Override
     public String profile() {
@@ -75,13 +55,7 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
             parent.addProperty(model.createProperty(OBO + "BFO_0000051"), organisationUnit);
         }
 
-        var countryUri = Objects.nonNull(snapshot.getCountry()) ?
-            COUNTRY_URIS.get(snapshot.getCountry().trim().toUpperCase(Locale.ROOT)) : null;
-        if (Objects.nonNull(countryUri)) {
-            var country = model.createResource(countryUri);
-            organisationUnit.addProperty(model.createProperty(OBO + "RO_0001025"), country);
-            country.addProperty(model.createProperty(OBO + "RO_0001015"), organisationUnit);
-        }
+        VivoRdfSupport.addCountry(model, organisationUnit, snapshot.getCountry());
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {

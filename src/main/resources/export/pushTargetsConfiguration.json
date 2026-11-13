@@ -20,7 +20,8 @@
       ],
       "entityTypes": [
         "org_units",
-        "persons"
+        "persons",
+        "events"
       ]
     }
   ]

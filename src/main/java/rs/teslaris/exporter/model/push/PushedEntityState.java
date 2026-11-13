@@ -39,6 +39,10 @@ public class PushedEntityState {
     @Field("pushed_at")
     private Date pushedAt;
 
+    // URIs of shared nodes that the triples link to.
+    @Field("dependencies")
+    private List<String> dependencies = new ArrayList<>();
+
 
     public PushedEntityState(String target, PushEntityType entityType, Integer databaseId) {
         this.target = target;

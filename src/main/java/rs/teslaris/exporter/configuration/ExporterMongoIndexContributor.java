@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.configuration.MongoIndexContributor;
 import rs.teslaris.exporter.model.push.PushedEntityState;
+import rs.teslaris.exporter.model.push.PushedSharedNodeState;
 import rs.teslaris.exporter.util.ResumptionTokenStash;
 
 @Component
@@ -20,6 +21,13 @@ public class ExporterMongoIndexContributor implements MongoIndexContributor {
                 new Index().on("target", Sort.Direction.ASC)
                     .on("entityType", Sort.Direction.ASC)
                     .on("databaseId", Sort.Direction.ASC)
+                    .unique()),
+            new MongoIndex(PushedEntityState.class,
+                new Index().on("target", Sort.Direction.ASC)
+                    .on("dependencies", Sort.Direction.ASC)),
+            new MongoIndex(PushedSharedNodeState.class,
+                new Index().on("target", Sort.Direction.ASC)
+                    .on("uri", Sort.Direction.ASC)
                     .unique()));
     }
 }

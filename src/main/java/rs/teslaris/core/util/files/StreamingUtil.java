@@ -18,9 +18,9 @@ public class StreamingUtil {
 
     public static StreamingResponseBody createStreamingBody(InputStream inputStream,
                                                             int bufferSize, Runnable onComplete) {
+        // The stream is not flushed before the first write. An empty flush commits the response,
+        // and a read that fails after that can no longer send an error status.
         return outputStream -> {
-            outputStream.flush();
-
             try (inputStream) {
                 byte[] buffer = new byte[bufferSize];
                 int bytesRead;

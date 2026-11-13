@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
+import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 
@@ -13,7 +14,8 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 public enum PushEntityType {
 
     ORGANISATION_UNITS("org_units", ExportOrganisationUnit.class),
-    PERSONS("persons", ExportPerson.class);
+    PERSONS("persons", ExportPerson.class),
+    EVENTS("events", ExportEvent.class);
 
     private final String code;
 

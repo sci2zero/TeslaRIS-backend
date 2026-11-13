@@ -273,6 +273,8 @@ public class EventServiceTest {
 
         // Then
         verify(eventsRelationRepository, times(1)).save(any(EventsRelation.class));
+        assertNotNull(sourceEvent.getLastModification());
+        verify(eventRepository).save(sourceEvent);
     }
 
     @Test
@@ -393,6 +395,9 @@ public class EventServiceTest {
         var relationId = 1;
         var relation = new EventsRelation();
         relation.setId(relationId);
+        var sourceEvent = new Conference();
+        sourceEvent.setId(1);
+        relation.setSource(sourceEvent);
 
         when(eventsRelationRepository.findById(relationId)).thenReturn(Optional.of(relation));
 
@@ -401,6 +406,8 @@ public class EventServiceTest {
 
         // Then
         verify(eventsRelationRepository, times(1)).delete(relation);
+        assertNotNull(sourceEvent.getLastModification());
+        verify(eventRepository).save(sourceEvent);
     }
 
     @Test

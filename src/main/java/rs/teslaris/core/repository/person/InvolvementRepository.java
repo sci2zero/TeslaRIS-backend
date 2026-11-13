@@ -31,12 +31,13 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
         "AND e.dateTo IS NULL")
     List<Integer> findActiveEmploymentInstitutionIds(Integer personId);
 
+    // Also returns employments at external institutions, which have only a display name.
     @Query(
         "SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
             "WHERE e.personInvolved.id = :personId " +
             "AND e.dateTo IS NULL " +
-            "AND e.organisationUnit IS NOT NULL")
-    List<Employment> findActiveEmploymentInstitutions(Integer personId);
+            "AND (e.organisationUnit IS NOT NULL OR e.displayOrganisationUnit IS NOT EMPTY)")
+    List<Employment> findActiveEmployments(Integer personId);
 
     @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
         "WHERE e.personInvolved.id = :personId " +
