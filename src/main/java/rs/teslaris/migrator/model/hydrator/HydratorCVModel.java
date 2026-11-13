@@ -45,7 +45,31 @@ public class HydratorCVModel {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Service(
         String id,
-        Supervision researchBasedDegreeSupervision
+        Supervision researchBasedDegreeSupervision,
+        Examination graduateExamination
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Examination(
+        DateInfo date,
+        String theme,
+        String studentName,
+        ExaminationRole examinationRole,
+        DegreeType examinationDegree,
+        String examinationSubject,
+        String courseCode,
+        String tid,
+        Institutions institutions,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ExaminationRole(
+        String code,
+        String role
     ) {
     }
 
