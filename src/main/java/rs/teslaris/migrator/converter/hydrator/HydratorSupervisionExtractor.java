@@ -18,7 +18,7 @@ import rs.teslaris.migrator.util.MigrationLog;
 @Component
 @RequiredArgsConstructor
 public class HydratorSupervisionExtractor
-    implements RecordExtractor<HydratorCVModel.Curriculum, SupervisionMigrationDTO> {
+    implements RecordExtractor<HydratorCVModel.Curriculum, ThesisContributionMigrationDTO> {
 
     private static final String COMPLETED = "Completed";
 
@@ -28,14 +28,14 @@ public class HydratorSupervisionExtractor
 
 
     @Override
-    public List<SupervisionMigrationDTO> extract(HydratorCVModel.Curriculum record) {
+    public List<ThesisContributionMigrationDTO> extract(HydratorCVModel.Curriculum record) {
         if (Objects.isNull(record.curriculum()) ||
             Objects.isNull(record.curriculum().services()) ||
             Objects.isNull(record.curriculum().services().service())) {
             return List.of();
         }
 
-        var dtos = new ArrayList<SupervisionMigrationDTO>();
+        var dtos = new ArrayList<ThesisContributionMigrationDTO>();
 
         record.curriculum().services().service().forEach(service -> {
             if (Objects.isNull(service) ||
@@ -62,7 +62,7 @@ public class HydratorSupervisionExtractor
             dropValue(key, HydratorMappingRule.cv(868), supervision.degreeSubject(),
                 "student is not a person, no education to hold the degree title");
 
-            dtos.add(new SupervisionMigrationDTO(record.id(), key,
+            dtos.add(new ThesisContributionMigrationDTO(record.id(), key,
                 outputConverters.toSupervisionThesis(record, service),
                 outputConverters.studentName(supervision), null));
         });
@@ -82,7 +82,7 @@ public class HydratorSupervisionExtractor
             return "thesis not created (supervision not completed): '" + status + "'";
         }
 
-        if (Objects.isNull(HydratorDegreeTypes.supervisionThesisType(supervision.degreeType()))) {
+        if (Objects.isNull(HydratorDegreeTypes.serviceThesisType(supervision.degreeType()))) {
             var type = Objects.isNull(supervision.degreeType()) ? null :
                 supervision.degreeType().value();
             return "thesis not created (degree type '" + type + "' has no thesis)";

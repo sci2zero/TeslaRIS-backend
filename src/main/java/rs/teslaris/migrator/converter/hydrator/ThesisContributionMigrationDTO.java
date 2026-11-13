@@ -4,10 +4,10 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.migrator.pipeline.MigrationDTO;
 
 /**
- * The supervised thesis, created unless one with the same title and student already exists. The
- * curriculum owner is resolved at creation time.
+ * A thesis the curriculum owner contributed to as advisor or examiner, created unless one with
+ * the same title and student already exists. The owner is resolved at creation time.
  */
-public record SupervisionMigrationDTO(
+public record ThesisContributionMigrationDTO(
     String personSourceKey,
     String sourceKey,
     ThesisDTO thesis,

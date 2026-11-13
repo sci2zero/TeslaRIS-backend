@@ -20,6 +20,7 @@ import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.HydratorCvFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorDegreeRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorExaminationExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
@@ -31,7 +32,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorSupervisionExtractor;
 import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
-import rs.teslaris.migrator.converter.hydrator.SupervisionEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.ThesisContributionEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -63,7 +64,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     <li>{@code PERSON_EDUCATION} - each degree's thesis, unless the {@code DOCUMENT} pass already
  *     created it from a dissertation of the same title, followed by the education;</li>
  *     <li>{@code THESIS_SUPERVISION} - the thesis of each completed supervision with the owner as
- *     advisor, or the owner added to an earlier thesis of the same title and student.</li>
+ *     advisor, or the owner added to an earlier thesis of the same title and student;</li>
+ *     <li>{@code THESIS_EXAMINATION} - the same for each master or PhD examination, with the
+ *     owner in their examination role.</li>
  * </ol>
  */
 @Configuration
@@ -98,7 +101,9 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorSupervisionExtractor supervisionExtractor;
 
-    private final SupervisionEntityCreator supervisionEntityCreator;
+    private final HydratorExaminationExtractor examinationExtractor;
+
+    private final ThesisContributionEntityCreator thesisContributionEntityCreator;
 
     private final EmploymentEntityCreator employmentEntityCreator;
 
@@ -127,7 +132,8 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.CV_FUNDING,
             MigrationEntityType.DOCUMENT,
             MigrationEntityType.PERSON_EDUCATION,
-            MigrationEntityType.THESIS_SUPERVISION
+            MigrationEntityType.THESIS_SUPERVISION,
+            MigrationEntityType.THESIS_EXAMINATION
         );
     }
 
@@ -201,7 +207,17 @@ public class HydratorPipelineConfiguration {
         return pipeline(MigrationEntityType.THESIS_SUPERVISION, new SimpleMapping<>(
             MigrationEntityType.THESIS_SUPERVISION,
             supervisionExtractor,
-            supervisionEntityCreator,
+            thesisContributionEntityCreator,
+            FailureHandler.resolvedToExisting(),
+            (record, dto) -> dto.sourceKey()));
+    }
+
+    @Bean
+    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorExaminationPipeline() {
+        return pipeline(MigrationEntityType.THESIS_EXAMINATION, new SimpleMapping<>(
+            MigrationEntityType.THESIS_EXAMINATION,
+            examinationExtractor,
+            thesisContributionEntityCreator,
             FailureHandler.resolvedToExisting(),
             (record, dto) -> dto.sourceKey()));
     }

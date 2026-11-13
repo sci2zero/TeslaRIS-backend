@@ -68,6 +68,20 @@ public class HydratorOutputConverters {
     private static final Set<String> NO_THESIS_TITLES = Set.of("semtese", "notapplicable");
 
     /**
+     * CW-001-MAP-000821: examination-role codes. The crosswalk defaults to BOARD_MEMBER
+     * (MAP-000816) and defines no vocabulary; an arguer ("arguente") is the defence opponent.
+     */
+    private static final Map<String, DocumentContributionType> EXAMINATION_ROLES = Map.of(
+        "A", DocumentContributionType.ARGUER,
+        "AP", DocumentContributionType.ARGUER,
+        "O", DocumentContributionType.ADVISOR,
+        "V", DocumentContributionType.BOARD_MEMBER,
+        "P", DocumentContributionType.BOARD_MEMBER
+    );
+
+    private static final String JURY_PRESIDENT = "P";
+
+    /**
      * CW-001-MAP-000067: identifier types of the work itself, the document field each one fills,
      * and the format core accepts for it. Core rejects the whole document on a malformed
      * identifier, so a value failing the format is dropped here instead. The patterns mirror {@code
@@ -413,7 +427,7 @@ public class HydratorOutputConverters {
             dto.getUris().add(supervision.url().trim());
         }
 
-        dto.setThesisType(HydratorDegreeTypes.supervisionThesisType(supervision.degreeType()));
+        dto.setThesisType(HydratorDegreeTypes.serviceThesisType(supervision.degreeType()));
         dto.setThesisDefenceDate(defenceDate(supervision.endDate()));
         dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
             institutionName(key, supervision.academicInstitutions(), HydratorMappingRule.cv(874)),
@@ -426,14 +440,18 @@ public class HydratorOutputConverters {
         return dto;
     }
 
-    // The student's name without the stray punctuation the source often carries ("Name. ", "Name¿")
     public String studentName(HydratorCVModel.Supervision supervision) {
-        if (Objects.isNull(supervision.studentName()) ||
-            isBlank(supervision.studentName().name())) {
+        return Objects.isNull(supervision.studentName()) ? null :
+            studentName(supervision.studentName().name());
+    }
+
+    // The student's name without the stray punctuation the source often carries ("Name. ", "Name¿")
+    public String studentName(String value) {
+        if (isBlank(value)) {
             return null;
         }
 
-        var name = supervision.studentName().name().replaceAll("^[^\\p{L}]+|[^\\p{L}]+$", "");
+        var name = value.replaceAll("^[^\\p{L}]+|[^\\p{L}]+$", "");
 
         return name.isBlank() ? null : name;
     }
@@ -442,6 +460,66 @@ public class HydratorOutputConverters {
     public String supervisionKey(HydratorCVModel.Curriculum record,
                                  HydratorCVModel.Service service) {
         return record.id() + "#supervision#" + Objects.toString(service.id(), "unknown");
+    }
+
+    /**
+     * The examined student's thesis (CW-001-MAP-000816 to 000827). The crosswalk keeps the thesis
+     * by name only (MAP-000819); TeslaRIS needs a document, so it is created like a supervised
+     * one, with the student by name and the curriculum owner in their examination role.
+     */
+    public ThesisDTO toExaminationThesis(HydratorCVModel.Curriculum record,
+                                         HydratorCVModel.Service service) {
+        var examination = service.graduateExamination();
+        var key = examinationKey(record, service);
+        var language = languageOf(record);
+        var dto = new ThesisDTO();
+
+        dto.setTitle(conversionUtil.multilingualContent(examination.theme(), language));
+        dto.setSubTitle(List.of());
+        dto.setDescription(List.of());
+        dto.setKeywords(conversionUtil.multilingualContent(keywords(examination.keywords()),
+            language));
+        dto.setUris(new HashSet<>());
+        dto.setDocumentDate(conversionUtil.flexibleDate(examination.date()));
+        dto.setContributions(new ArrayList<>());
+
+        var studentName = conversionUtil.splitName(studentName(examination.studentName()), null);
+        if (Objects.nonNull(studentName)) {
+            dto.getContributions().add(contribution(DocumentContributionType.AUTHOR, 1,
+                studentName, null));
+        }
+
+        var ownerName = personResolver.ownerName(record);
+        if (Objects.nonNull(ownerName)) {
+            var role = Objects.isNull(examination.examinationRole()) ? "" :
+                Objects.toString(examination.examinationRole().code(), "").trim();
+            var examiner = contribution(
+                EXAMINATION_ROLES.getOrDefault(role, DocumentContributionType.BOARD_MEMBER), 2,
+                ownerName, personResolver.resolveOwner(record));
+            examiner.setIsBoardPresident(JURY_PRESIDENT.equals(role));
+            dto.getContributions().add(examiner);
+        }
+
+        dto.setThesisType(HydratorDegreeTypes.serviceThesisType(examination.examinationDegree()));
+        dto.setThesisDefenceDate(defenceDate(examination.date()));
+        dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
+            institutionName(key, examination.institutions(), HydratorMappingRule.cv(825)),
+            language));
+        applyThesisInstitution(dto, key, examination.institutions(), HydratorMappingRule.cv(825));
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
+
+        var classifications = researchClassifications(examination.researchClassifications());
+        if (!classifications.isEmpty()) {
+            applyScientificArea(dto, classifications.getFirst().value());
+        }
+
+        return dto;
+    }
+
+    public String examinationKey(HydratorCVModel.Curriculum record,
+                                 HydratorCVModel.Service service) {
+        return record.id() + "#examination#" + Objects.toString(service.id(), "unknown");
     }
 
     private LocalDate supervisionDate(String key, HydratorCVModel.DateInfo date, String rule) {

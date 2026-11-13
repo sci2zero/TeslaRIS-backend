@@ -63,8 +63,9 @@ public final class HydratorDegreeTypes {
         DegreeType.BACHELOR, ThesisType.BACHELOR
     );
 
-    // Supervision degree-type codes; Other, Scientific initiation and Specialization have no thesis
-    private static final Map<String, ThesisType> SUPERVISION_THESIS_TYPES = Map.of(
+    // Degree-type codes of supervisions and examinations; Other, Scientific initiation,
+    // Specialization and Aggregation have no thesis
+    private static final Map<String, ThesisType> SERVICE_THESIS_TYPES = Map.of(
         "LB", ThesisType.BACHELOR,
         "M", ThesisType.MASTER,
         "D", ThesisType.PHD
@@ -90,10 +91,11 @@ public final class HydratorDegreeTypes {
     }
 
     /**
-     * The thesis type of a supervised degree that can have one, otherwise {@code null}.
+     * The thesis type of a supervised or examined degree that can have one, otherwise
+     * {@code null}.
      */
-    public static ThesisType supervisionThesisType(HydratorCVModel.DegreeType degreeType) {
-        return SUPERVISION_THESIS_TYPES.get(code(degreeType));
+    public static ThesisType serviceThesisType(HydratorCVModel.DegreeType degreeType) {
+        return SERVICE_THESIS_TYPES.get(code(degreeType));
     }
 
     private static String code(HydratorCVModel.DegreeType degreeType) {

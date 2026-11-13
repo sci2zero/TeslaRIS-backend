@@ -17,13 +17,15 @@ import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.ResolvedToExistingException;
 
 /**
- * Creates the supervised thesis with the curriculum owner as advisor. When a thesis of the same
- * title and student already exists, the owner is added to it as advisor instead - or linked, when
- * it already names them - and the item is reported as resolved.
+ * Creates a supervised or examined thesis with the curriculum owner in their role. When a thesis
+ * of the same title and student already exists, the owner is added to it instead - or linked,
+ * when it already names them - and the item is reported as resolved. An owner already on the
+ * thesis gets no second role.
  */
 @Component
 @RequiredArgsConstructor
-public class SupervisionEntityCreator implements EntityCreator<SupervisionMigrationDTO> {
+public class ThesisContributionEntityCreator
+    implements EntityCreator<ThesisContributionMigrationDTO> {
 
     private final ThesisService thesisService;
 
@@ -35,23 +37,23 @@ public class SupervisionEntityCreator implements EntityCreator<SupervisionMigrat
 
 
     @Override
-    public Integer create(SupervisionMigrationDTO dto, MigrationRun run) {
+    public Integer create(ThesisContributionMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
         var ownerId = idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON,
             dto.personSourceKey());
-        var advisor = dto.thesis().getContributions().stream()
-            .filter(this::isAdvisor)
+        var owner = dto.thesis().getContributions().stream()
+            .filter(contribution -> !isAuthor(contribution))
             .findFirst()
             .orElseThrow(() -> new MigrationException("curriculum owner has no name"));
-        advisor.setPersonId(ownerId);
+        owner.setPersonId(ownerId);
 
         var title = dto.thesis().getTitle().getFirst().getContent();
         var existing = thesisResolver.find(title, dto.studentName());
 
         if (existing.isPresent()) {
             throw new ResolvedToExistingException(existing.get(),
-                addAdvisor(existing.get(), advisor));
+                addOwner(existing.get(), owner));
         }
 
         var created = thesisService.createThesis(dto.thesis(), run.isPerformIndex());
@@ -63,29 +65,30 @@ public class SupervisionEntityCreator implements EntityCreator<SupervisionMigrat
         return created.getId();
     }
 
-    private String addAdvisor(Integer thesisId, PersonDocumentContributionDTO advisor) {
+    private String addOwner(Integer thesisId, PersonDocumentContributionDTO owner) {
         var thesis = thesisService.readThesisSnapshot(thesisId);
         var contributions = new ArrayList<>(thesis.getContributions());
 
-        if (contributions.stream().anyMatch(contribution -> isAdvisor(contribution) &&
-            advisor.getPersonId().equals(contribution.getPersonId()))) {
-            return "thesis " + thesisId + " already has the owner as advisor";
+        if (contributions.stream()
+            .anyMatch(contribution -> owner.getPersonId().equals(contribution.getPersonId()))) {
+            return "thesis " + thesisId + " already has the owner";
         }
 
         var unlinked = contributions.stream()
-            .filter(contribution -> isAdvisor(contribution) &&
+            .filter(contribution -> !isAuthor(contribution) &&
                 Objects.isNull(contribution.getPersonId()) &&
-                sameName(contribution.getPersonName(), advisor.getPersonName()))
+                sameName(contribution.getPersonName(), owner.getPersonName()))
             .findFirst();
 
         String message;
         if (unlinked.isPresent()) {
-            unlinked.get().setPersonId(advisor.getPersonId());
-            message = "owner linked to the advisor of thesis " + thesisId;
+            unlinked.get().setPersonId(owner.getPersonId());
+            message = "owner linked to their " + unlinked.get().getContributionType() +
+                " contribution on thesis " + thesisId;
         } else {
-            advisor.setOrderNumber(contributions.size() + 1);
-            contributions.add(advisor);
-            message = "owner added as advisor to thesis " + thesisId;
+            owner.setOrderNumber(contributions.size() + 1);
+            contributions.add(owner);
+            message = "owner added as " + owner.getContributionType() + " to thesis " + thesisId;
         }
 
         thesis.setContributions(contributions);
@@ -104,7 +107,7 @@ public class SupervisionEntityCreator implements EntityCreator<SupervisionMigrat
                 Objects.toString(name.getLastname(), ""));
     }
 
-    private boolean isAdvisor(PersonDocumentContributionDTO contribution) {
-        return DocumentContributionType.ADVISOR.equals(contribution.getContributionType());
+    private boolean isAuthor(PersonDocumentContributionDTO contribution) {
+        return DocumentContributionType.AUTHOR.equals(contribution.getContributionType());
     }
 }
