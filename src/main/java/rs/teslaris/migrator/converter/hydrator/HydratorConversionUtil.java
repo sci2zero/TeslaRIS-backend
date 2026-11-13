@@ -581,6 +581,16 @@ public class HydratorConversionUtil implements RunScopedCache {
         return common > 0 && common >= Math.min(2, Math.min(first.size(), second.size()));
     }
 
+    public Set<String> nameTokens(PersonNameDTO name) {
+        return Objects.isNull(name) ? Set.of() : nameTokens(
+            Objects.toString(name.getFirstname(), "") + " " +
+                Objects.toString(name.getLastname(), ""));
+    }
+
+    public boolean namesMatch(PersonNameDTO first, PersonNameDTO second) {
+        return namesMatch(nameTokens(first), nameTokens(second));
+    }
+
     private String foldCase(String value) {
         return DIACRITICS.matcher(Normalizer.normalize(value, Normalizer.Form.NFKD))
             .replaceAll("")

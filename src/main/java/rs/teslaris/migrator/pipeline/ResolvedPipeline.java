@@ -17,6 +17,6 @@ public record ResolvedPipeline<S>(
 
     public boolean accepts(MigrationItem<?> item) {
         return Objects.equals(pipeline.entityType(), requestedType) ||
-            Objects.equals(item.type(), requestedType);
+            requestedType.includes(item.type());
     }
 }

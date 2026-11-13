@@ -11,7 +11,6 @@ import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
-import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
@@ -19,7 +18,6 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationServic
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
-import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.pipeline.EntityUpdater;
 import rs.teslaris.migrator.pipeline.ExistingReader;
 import rs.teslaris.migrator.pipeline.FailureHandler;
@@ -54,6 +52,8 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
     private final DocumentPublicationService documentPublicationService;
 
     private final DocumentDuplicateFailureHandler duplicateFailureHandler;
+
+    private final StudentThesisEntityCreator studentThesisEntityCreator;
 
 
     @Override
@@ -150,10 +150,10 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 converters.outputKey(record, output),
                 null,
                 dto,
-                EntityCreator.of(thesisService::createThesis, Thesis::getId),
+                studentThesisEntityCreator,
                 UpdatePlan.<ThesisDTO>of(ExistingReader.of(thesisService::readThesisById),
                     EntityUpdater.of(thesisService::editThesis)),
-                FailureHandler.noOp());
+                FailureHandler.resolvedToExisting());
         }
 
         return null;

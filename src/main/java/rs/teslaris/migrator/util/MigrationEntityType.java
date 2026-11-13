@@ -45,6 +45,21 @@ public enum MigrationEntityType {
         };
     }
 
+    /**
+     * Whether a request for this type takes items of {@code itemType}. A thesis request also
+     * takes the educations, supervisions and examinations, which make theses too.
+     */
+    public boolean includes(MigrationEntityType itemType) {
+        if (Objects.equals(this, itemType)) {
+            return true;
+        }
+
+        return Objects.equals(THESIS, this) && switch (itemType) {
+            case PERSON_EDUCATION, THESIS_SUPERVISION, THESIS_EXAMINATION -> true;
+            default -> false;
+        };
+    }
+
     public boolean isDocumentType() {
         return Objects.equals(DOCUMENT, parent());
     }

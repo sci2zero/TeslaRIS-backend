@@ -60,13 +60,11 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
  *     <li>{@code CV_FUNDING} - curriculum fundings, matched against the projects of the previous
  *     pass and created only when not found;</li>
- *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve;</li>
- *     <li>{@code PERSON_EDUCATION} - each degree's thesis, unless the {@code DOCUMENT} pass already
- *     created it from a dissertation of the same title, followed by the education;</li>
- *     <li>{@code THESIS_SUPERVISION} - the thesis of each completed supervision with the owner as
- *     advisor, or the owner added to an earlier thesis of the same title and student;</li>
- *     <li>{@code THESIS_EXAMINATION} - the same for each master or PhD examination, with the
- *     owner in their examination role.</li>
+ *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve. Each
+ *     curriculum yields its outputs, then each degree's thesis followed by the education, then the
+ *     theses of its completed supervisions and of its master and PhD examinations. A thesis is
+ *     matched by title and author across curricula, whichever comes first: the author's own
+ *     version replaces the fields and an advisor or examiner adds their role.</li>
  * </ol>
  */
 @Configuration
@@ -130,10 +128,7 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.PERSON,
             MigrationEntityType.PROJECT,
             MigrationEntityType.CV_FUNDING,
-            MigrationEntityType.DOCUMENT,
-            MigrationEntityType.PERSON_EDUCATION,
-            MigrationEntityType.THESIS_SUPERVISION,
-            MigrationEntityType.THESIS_EXAMINATION
+            MigrationEntityType.DOCUMENT
         );
     }
 
@@ -194,32 +189,21 @@ public class HydratorPipelineConfiguration {
      */
     @Bean
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorDocumentPipeline() {
-        return pipeline(MigrationEntityType.DOCUMENT, outputRouter);
-    }
-
-    @Bean
-    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorEducationPipeline() {
-        return pipeline(MigrationEntityType.PERSON_EDUCATION, degreeRouter);
-    }
-
-    @Bean
-    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorSupervisionPipeline() {
-        return pipeline(MigrationEntityType.THESIS_SUPERVISION, new SimpleMapping<>(
-            MigrationEntityType.THESIS_SUPERVISION,
-            supervisionExtractor,
-            thesisContributionEntityCreator,
-            FailureHandler.resolvedToExisting(),
-            (record, dto) -> dto.sourceKey()));
-    }
-
-    @Bean
-    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorExaminationPipeline() {
-        return pipeline(MigrationEntityType.THESIS_EXAMINATION, new SimpleMapping<>(
-            MigrationEntityType.THESIS_EXAMINATION,
-            examinationExtractor,
-            thesisContributionEntityCreator,
-            FailureHandler.resolvedToExisting(),
-            (record, dto) -> dto.sourceKey()));
+        return pipeline(MigrationEntityType.DOCUMENT, ItemRouter.ordered(List.of(
+            outputRouter,
+            degreeRouter,
+            new SimpleMapping<>(
+                MigrationEntityType.THESIS_SUPERVISION,
+                supervisionExtractor,
+                thesisContributionEntityCreator,
+                FailureHandler.resolvedToExisting(),
+                (record, dto) -> dto.sourceKey()),
+            new SimpleMapping<>(
+                MigrationEntityType.THESIS_EXAMINATION,
+                examinationExtractor,
+                thesisContributionEntityCreator,
+                FailureHandler.resolvedToExisting(),
+                (record, dto) -> dto.sourceKey()))));
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> organisationUnitRouter() {

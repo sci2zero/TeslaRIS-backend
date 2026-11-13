@@ -2,11 +2,9 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
-import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.migrator.model.MigrationRun;
@@ -77,7 +75,7 @@ public class ThesisContributionEntityCreator
         var unlinked = contributions.stream()
             .filter(contribution -> !isAuthor(contribution) &&
                 Objects.isNull(contribution.getPersonId()) &&
-                sameName(contribution.getPersonName(), owner.getPersonName()))
+                conversionUtil.namesMatch(contribution.getPersonName(), owner.getPersonName()))
             .findFirst();
 
         String message;
@@ -95,16 +93,6 @@ public class ThesisContributionEntityCreator
         thesisService.editThesis(thesisId, thesis);
 
         return message;
-    }
-
-    private boolean sameName(PersonNameDTO first, PersonNameDTO second) {
-        return conversionUtil.namesMatch(tokens(first), tokens(second));
-    }
-
-    private Set<String> tokens(PersonNameDTO name) {
-        return Objects.isNull(name) ? Set.of() : conversionUtil.nameTokens(
-            Objects.toString(name.getFirstname(), "") + " " +
-                Objects.toString(name.getLastname(), ""));
     }
 
     private boolean isAuthor(PersonDocumentContributionDTO contribution) {

@@ -6,10 +6,8 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ThesisDTO;
-import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
-import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.pipeline.EntityUpdater;
 import rs.teslaris.migrator.pipeline.ExistingReader;
 import rs.teslaris.migrator.pipeline.FailureHandler;
@@ -34,6 +32,8 @@ public class HydratorDegreeRouter implements ItemRouter<HydratorCVModel.Curricul
     private final EducationEntityCreator educationEntityCreator;
 
     private final ThesisService thesisService;
+
+    private final StudentThesisEntityCreator studentThesisEntityCreator;
 
     private final MigrationLog migrationLog;
 
@@ -65,10 +65,10 @@ public class HydratorDegreeRouter implements ItemRouter<HydratorCVModel.Curricul
                     key,
                     null,
                     thesis,
-                    EntityCreator.of(thesisService::createThesis, Thesis::getId),
+                    studentThesisEntityCreator,
                     UpdatePlan.<ThesisDTO>of(ExistingReader.of(thesisService::readThesisById),
                         EntityUpdater.of(thesisService::editThesis)),
-                    FailureHandler.noOp()));
+                    FailureHandler.resolvedToExisting()));
             }
 
             items.add(new MigrationItem<>(
