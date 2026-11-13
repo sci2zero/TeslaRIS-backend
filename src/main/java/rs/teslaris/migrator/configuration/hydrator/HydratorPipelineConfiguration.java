@@ -14,9 +14,13 @@ import rs.teslaris.migrator.client.fetcher.HttpPagedFetcher;
 import rs.teslaris.migrator.client.hydrator.HydratorCVClient;
 import rs.teslaris.migrator.client.hydrator.HydratorProjectClient;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
+import rs.teslaris.migrator.converter.hydrator.CvFundingEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.FundingEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.HydratorCvFundingExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorDegreeRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorExaminationExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
@@ -24,9 +28,11 @@ import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
+import rs.teslaris.migrator.converter.hydrator.HydratorSupervisionExtractor;
 import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.ThesisContributionEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.model.hydrator.HydratorProjectModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -52,7 +58,13 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     traversal; a request for {@code PERSON_PRIZE} or {@code PERSON_EMPLOYMENT} alone runs this
  *     pipeline filtered to that type;</li>
  *     <li>{@code PROJECT} - SciPROJ projects (flat attributes), each followed by its fundings;</li>
- *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve.</li>
+ *     <li>{@code CV_FUNDING} - curriculum fundings, matched against the projects of the previous
+ *     pass and created only when not found;</li>
+ *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve. Each
+ *     curriculum yields its outputs, then each degree's thesis followed by the education, then the
+ *     theses of its completed supervisions and of its master and PhD examinations. A thesis is
+ *     matched by title and author across curricula, whichever comes first: the author's own
+ *     version replaces the fields and an advisor or examiner adds their role.</li>
  * </ol>
  */
 @Configuration
@@ -83,11 +95,23 @@ public class HydratorPipelineConfiguration {
 
     private final HydratorOutputRouter outputRouter;
 
+    private final HydratorDegreeRouter degreeRouter;
+
+    private final HydratorSupervisionExtractor supervisionExtractor;
+
+    private final HydratorExaminationExtractor examinationExtractor;
+
+    private final ThesisContributionEntityCreator thesisContributionEntityCreator;
+
     private final EmploymentEntityCreator employmentEntityCreator;
 
     private final PrizeEntityCreator prizeEntityCreator;
 
     private final PersonMigrationWriter personMigrationWriter;
+
+    private final HydratorCvFundingExtractor cvFundingExtractor;
+
+    private final CvFundingEntityCreator cvFundingEntityCreator;
 
     private final PersonMergeFailureHandler personMergeFailureHandler;
 
@@ -103,6 +127,7 @@ public class HydratorPipelineConfiguration {
             MigrationEntityType.ORGANISATION_UNIT,
             MigrationEntityType.PERSON,
             MigrationEntityType.PROJECT,
+            MigrationEntityType.CV_FUNDING,
             MigrationEntityType.DOCUMENT
         );
     }
@@ -147,6 +172,16 @@ public class HydratorPipelineConfiguration {
             sourceProperties.batchSizeOrDefault(properties.getDefaultBatchSize()));
     }
 
+    @Bean
+    public MigrationPipeline<HydratorCVModel.Curriculum> hydratorCvFundingPipeline() {
+        return pipeline(MigrationEntityType.CV_FUNDING, new SimpleMapping<>(
+            MigrationEntityType.CV_FUNDING,
+            cvFundingExtractor,
+            cvFundingEntityCreator,
+            FailureHandler.resolvedToExisting(),
+            (record, dto) -> dto.sourceKey()));
+    }
+
     /**
      * Documents fall back to this pipeline unless a subtype registers its own - a request for
      * {@code PROCEEDINGS_PUBLICATION} would resolve here and be filtered to that type, until a
@@ -154,7 +189,21 @@ public class HydratorPipelineConfiguration {
      */
     @Bean
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorDocumentPipeline() {
-        return pipeline(MigrationEntityType.DOCUMENT, outputRouter);
+        return pipeline(MigrationEntityType.DOCUMENT, ItemRouter.ordered(List.of(
+            outputRouter,
+            degreeRouter,
+            new SimpleMapping<>(
+                MigrationEntityType.THESIS_SUPERVISION,
+                supervisionExtractor,
+                thesisContributionEntityCreator,
+                FailureHandler.resolvedToExisting(),
+                (record, dto) -> dto.sourceKey()),
+            new SimpleMapping<>(
+                MigrationEntityType.THESIS_EXAMINATION,
+                examinationExtractor,
+                thesisContributionEntityCreator,
+                FailureHandler.resolvedToExisting(),
+                (record, dto) -> dto.sourceKey()))));
     }
 
     private ItemRouter<HydratorCVModel.Curriculum> organisationUnitRouter() {

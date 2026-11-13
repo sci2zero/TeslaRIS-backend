@@ -15,9 +15,13 @@ public enum MigrationEntityType {
     PERSON,
     PERSON_EMPLOYMENT,
     PERSON_PRIZE,
+    PERSON_EDUCATION,
+    THESIS_SUPERVISION,
+    THESIS_EXAMINATION,
     PROJECT,
     PROJECT_FUNDING,
     PROJECT_ORGANISATION,
+    CV_FUNDING,
 
     DOCUMENT,
     JOURNAL_PUBLICATION,
@@ -38,6 +42,21 @@ public enum MigrationEntityType {
             case PERSON_EMPLOYMENT, PERSON_PRIZE -> PERSON;
             case PROJECT_FUNDING, PROJECT_ORGANISATION -> PROJECT;
             default -> null;
+        };
+    }
+
+    /**
+     * Whether a request for this type takes items of {@code itemType}. A thesis request also
+     * takes the educations, supervisions and examinations, which make theses too.
+     */
+    public boolean includes(MigrationEntityType itemType) {
+        if (Objects.equals(this, itemType)) {
+            return true;
+        }
+
+        return Objects.equals(THESIS, this) && switch (itemType) {
+            case PERSON_EDUCATION, THESIS_SUPERVISION, THESIS_EXAMINATION -> true;
+            default -> false;
         };
     }
 

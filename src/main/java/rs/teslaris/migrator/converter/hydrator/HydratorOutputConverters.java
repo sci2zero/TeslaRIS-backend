@@ -1,11 +1,13 @@
 package rs.teslaris.migrator.converter.hydrator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -30,6 +32,7 @@ import rs.teslaris.core.model.document.PublicationStatus;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
+import rs.teslaris.migrator.util.InvalidSourceValueException;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
@@ -59,6 +62,24 @@ public class HydratorOutputConverters {
     private static final String SOURCE_WORK_ID_CODE = "source-work-id";
 
     private static final String NOT_INFORMED = "Not informed";
+
+    private static final int MIN_THESIS_TITLE_LENGTH = 5;
+
+    private static final Set<String> NO_THESIS_TITLES = Set.of("semtese", "notapplicable");
+
+    /**
+     * CW-001-MAP-000821: examination-role codes. The crosswalk defaults to BOARD_MEMBER
+     * (MAP-000816) and defines no vocabulary; an arguer ("arguente") is the defence opponent.
+     */
+    private static final Map<String, DocumentContributionType> EXAMINATION_ROLES = Map.of(
+        "A", DocumentContributionType.ARGUER,
+        "AP", DocumentContributionType.ARGUER,
+        "O", DocumentContributionType.ADVISOR,
+        "V", DocumentContributionType.BOARD_MEMBER,
+        "P", DocumentContributionType.BOARD_MEMBER
+    );
+
+    private static final String JURY_PRESIDENT = "P";
 
     /**
      * CW-001-MAP-000067: identifier types of the work itself, the document field each one fills,
@@ -121,6 +142,8 @@ public class HydratorOutputConverters {
     private final HydratorJournalResolver journalResolver;
 
     private final HydratorPersonResolver personResolver;
+
+    private final HydratorInstitutionResolver institutionResolver;
 
     private final CountryService countryService;
 
@@ -252,6 +275,14 @@ public class HydratorOutputConverters {
             return null;
         }
 
+        var firstKey = dissertationKey(record, dissertation.title());
+        if (!outputKey(record, output).equals(firstKey)) {
+            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.THESIS.name(),
+                outputKey(record, output), HydratorMappingRule.cv(212),
+                "thesis not created (same dissertation as " + firstKey + ")");
+            return null;
+        }
+
         var language = languageOf(record);
         var dto = new ThesisDTO();
         var entityType = MigrationEntityType.THESIS;
@@ -261,13 +292,27 @@ public class HydratorOutputConverters {
             dissertation.authors(), null);
         applyIdentifiers(dto, record, output, entityType,
             dissertation.identifiers(), null);
+
+        var classifications = researchClassifications(dissertation.researchClassifications());
         applyPublicationFields(dto, record, output, entityType, language, dissertation.keywords(),
-            null, dissertation.researchClassifications());
+            null, new HydratorCVModel.ResearchClassifications(null,
+                classifications.stream().skip(1).toList()));
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
+        dto.setThesisDefenceDate(defenceDate(dissertation.completionDate()));
+        var key = outputKey(record, output);
         dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
-            institutionName(record, output, dissertation.institutions()), language));
-        dto.getContributions().addAll(supervisorContributions(dissertation.supervisors()));
+            institutionName(key, dissertation.institutions(), HydratorMappingRule.cv(209)),
+            language));
+        applyThesisInstitution(dto, key, dissertation.institutions(), HydratorMappingRule.cv(209));
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
+        dto.getContributions().addAll(supervisorContributions(dissertation.supervisors(),
+            outputKey(record, output), HydratorMappingRule.cv(216)));
+
+        if (!classifications.isEmpty()) {
+            applyScientificArea(dto, classifications.getFirst().value());
+        }
 
         if (!isBlank(dissertation.numberOfVolumes())) {
             dto.setDescription(conversionUtil.multilingualContent(
@@ -281,11 +326,307 @@ public class HydratorOutputConverters {
         return dto;
     }
 
+    /**
+     * The thesis of a concluded bachelor, master or PhD degree (CW-001-MAP-000038). The crosswalk
+     * has no rule for degree theses, so the fields follow the dissertation output. The owner is the
+     * author and the thesis supervisors are advisors.
+     */
+    public ThesisDTO toDegreeThesis(HydratorCVModel.Curriculum record,
+                                    HydratorCVModel.Degree degree) {
+        if (!isThesisDegree(degree) || Objects.nonNull(dissertationKey(record, degree))) {
+            return null;
+        }
+
+        var key = degreeKey(record, degree);
+        var firstKey = degreeThesisKey(record, degree);
+        if (!key.equals(firstKey)) {
+            migrationLog.valueDropped(HydratorSource.NAME,
+                MigrationEntityType.PERSON_EDUCATION.name(), key, HydratorMappingRule.cv(38),
+                "thesis not created (same thesis as " + firstKey + ")");
+            return null;
+        }
+
+        var thesisType = HydratorDegreeTypes.thesisType(degree.degreeType());
+        var language = languageOf(record);
+        var dto = new ThesisDTO();
+        var institutions = degreeThesisInstitutions(degree);
+
+        dto.setTitle(conversionUtil.multilingualContent(degree.thesis().title(), language));
+        dto.setSubTitle(List.of());
+        dto.setDescription(List.of());
+        dto.setKeywords(List.of());
+        dto.setUris(new HashSet<>());
+        dto.setDocumentDate(conversionUtil.flexibleDate(degree.endDate()));
+        dto.setContributions(new ArrayList<>());
+
+        var ownerName = personResolver.ownerName(record);
+        if (Objects.nonNull(ownerName)) {
+            dto.getContributions().add(contribution(DocumentContributionType.AUTHOR, 1,
+                ownerName, personResolver.resolveOwner(record)));
+        }
+
+        dto.getContributions().addAll(
+            supervisorContributions(degree.thesis().supervisors(), key,
+                HydratorMappingRule.cv(38)));
+
+        dto.setThesisType(thesisType);
+        dto.setThesisDefenceDate(defenceDate(degree.endDate()));
+        dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
+            institutionName(key, institutions, HydratorMappingRule.cv(209)), language));
+        applyThesisInstitution(dto, key, institutions, HydratorMappingRule.cv(209));
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
+
+        var classifications = researchClassifications(degree.researchClassifications());
+        if (!classifications.isEmpty()) {
+            applyScientificArea(dto, classifications.getFirst().value());
+        }
+
+        return dto;
+    }
+
+    /**
+     * The student's thesis of a completed supervision (CW-001-MAP-000862 to 000874). The student
+     * is kept by name only (MAP-000867) and the curriculum owner is the advisor, supervisor and
+     * co-supervisor alike (MAP-000872), for the supervision period (MAP-000863, 000864).
+     */
+    public ThesisDTO toSupervisionThesis(HydratorCVModel.Curriculum record,
+                                         HydratorCVModel.Service service) {
+        var supervision = service.researchBasedDegreeSupervision();
+        var key = supervisionKey(record, service);
+        var language = languageOf(record);
+        var dto = new ThesisDTO();
+
+        dto.setTitle(conversionUtil.multilingualContent(supervision.thesisTitle(), language));
+        dto.setSubTitle(List.of());
+        dto.setDescription(List.of());
+        dto.setKeywords(List.of());
+        dto.setUris(new HashSet<>());
+        dto.setDocumentDate(conversionUtil.flexibleDate(supervision.endDate()));
+        dto.setContributions(new ArrayList<>());
+
+        var studentName = conversionUtil.splitName(studentName(supervision), null);
+        if (Objects.nonNull(studentName)) {
+            dto.getContributions().add(contribution(DocumentContributionType.AUTHOR, 1,
+                studentName, null));
+        }
+
+        var ownerName = personResolver.ownerName(record);
+        if (Objects.nonNull(ownerName)) {
+            var advisor = contribution(DocumentContributionType.ADVISOR, 2, ownerName,
+                personResolver.resolveOwner(record));
+            advisor.setDateFrom(supervisionDate(key, supervision.startDate(),
+                HydratorMappingRule.cv(863)));
+            advisor.setDateTo(supervisionDate(key, supervision.endDate(),
+                HydratorMappingRule.cv(864)));
+            dto.getContributions().add(advisor);
+        }
+
+        // CW-001-MAP-000873
+        if (!isBlank(supervision.url())) {
+            dto.getUris().add(supervision.url().trim());
+        }
+
+        dto.setThesisType(HydratorDegreeTypes.serviceThesisType(supervision.degreeType()));
+        dto.setThesisDefenceDate(defenceDate(supervision.endDate()));
+        dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
+            institutionName(key, supervision.academicInstitutions(), HydratorMappingRule.cv(874)),
+            language));
+        applyThesisInstitution(dto, key, supervision.academicInstitutions(),
+            HydratorMappingRule.cv(874));
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
+
+        return dto;
+    }
+
+    public String studentName(HydratorCVModel.Supervision supervision) {
+        return Objects.isNull(supervision.studentName()) ? null :
+            studentName(supervision.studentName().name());
+    }
+
+    // The student's name without the stray punctuation the source often carries ("Name. ", "Name¿")
+    public String studentName(String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+
+        var name = value.replaceAll("^[^\\p{L}]+|[^\\p{L}]+$", "");
+
+        return name.isBlank() ? null : name;
+    }
+
+    // Service ids are unique only within a curriculum, hence the composite key
+    public String supervisionKey(HydratorCVModel.Curriculum record,
+                                 HydratorCVModel.Service service) {
+        return record.id() + "#supervision#" + Objects.toString(service.id(), "unknown");
+    }
+
+    /**
+     * The examined student's thesis (CW-001-MAP-000816 to 000827). The crosswalk keeps the thesis
+     * by name only (MAP-000819); TeslaRIS needs a document, so it is created like a supervised
+     * one, with the student by name and the curriculum owner in their examination role.
+     */
+    public ThesisDTO toExaminationThesis(HydratorCVModel.Curriculum record,
+                                         HydratorCVModel.Service service) {
+        var examination = service.graduateExamination();
+        var key = examinationKey(record, service);
+        var language = languageOf(record);
+        var dto = new ThesisDTO();
+
+        dto.setTitle(conversionUtil.multilingualContent(examination.theme(), language));
+        dto.setSubTitle(List.of());
+        dto.setDescription(List.of());
+        dto.setKeywords(conversionUtil.multilingualContent(keywords(examination.keywords()),
+            language));
+        dto.setUris(new HashSet<>());
+        dto.setDocumentDate(conversionUtil.flexibleDate(examination.date()));
+        dto.setContributions(new ArrayList<>());
+
+        var studentName = conversionUtil.splitName(studentName(examination.studentName()), null);
+        if (Objects.nonNull(studentName)) {
+            dto.getContributions().add(contribution(DocumentContributionType.AUTHOR, 1,
+                studentName, null));
+        }
+
+        var ownerName = personResolver.ownerName(record);
+        if (Objects.nonNull(ownerName)) {
+            var role = Objects.isNull(examination.examinationRole()) ? "" :
+                Objects.toString(examination.examinationRole().code(), "").trim();
+            var examiner = contribution(
+                EXAMINATION_ROLES.getOrDefault(role, DocumentContributionType.BOARD_MEMBER), 2,
+                ownerName, personResolver.resolveOwner(record));
+            examiner.setIsBoardPresident(JURY_PRESIDENT.equals(role));
+            dto.getContributions().add(examiner);
+        }
+
+        dto.setThesisType(HydratorDegreeTypes.serviceThesisType(examination.examinationDegree()));
+        dto.setThesisDefenceDate(defenceDate(examination.date()));
+        dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
+            institutionName(key, examination.institutions(), HydratorMappingRule.cv(825)),
+            language));
+        applyThesisInstitution(dto, key, examination.institutions(), HydratorMappingRule.cv(825));
+        dto.setLanguageId(conversionUtil.localeLanguageId(language));
+        dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
+
+        var classifications = researchClassifications(examination.researchClassifications());
+        if (!classifications.isEmpty()) {
+            applyScientificArea(dto, classifications.getFirst().value());
+        }
+
+        return dto;
+    }
+
+    public String examinationKey(HydratorCVModel.Curriculum record,
+                                 HydratorCVModel.Service service) {
+        return record.id() + "#examination#" + Objects.toString(service.id(), "unknown");
+    }
+
+    private LocalDate supervisionDate(String key, HydratorCVModel.DateInfo date, String rule) {
+        try {
+            return conversionUtil.localDate(date);
+        } catch (InvalidSourceValueException e) {
+            migrationLog.valueDropped(HydratorSource.NAME,
+                MigrationEntityType.THESIS_SUPERVISION.name(), key, rule, e.getMessage());
+            return null;
+        }
+    }
+
+    // A concluded bachelor, master or PhD degree with a thesis title
+    public boolean isThesisDegree(HydratorCVModel.Degree degree) {
+        return hasThesisTitle(degree) &&
+            Objects.nonNull(HydratorDegreeTypes.thesisType(degree.degreeType())) &&
+            isConcluded(degree);
+    }
+
+    /**
+     * Key of the first thesis degree of the same curriculum carrying the degree's thesis title, or
+     * {@code null} when the degree has no thesis. The same thesis is often listed under several
+     * degrees; only the first one creates it.
+     */
+    public String degreeThesisKey(HydratorCVModel.Curriculum record,
+                                  HydratorCVModel.Degree degree) {
+        if (!isThesisDegree(degree)) {
+            return null;
+        }
+
+        var title = conversionUtil.titleKey(degree.thesis().title());
+
+        return record.curriculum().degrees().degree().stream()
+            .filter(candidate -> Objects.nonNull(candidate) && !isBlank(candidate.id()) &&
+                isThesisDegree(candidate) &&
+                title.equals(conversionUtil.titleKey(candidate.thesis().title())))
+            .findFirst()
+            .map(candidate -> degreeKey(record, candidate))
+            .orElse(null);
+    }
+
+    public boolean isConcluded(HydratorCVModel.Degree degree) {
+        return Objects.nonNull(degree.degreeStatus()) &&
+            "Concluded".equalsIgnoreCase(Objects.toString(degree.degreeStatus().status(), "")
+                .trim());
+    }
+
+    /**
+     * Key of the dissertation output of the same curriculum carrying the degree's thesis title,
+     * or {@code null} - that thesis is already migrated by the document pass.
+     */
+    public String dissertationKey(HydratorCVModel.Curriculum record,
+                                  HydratorCVModel.Degree degree) {
+        return hasThesisTitle(degree) ? dissertationKey(record, degree.thesis().title()) : null;
+    }
+
+    // The first dissertation output of the curriculum with this title; only that one is migrated
+    private String dissertationKey(HydratorCVModel.Curriculum record, String thesisTitle) {
+        if (Objects.isNull(record.curriculum().outputs()) ||
+            Objects.isNull(record.curriculum().outputs().output())) {
+            return null;
+        }
+
+        var title = conversionUtil.titleKey(thesisTitle);
+
+        return record.curriculum().outputs().output().stream()
+            .filter(output -> Objects.nonNull(output.dissertation()) &&
+                title.equals(conversionUtil.titleKey(output.dissertation().title())))
+            .findFirst()
+            .map(output -> outputKey(record, output))
+            .orElse(null);
+    }
+
+    // "n/a", "-", "Sem tese" and the like stand for a degree without a thesis
+    public boolean hasThesisTitle(HydratorCVModel.Degree degree) {
+        return Objects.nonNull(degree.thesis()) && isThesisTitle(degree.thesis().title());
+    }
+
+    public boolean isThesisTitle(String title) {
+        if (isBlank(title)) {
+            return false;
+        }
+
+        var key = conversionUtil.titleKey(title);
+
+        return key.length() >= MIN_THESIS_TITLE_LENGTH && !NO_THESIS_TITLES.contains(key);
+    }
+
+    // Degree ids are unique only within a curriculum, hence the composite key
+    public String degreeKey(HydratorCVModel.Curriculum record, HydratorCVModel.Degree degree) {
+        return record.id() + "#degree#" + Objects.toString(degree.id(), "unknown");
+    }
+
+    // The thesis's own institution, falling back to the degree's
+    private HydratorCVModel.Institutions degreeThesisInstitutions(
+        HydratorCVModel.Degree degree) {
+        if (Objects.nonNull(degree.thesis().institution())) {
+            return new HydratorCVModel.Institutions(1, List.of(degree.thesis().institution()));
+        }
+
+        return degree.institutions();
+    }
+
     // CW-001-MAP-000209: a thesis has one institution, kept by name until matched to an
     // organisation unit; core rejects a thesis without one
-    private String institutionName(HydratorCVModel.Curriculum record,
-                                   HydratorCVModel.Output output,
-                                   HydratorCVModel.Institutions institutions) {
+    private String institutionName(String key, HydratorCVModel.Institutions institutions,
+                                   String rule) {
         var names = Objects.isNull(institutions) || Objects.isNull(institutions.institution()) ?
             List.<String>of() : institutions.institution().stream()
             .filter(Objects::nonNull)
@@ -299,16 +640,76 @@ public class HydratorOutputConverters {
         }
 
         names.stream().skip(1).forEach(name -> migrationLog.valueDropped(HydratorSource.NAME,
-            MigrationEntityType.THESIS.name(), outputKey(record, output),
-            HydratorMappingRule.cv(209),
+            MigrationEntityType.THESIS.name(), key, rule,
             "only one institution is kept: '" + name + "'"));
 
         return names.getFirst();
     }
 
+    private void applyThesisInstitution(ThesisDTO dto, String key,
+                                        HydratorCVModel.Institutions institutions, String rule) {
+        var institution = Objects.isNull(institutions) ||
+            Objects.isNull(institutions.institution()) ? null :
+            institutions.institution().stream()
+                .filter(Objects::nonNull)
+                .filter(candidate -> !isBlank(candidate.name()))
+                .findFirst()
+                .orElse(null);
+
+        if (Objects.isNull(institution)) {
+            return;
+        }
+
+        var match = institutionResolver.resolve(institution);
+
+        if (match.found()) {
+            dto.setOrganisationUnitId(match.organisationUnitId());
+        } else {
+            migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.THESIS.name(),
+                key, rule,
+                "organisation unit not linked, institution kept as display name: " +
+                    match.reason());
+        }
+    }
+
+    private LocalDate defenceDate(HydratorCVModel.DateInfo date) {
+        var flexibleDate = conversionUtil.flexibleDate(date);
+
+        if (Objects.isNull(flexibleDate)) {
+            return null;
+        }
+
+        return LocalDate.of(flexibleDate.year(),
+            Objects.requireNonNullElse(flexibleDate.month(), 1),
+            Objects.requireNonNullElse(flexibleDate.day(), 1));
+    }
+
+    private List<HydratorCVModel.ResearchClassification> researchClassifications(
+        HydratorCVModel.ResearchClassifications classifications) {
+        if (Objects.isNull(classifications) ||
+            Objects.isNull(classifications.researchClassification())) {
+            return List.of();
+        }
+
+        return classifications.researchClassification().stream()
+            .filter(Objects::nonNull)
+            .filter(classification -> !isBlank(classification.value()))
+            .toList();
+    }
+
+    private void applyScientificArea(ThesisDTO dto, String label) {
+        var parts = label.trim().split("\\s+-\\s+", 2);
+
+        dto.setScientificArea(conversionUtil.multilingualContent(parts[0], "en"));
+
+        if (parts.length > 1) {
+            dto.setScientificSubArea(conversionUtil.multilingualContent(parts[1], "en"));
+        }
+    }
+
     // CW-001-MAP-000216: supervisors and co-supervisors alike, after the author
     private List<PersonDocumentContributionDTO> supervisorContributions(
-        HydratorCVModel.Supervisors supervisors) {
+        HydratorCVModel.Supervisors supervisors, String key, String rule) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
 
         if (Objects.isNull(supervisors) || Objects.isNull(supervisors.supervisor())) {
@@ -316,6 +717,13 @@ public class HydratorOutputConverters {
         }
 
         for (var supervisor : supervisors.supervisor()) {
+            if (Objects.nonNull(supervisor) && !isBlank(supervisor.name()) &&
+                conversionUtil.isNoValue(supervisor.name())) {
+                migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.THESIS.name(),
+                    key, rule, "not a supervisor name: '" + supervisor.name().trim() + "'");
+                continue;
+            }
+
             var name = Objects.isNull(supervisor) ? null :
                 conversionUtil.splitName(supervisor.name(), null);
 

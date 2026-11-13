@@ -12,6 +12,9 @@ public final class HydratorSource {
     // Stamped on projects and fundings, which come from SciPROJ rather than a curriculum
     public static final String PROJECTS_IMPORT_SOURCE = "SCIPROJ";
 
+    // Other identifier holding the SciPROJ project id
+    public static final String SCIPROJ_IDENTIFIER_CODE = "SCIPROJID";
+
     /**
      * Sort key pinned on the client call. See the design document - offset paging over a mutable
      * sort key can skip records, which is why keyset pagination was requested from hydrator.

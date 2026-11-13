@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -75,6 +76,9 @@ public class HydratorConversionUtil implements RunScopedCache {
 
     // CV labels use " - " between levels, SciPROJ subjects use "/"
     private static final String RESEARCH_AREA_LEVEL_SEPARATOR = "\\s+-\\s+|\\s*/\\s*";
+
+    private static final Set<String> NO_VALUE_KEYS = Set.of("na", "none", "notapplicable",
+        "naoseaplica", "naoaplicavel", "naoaplicable", "didnothaveacosupervisor");
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
@@ -544,6 +548,47 @@ public class HydratorConversionUtil implements RunScopedCache {
     public String fullNameKey(PersonNameDTO name) {
         return foldCase(Objects.toString(name.getFirstname(), "") + "|" +
             Objects.toString(name.getLastname(), "")).replaceAll("[^\\p{L}|]", "");
+    }
+
+    // "n/a", "none", "Não se aplica" and the like, written where the source has no value
+    public boolean isNoValue(String value) {
+        var key = titleKey(value);
+
+        return key.isEmpty() || NO_VALUE_KEYS.contains(key);
+    }
+
+    // A title folded to letters and digits, so the same work entered twice compares equal
+    public String titleKey(String title) {
+        return Objects.isNull(title) ? "" : foldCase(title).replaceAll("[^\\p{L}\\p{N}]", "");
+    }
+
+    // Folded name parts of three letters or more, without surname particles ("dos", "van")
+    public Set<String> nameTokens(String name) {
+        if (Objects.isNull(name)) {
+            return Set.of();
+        }
+
+        return Arrays.stream(foldCase(name).split("[^\\p{L}]+"))
+            .filter(token -> token.length() >= 3 && !SURNAME_PARTICLES.contains(token))
+            .collect(Collectors.toSet());
+    }
+
+    // Two name parts in common, or one when either name has a single part; a shared first name
+    // alone ("Maria", "Joana") does not make two people the same
+    public boolean namesMatch(Set<String> first, Set<String> second) {
+        var common = first.stream().filter(second::contains).count();
+
+        return common > 0 && common >= Math.min(2, Math.min(first.size(), second.size()));
+    }
+
+    public Set<String> nameTokens(PersonNameDTO name) {
+        return Objects.isNull(name) ? Set.of() : nameTokens(
+            Objects.toString(name.getFirstname(), "") + " " +
+                Objects.toString(name.getLastname(), ""));
+    }
+
+    public boolean namesMatch(PersonNameDTO first, PersonNameDTO second) {
+        return namesMatch(nameTokens(first), nameTokens(second));
     }
 
     private String foldCase(String value) {

@@ -313,6 +313,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setResearchAreas(new HashSet<>(researchAreas));
 
         funding.setFundingTypes(fundingDTO.getFundingTypes());
+        funding.setFundingLocationType(fundingDTO.getFundingLocationType());
 
         // An amount without its currency is a number without a unit, so the whole amount goes.
         var currency = Objects.nonNull(fundingDTO.getAmount())

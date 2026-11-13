@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.project.OrganisationUnitProjectContributionDTO;
 import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
+import rs.teslaris.core.dto.project.ProjectDTO;
 import rs.teslaris.core.migration.ProjectMigrationWriter;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -76,7 +77,7 @@ public class ProjectEntityCreator
             .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT, dto.sourceId())
             .orElse(null);
 
-        var migrated = projectMigrationWriter.migrate(dto.project(), existingId);
+        var migrated = migrate(dto, dto.project(), existingId);
         if (Objects.isNull(migrated)) {
             return null;
         }
@@ -98,13 +99,29 @@ public class ProjectEntityCreator
             new MergeContext(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
                 dto.sourceId()));
 
-        var migrated = projectMigrationWriter.migrate(merged, targetId);
+        var migrated = migrate(dto, merged, targetId);
 
         if (Objects.isNull(migrated)) {
             return;
         }
 
         rememberConsortium(dto, migrated, run);
+    }
+
+    // The SciPROJ id goes in as an other identifier; one the writer could not attach is reported
+    private ProjectMigrationWriter.MigratedProject migrate(ProjectMigrationDTO dto,
+                                                           ProjectDTO project,
+                                                           Integer existingId) {
+        var migrated = projectMigrationWriter.migrate(project, existingId,
+            Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, dto.sourceId()));
+
+        if (Objects.nonNull(migrated)) {
+            migrated.droppedIdentifiers().forEach((code, reason) ->
+                migrationLog.valueDropped(HydratorSource.NAME, MigrationEntityType.PROJECT.name(),
+                    dto.sourceId(), HydratorMappingRule.sciproj(19), reason));
+        }
+
+        return migrated;
     }
 
     private void rememberConsortium(ProjectMigrationDTO dto,

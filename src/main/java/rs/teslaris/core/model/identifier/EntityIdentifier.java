@@ -5,6 +5,7 @@ import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -24,7 +25,10 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(
-    name = "entity_identifiers"
+    name = "entity_identifiers",
+    indexes = {
+        @Index(name = "idx_entity_identifier_value_type", columnList = "value, entity_type")
+    }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "entity_type", discriminatorType = DiscriminatorType.STRING)

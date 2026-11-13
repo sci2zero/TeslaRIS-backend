@@ -10,6 +10,10 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -112,9 +117,109 @@ public class HydratorFundingExtractorTest {
         assertEquals(LocalDate.of(2021, 12, 31), dto.getDateTo());
         assertEquals(Boolean.TRUE, dto.getOaMandated());
         assertEquals("https://example.com/oa-policy", dto.getOaMandateUrl());
-        assertEquals(Set.of(FundingType.FUNDING_PROGRAMME), dto.getFundingTypes());
+        assertEquals(Set.of(FundingType.FUNDING_PROGRAM), dto.getFundingTypes());
         assertEquals(Set.of("F1"), dto.getOldIds());
         assertEquals("SCIPROJ", dto.getImportSource());
+    }
+
+    private HydratorProjectModel.ProjectDocument documentWithProgram(String program, String type,
+                                                                     String funded)
+        throws Exception {
+        var identifiers = new ArrayList<String>();
+        if (Objects.nonNull(program)) {
+            identifiers.add("{\"type\": \"%sFundingProgram\", \"value\": \"%s\"}"
+                .formatted(ID_TYPES, program));
+        }
+        if (Objects.nonNull(type)) {
+            identifiers.add("{\"type\": \"%sFundingProgramType\", \"value\": \"%s\"}"
+                .formatted(ID_TYPES, type));
+        }
+
+        return MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": {
+              "projectId": "TEST001", "identifiers": [%s], "funded": [%s]}}}}
+            """.formatted(String.join(",", identifiers), funded),
+            HydratorProjectModel.ProjectDocument.class);
+    }
+
+    private static List<String> contents(List<MultilingualContentDTO> values) {
+        return values.stream().map(MultilingualContentDTO::getContent).toList();
+    }
+
+    @Test
+    void shouldSetProgramFromTypeAndCallWhenProgramDiffersFromName() throws Exception {
+        var dto = extractor.extract(documentWithProgram(" Other Call ", "Test Type",
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertEquals(List.of("Test Type"), contents(dto.getDisplayProgram()));
+        assertEquals(List.of("Other Call"), contents(dto.getDisplayCall()));
+    }
+
+    @Test
+    void shouldSkipCallWhenProgramRepeatsNameAndTypeExists() throws Exception {
+        var dto = extractor.extract(documentWithProgram(" test  PROGRAMME 2020 ", "Test Type",
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertEquals(List.of("Test Type"), contents(dto.getDisplayProgram()));
+        assertTrue(dto.getDisplayCall().isEmpty());
+    }
+
+    @Test
+    void shouldSetCallOnlyWhenTypeIsMissingAndProgramDiffersFromName() throws Exception {
+        var dto = extractor.extract(documentWithProgram("Other Call", null,
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertTrue(dto.getDisplayProgram().isEmpty());
+        assertEquals(List.of("Other Call"), contents(dto.getDisplayCall()));
+    }
+
+    @Test
+    void shouldSetProgramWhenTypeIsMissingAndProgramRepeatsName() throws Exception {
+        var dto = extractor.extract(documentWithProgram("Test Programme 2020", null,
+            funding("F1", "2020-01-01"))).getFirst().funding();
+
+        assertEquals(List.of("Test Programme 2020"), contents(dto.getDisplayProgram()));
+        assertTrue(dto.getDisplayCall().isEmpty());
+    }
+
+    @Test
+    void shouldApplyProgramRulesToEveryFundingOfTheProject() throws Exception {
+        var result = extractor.extract(documentWithProgram("Other Call", "Test Type",
+            funding("F1", "2020-01-01") + "," + funding("F2", "2020-01-01")));
+
+        assertEquals(2, result.size());
+        result.forEach(item -> {
+            assertEquals(List.of("Test Type"), contents(item.funding().getDisplayProgram()));
+            assertEquals(List.of("Other Call"), contents(item.funding().getDisplayCall()));
+        });
+    }
+
+    @Test
+    void shouldLeaveProgramAndCallEmptyWhenProjectHasNone() throws Exception {
+        var dto = extractor.extract(document("[" + funding("F1", "2020-01-01") + "]"))
+            .getFirst().funding();
+
+        assertTrue(dto.getDisplayProgram().isEmpty());
+        assertTrue(dto.getDisplayCall().isEmpty());
+    }
+
+    @Test
+    void shouldReportFurtherFundingPrograms() throws Exception {
+        var record = MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": {
+              "projectId": "TEST001",
+              "identifiers": [{"type": "%sFundingProgram", "value": "Test Programme"},
+                              {"type": "%sFundingProgram", "value": "Other Programme"}],
+              "funded": [%s]}}}}
+            """.formatted(ID_TYPES, ID_TYPES, funding("F1", "2020-01-01")),
+            HydratorProjectModel.ProjectDocument.class);
+
+        var result = extractor.extract(record);
+
+        assertEquals("Test Programme",
+            result.getFirst().funding().getDisplayCall().getFirst().getContent());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), eq("1 further funding program(s) not carried over"));
     }
 
     @Test
@@ -134,12 +239,19 @@ public class HydratorFundingExtractorTest {
         var result = extractor.extract(document("[" + funding("F1", "2020-01-01", "Contract") +
             "," + funding("F2", "2020-01-01", "Gift") + "," +
             funding("F3", "2020-01-01", "Call") + "," +
-            funding("F4", "2020-01-01", "Grant") + "]"));
+            funding("F4", "2020-01-01", "Grant") + "," +
+            funding("F5", "2020-01-01", "Tender") + "," +
+            funding("F6", "2020-01-01", "InternalFunding") + "," +
+            funding("F7", "2020-01-01", "Award") + "]"));
 
         assertEquals(Set.of(FundingType.CONTRACT), result.get(0).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.GIFT), result.get(1).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.CALL), result.get(2).funding().getFundingTypes());
         assertEquals(Set.of(FundingType.GRANT), result.get(3).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.TENDER), result.get(4).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.INTERNAL_FUNDING),
+            result.get(5).funding().getFundingTypes());
+        assertEquals(Set.of(FundingType.AWARD), result.get(6).funding().getFundingTypes());
         verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
             eq("CW-002-MAP-000002"), anyString());
     }
@@ -147,12 +259,55 @@ public class HydratorFundingExtractorTest {
     @Test
     void shouldLogMissingTypeVocabulary() throws Exception {
         var result =
-            extractor.extract(document("[" + funding("F1", "2020-01-01", "Tender") + "]"));
+            extractor.extract(document("[" + funding("F1", "2020-01-01", "Unknown") + "]"));
 
         assertTrue(result.getFirst().funding().getFundingTypes().isEmpty());
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
             eq("TEST001#funding#F1"), eq("CW-002-MAP-000002"),
-            eq("funding type 'Tender' has no vocabulary"));
+            eq("funding type 'Unknown' has no vocabulary"));
+    }
+
+    @Test
+    void shouldMapFundingTypeFromIdSuffix() throws Exception {
+        var expected = new LinkedHashMap<String, FundingType>();
+        expected.put("100DFA", FundingType.GRANT);
+        expected.put("100FAC", FundingType.GRANT);
+        expected.put("100PRJ", FundingType.PROJECT);
+        expected.put("100FP7", FundingType.PROJECT);
+        expected.put("100H20", FundingType.PROJECT);
+        expected.put("100B30", FundingType.PROJECT);
+        expected.put("100EEC", FundingType.EMPLOYMENT);
+        expected.put("100UID", FundingType.INSTITUTIONAL_FUNDING);
+        expected.put("100COL", FundingType.INSTITUTIONAL_FUNDING);
+
+        for (var entry : expected.entrySet()) {
+            var result = extractor.extract(
+                document("[" + funding(entry.getKey(), "2020-01-01") + "]"));
+
+            assertEquals(Set.of(entry.getValue()), result.getFirst().funding().getFundingTypes(),
+                entry.getKey());
+        }
+        verify(migrationLog, never()).valueDropped(anyString(), anyString(), anyString(),
+            eq("CW-002-MAP-000002"), anyString());
+    }
+
+    @Test
+    void shouldPreferIdSuffixOverSourceType() throws Exception {
+        var result =
+            extractor.extract(document("[" + funding("100EEC", "2020-01-01", "Contract") + "]"));
+
+        assertEquals(Set.of(FundingType.EMPLOYMENT), result.getFirst().funding().getFundingTypes());
+    }
+
+    @Test
+    void shouldLogUnknownIdSuffixAndUseSourceType() throws Exception {
+        var result =
+            extractor.extract(document("[" + funding("100XYZ", "2020-01-01", "Contract") + "]"));
+
+        assertEquals(Set.of(FundingType.CONTRACT), result.getFirst().funding().getFundingTypes());
+        verify(migrationLog).valueDropped(anyString(), eq("PROJECT_FUNDING"),
+            eq("TEST001#funding#100XYZ"), eq("CW-002-MAP-000002"),
+            eq("funding id suffix 'XYZ' has no funding type"));
     }
 
     @Test

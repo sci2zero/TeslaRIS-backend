@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -113,8 +114,21 @@ public class HydratorProjectConverterTest {
         var dto = converter.toDTO(document(FULL_PROJECT)).project();
 
         assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());
+    }
+
+    @Test
+    void shouldDropFundingProgramOnlyWithoutFundings() throws Exception {
+        converter.toDTO(document(FULL_PROJECT));
+
         verify(migrationLog).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
-            eq("CW-002-MAP-000019"), eq("identifier type 'FundingProgram' not mapped"));
+            eq("CW-002-MAP-000019"), eq("funding program not kept: project has no funding"));
+
+        clearInvocations(migrationLog);
+        converter.toDTO(document(FULL_PROJECT.replace("\"acronym\"",
+            "\"funded\": [{\"fundedAs\": {\"funding\": {\"id\": \"F1\"}}}], \"acronym\"")));
+
+        verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), anyString());
     }
 
     @Test
@@ -124,6 +138,19 @@ public class HydratorProjectConverterTest {
         assertEquals(Set.of("https://example.com/project"), dto.getUris());
         verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
             eq("CW-002-MAP-000019"), eq("identifier type 'URL' not mapped"));
+    }
+
+    @Test
+    void shouldNotReportFundingProgramTypeAsUnmapped() throws Exception {
+        var dto = converter.toDTO(document(FULL_PROJECT
+            .replace("#FundingProgram\"", "#FundingProgramType\"")
+            .replace("\"acronym\"",
+                "\"funded\": [{\"fundedAs\": {\"funding\": {\"id\": \"F1\"}}}], \"acronym\"")))
+            .project();
+
+        assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());
+        verify(migrationLog, never()).valueDropped(anyString(), eq("PROJECT"), eq("TEST001"),
+            eq("CW-002-MAP-000019"), eq("identifier type 'FundingProgramType' not mapped"));
     }
 
     @Test
@@ -247,6 +274,26 @@ public class HydratorProjectConverterTest {
             """));
 
         assertNull(result.consortium().getFirst().amount());
+    }
+
+    @Test
+    void shouldMakeOnlyFirstPrincipalInvestigatorPrincipal() throws Exception {
+        var result = converter.toDTO(document("""
+            {"projectId": "TEST009", "titles": [{"language": "en", "value": "Test"}],
+             "team": {"principalInvestigator": [
+               {"person": {"personName": "John Doe"}},
+               {"person": {"personName": "Jane Smith"}},
+               {"person": {"personName": "Mark Brown"}}]}}
+            """));
+
+        var team = result.team();
+        assertEquals(3, team.size());
+        assertEquals(PersonProjectContributionType.PRINCIPLE_INVESTIGATOR, team.get(0).type());
+        assertEquals("John Doe", team.get(0).name());
+        assertEquals(PersonProjectContributionType.CO_PRINCIPLE_INVESTIGATOR, team.get(1).type());
+        assertEquals("Jane Smith", team.get(1).name());
+        assertEquals(PersonProjectContributionType.CO_PRINCIPLE_INVESTIGATOR, team.get(2).type());
+        assertEquals(3, team.get(2).orderNumber());
     }
 
     @Test

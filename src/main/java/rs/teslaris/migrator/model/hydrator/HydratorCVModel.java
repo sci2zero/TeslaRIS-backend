@@ -26,10 +26,79 @@ public class HydratorCVModel {
         String language,
         String lastModifiedDate,
         IdentifyingInfo identifyingInfo,
+        Degrees degrees,
         Employments employments,
         Distinctions distinctions,
         Fundings fundings,
-        Outputs outputs
+        Outputs outputs,
+        Services services
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Services(
+        Integer total,
+        List<Service> service
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Service(
+        String id,
+        Supervision researchBasedDegreeSupervision,
+        Examination graduateExamination
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Examination(
+        DateInfo date,
+        String theme,
+        String studentName,
+        ExaminationRole examinationRole,
+        DegreeType examinationDegree,
+        String examinationSubject,
+        String courseCode,
+        String tid,
+        Institutions institutions,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ExaminationRole(
+        String code,
+        String role
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Supervision(
+        DateInfo startDate,
+        DateInfo endDate,
+        String thesisTitle,
+        StudentName studentName,
+        String degreeSubject,
+        DegreeType degreeType,
+        DegreeStatus degreeStatus,
+        SupervisoryType supervisoryType,
+        Institutions academicInstitutions,
+        String url,
+        String tid
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record StudentName(
+        String name
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SupervisoryType(
+        String code,
+        String type
     ) {
     }
 
@@ -316,6 +385,46 @@ public class HydratorCVModel {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degrees(
+        Integer total,
+        List<Degree> degree
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degree(
+        String id,
+        DegreeType degreeType,
+        String degreeName,
+        String degreeMajor,
+        String description,
+        String classification,
+        Institutions institutions,
+        DegreeStatus degreeStatus,
+        DateInfo startDate,
+        DateInfo endDate,
+        DegreeThesis thesis,
+        ResearchClassifications researchClassifications
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeStatus(
+        String code,
+        String status
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeThesis(
+        String tid,
+        String title,
+        Institution institution,
+        Supervisors supervisors
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Employments(
         Integer total,
         List<Employment> employment
@@ -406,6 +515,8 @@ public class HydratorCVModel {
         String programName,
         InvestigationRole investigationRole,
         String yearAwarded,
+        String competitive,
+        String fundingRenewable,
         TotalAmount totalAmount,
         FundingIdentifiers fundingIdentifiers,
         FundingInvestigators investigators,

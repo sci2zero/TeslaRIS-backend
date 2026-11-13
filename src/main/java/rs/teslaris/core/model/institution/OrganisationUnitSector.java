@@ -6,5 +6,8 @@ public enum OrganisationUnitSector {
     HEALTH,
     INSTITUTION,
     GOVERNMENT,
-    OTHER
+    OTHER,
+    RESEARCH_INSTITUTE,
+    SME,
+    PRIVATE_NON_PROFIT
 }
