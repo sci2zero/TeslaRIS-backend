@@ -3,6 +3,7 @@ package rs.teslaris.migrator.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,10 @@ public class HydratorIdentifierInitializerTest {
 
     private static final String SCIPROJ_URL_TEMPLATE = "https://sciproj.ptcris.pt/{ID}/";
 
+    private static final String PROJECT_CODE = HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE;
+
+    private static final String FUNDING_CODE = HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE;
+
     @Mock
     private IdentifierRepository identifierRepository;
 
@@ -38,37 +43,68 @@ public class HydratorIdentifierInitializerTest {
     private HydratorIdentifierInitializer initializer;
 
 
-    @Test
-    public void shouldCreateSciprojIdentifierWhenMissing() {
+    private static LanguageTag english() {
         var english = new LanguageTag("EN", "English");
         english.setId(1);
-        when(identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))
-            .thenReturn(null);
-        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english);
+        return english;
+    }
+
+    private static Identifier complete() {
+        var identifier = new Identifier();
+        identifier.setUrlTemplate("https://example.com/{ID}");
+        identifier.getDescription().add(new MultiLingualContent(english(), "Custom", 1));
+        return identifier;
+    }
+
+    @Test
+    public void shouldCreateProjectAndFundingIdentifiersWhenMissing() {
+        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();
 
         var captor = ArgumentCaptor.forClass(Identifier.class);
-        verify(identifierRepository).save(captor.capture());
-        var saved = captor.getValue();
-        assertEquals(HydratorSource.SCIPROJ_IDENTIFIER_CODE, saved.getCode());
-        assertEquals("SciPROJ ID", saved.getTitle().iterator().next().getContent());
+        verify(identifierRepository, times(2)).save(captor.capture());
+        var project = captor.getAllValues().get(0);
+        assertEquals(PROJECT_CODE, project.getCode());
+        assertEquals("SciPROJ Project ID", project.getTitle().iterator().next().getContent());
         assertEquals("Identifier of the project in SciPROJ",
-            saved.getDescription().iterator().next().getContent());
-        assertEquals(Set.of(ApplicableEntityType.PROJECT), saved.getApplicableTypes());
-        assertEquals(AccessLevel.OPEN, saved.getAccessLevel());
-        assertEquals(SCIPROJ_URL_TEMPLATE, saved.getUrlTemplate());
+            project.getDescription().iterator().next().getContent());
+        assertEquals(Set.of(ApplicableEntityType.PROJECT), project.getApplicableTypes());
+        assertEquals(AccessLevel.OPEN, project.getAccessLevel());
+        assertEquals(SCIPROJ_URL_TEMPLATE, project.getUrlTemplate());
+
+        var funding = captor.getAllValues().get(1);
+        assertEquals(FUNDING_CODE, funding.getCode());
+        assertEquals("SciPROJ Funding ID", funding.getTitle().iterator().next().getContent());
+        assertEquals("Identifier of the funding in SciPROJ",
+            funding.getDescription().iterator().next().getContent());
+        assertEquals(Set.of(ApplicableEntityType.FUNDING), funding.getApplicableTypes());
+        assertEquals(AccessLevel.OPEN, funding.getAccessLevel());
+        assertEquals(SCIPROJ_URL_TEMPLATE, funding.getUrlTemplate());
+    }
+
+    @Test
+    public void shouldRenameProjectIdentifierCreatedUnderLegacyCode() {
+        var legacy = complete();
+        legacy.setCode(HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE);
+        when(identifierRepository.findByCode(
+            HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE)).thenReturn(legacy);
+        when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(complete());
+
+        initializer.ensureIdentifiers();
+
+        verify(identifierRepository).save(legacy);
+        assertEquals(PROJECT_CODE, legacy.getCode());
+        assertEquals("https://example.com/{ID}", legacy.getUrlTemplate());
     }
 
     @Test
     public void shouldAddMissingValuesToExistingIdentifier() {
-        var english = new LanguageTag("EN", "English");
-        english.setId(1);
         var existing = new Identifier();
         existing.setUrlTemplate("");
-        when(identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))
-            .thenReturn(existing);
-        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english);
+        when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(existing);
+        when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(complete());
+        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();
 
@@ -79,43 +115,37 @@ public class HydratorIdentifierInitializerTest {
     }
 
     @Test
-    public void shouldKeepValuesOfExistingIdentifier() {
-        var english = new LanguageTag("EN", "English");
-        var existing = new Identifier();
-        existing.setUrlTemplate("https://example.com/{ID}");
-        existing.getDescription().add(new MultiLingualContent(english, "Custom", 1));
-        when(identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))
-            .thenReturn(existing);
+    public void shouldKeepValuesOfExistingIdentifiers() {
+        var project = complete();
+        var funding = complete();
+        when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(project);
+        when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(funding);
 
         initializer.ensureIdentifiers();
 
         verify(identifierRepository, never()).save(any());
-        assertEquals("https://example.com/{ID}", existing.getUrlTemplate());
-        assertEquals("Custom", existing.getDescription().iterator().next().getContent());
+        assertEquals("https://example.com/{ID}", project.getUrlTemplate());
+        assertEquals("Custom", funding.getDescription().iterator().next().getContent());
     }
 
     @Test
     public void shouldAddOnlyMissingDescriptionToExistingIdentifier() {
-        var english = new LanguageTag("EN", "English");
-        english.setId(1);
         var existing = new Identifier();
         existing.setUrlTemplate("https://example.com/{ID}");
-        when(identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))
-            .thenReturn(existing);
-        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english);
+        when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(complete());
+        when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(existing);
+        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();
 
         verify(identifierRepository).save(existing);
         assertEquals("https://example.com/{ID}", existing.getUrlTemplate());
-        assertEquals("Identifier of the project in SciPROJ",
+        assertEquals("Identifier of the funding in SciPROJ",
             existing.getDescription().iterator().next().getContent());
     }
 
     @Test
-    public void shouldNotCreateSciprojIdentifierWithoutEnglishTag() {
-        when(identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE))
-            .thenReturn(null);
+    public void shouldNotCreateIdentifiersWithoutEnglishTag() {
         when(languageTagService.findLanguageTagByValue("EN")).thenReturn(new LanguageTag());
 
         initializer.ensureIdentifiers();

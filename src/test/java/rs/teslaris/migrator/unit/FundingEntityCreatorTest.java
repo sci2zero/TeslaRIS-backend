@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,8 +108,8 @@ public class FundingEntityCreatorTest {
             new HydratorConsortiumKeyFactory(institutionResolver, conversionUtil), mergePolicy,
             migrationLog);
 
-        when(fundingMigrationWriter.migrate(any(), any()))
-            .thenReturn(new FundingMigrationWriter.MigratedFunding(42, true));
+        when(fundingMigrationWriter.migrate(any(), any(), any()))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(42, true, Map.of()));
         when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PROJECT, "TEST001"))
             .thenReturn(5);
     }
@@ -139,15 +140,16 @@ public class FundingEntityCreatorTest {
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
         when(idResolver.resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, key))
             .thenReturn(Optional.of(9));
-        when(fundingMigrationWriter.migrate(any(), eq(9)))
-            .thenReturn(new FundingMigrationWriter.MigratedFunding(9, false));
+        when(fundingMigrationWriter.migrate(any(), eq(9), any()))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(9, false, Map.of()));
 
         var id = creator.create(
             new FundingMigrationDTO("TEST001", "F1", FUNDER, new FundingDTO(), List.of(), null),
             RUN);
 
         assertEquals(9, id);
-        verify(fundingMigrationWriter).migrate(any(), eq(9));
+        verify(fundingMigrationWriter).migrate(any(), eq(9),
+            eq(Map.of(HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE, "F1")));
     }
 
     @Test
@@ -188,7 +190,7 @@ public class FundingEntityCreatorTest {
         assertThrows(MigrationException.class, () -> creator.create(
             new FundingMigrationDTO("TEST999", "F1", FUNDER, new FundingDTO(), List.of(), null),
             RUN));
-        verify(fundingMigrationWriter, never()).migrate(any(), any());
+        verify(fundingMigrationWriter, never()).migrate(any(), any(), any());
     }
 
     @Test
