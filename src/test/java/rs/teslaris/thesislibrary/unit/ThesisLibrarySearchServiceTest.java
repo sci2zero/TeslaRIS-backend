@@ -2,6 +2,7 @@ package rs.teslaris.thesislibrary.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,5 +138,67 @@ public class ThesisLibrarySearchServiceTest {
 
         assertNotNull(result);
         verify(searchService).runWordCloudSearch(any(), any(), anyBoolean());
+    }
+
+    private BoolQuery tokenQueryOf(List<String> tokens) {
+        var query = thesisSearchService.buildSearchQuery(tokens, List.of(), List.of(), List.of(),
+            List.of(), List.of(), List.of(), null, null, SearchRequestType.SIMPLE, false);
+
+        return query.bool().must().getFirst().bool().must().get(1).bool();
+    }
+
+    private Query wildcardOnField(BoolQuery tokenGroup, String field) {
+        return tokenGroup.should().stream()
+            .filter(clause -> clause.isWildcard() && clause.wildcard().field().equals(field))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    @Test
+    void shouldGroupClausesOfEachTokenIntoSingleShouldClause() {
+        var tokenQuery = tokenQueryOf(List.of("prva", "druga"));
+
+        assertEquals(2, tokenQuery.should().size());
+        tokenQuery.should().forEach(clause -> assertTrue(clause.isBool()));
+        assertEquals("2", tokenQuery.minimumShouldMatch());
+    }
+
+    @Test
+    void shouldQueryKeywordFieldsWithSameValueForBothSerbianScripts() {
+        var cyrillicGroup =
+            tokenQueryOf(List.of("Библиотека")).should().getFirst().bool();
+        var latinGroup = tokenQueryOf(List.of("Biblioteka")).should().getFirst().bool();
+
+        assertEquals("*biblioteka*",
+            wildcardOnField(cyrillicGroup, "keywords_sr").wildcard().value());
+        assertEquals(wildcardOnField(cyrillicGroup, "keywords_sr").wildcard().value(),
+            wildcardOnField(latinGroup, "keywords_sr").wildcard().value());
+        assertEquals(wildcardOnField(cyrillicGroup, "keywords_other").wildcard().value(),
+            wildcardOnField(latinGroup, "keywords_other").wildcard().value());
+        assertEquals(wildcardOnField(cyrillicGroup, "title_sr").wildcard().value(),
+            wildcardOnField(latinGroup, "title_sr").wildcard().value());
+    }
+
+    @Test
+    void shouldSearchKeywordFieldsCaseInsensitively() {
+        var tokenGroup = tokenQueryOf(List.of("Biblioteka")).should().getFirst().bool();
+
+        assertTrue(wildcardOnField(tokenGroup, "keywords_sr").wildcard().caseInsensitive());
+        assertTrue(wildcardOnField(tokenGroup, "keywords_other").wildcard().caseInsensitive());
+        assertTrue(wildcardOnField(tokenGroup, "title_sr").wildcard().caseInsensitive());
+        assertTrue(wildcardOnField(tokenGroup, "title_other").wildcard().caseInsensitive());
+    }
+
+    @Test
+    void shouldStripQuotesFromPhraseTokens() {
+        var tokenQuery = tokenQueryOf(List.of("\"neki tekst\""));
+
+        var phraseClauses = tokenQuery.must().getFirst().bool().should();
+        assertEquals(2, phraseClauses.size());
+        phraseClauses.forEach(
+            clause -> assertEquals("neki tekst", clause.matchPhrase().query()));
+
+        assertEquals("neki tekst*",
+            wildcardOnField(tokenQuery.should().getFirst().bool(), "title_sr").wildcard().value());
     }
 }

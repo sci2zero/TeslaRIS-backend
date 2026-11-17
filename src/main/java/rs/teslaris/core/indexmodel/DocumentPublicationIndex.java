@@ -50,10 +50,12 @@ public class DocumentPublicationIndex implements ExternallyEnrichable, PubliclyV
     @Field(type = FieldType.Text, name = "description_other", analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
-    @Field(type = FieldType.Keyword, name = "keywords_sr", store = true)
+    @Field(type = FieldType.Keyword, name = "keywords_sr", store = true,
+        normalizer = "serbian_normalizer")
     private String keywordsSr;
 
-    @Field(type = FieldType.Keyword, name = "keywords_other", store = true)
+    @Field(type = FieldType.Keyword, name = "keywords_other", store = true,
+        normalizer = "english_normalizer")
     private String keywordsOther;
 
     @Field(type = FieldType.Text, name = "full_text_sr", analyzer = "serbian", searchAnalyzer = "serbian")

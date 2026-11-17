@@ -307,14 +307,15 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
+        var oldDocument = new JournalPublication();
+
         if (Objects.nonNull(oldPublicationId)) {
             when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
                 any(), any(), any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
-            when(documentPublicationService.findOne(1)).thenReturn(
-                new JournalPublication());
+            when(documentPublicationService.findOne(1)).thenReturn(oldDocument);
         }
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
@@ -327,7 +328,7 @@ public class CommonLoaderTest {
         var updateOperation = new Update();
         updateOperation.set("loaded", true);
 
-        doReturn(new DocumentImport()).when(mongoTemplate)
+        doReturn(loadedRecord("SCOPUS", "85123456789")).when(mongoTemplate)
             .findAndModify(eq(query), eq(updateOperation),
                 any(FindAndModifyOptions.class), eq(entityClass));
 
@@ -340,7 +341,92 @@ public class CommonLoaderTest {
 
             verify(documentPublicationService, times(1)).findOne(1);
             verify(documentPublicationService, times(1)).save(any());
+            assertEquals("85123456789", oldDocument.getScopusId());
         }
+    }
+
+    private DocumentImport loadedRecord(String source, String identifier) {
+        var record = new DocumentImport();
+        record.setSource(source);
+
+        switch (source) {
+            case "SCOPUS" -> record.setScopusId(identifier);
+            case "OPEN_ALEX" -> record.setOpenAlexId(identifier);
+            case "WEB_OF_SCIENCE" -> record.setWebOfScienceId(identifier);
+            default -> record.setIdentifier(identifier);
+        }
+
+        return record;
+    }
+
+    private JournalPublication stampedOldDocument(String source, String identifier) {
+        var userId = 1;
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier("someId");
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var oldDocument = new JournalPublication();
+        when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
+            any(), any(), any())).thenReturn(
+            new PageImpl<>(List.of(new DocumentPublicationIndex() {{
+                setDatabaseId(1);
+            }})));
+        when(documentPublicationService.findOne(1)).thenReturn(oldDocument);
+
+        var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
+        doReturn(loadedRecord(source, identifier)).when(mongoTemplate)
+            .findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(entityClass));
+
+        commonLoader.markRecordAsLoaded(userId, null, 1, null);
+
+        return oldDocument;
+    }
+
+    @Test
+    void shouldStripSourceSchemeFromStampedScopusIdentifier() {
+        // When
+        var oldDocument = stampedOldDocument("SCOPUS", "SCOPUS_ID:85123456789");
+
+        // Then
+        assertEquals("85123456789", oldDocument.getScopusId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldStampWebOfScienceIdentifierIntoItsOwnColumn() {
+        // When
+        var oldDocument = stampedOldDocument("WEB_OF_SCIENCE", "000123456789012");
+
+        // Then
+        assertEquals("000123456789012", oldDocument.getWebOfScienceId());
+        assertNull(oldDocument.getScopusId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldStampOpenAlexIdentifierIntoItsOwnColumn() {
+        // When
+        var oldDocument = stampedOldDocument("OPEN_ALEX", "W123456789");
+
+        // Then
+        assertEquals("W123456789", oldDocument.getOpenAlexId());
+        assertNull(oldDocument.getScopusId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldNotStampOldDocumentForSourceWithoutIdentifierColumn() {
+        // When
+        var oldDocument = stampedOldDocument("BIBTEX", "someCitationKey2024");
+
+        // Then
+        assertNull(oldDocument.getScopusId());
+        assertNull(oldDocument.getOpenAlexId());
+        assertNull(oldDocument.getWebOfScienceId());
+        verify(documentPublicationService, never()).save(any());
     }
 
     @ParameterizedTest

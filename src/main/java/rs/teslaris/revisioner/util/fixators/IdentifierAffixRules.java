@@ -20,11 +20,11 @@ public final class IdentifierAffixRules {
 
     public static final Rule DOCUMENT_SCOPUS_ID =
         rule("\\d{6,12}", Casing.AS_IS, "https://www.scopus.com/inward/record.uri?eid=2-s2.0-",
-            "2-s2.0-");
+            "2-s2.0-", "SCOPUS_ID:", "SCOPUS:");
 
     public static final Rule DOCUMENT_OPEN_ALEX_ID =
         rule("W\\d{4,10}", Casing.UPPER, "https://openalex.org/",
-            "https://api.openalex.org/works/");
+            "https://api.openalex.org/works/", "openalex:", "open_alex:");
 
     public static final Rule WEB_OF_SCIENCE_ID = rule("\\d{15}", Casing.AS_IS, "WOS:");
 

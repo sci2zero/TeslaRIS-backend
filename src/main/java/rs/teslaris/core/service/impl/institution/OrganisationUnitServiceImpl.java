@@ -113,6 +113,13 @@ import rs.teslaris.core.util.visibility.PublicVisibilityQueries;
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
 
+    // Sub and super hierarchies share one cache, so each key space carries its own prefix.
+    private static final String SUB_HIERARCHY_KEY_PREFIX = "subOUs-";
+
+    private static final String LIBRARY_ONLY_KEY_PREFIX = "libraryOnly-";
+
+    private static final String SUPER_HIERARCHY_KEY_PREFIX = "superOUs-";
+
     private final OrganisationUnitsRelationJPAServiceImpl organisationUnitsRelationJPAService;
 
     private final CrisContextInformationService crisContextInformationService;
@@ -480,18 +487,37 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE,
+        key = "'" + SUB_HIERARCHY_KEY_PREFIX + "' + #currentOUNodeId",
+        condition = "#currentOUNodeId != null")
     public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId) {
+        if (Objects.isNull(currentOUNodeId)) {
+            return Collections.emptyList();
+        }
+
         var ouSubUnits =
             organisationUnitsRelationRepository.getSubOUsRecursive(currentOUNodeId);
         ouSubUnits.add(currentOUNodeId);
 
-        return ouSubUnits;
+        return List.copyOf(ouSubUnits);
     }
 
+    /**
+     * Shares the cache entry of the single argument method when nothing is filtered out, as both
+     * then answer with the same hierarchy.
+     */
     @Override
     @Transactional
+    @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE,
+        key = "'" + SUB_HIERARCHY_KEY_PREFIX + "' + (#libraryOnly == true ? '" +
+            LIBRARY_ONLY_KEY_PREFIX + "' : '') + #currentOUNodeId",
+        condition = "#currentOUNodeId != null")
     public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId,
                                                                 Boolean libraryOnly) {
+        if (Objects.isNull(currentOUNodeId)) {
+            return Collections.emptyList();
+        }
+
         if (!Boolean.TRUE.equals(libraryOnly)) {
             return getOrganisationUnitIdsFromSubHierarchy(currentOUNodeId);
         }
@@ -503,12 +529,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             ouSubUnits.add(currentOUNodeId);
         }
 
-        return ouSubUnits;
+        return List.copyOf(ouSubUnits);
     }
 
     @Override
     @Transactional
-    @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, key = "#sourceOUId",
+    @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE,
+        key = "'" + SUPER_HIERARCHY_KEY_PREFIX + "' + #sourceOUId",
         condition = "#sourceOUId != null")
     public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {
         return List.copyOf(organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId));
@@ -564,6 +591,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
@@ -1199,6 +1227,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, allEntries = true)
     public void deleteOrganisationUnit(Integer organisationUnitId) {
         if (organisationUnitRepository.hasEmployees(organisationUnitId) ||
             organisationUnitRepository.hasThesis(organisationUnitId) ||

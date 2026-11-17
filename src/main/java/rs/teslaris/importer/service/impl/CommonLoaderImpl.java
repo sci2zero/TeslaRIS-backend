@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -289,8 +290,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         updatePersonInvolvements((DocumentImport) updatedRecord);
 
-        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord,
-            progressReport);
+        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord);
 
         migrateInternalIdentifiers(newDocumentId, (DocumentImport) updatedRecord);
     }
@@ -445,20 +445,46 @@ public class CommonLoaderImpl implements CommonLoader {
         }
     }
 
-    private void handleDeduplication(Integer oldDocumentId,
-                                     DocumentImport updatedRecord,
-                                     LoadProgressReport progressReport) {
-        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0) {
-            var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
+    /**
+     * Stamps the document which the loaded record duplicates with the identifier of the source it
+     * came from. Sources which have no dedicated identifier column keep their harvest key in the
+     * internal identifiers only.
+     */
+    private void handleDeduplication(Integer oldDocumentId, DocumentImport updatedRecord) {
+        if (Objects.isNull(oldDocumentId) || oldDocumentId <= 0) {
+            return;
+        }
 
-            if (!potentialDuplicateIds.contains(oldDocumentId)) {
-                return;
-            }
+        var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
 
-            var oldDocument = documentPublicationService.findOne(oldDocumentId);
-            oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+        if (!potentialDuplicateIds.contains(oldDocumentId)) {
+            return;
+        }
+
+        var oldDocument = documentPublicationService.findOne(oldDocumentId);
+
+        var identifierSet = switch (Objects.requireNonNullElse(updatedRecord.getSource(), "")) {
+            case "SCOPUS" -> setHarvestedIdentifier(updatedRecord.getScopusId(),
+                oldDocument::setScopusId);
+            case "OPEN_ALEX" -> setHarvestedIdentifier(updatedRecord.getOpenAlexId(),
+                oldDocument::setOpenAlexId);
+            case "WEB_OF_SCIENCE" -> setHarvestedIdentifier(updatedRecord.getWebOfScienceId(),
+                oldDocument::setWebOfScienceId);
+            default -> false;
+        };
+
+        if (identifierSet) {
             documentPublicationService.save(oldDocument);
         }
+    }
+
+    private boolean setHarvestedIdentifier(String identifier, Consumer<String> setter) {
+        if (!StringUtil.valueExists(identifier)) {
+            return false;
+        }
+
+        setter.accept(StringUtil.normalizeIdentifier(identifier));
+        return true;
     }
 
     private void migrateInternalIdentifiers(Integer newDocumentId, DocumentImport updatedRecord) {

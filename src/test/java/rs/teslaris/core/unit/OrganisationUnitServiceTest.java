@@ -817,6 +817,59 @@ public class OrganisationUnitServiceTest {
     }
 
     @Test
+    public void shouldGetDigitalLibraryClientIdsFromSubHierarchyIncludingRoot() {
+        // given
+        var root = new OrganisationUnit();
+        root.setId(1);
+        root.setIsClientInstitutionDl(true);
+
+        when(organisationUnitsRelationRepository.getDigitalLibraryClientSubOUsRecursive(1))
+            .thenReturn(new ArrayList<>(List.of(2, 3)));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1))
+            .thenReturn(Optional.of(root));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, true);
+
+        // then
+        assertEquals(List.of(2, 3, 1), result);
+    }
+
+    @Test
+    public void shouldNotIncludeRootInDigitalLibraryClientSubHierarchyWhenItIsNotAClient() {
+        // given
+        var root = new OrganisationUnit();
+        root.setId(1);
+        root.setIsClientInstitutionDl(false);
+
+        when(organisationUnitsRelationRepository.getDigitalLibraryClientSubOUsRecursive(1))
+            .thenReturn(new ArrayList<>(List.of(2, 3)));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1))
+            .thenReturn(Optional.of(root));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, true);
+
+        // then
+        assertEquals(List.of(2, 3), result);
+    }
+
+    @Test
+    public void shouldGetWholeSubHierarchyWhenLibraryFilterIsNotRequested() {
+        // given
+        when(organisationUnitsRelationRepository.getSubOUsRecursive(1)).thenReturn(
+            new ArrayList<>(List.of(2, 3)));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, false);
+
+        // then
+        assertEquals(List.of(2, 3, 1), result);
+        verify(organisationUnitsRelationRepository, never())
+            .getDigitalLibraryClientSubOUsRecursive(anyInt());
+    }
+
+    @Test
     public void shouldFindOUByImportId() {
         // Given
         var ou = new OrganisationUnitIndex();
