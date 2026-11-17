@@ -25,6 +25,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -44,6 +45,9 @@ public class ThesisLibrarySearchServiceTest {
 
     @Mock
     private SearchFieldsLoader searchFieldsLoader;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private ThesisSearchServiceImpl thesisSearchService;
@@ -68,6 +72,8 @@ public class ThesisLibrarySearchServiceTest {
 
     @Test
     void shouldCallPerformQueryWhenPerformingSimpleThesisSearch() {
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(eq(1), eq(true)))
+            .thenReturn(List.of(1, 10, 11));
         var expectedPage = new PageImpl<>(documentList);
         when(searchService.runQuery(any(), any(), eq(DocumentPublicationIndex.class), any()))
             .thenReturn(expectedPage);
@@ -82,6 +88,8 @@ public class ThesisLibrarySearchServiceTest {
 
     @Test
     void shouldCallPerformQueryWhenPerformingAdvancedThesisSearch() {
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(eq(1), eq(true)))
+            .thenReturn(List.of(1, 10, 11));
         Page<DocumentPublicationIndex> expectedPage = new PageImpl<>(documentList);
         when(searchService.runQuery(any(), any(), eq(DocumentPublicationIndex.class), any()))
             .thenReturn(expectedPage);
@@ -115,6 +123,8 @@ public class ThesisLibrarySearchServiceTest {
 
     @Test
     void shouldCallRunWordCloudSearchWhenPerformingSimpleThesisSearch() {
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(eq(1), eq(true)))
+            .thenReturn(List.of(1, 10, 11));
         List<Pair<String, Long>> expectedResult = List.of(new Pair<>("ai", 42L));
         when(searchService.runWordCloudSearch(any(), any(), eq(false)))
             .thenReturn(expectedResult);

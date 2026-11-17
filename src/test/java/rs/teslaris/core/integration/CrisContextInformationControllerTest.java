@@ -55,6 +55,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0, null,
             Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(),
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -78,6 +79,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0, null,
             Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(),
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -98,6 +100,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0, null,
             Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(),
             false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
@@ -122,7 +125,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             Collections.emptyList(),
             List.of(new MultilingualContentDTO(1, "EN", "National project number", 1)),
             Collections.emptyList(),
-            "https://example.org/researchers/{ID}", "", "", "", false);
+            "https://example.org/researchers/{ID}", "", "", "", Collections.emptyList(), false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -156,7 +159,8 @@ public class CrisContextInformationControllerTest extends BaseTest {
             Map.of(ApplicableEntityType.DOCUMENT,
                 Map.of("orcid", new IdentifierConfigurationDTO(true, false, true))),
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(
@@ -176,7 +180,7 @@ public class CrisContextInformationControllerTest extends BaseTest {
             ".*", ".*", ".*", ".*", License.CC0, null,
             Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), Collections.emptyList(),
-            "https://example.org/researchers/", "", "", "", false);
+            "https://example.org/researchers/", "", "", "", Collections.emptyList(), false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

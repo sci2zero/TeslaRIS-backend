@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.commontypes;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +46,8 @@ public class CrisContextInformationConverter {
             Objects.requireNonNullElse(configuration.getOrganisationUnitNationalIdUrl(), ""),
             Objects.requireNonNullElse(configuration.getProjectNationalIdUrl(), ""),
             Objects.requireNonNullElse(configuration.getDocumentNationalIdUrl(), ""),
+            Objects.requireNonNullElse(configuration.getThesisLibraryInstitutionIds(),
+                Collections.emptyList()),
             isOrcidLoginConfigured);
     }
 

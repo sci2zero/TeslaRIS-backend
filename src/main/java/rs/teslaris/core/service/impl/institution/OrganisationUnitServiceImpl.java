@@ -490,6 +490,24 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Transactional
+    public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId,
+                                                                Boolean libraryOnly) {
+        if (!Boolean.TRUE.equals(libraryOnly)) {
+            return getOrganisationUnitIdsFromSubHierarchy(currentOUNodeId);
+        }
+
+        var ouSubUnits = organisationUnitsRelationRepository.getDigitalLibraryClientSubOUsRecursive(
+            currentOUNodeId);
+
+        if (Boolean.TRUE.equals(findOne(currentOUNodeId).getIsClientInstitutionDl())) {
+            ouSubUnits.add(currentOUNodeId);
+        }
+
+        return ouSubUnits;
+    }
+
+    @Override
+    @Transactional
     @Cacheable(cacheNames = CachingConfiguration.OU_HIERARCHY_CACHE, key = "#sourceOUId",
         condition = "#sourceOUId != null")
     public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {

@@ -36,6 +36,8 @@ public final class VivoRdfSupport {
 
     public static final String EVENT = "http://purl.org/NET/c4dm/event.owl#";
 
+    public static final String FABIO = "http://purl.org/spar/fabio/";
+
     private static final Map<String, String> COUNTRY_URIS = loadCountryUris();
 
 
@@ -77,6 +79,24 @@ public final class VivoRdfSupport {
 
     public static String personUri(PushTarget target, Integer databaseId) {
         return target.namespace() + "teslaris-person-" + databaseId;
+    }
+
+    // Journals and book series have their own ID sequence, so they need their own prefix.
+    public static String publicationSeriesUri(PushTarget target, Integer databaseId) {
+        return target.namespace() + "teslaris-series-" + databaseId;
+    }
+
+    public static String documentUri(PushTarget target, Integer databaseId) {
+        return target.namespace() + "teslaris-document-" + databaseId;
+    }
+
+    public static String publisherUri(PushTarget target, Integer databaseId) {
+        return target.namespace() + "teslaris-publisher-" + databaseId;
+    }
+
+    // The key comes from SharedNodeKey, so the same name gives the same URI.
+    public static String externalPublisherUri(PushTarget target, String key) {
+        return target.namespace() + "teslaris-external-publisher-" + key;
     }
 
     public static String eventUri(PushTarget target, Integer databaseId) {
@@ -222,6 +242,41 @@ public final class VivoRdfSupport {
             interval.addProperty(model.createProperty(VIVO + "end"),
                 addDateTimeValue(model, uri + "-end", end));
         }
+    }
+
+    /**
+     * Adds a vivo:DateTimeValue for an ISO date that can be partial ("2024", "2024-05" or
+     * "2024-05-12"). The precision follows the given parts. Returns null for a value that is
+     * not one of these forms.
+     */
+    public static Resource addPartialDateTimeValue(Model model, String uri, String isoDate) {
+        if (Objects.isNull(isoDate)) {
+            return null;
+        }
+
+        var value = isoDate.trim();
+        String dateTime;
+        String precision;
+        if (value.matches("\\d{4}")) {
+            dateTime = value + "-01-01T00:00:00";
+            precision = "yearPrecision";
+        } else if (value.matches("\\d{4}-\\d{2}")) {
+            dateTime = value + "-01T00:00:00";
+            precision = "yearMonthPrecision";
+        } else if (value.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            dateTime = value + "T00:00:00";
+            precision = "yearMonthDayPrecision";
+        } else {
+            return null;
+        }
+
+        var dateTimeValue = model.createResource(uri);
+        dateTimeValue.addProperty(RDF.type, model.createResource(VIVO + "DateTimeValue"));
+        dateTimeValue.addProperty(model.createProperty(VIVO + "dateTime"),
+            model.createTypedLiteral(dateTime, XSDDatatype.XSDdateTime));
+        dateTimeValue.addProperty(model.createProperty(VIVO + "dateTimePrecision"),
+            model.createResource(VIVO + precision));
+        return dateTimeValue;
     }
 
     public record Link(String key, String label, String url) {

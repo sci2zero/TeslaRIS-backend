@@ -40,6 +40,12 @@ public class SparqlUpdateClient {
         this.environment = environment;
     }
 
+    // VIVO shows this page once after a start with warnings, instead of the real response.
+    private static boolean isVivoStartupStatusPage(HttpServerErrorException e) {
+        return e.getStatusCode().value() == 500 &&
+            e.getResponseBodyAsString().contains("<title>Startup Status</title>");
+    }
+
     public void deleteData(PushTarget target, Collection<String> triples) {
         send(target, "DELETE DATA", triples);
     }
@@ -115,12 +121,6 @@ public class SparqlUpdateClient {
                 target.identifier());
             restTemplate.postForEntity(target.endpointUrl(), request, String.class);
         }
-    }
-
-    // VIVO shows this page once after a start with warnings, instead of the real response.
-    private static boolean isVivoStartupStatusPage(HttpServerErrorException e) {
-        return e.getStatusCode().value() == 500 &&
-            e.getResponseBodyAsString().contains("<title>Startup Status</title>");
     }
 
     private String resolvePassword(PushTarget target) {

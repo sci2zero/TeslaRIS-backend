@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +29,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.StaticMessageSource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
+import rs.teslaris.exporter.model.common.ExportPublicationType;
+import rs.teslaris.exporter.model.common.ExportPublisher;
+import rs.teslaris.exporter.model.converter.push.vivo.VivoDocumentMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoOrganisationUnitMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoPersonMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoTeslarisLinks;
@@ -56,24 +62,18 @@ public class PushExportServiceTest {
     private static final Date LAST_UPDATED = new Date(1_000L);
 
     private static final String STALE_TRIPLE = "<http://stale> <http://p> \"old\" .";
-
+    private static final String SHARED_TRIPLE = "<http://shared> <http://p> \"label\" .";
     @Mock
     private MongoTemplate mongoTemplate;
-
     @Mock
     private RdfMapperRegistry rdfMapperRegistry;
-
     @Mock
     private SparqlUpdateClient sparqlUpdateClient;
-
     @Captor
     private ArgumentCaptor<Collection<String>> deletedCaptor;
-
     @Captor
     private ArgumentCaptor<Collection<String>> insertedCaptor;
-
     private PushExportServiceImpl pushExportService;
-
 
     private static ExportOrganisationUnit organisationUnit(boolean deleted) {
         var organisationUnit = new ExportOrganisationUnit();
@@ -91,6 +91,53 @@ public class PushExportServiceTest {
         state.setSnapshotLastUpdated(snapshotLastUpdated);
         state.setTriples(new ArrayList<>(triples));
         return state;
+    }
+
+    private static ExportPerson person(boolean withExternalEmployment) {
+        var person = new ExportPerson();
+        person.setDatabaseId(7);
+        person.setLastUpdated(LAST_UPDATED);
+        person.setName(new ExportPersonName("Ivan", null, "Mrsulja"));
+        if (withExternalEmployment) {
+            person.getEmployments().add(new ExportEmployment(null, null, null, null, 43, null,
+                new ArrayList<>(
+                    List.of(new ExportMultilingualContent("EN", "University of Belgrade", 1)))));
+        }
+        return person;
+    }
+
+    private static VivoPersonMapper personMapper() {
+        return new VivoPersonMapper(
+            new VivoTeslarisLinks("http://localhost:5173/", "sr,en", "CRIS UNS"),
+            new StaticMessageSource());
+    }
+
+    private static String externalOrganisationUri() {
+        return personMapper().map(person(true), TARGET).sharedNodes().getFirst().uri();
+    }
+
+    private static PushedEntityState personState(List<String> dependencies) {
+        var state = new PushedEntityState(TARGET.identifier(), PushEntityType.PERSONS, 7);
+        state.setSnapshotLastUpdated(new Date(500L));
+        state.setTriples(new ArrayList<>(List.of(STALE_TRIPLE)));
+        state.setDependencies(new ArrayList<>(dependencies));
+        return state;
+    }
+
+    private static PushedSharedNodeState sharedState(String uri) {
+        var sharedState = new PushedSharedNodeState(TARGET.identifier(), uri);
+        sharedState.setTriples(new ArrayList<>(List.of(SHARED_TRIPLE)));
+        return sharedState;
+    }
+
+    private static ExportDocument documentSnapshot(ExportPublicationType type, Integer id) {
+        var document = new ExportDocument();
+        document.setType(type);
+        document.setDatabaseId(id);
+        document.setLastUpdated(LAST_UPDATED);
+        document.setTitle(
+            new ArrayList<>(List.of(new ExportMultilingualContent("EN", "Title " + id, 1))));
+        return document;
     }
 
     @BeforeEach
@@ -193,31 +240,6 @@ public class PushExportServiceTest {
         verify(mongoTemplate, never()).remove(any(PushedEntityState.class));
     }
 
-    private static final String SHARED_TRIPLE = "<http://shared> <http://p> \"label\" .";
-
-    private static ExportPerson person(boolean withExternalEmployment) {
-        var person = new ExportPerson();
-        person.setDatabaseId(7);
-        person.setLastUpdated(LAST_UPDATED);
-        person.setName(new ExportPersonName("Ivan", null, "Mrsulja"));
-        if (withExternalEmployment) {
-            person.getEmployments().add(new ExportEmployment(null, null, null, null, 43, null,
-                new ArrayList<>(
-                    List.of(new ExportMultilingualContent("EN", "University of Belgrade", 1)))));
-        }
-        return person;
-    }
-
-    private static VivoPersonMapper personMapper() {
-        return new VivoPersonMapper(
-            new VivoTeslarisLinks("http://localhost:5173/", "sr,en", "CRIS UNS"),
-            new StaticMessageSource());
-    }
-
-    private static String externalOrganisationUri() {
-        return personMapper().map(person(true), TARGET).sharedNodes().getFirst().uri();
-    }
-
     private void givenPerson(ExportPerson snapshot, List<PushedEntityState> states) {
         when(rdfMapperRegistry.find("vivo", ExportPerson.class))
             .thenReturn(Optional.of(personMapper()));
@@ -229,20 +251,6 @@ public class PushExportServiceTest {
 
     private void verifySaved(Predicate<Object> condition) {
         verify(mongoTemplate).save(ArgumentMatchers.<Object>argThat(condition::test));
-    }
-
-    private static PushedEntityState personState(List<String> dependencies) {
-        var state = new PushedEntityState(TARGET.identifier(), PushEntityType.PERSONS, 7);
-        state.setSnapshotLastUpdated(new Date(500L));
-        state.setTriples(new ArrayList<>(List.of(STALE_TRIPLE)));
-        state.setDependencies(new ArrayList<>(dependencies));
-        return state;
-    }
-
-    private static PushedSharedNodeState sharedState(String uri) {
-        var sharedState = new PushedSharedNodeState(TARGET.identifier(), uri);
-        sharedState.setTriples(new ArrayList<>(List.of(SHARED_TRIPLE)));
-        return sharedState;
     }
 
     private void pushPersons() {
@@ -321,5 +329,83 @@ public class PushExportServiceTest {
         // Then
         assertFalse(deletedCaptor.getValue().contains(SHARED_TRIPLE));
         verify(mongoTemplate, never()).remove(any(PushedSharedNodeState.class));
+    }
+
+    private void givenDocumentGroups(Map<ExportPublicationType, List<ExportDocument>> byType) {
+        when(rdfMapperRegistry.find("vivo", ExportDocument.class)).thenReturn(Optional.of(
+            new VivoDocumentMapper(
+                new VivoTeslarisLinks("http://localhost:5173/", "sr,en", "CRIS UNS"))));
+        when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
+            .thenAnswer(invocation -> {
+                Query query = invocation.getArgument(0);
+                var filter = (org.bson.Document) query.getQueryObject().get("type");
+                var types = (List<?>) filter.get("$in");
+                return byType.entrySet().stream()
+                    .filter(entry -> types.contains(entry.getKey().name()))
+                    .flatMap(entry -> entry.getValue().stream()).toList();
+            });
+        when(mongoTemplate.find(any(Query.class), eq(PushedEntityState.class)))
+            .thenReturn(List.of());
+    }
+
+    @Test
+    public void shouldPushSeriesBeforeDocumentsWithSeparateStateTypes() {
+        // Given
+        var journal = documentSnapshot(ExportPublicationType.JOURNAL, 20);
+        var article = documentSnapshot(ExportPublicationType.JOURNAL_PUBLICATION, 20);
+        article.setJournal(documentSnapshot(ExportPublicationType.JOURNAL, 20));
+        givenDocumentGroups(Map.of(
+            ExportPublicationType.JOURNAL, List.of(journal),
+            ExportPublicationType.JOURNAL_PUBLICATION, List.of(article)));
+
+        // When
+        pushExportService.pushEntities(TARGET, PushEntityType.DOCUMENTS, false);
+
+        // Then
+        verify(sparqlUpdateClient, times(2)).insertData(eq(TARGET), insertedCaptor.capture());
+        var first = insertedCaptor.getAllValues().get(0);
+        var second = insertedCaptor.getAllValues().get(1);
+        assertTrue(first.stream().anyMatch(triple ->
+            triple.startsWith("<http://vivo.example/individual/teslaris-series-20> " +
+                "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>")));
+        assertTrue(second.stream().anyMatch(triple ->
+            triple.startsWith("<http://vivo.example/individual/teslaris-document-20> " +
+                "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>")));
+
+        // Same database ID, but different state types, so neither overwrites the other.
+        verifySaved(saved -> saved instanceof PushedEntityState state &&
+            state.getEntityType() == PushEntityType.PUBLICATION_SERIES &&
+            state.getDatabaseId() == 20);
+        verifySaved(saved -> saved instanceof PushedEntityState state &&
+            state.getEntityType() == PushEntityType.DOCUMENTS && state.getDatabaseId() == 20);
+    }
+
+    @Test
+    public void shouldReplaceChangedPublisherNodeMadeFromEntity() {
+        // Given
+        var monograph = documentSnapshot(ExportPublicationType.MONOGRAPH, 40);
+        monograph.getPublishers().add(new ExportPublisher(
+            new ArrayList<>(List.of(new ExportMultilingualContent("EN", "New Name", 1))), 9));
+        givenDocumentGroups(Map.of(ExportPublicationType.MONOGRAPH, List.of(monograph)));
+
+        var publisherUri = "http://vivo.example/individual/teslaris-publisher-9";
+        var oldLabel = "<" + publisherUri + "> <http://www.w3.org/2000/01/rdf-schema#label> " +
+            "\"Old Name\"@en .";
+        var sharedState = new PushedSharedNodeState(TARGET.identifier(), publisherUri);
+        sharedState.setTriples(new ArrayList<>(List.of(oldLabel)));
+        when(mongoTemplate.find(any(Query.class), eq(PushedSharedNodeState.class)))
+            .thenReturn(List.of(sharedState));
+
+        // When
+        pushExportService.pushEntities(TARGET, PushEntityType.DOCUMENTS, false);
+
+        // Then
+        verify(sparqlUpdateClient).deleteData(eq(TARGET), deletedCaptor.capture());
+        verify(sparqlUpdateClient).insertData(eq(TARGET), insertedCaptor.capture());
+        assertTrue(deletedCaptor.getValue().contains(oldLabel));
+        assertTrue(insertedCaptor.getValue().contains(
+            "<" + publisherUri + "> <http://www.w3.org/2000/01/rdf-schema#label> " +
+                "\"New Name\"@en ."));
+        verifySaved(saved -> saved == sharedState);
     }
 }

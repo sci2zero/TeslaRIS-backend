@@ -29,7 +29,7 @@ public class RdfMapperRegistry {
 
     @SuppressWarnings("unchecked")
     public <T extends BaseExportEntity> Optional<RdfMapper<T>> find(String profile,
-                                                                   Class<T> sourceType) {
+                                                                    Class<T> sourceType) {
         return Optional.ofNullable((RdfMapper<T>) mappers.get(key(profile, sourceType)));
     }
 }

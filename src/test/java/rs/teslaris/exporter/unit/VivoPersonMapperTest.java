@@ -87,6 +87,16 @@ public class VivoPersonMapperTest {
             model.createResource(object));
     }
 
+    private static ExportEmployment externalEmployment(Integer involvementId,
+                                                       String... englishNames) {
+        var names = new ArrayList<ExportMultilingualContent>();
+        for (var name : englishNames) {
+            names.add(new ExportMultilingualContent("EN", name, 1));
+        }
+        return new ExportEmployment(null, null, null, "Visiting Professor", involvementId,
+            InvolvementType.EMPLOYED_AT, names);
+    }
+
     @Test
     public void shouldMapPersonNameVcardAndIdentifiers() {
         // When
@@ -171,16 +181,6 @@ public class VivoPersonMapperTest {
         // Then
         assertEquals(0, lines.stream().filter(line -> line.contains("FEMALE") ||
             line.toLowerCase().contains("gender")).count());
-    }
-
-    private static ExportEmployment externalEmployment(Integer involvementId,
-                                                       String... englishNames) {
-        var names = new ArrayList<ExportMultilingualContent>();
-        for (var name : englishNames) {
-            names.add(new ExportMultilingualContent("EN", name, 1));
-        }
-        return new ExportEmployment(null, null, null, "Visiting Professor", involvementId,
-            InvolvementType.EMPLOYED_AT, names);
     }
 
     @Test

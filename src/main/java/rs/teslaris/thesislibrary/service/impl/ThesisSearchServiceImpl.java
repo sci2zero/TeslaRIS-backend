@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -41,13 +43,18 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
 
     private final ExpressionTransformer expressionTransformer;
 
+    private final OrganisationUnitService organisationUnitService;
+
 
     public ThesisSearchServiceImpl(SearchFieldsLoader searchFieldsLoader,
                                    SearchService<DocumentPublicationIndex> searchService,
-                                   ExpressionTransformer expressionTransformer) throws IOException {
+                                   ExpressionTransformer expressionTransformer,
+                                   OrganisationUnitService organisationUnitService)
+        throws IOException {
         this.searchFieldsLoader = searchFieldsLoader;
         this.searchService = searchService;
         this.expressionTransformer = expressionTransformer;
+        this.organisationUnitService = organisationUnitService;
         this.searchFieldsLoader.loadConfiguration(configFileName);
     }
 
@@ -128,7 +135,12 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                                      Boolean showOnlyOpenAccessTheses) {
         return BoolQuery.of(b -> {
             if (!facultyIds.isEmpty()) {
-                b.must(createIdTermsQuery("organisation_unit_ids", facultyIds));
+                var organisationUnitIds = new HashSet<Integer>();
+                facultyIds.forEach(facultyId -> organisationUnitIds.addAll(
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(facultyId,
+                        true)));
+                b.must(createIdTermsQuery("organisation_unit_ids",
+                    organisationUnitIds.stream().toList()));
             }
 
             if (!authorIds.isEmpty()) {

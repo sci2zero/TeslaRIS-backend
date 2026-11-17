@@ -2,12 +2,14 @@ package rs.teslaris.exporter.service.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -49,6 +51,9 @@ public class PushExportServiceImpl implements PushExportService {
 
     private final Map<String, ReentrantLock> targetLocks = new ConcurrentHashMap<>();
 
+    private static List<String> dependenciesOf(PushedEntityState state) {
+        return Objects.nonNull(state.getDependencies()) ? state.getDependencies() : List.of();
+    }
 
     @Override
     @Async("taskExecutor")
@@ -77,29 +82,46 @@ public class PushExportServiceImpl implements PushExportService {
                 "No RDF mapper for profile '" + target.profile() + "' and type " +
                     entityType.getCode()));
 
-        int pageNumber = 0;
         int changed = 0;
-        boolean hasNextPage = true;
+        var missingLinks = new EnumMap<PushEntityType, Integer>(PushEntityType.class);
 
-        while (hasNextPage) {
-            var query = new Query().with(
-                PageRequest.of(pageNumber, PAGE_SIZE, Sort.by(Sort.Direction.ASC, "databaseId")));
-            var snapshots = mongoTemplate.find(query, snapshotType);
+        for (var group : entityType.groups()) {
+            int pageNumber = 0;
+            boolean hasNextPage = true;
 
-            changed += pushPage(target, entityType, mapper, snapshots, force);
+            while (hasNextPage) {
+                var query = new Query();
+                if (!group.publicationTypes().isEmpty()) {
+                    query.addCriteria(Criteria.where("type")
+                        .in(group.publicationTypes().stream().map(Enum::name).toList()));
+                }
+                query.with(PageRequest.of(pageNumber, PAGE_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")));
+                var snapshots = mongoTemplate.find(query, snapshotType);
 
-            pageNumber++;
-            hasNextPage = snapshots.size() == PAGE_SIZE;
+                changed += pushPage(target, group.stateType(), mapper, snapshots, force,
+                    missingLinks);
+
+                pageNumber++;
+                hasNextPage = snapshots.size() == PAGE_SIZE;
+            }
         }
 
-        log.info("Push of {} to {} completed, {} entities changed.", entityType.getCode(),
-            target.identifier(), changed);
+        if (missingLinks.isEmpty()) {
+            log.info("Push of {} to {} completed, {} entities changed.", entityType.getCode(),
+                target.identifier(), changed);
+        } else {
+            log.info("Push of {} to {} completed, {} entities changed. Links to entities that " +
+                    "are not pushed to this target: {}.", entityType.getCode(),
+                target.identifier(), changed, missingLinks);
+        }
     }
 
     private <T extends BaseExportEntity> int pushPage(PushTarget target,
                                                       PushEntityType entityType,
                                                       RdfMapper<T> mapper, List<T> snapshots,
-                                                      boolean force) {
+                                                      boolean force,
+                                                      Map<PushEntityType, Integer> missingLinks) {
         if (snapshots.isEmpty()) {
             return 0;
         }
@@ -115,6 +137,9 @@ public class PushExportServiceImpl implements PushExportService {
         // Shared nodes that the new triples link to, and URIs that entities stopped linking to.
         var sharedNodes = new LinkedHashMap<String, SharedNode>();
         var droppedDependencies = new LinkedHashSet<String>();
+
+        // Entities that the changed snapshots link to, to count links to missing entities.
+        var references = new EnumMap<PushEntityType, Set<Integer>>(PushEntityType.class);
 
         for (var snapshot : snapshots) {
             var state = states.get(snapshot.getDatabaseId());
@@ -145,6 +170,10 @@ public class PushExportServiceImpl implements PushExportService {
                 .forEach(toInsert::add);
 
             mapping.sharedNodes().forEach(node -> sharedNodes.putIfAbsent(node.uri(), node));
+            mapping.references().stream()
+                .filter(reference -> Objects.nonNull(reference.databaseId()))
+                .forEach(reference -> references.computeIfAbsent(reference.entityType(),
+                    type -> new HashSet<>()).add(reference.databaseId()));
             var dependencies = mapping.sharedNodes().stream().map(SharedNode::uri)
                 .distinct().sorted().toList();
             if (Objects.nonNull(state)) {
@@ -179,7 +208,8 @@ public class PushExportServiceImpl implements PushExportService {
             var sharedState = sharedStates.get(node.uri());
             // The first entity that links to a node creates it. Later entities with the same
             // node do not change it. A forced push replaces it with the current triples.
-            if (Objects.nonNull(sharedState) && !force) {
+            // A node made from a TeslaRIS entity (replaceWhenChanged) is replaced when it changed.
+            if (Objects.nonNull(sharedState) && !force && !node.replaceWhenChanged()) {
                 return;
             }
 
@@ -221,11 +251,22 @@ public class PushExportServiceImpl implements PushExportService {
         statesToRemove.forEach(mongoTemplate::remove);
         sharedStatesToRemove.forEach(mongoTemplate::remove);
 
+        countMissingLinks(target, references, missingLinks);
+
         return statesToSave.size() + statesToRemove.size();
     }
 
-    private static List<String> dependenciesOf(PushedEntityState state) {
-        return Objects.nonNull(state.getDependencies()) ? state.getDependencies() : List.of();
+    // Runs after the states of the page are saved, so links inside the page are not counted.
+    private void countMissingLinks(PushTarget target,
+                                   Map<PushEntityType, Set<Integer>> references,
+                                   Map<PushEntityType, Integer> missingLinks) {
+        references.forEach((entityType, databaseIds) -> {
+            var pushed = findStates(target, entityType, List.copyOf(databaseIds)).keySet();
+            var missing = (int) databaseIds.stream().filter(id -> !pushed.contains(id)).count();
+            if (missing > 0) {
+                missingLinks.merge(entityType, missing, Integer::sum);
+            }
+        });
     }
 
     // The states of the changed entities are not saved yet, so they are not counted.
