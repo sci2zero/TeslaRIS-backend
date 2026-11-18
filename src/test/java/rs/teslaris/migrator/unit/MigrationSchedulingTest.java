@@ -71,7 +71,7 @@ public class MigrationSchedulingTest {
 
     @BeforeEach
     public void setUp() {
-        doReturn(Optional.of(new ResolvedPipeline<>(mock(MigrationPipeline.class),
+        doReturn(Optional.of(new ResolvedPipeline<Object>(mock(MigrationPipeline.class),
             MigrationEntityType.PERSON))).when(pipelineRegistry).resolve(anyString(), any());
         when(runRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(taskManagerService.scheduleTask(anyString(), any(), any(), any(), any()))

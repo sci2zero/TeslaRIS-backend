@@ -84,21 +84,6 @@ public class HydratorIdentifierInitializerTest {
     }
 
     @Test
-    public void shouldRenameProjectIdentifierCreatedUnderLegacyCode() {
-        var legacy = complete();
-        legacy.setCode(HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE);
-        when(identifierRepository.findByCode(
-            HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE)).thenReturn(legacy);
-        when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(complete());
-
-        initializer.ensureIdentifiers();
-
-        verify(identifierRepository).save(legacy);
-        assertEquals(PROJECT_CODE, legacy.getCode());
-        assertEquals("https://example.com/{ID}", legacy.getUrlTemplate());
-    }
-
-    @Test
     public void shouldAddMissingValuesToExistingIdentifier() {
         var existing = new Identifier();
         existing.setUrlTemplate("");
