@@ -2,6 +2,7 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,13 @@ public class HydratorOutputConverters {
 
     private static final String HANDLE_CODE = "handle";
 
+    private static final String OTHER_ID_CODE = "other-id";
+
+    // "No id" answers written into other-id, not values
+    private static final Pattern OTHER_ID_PLACEHOLDER = Pattern.compile(
+        "^(?:n/?a|nd|none|not available|n[aã]o(?: possui)?|-+)$",
+        Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
     // Internal id of the source system, not a real PID - expected on almost every output
     private static final String SOURCE_WORK_ID_CODE = "source-work-id";
 
@@ -100,8 +108,11 @@ public class HydratorOutputConverters {
             "^(?:\\d{2}\\.\\d{3,}\\.\\d+/\\S+)$")
     );
 
-    // Prefixes the source keeps on an id that core stores bare (Scopus EID, WoS UID)
+    // Prefixes the source keeps on an id that core stores bare (DOI, Scopus EID, WoS UID)
     private static final Map<String, Pattern> IDENTIFIER_PREFIXES = Map.of(
+        "doi",
+        Pattern.compile("^(?:(?:https?://)?(?:dx\\.)?doi\\.org/|doi\\s*[:.]?|/(?=10\\.))\\s*",
+            Pattern.CASE_INSENSITIVE),
         "eid", Pattern.compile("^2-s2\\.0-", Pattern.CASE_INSENSITIVE),
         "wosuid", Pattern.compile("^(?:WOS|ISI):", Pattern.CASE_INSENSITIVE)
     );
@@ -132,6 +143,7 @@ public class HydratorOutputConverters {
     private static final Map<MigrationEntityType, OutputRules> OUTPUT_RULES = Map.of(
         MigrationEntityType.JOURNAL_PUBLICATION, new OutputRules(62, 67, 68, 69),
         MigrationEntityType.PROCEEDINGS_PUBLICATION, new OutputRules(76, 85, 86, 88),
+        MigrationEntityType.CONFERENCE_ABSTRACT, new OutputRules(380, 382, 383, 384),
         // Slides carry only the presentation date and the presenters
         MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
@@ -223,6 +235,35 @@ public class HydratorOutputConverters {
                 "proceedings publisher not migrated: '" + paper.proceedingsPublisher().trim() +
                     "'");
         }
+
+        return dto;
+    }
+
+    // CW-001-MAP-000370…385
+    public ProceedingsPublicationDTO toConferenceAbstract(HydratorCVModel.Curriculum record,
+                                                          HydratorCVModel.Output output) {
+        var conferenceAbstract = output.conferenceAbstract();
+
+        if (Objects.isNull(conferenceAbstract) || isBlank(conferenceAbstract.articleTitle())) {
+            return null;
+        }
+
+        var language = languageOf(record);
+        var dto = new ProceedingsPublicationDTO();
+        var entityType = MigrationEntityType.CONFERENCE_ABSTRACT;
+
+        applyCommonFields(dto, record, output, entityType, conferenceAbstract.articleTitle(),
+            language, conferenceAbstract.publicationDate(), null, conferenceAbstract.authors(),
+            conferenceAbstract.authoringRole());
+        applyIdentifiers(dto, record, output, entityType, conferenceAbstract.identifiers(),
+            ISBN_CODE);
+        applyPublicationFields(dto, record, output, entityType, language,
+            conferenceAbstract.keywords(), conferenceAbstract.publicationStatus(),
+            conferenceAbstract.researchClassifications());
+
+        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE);
+        dto.setStartPage(conferenceAbstract.pageFrom());
+        dto.setEndPage(conferenceAbstract.pageTo());
 
         return dto;
     }
@@ -860,6 +901,19 @@ public class HydratorOutputConverters {
                 continue;
             }
 
+            if (OTHER_ID_CODE.equals(code)) {
+                var value = identifier.identifier().trim();
+
+                if (value.matches("(?i)^https?://\\S+$")) {
+                    dto.getUris().add(value);
+                    continue;
+                }
+
+                if (OTHER_ID_PLACEHOLDER.matcher(value).matches()) {
+                    continue;
+                }
+            }
+
             var target = IDENTIFIER_TARGETS.get(code);
 
             if (Objects.isNull(target)) {
@@ -961,7 +1015,7 @@ public class HydratorOutputConverters {
         var people = new ArrayList<HydratorCVModel.OutputAuthor>();
         var names = new ArrayList<PersonNameDTO>();
 
-        for (var author : authors.author()) {
+        for (var author : separated(authors.author())) {
             var personName = conversionUtil.splitName(author.name(), null);
 
             if (Objects.nonNull(personName) && !isEtAl(author.name())) {
@@ -1000,7 +1054,7 @@ public class HydratorOutputConverters {
             return contributions;
         }
 
-        for (var person : people.author()) {
+        for (var person : separated(people.author())) {
             var personName = conversionUtil.splitName(person.name(), null);
 
             if (Objects.nonNull(personName) && !isEtAl(person.name())) {
@@ -1011,6 +1065,26 @@ public class HydratorOutputConverters {
         }
 
         return contributions;
+    }
+
+    // Whole author lists kept in one entry, separated by ";"
+    private List<HydratorCVModel.OutputAuthor> separated(
+        List<HydratorCVModel.OutputAuthor> authors) {
+        var separated = new ArrayList<HydratorCVModel.OutputAuthor>();
+
+        for (var author : authors) {
+            if (Objects.isNull(author) || isBlank(author.name()) || !author.name().contains(";")) {
+                separated.add(author);
+                continue;
+            }
+
+            Arrays.stream(author.name().split(";"))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .forEach(name -> separated.add(new HydratorCVModel.OutputAuthor(null, null, name)));
+        }
+
+        return separated;
     }
 
     private PersonDocumentContributionDTO contribution(DocumentContributionType type,

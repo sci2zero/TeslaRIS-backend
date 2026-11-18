@@ -111,12 +111,17 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 duplicateFailureHandler.forType(JournalPublicationDTO.class));
         }
 
-        if (Objects.nonNull(output.conferencePaper())) {
-            var dto = converters.toProceedingsPublication(record, output);
+        if (Objects.nonNull(output.conferencePaper()) ||
+            Objects.nonNull(output.conferenceAbstract())) {
+            var dto = Objects.nonNull(output.conferencePaper()) ?
+                converters.toProceedingsPublication(record, output) :
+                converters.toConferenceAbstract(record, output);
 
             // Proceedings are resolved on creation, so skipped or filtered items create no stubs
             return Objects.isNull(dto) ? null : new MigrationItem<ProceedingsPublicationDTO>(
-                MigrationEntityType.PROCEEDINGS_PUBLICATION,
+                Objects.nonNull(output.conferencePaper()) ?
+                    MigrationEntityType.PROCEEDINGS_PUBLICATION :
+                    MigrationEntityType.CONFERENCE_ABSTRACT,
                 converters.outputKey(record, output),
                 null,
                 dto,

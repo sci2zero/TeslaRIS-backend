@@ -596,6 +596,7 @@ public class HydratorCVModel {
         OutputType outputType,
         JournalArticle journalArticle,
         ConferencePaper conferencePaper,
+        ConferenceAbstract conferenceAbstract,
         Dissertation dissertation
     ) {
     }
@@ -647,6 +648,25 @@ public class HydratorCVModel {
         CodeValue authoringRole,
         CodeValue publicationStatus,
         PublicationLocation publicationLocation,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConferenceAbstract(
+        String articleTitle,
+        String conferenceName,
+        PublicationLocation conferenceLocation,
+        String volume,
+        String issue,
+        String pageFrom,
+        String pageTo,
+        DateInfo publicationDate,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        CodeValue publicationStatus,
         ResearchClassifications researchClassifications,
         Keywords keywords
     ) {
