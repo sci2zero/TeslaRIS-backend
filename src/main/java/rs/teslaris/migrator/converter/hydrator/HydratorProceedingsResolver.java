@@ -35,9 +35,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * The proceedings of a conference paper or abstract, its conference and the event a paper was
- * presented at are only named in the curriculum, so all are created on demand as stubs
- * (CW-001-MAP-000073…083, 000087, 000090, 000372…376, 000380).
+ * The proceedings of a conference paper or abstract, its conference (also a poster's) and the event
+ * a paper was presented at are only named in the curriculum, so all are created on demand as stubs
+ * (CW-001-MAP-000073…083, 000087, 000090, 000372…376, 000380, 000388/389).
  * <p>
  * Proceedings are matched by their ISBN (CW-001-MAP-000085), otherwise by conference and title;
  * conferences by name and year. Missing names fall back to "Not informed" per crosswalk.
@@ -94,6 +94,12 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             key -> storedStub(MigrationEntityType.PROCEEDINGS, key)
                 .map(this::container)
                 .orElseGet(() -> create(key, record, output, language, null, performIndex)));
+    }
+
+    // A poster is held at its conference directly, the same stub its papers and abstracts use
+    public Integer resolveConference(HydratorCVModel.Curriculum record,
+                                     HydratorCVModel.Output output, boolean performIndex) {
+        return resolveConference(record, output, converters.languageOf(record), performIndex);
     }
 
     @Override
@@ -298,6 +304,15 @@ public class HydratorProceedingsResolver implements RunScopedCache {
                 paper.conferenceLocation(), paper.proceedingsTitle(), paper.conferenceDate(),
                 paper.identifiers(), paper.proceedingsEditors(), paper.publicationLocation(), null,
                 null, MigrationEntityType.PROCEEDINGS_PUBLICATION, 85);
+        }
+
+        var poster = output.conferencePoster();
+
+        // CW-001-MAP-000388/389: a poster has a conference only, no location and no proceedings
+        if (Objects.nonNull(poster)) {
+            return new Source(poster.conferenceName(), poster.conferenceDate(), null, null, null,
+                poster.identifiers(), null, null, null, null, MigrationEntityType.CONFERENCE_POSTER,
+                391);
         }
 
         var conferenceAbstract = output.conferenceAbstract();

@@ -147,6 +147,35 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 duplicateFailureHandler.forType(ProceedingsPublicationDTO.class));
         }
 
+        if (Objects.nonNull(output.conferencePoster())) {
+            var dto = converters.toConferencePoster(record, output);
+
+            // The conference is resolved on creation, so skipped or filtered posters create no stubs
+            return Objects.isNull(dto) ? null : new MigrationItem<PerformanceRelatedOutputDTO>(
+                MigrationEntityType.CONFERENCE_POSTER,
+                converters.outputKey(record, output),
+                null,
+                dto,
+                (poster, run) -> {
+                    dropUsedIdentifiers(record, output, poster, null);
+                    poster.setEventId(
+                        proceedingsResolver.resolveConference(record, output,
+                            run.isPerformIndex()));
+                    return performanceRelatedOutputService.createPerformanceRelatedOutput(poster,
+                        run.isPerformIndex()).getId();
+                },
+                // The merge keeps the present conference, so an update creates no second stub
+                UpdatePlan.<PerformanceRelatedOutputDTO>of(
+                    ExistingReader.of(
+                        performanceRelatedOutputService::readPerformanceRelatedOutputById),
+                    (targetId, poster, run) -> {
+                        dropUsedIdentifiers(record, output, poster, targetId);
+                        performanceRelatedOutputService.editPerformanceRelatedOutput(targetId,
+                            poster);
+                    }),
+                FailureHandler.noOp());
+        }
+
         if (Objects.nonNull(output.dissertation())) {
             var dto = converters.toThesis(record, output);
 
@@ -193,6 +222,16 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                     performanceRelatedOutputService::readPerformanceRelatedOutputById),
                 EntityUpdater.of(performanceRelatedOutputService::editPerformanceRelatedOutput)),
             FailureHandler.noOp());
+    }
+
+    private void dropUsedIdentifiers(HydratorCVModel.Curriculum record,
+                                     HydratorCVModel.Output output, DocumentDTO dto,
+                                     Integer targetId) {
+        documentPublicationService.findDocumentByCommonIdentifier(dto.getDoi(),
+                dto.getOpenAlexId(), dto.getScopusId(), dto.getWebOfScienceId())
+            .filter(owner -> !Objects.equals(owner.getId(), targetId))
+            .ifPresent(owner -> converters.dropUsedIdentifiers(record, output, dto,
+                owner.getId()));
     }
 
     // A duplicate fails before its container is resolved, so it leaves no stubs behind

@@ -144,6 +144,7 @@ public class HydratorOutputConverters {
         MigrationEntityType.JOURNAL_PUBLICATION, new OutputRules(62, 67, 68, 69),
         MigrationEntityType.PROCEEDINGS_PUBLICATION, new OutputRules(76, 85, 86, 88),
         MigrationEntityType.CONFERENCE_ABSTRACT, new OutputRules(380, 382, 383, 384),
+        MigrationEntityType.CONFERENCE_POSTER, new OutputRules(389, 391, 392, 393),
         // Slides carry only the presentation date and the presenters
         MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
@@ -266,6 +267,74 @@ public class HydratorOutputConverters {
         dto.setEndPage(conferenceAbstract.pageTo());
 
         return dto;
+    }
+
+    // CW-001-MAP-000386…394: the poster only; its conference is resolved when it is created
+    public PerformanceRelatedOutputDTO toConferencePoster(HydratorCVModel.Curriculum record,
+                                                          HydratorCVModel.Output output) {
+        var poster = output.conferencePoster();
+
+        if (Objects.isNull(poster) || isBlank(poster.title())) {
+            return null;
+        }
+
+        var language = languageOf(record);
+        var dto = new PerformanceRelatedOutputDTO();
+        var entityType = MigrationEntityType.CONFERENCE_POSTER;
+
+        applyCommonFields(dto, record, output, entityType, poster.title(), language,
+            poster.conferenceDate(), null, poster.authors(), poster.authoringRole());
+        applyIdentifiers(dto, record, output, entityType, poster.identifiers(), null);
+        dto.setKeywords(conversionUtil.multilingualContent(keywords(poster.keywords()), language));
+        dropResearchClassifications(record, output, entityType, poster.researchClassifications());
+        dropPartOfIdentifiers(record, output, entityType, poster.identifiers());
+
+        dto.setType(PerformanceRelatedOutputType.POSTER);
+        dto.getTitle().stream()
+            .map(MultilingualContentDTO::getLanguageTagId)
+            .filter(Objects::nonNull)
+            .forEach(dto.getLanguageTagIds()::add);
+
+        return dto;
+    }
+
+    // A poster has no container to hold the identifiers of the book or proceedings it is part of
+    private void dropPartOfIdentifiers(HydratorCVModel.Curriculum record,
+                                       HydratorCVModel.Output output,
+                                       MigrationEntityType entityType,
+                                       HydratorCVModel.OutputIdentifiers identifiers) {
+        if (Objects.isNull(identifiers) || Objects.isNull(identifiers.identifier())) {
+            return;
+        }
+
+        identifiers.identifier().stream()
+            .filter(identifier -> Objects.nonNull(identifier) && isPartOf(identifier) &&
+                !isBlank(identifier.identifier()) &&
+                !SOURCE_WORK_ID_CODE.equals(identifierCode(identifier)))
+            .forEach(identifier -> migrationLog.valueDropped(HydratorSource.NAME,
+                entityType.name(), outputKey(record, output),
+                HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).identifiers()),
+                "part-of " + identifierCode(identifier) + " has no container: '" +
+                    identifier.identifier().trim() + "'"));
+    }
+
+    /**
+     * Drops the identifiers another document already holds, as core rejects the poster for them.
+     * Posters often carry the DOI of the book or proceedings they were printed in.
+     */
+    void dropUsedIdentifiers(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
+                             DocumentDTO dto, Integer ownerId) {
+        migrationLog.valueDropped(HydratorSource.NAME,
+            MigrationEntityType.CONFERENCE_POSTER.name(), outputKey(record, output),
+            HydratorMappingRule.cv(OUTPUT_RULES.get(MigrationEntityType.CONFERENCE_POSTER)
+                .identifiers()),
+            String.format("identifier already used by document %d (doi='%s', scopus='%s', " +
+                    "wos='%s', openAlex='%s')", ownerId, dto.getDoi(), dto.getScopusId(),
+                dto.getWebOfScienceId(), dto.getOpenAlexId()));
+        dto.setDoi(null);
+        dto.setScopusId(null);
+        dto.setWebOfScienceId(null);
+        dto.setOpenAlexId(null);
     }
 
     /**
