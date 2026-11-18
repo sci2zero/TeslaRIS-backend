@@ -598,6 +598,7 @@ public class HydratorCVModel {
         ConferencePaper conferencePaper,
         ConferenceAbstract conferenceAbstract,
         ConferencePoster conferencePoster,
+        BookChapter bookChapter,
         Dissertation dissertation
     ) {
     }
@@ -681,6 +682,29 @@ public class HydratorCVModel {
         OutputIdentifiers identifiers,
         OutputAuthors authors,
         CodeValue authoringRole,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BookChapter(
+        String chapterTitle,
+        String bookTitle,
+        String bookVolume,
+        String bookEdition,
+        String bookPublisher,
+        String pageFrom,
+        String pageTo,
+        String refereed,
+        CodeValue publicationStatus,
+        String publicationYear,
+        PublicationLocation publicationLocation,
+        String url,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        OutputAuthors editors,
         ResearchClassifications researchClassifications,
         Keywords keywords
     ) {

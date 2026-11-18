@@ -20,6 +20,7 @@ import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -27,6 +28,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationStatus;
@@ -56,6 +58,9 @@ public class HydratorOutputConverters {
     private static final String ISSN_CODE = "issn";
 
     private static final String ISBN_CODE = "isbn";
+
+    private static final Pattern ISBN_PREFIX = Pattern.compile("^ISBN[-:\\s]*",
+        Pattern.CASE_INSENSITIVE);
 
     private static final String HANDLE_CODE = "handle";
 
@@ -145,6 +150,7 @@ public class HydratorOutputConverters {
         MigrationEntityType.PROCEEDINGS_PUBLICATION, new OutputRules(76, 85, 86, 88),
         MigrationEntityType.CONFERENCE_ABSTRACT, new OutputRules(380, 382, 383, 384),
         MigrationEntityType.CONFERENCE_POSTER, new OutputRules(389, 391, 392, 393),
+        MigrationEntityType.MONOGRAPH_PUBLICATION, new OutputRules(154, 160, 161, 163),
         // Slides carry only the presentation date and the presenters
         MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
@@ -287,7 +293,7 @@ public class HydratorOutputConverters {
         applyIdentifiers(dto, record, output, entityType, poster.identifiers(), null);
         dto.setKeywords(conversionUtil.multilingualContent(keywords(poster.keywords()), language));
         dropResearchClassifications(record, output, entityType, poster.researchClassifications());
-        dropPartOfIdentifiers(record, output, entityType, poster.identifiers());
+        dropPartOfIdentifiers(record, output, entityType, poster.identifiers(), null);
 
         dto.setType(PerformanceRelatedOutputType.POSTER);
         dto.getTitle().stream()
@@ -298,11 +304,63 @@ public class HydratorOutputConverters {
         return dto;
     }
 
-    // A poster has no container to hold the identifiers of the book or proceedings it is part of
+    /**
+     * CW-001-MAP-000145…164: the chapter only; its book is resolved when it is created (see
+     * {@link HydratorMonographResolver}), as core overwrites the chapter's date from the book.
+     */
+    public MonographPublicationDTO toBookChapter(HydratorCVModel.Curriculum record,
+                                                 HydratorCVModel.Output output) {
+        var chapter = output.bookChapter();
+
+        if (Objects.isNull(chapter) || isBlank(chapter.chapterTitle())) {
+            return null;
+        }
+
+        var language = languageOf(record);
+        var dto = new MonographPublicationDTO();
+        var entityType = MigrationEntityType.MONOGRAPH_PUBLICATION;
+
+        applyCommonFields(dto, record, output, entityType, chapter.chapterTitle(), language,
+            yearDate(chapter.publicationYear()), chapter.url(), chapter.authors(),
+            chapter.authoringRole());
+        applyIdentifiers(dto, record, output, entityType, chapter.identifiers(), ISBN_CODE);
+        applyPublicationFields(dto, record, output, entityType, language, chapter.keywords(),
+            chapter.publicationStatus(), chapter.researchClassifications());
+        dropPartOfIdentifiers(record, output, entityType, chapter.identifiers(), ISBN_CODE);
+
+        dto.setMonographPublicationType(MonographPublicationType.CHAPTER);
+        dto.setPeerReviewed(isTrue(chapter.refereed()));
+        dto.setStartPage(chapter.pageFrom());
+        dto.setEndPage(chapter.pageTo());
+
+        return dto;
+    }
+
+    HydratorCVModel.DateInfo yearDate(String year) {
+        return isBlank(year) ? null : new HydratorCVModel.DateInfo(year.trim(), null, null);
+    }
+
+    // CW-001-MAP-000160: a chapter has no ISBN of its own, so every ISBN on it is its book's
+    List<String> bookIsbns(HydratorCVModel.OutputIdentifiers identifiers) {
+        if (Objects.isNull(identifiers) || Objects.isNull(identifiers.identifier())) {
+            return List.of();
+        }
+
+        return identifiers.identifier().stream()
+            .filter(identifier -> Objects.nonNull(identifier) &&
+                ISBN_CODE.equals(identifierCode(identifier)) && !isBlank(identifier.identifier()))
+            .map(identifier -> ISBN_PREFIX.matcher(identifier.identifier().trim())
+                .replaceFirst("").replaceFirst("[.,;\\s]+$", "").toUpperCase())
+            .distinct()
+            .toList();
+    }
+
+    // Identifiers of a container this output type has no place for
     private void dropPartOfIdentifiers(HydratorCVModel.Curriculum record,
                                        HydratorCVModel.Output output,
                                        MigrationEntityType entityType,
-                                       HydratorCVModel.OutputIdentifiers identifiers) {
+                                       HydratorCVModel.OutputIdentifiers identifiers,
+                                       String containerCode) {
         if (Objects.isNull(identifiers) || Objects.isNull(identifiers.identifier())) {
             return;
         }
@@ -310,7 +368,8 @@ public class HydratorOutputConverters {
         identifiers.identifier().stream()
             .filter(identifier -> Objects.nonNull(identifier) && isPartOf(identifier) &&
                 !isBlank(identifier.identifier()) &&
-                !SOURCE_WORK_ID_CODE.equals(identifierCode(identifier)))
+                !SOURCE_WORK_ID_CODE.equals(identifierCode(identifier)) &&
+                !Objects.equals(containerCode, identifierCode(identifier)))
             .forEach(identifier -> migrationLog.valueDropped(HydratorSource.NAME,
                 entityType.name(), outputKey(record, output),
                 HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).identifiers()),

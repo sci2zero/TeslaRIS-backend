@@ -34,7 +34,8 @@ public enum MigrationEntityType {
     PERFORMANCE_RELATED_OUTPUT,
 
     CONFERENCE,
-    PROCEEDINGS;
+    PROCEEDINGS,
+    PUBLISHER;
 
 
     public MigrationEntityType parent() {
