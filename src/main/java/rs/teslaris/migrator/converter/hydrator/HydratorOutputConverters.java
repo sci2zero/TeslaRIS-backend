@@ -246,13 +246,6 @@ public class HydratorOutputConverters {
         dto.setStartPage(paper.pageFrom());
         dto.setEndPage(paper.pageTo());
 
-        if (!isBlank(paper.proceedingsPublisher())) {
-            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                outputKey(record, output), HydratorMappingRule.cv(83),
-                "proceedings publisher not migrated: '" + paper.proceedingsPublisher().trim() +
-                    "'");
-        }
-
         ensureOwnerContribution(dto, record, output, MigrationEntityType.PROCEEDINGS_PUBLICATION,
             paper.authoringRole());
 
@@ -1244,6 +1237,29 @@ public class HydratorOutputConverters {
         var prefix = IDENTIFIER_PREFIXES.get(code);
 
         return Objects.isNull(prefix) ? value : prefix.matcher(value).replaceFirst("");
+    }
+
+    // The curriculum's own id of the output ("cv-prod-id-…"), whatever its kind
+    String sourceWorkId(HydratorCVModel.Output output) {
+        var identifiers = Optional.ofNullable(output.journalArticle())
+            .map(HydratorCVModel.JournalArticle::identifiers)
+            .or(() -> Optional.ofNullable(output.conferencePaper())
+                .map(HydratorCVModel.ConferencePaper::identifiers))
+            .or(() -> Optional.ofNullable(output.conferenceAbstract())
+                .map(HydratorCVModel.ConferenceAbstract::identifiers))
+            .or(() -> Optional.ofNullable(output.conferencePoster())
+                .map(HydratorCVModel.ConferencePoster::identifiers))
+            .or(() -> Optional.ofNullable(output.bookChapter())
+                .map(HydratorCVModel.BookChapter::identifiers))
+            .or(() -> Optional.ofNullable(output.book()).map(HydratorCVModel.Book::identifiers))
+            .or(() -> Optional.ofNullable(output.dissertation())
+                .map(HydratorCVModel.Dissertation::identifiers))
+            .orElse(null);
+
+        var value = firstIdentifier(identifiers, SOURCE_WORK_ID_CODE,
+            identifier -> !isPartOf(identifier));
+
+        return isBlank(value) ? null : value.trim();
     }
 
     String partOfIdentifier(HydratorCVModel.OutputIdentifiers identifiers, String code) {

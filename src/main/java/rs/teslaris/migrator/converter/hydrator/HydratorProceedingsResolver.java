@@ -56,6 +56,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
 
     private final ProceedingsService proceedingsService;
 
+    private final HydratorPublisherResolver publisherResolver;
+
     private final OtherEventService otherEventService;
 
     private final CountryService countryService;
@@ -130,6 +132,9 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             new ArrayList<>(List.of(languageId)));
 
         converters.applyLocation(dto, language, source.publicationLocation());
+        // CW-001-MAP-000083: the publisher is a stub too, as for books
+        dto.setPublisherId(publisherResolver.resolveOrCreate(source.publisher(), language,
+            source.publicationLocation()));
 
         var created = proceedingsService.createProceedings(dto, performIndex);
         migrationLog.stubCreated(HydratorSource.NAME, "PROCEEDINGS", key, created.getId(),
@@ -168,11 +173,14 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         var isNamed = !isBlank(source.conferenceName());
         var name = isNamed ? source.conferenceName().trim() : NOT_INFORMED;
         var date = conversionUtil.flexibleDate(source.conferenceDate());
-        var key = isNamed ? "name:" + conversionUtil.normalise(name) + "|" +
-            (Objects.isNull(date) ? "" : date.year()) :
+        var year = Objects.isNull(date) ? "" : String.valueOf(date.year());
+        var key = isNamed ? "name:" + conferenceKey(name, year) + "|" + year :
             "output:" + converters.outputKey(record, output);
+        // Stubs of runs before the looser key stay found under the key they were stored with
+        var legacyKey = isNamed ? "name:" + conversionUtil.normalise(name) + "|" + year : key;
 
         return conferenceIds.computeIfAbsent(key, k -> storedStub(MigrationEntityType.CONFERENCE, k)
+            .or(() -> storedStub(MigrationEntityType.CONFERENCE, legacyKey))
             .orElseGet(() -> {
                 var conference = Objects.isNull(date) ?
                     createUndated(name, language) :
@@ -183,6 +191,18 @@ public class HydratorProceedingsResolver implements RunScopedCache {
 
                 return conference.getId();
             }));
+    }
+
+    /**
+     * One conference written several ways ("COMUNICON" and "Comunicon 2016", "FÓRUM" and "FORUM",
+     * "–" and "-", a closing ", 2016.") gets one key: accents, case, punctuation and its own year
+     * in the name are left out.
+     */
+    private String conferenceKey(String name, String year) {
+        var withoutYear = year.isEmpty() ? name : name.replaceAll("\\b" + year + "\\b", " ");
+        var key = conversionUtil.titleKey(withoutYear);
+
+        return key.isEmpty() ? conversionUtil.titleKey(name) : key;
     }
 
     private Conference createDated(String name, FlexibleDateDTO date, String language,
@@ -295,7 +315,7 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             source.proceedingsTitle().trim();
     }
 
-    // CW-001-MAP-000372…376, 000380
+    // CW-001-MAP-000077…085, 000372…376, 000380, 000388/389
     private Source source(HydratorCVModel.Output output) {
         var paper = output.conferencePaper();
 
@@ -303,7 +323,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             return new Source(paper.conferenceName(), paper.conferenceDate(),
                 paper.conferenceLocation(), paper.proceedingsTitle(), paper.conferenceDate(),
                 paper.identifiers(), paper.proceedingsEditors(), paper.publicationLocation(), null,
-                null, MigrationEntityType.PROCEEDINGS_PUBLICATION, 85);
+                null, paper.proceedingsPublisher(), MigrationEntityType.PROCEEDINGS_PUBLICATION,
+                85);
         }
 
         var poster = output.conferencePoster();
@@ -311,8 +332,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         // CW-001-MAP-000388/389: a poster has a conference only, no location and no proceedings
         if (Objects.nonNull(poster)) {
             return new Source(poster.conferenceName(), poster.conferenceDate(), null, null, null,
-                poster.identifiers(), null, null, null, null, MigrationEntityType.CONFERENCE_POSTER,
-                391);
+                poster.identifiers(), null, null, null, null, null,
+                MigrationEntityType.CONFERENCE_POSTER, 391);
         }
 
         var conferenceAbstract = output.conferenceAbstract();
@@ -320,7 +341,7 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         return new Source(conferenceAbstract.conferenceName(),
             conferenceAbstract.publicationDate(), conferenceAbstract.conferenceLocation(), null,
             conferenceAbstract.publicationDate(), conferenceAbstract.identifiers(), null, null,
-            conferenceAbstract.volume(), conferenceAbstract.issue(),
+            conferenceAbstract.volume(), conferenceAbstract.issue(), null,
             MigrationEntityType.CONFERENCE_ABSTRACT, 382);
     }
 
@@ -334,7 +355,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
                           HydratorCVModel.OutputIdentifiers identifiers,
                           HydratorCVModel.OutputAuthors editors,
                           HydratorCVModel.PublicationLocation publicationLocation, String volume,
-                          String issue, MigrationEntityType entityType, int isbnRule) {
+                          String issue, String publisher, MigrationEntityType entityType,
+                          int isbnRule) {
     }
 
     // Core takes the paper's event from the DTO, not from its proceedings
