@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -55,6 +56,7 @@ class EmploymentPositionServiceTest {
             new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
+            "T01V01C01",
             null,
             null
         );
@@ -83,6 +85,20 @@ class EmploymentPositionServiceTest {
     }
 
     @Test
+    void shouldStoreCodeOnCreate() {
+        // given
+        when(employmentPositionRepository.save(any(EmploymentPositionHierarchy.class)))
+            .thenReturn(employmentPositionHierarchy);
+
+        // when
+        employmentPositionService.createEmploymentPosition(employmentPositionDTO);
+
+        // then
+        verify(employmentPositionRepository).save(
+            argThat(position -> "T01V01C01".equals(position.getCode())));
+    }
+
+    @Test
     void shouldCreateEmploymentPositionWithSuperPosition() {
         // given
         var superPositionId = 2;
@@ -92,6 +108,7 @@ class EmploymentPositionServiceTest {
             new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
+            "T01V01C01",
             superPositionId,
             new ArrayList<>()
         );
@@ -147,6 +164,7 @@ class EmploymentPositionServiceTest {
             new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
+            "T01V01C01",
             null,
             null
         );

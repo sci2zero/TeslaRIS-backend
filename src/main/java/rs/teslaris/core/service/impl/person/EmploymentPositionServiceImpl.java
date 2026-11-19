@@ -93,6 +93,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
 
         employmentPosition.setProcessedName(employmentPositionDTO.processedName());
         employmentPosition.setSchemeName(employmentPositionDTO.schemeName());
+        employmentPosition.setCode(employmentPositionDTO.code());
 
         if (Objects.nonNull(employmentPositionDTO.superEmploymentPositionId())) {
             employmentPosition.setSuperEmploymentPosition(findOne(
