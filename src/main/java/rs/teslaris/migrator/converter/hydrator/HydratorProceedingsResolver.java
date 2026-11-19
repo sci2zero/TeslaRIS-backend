@@ -298,7 +298,7 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             return null;
         }
 
-        var isbn = value.trim().toUpperCase(Locale.ROOT);
+        var isbn = value.trim().toUpperCase(Locale.ROOT).replaceAll("[\\s-]", "");
 
         if (!ISBN.matcher(isbn).matches()) {
             migrationLog.valueDropped(HydratorSource.NAME, source.entityType().name(),

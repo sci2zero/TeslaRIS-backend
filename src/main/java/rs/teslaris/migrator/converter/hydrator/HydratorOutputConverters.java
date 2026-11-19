@@ -107,7 +107,7 @@ public class HydratorOutputConverters {
      * DocumentPublicationServiceImpl#setCommonIdentifiers}; keep them in sync.
      */
     private static final Map<String, IdentifierTarget> IDENTIFIER_TARGETS = Map.of(
-        "doi", new IdentifierTarget(DocumentDTO::setDoi,
+        "doi", new IdentifierTarget((dto, doi) -> dto.setDoi(doi.toLowerCase()),
             "^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$"),
         "eid", new IdentifierTarget(DocumentDTO::setScopusId, "^\\d{6,12}$"),
         "wosuid", new IdentifierTarget(DocumentDTO::setWebOfScienceId, "\\d{15}$"),
@@ -216,7 +216,8 @@ public class HydratorOutputConverters {
         var article = output.journalArticle();
 
         return journalResolver.resolveOrCreate(article.journal(),
-            partOfIdentifier(article.identifiers(), ISSN_CODE), languageOf(record));
+            partOfIdentifier(article.identifiers(), ISSN_CODE), languageOf(record),
+            outputKey(record, output));
     }
 
     /**
@@ -457,7 +458,8 @@ public class HydratorOutputConverters {
             .filter(identifier -> Objects.nonNull(identifier) &&
                 ISBN_CODE.equals(identifierCode(identifier)) && !isBlank(identifier.identifier()))
             .map(identifier -> ISBN_PREFIX.matcher(identifier.identifier().trim())
-                .replaceFirst("").replaceFirst("[.,;\\s]+$", "").toUpperCase())
+                .replaceFirst("").replaceFirst("[.,;\\s]+$", "").replaceAll("[\\s-]", "")
+                .toUpperCase())
             .distinct()
             .toList();
     }

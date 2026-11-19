@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.migrator.converter.hydrator.HydratorPidDuplicateMerger.Filler;
+import rs.teslaris.migrator.converter.hydrator.HydratorPidDuplicateMerger.PidOutcome;
 import rs.teslaris.migrator.converter.hydrator.HydratorPidDuplicateMerger.TypeRule;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -143,10 +144,13 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 this.<JournalPublicationDTO>keepingSourceWorkId(
                     MigrationEntityType.JOURNAL_PUBLICATION, record, output,
                     (article, run) -> {
-                        mergeByPid(MigrationEntityType.JOURNAL_PUBLICATION, record, output,
-                            article, journalPublicationService::readJournalPublicationById,
+                        var pid = mergeByPid(MigrationEntityType.JOURNAL_PUBLICATION, record,
+                            output, article, journalPublicationService::readJournalPublicationById,
                             journalPublicationService::editJournalPublication, journalRule(output));
-                        requireUnusedIdentifiers(article, null);
+                        // Only a held id needs the second lookup
+                        if (PidOutcome.HELD.equals(pid)) {
+                            requireUnusedIdentifiers(article, null);
+                        }
                         resolveSameWork(MigrationEntityType.JOURNAL_PUBLICATION, record, article,
                             journalPublicationService::readJournalPublicationById,
                             journalPublicationService::editJournalPublication);
@@ -182,11 +186,14 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 this.<ProceedingsPublicationDTO>keepingSourceWorkId(
                     type, record, output,
                     (publication, run) -> {
-                        mergeByPid(type, record, output, publication,
+                        var pid = mergeByPid(type, record, output, publication,
                             proceedingsPublicationService::readProceedingsPublicationById,
                             proceedingsPublicationService::editProceedingsPublication,
                             proceedingsRule(output));
-                        requireUnusedIdentifiers(publication, null);
+                        // Only a held id needs the second lookup
+                        if (PidOutcome.HELD.equals(pid)) {
+                            requireUnusedIdentifiers(publication, null);
+                        }
                         resolveSameWork(type, record, publication,
                             proceedingsPublicationService::readProceedingsPublicationById,
                             proceedingsPublicationService::editProceedingsPublication);
@@ -223,11 +230,15 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 this.<PerformanceRelatedOutputDTO>keepingSourceWorkId(
                     MigrationEntityType.CONFERENCE_POSTER, record, output,
                     (poster, run) -> {
-                        mergeByPid(MigrationEntityType.CONFERENCE_POSTER, record, output, poster,
+                        var pid = mergeByPid(MigrationEntityType.CONFERENCE_POSTER, record,
+                            output, poster,
                             performanceRelatedOutputService::readPerformanceRelatedOutputById,
                             performanceRelatedOutputService::editPerformanceRelatedOutput,
                             posterRule(output));
-                        dropUsedIdentifiers(record, output, poster, null);
+                        // Only a held id needs the second lookup
+                        if (PidOutcome.HELD.equals(pid)) {
+                            dropUsedIdentifiers(record, output, poster, null);
+                        }
                         resolveSameWork(MigrationEntityType.CONFERENCE_POSTER, record, poster,
                             performanceRelatedOutputService::readPerformanceRelatedOutputById,
                             performanceRelatedOutputService::editPerformanceRelatedOutput);
@@ -262,11 +273,15 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 this.<MonographPublicationDTO>keepingSourceWorkId(
                     MigrationEntityType.MONOGRAPH_PUBLICATION, record, output,
                     (chapter, run) -> {
-                        mergeByPid(MigrationEntityType.MONOGRAPH_PUBLICATION, record, output,
-                            chapter, monographPublicationService::readMonographPublicationById,
+                        var pid = mergeByPid(MigrationEntityType.MONOGRAPH_PUBLICATION, record,
+                            output, chapter,
+                            monographPublicationService::readMonographPublicationById,
                             monographPublicationService::editMonographPublication,
                             chapterRule(output));
-                        requireUnusedIdentifiers(chapter, null);
+                        // Only a held id needs the second lookup
+                        if (PidOutcome.HELD.equals(pid)) {
+                            requireUnusedIdentifiers(chapter, null);
+                        }
                         resolveSameWork(MigrationEntityType.MONOGRAPH_PUBLICATION, record, chapter,
                             monographPublicationService::readMonographPublicationById,
                             monographPublicationService::editMonographPublication);
@@ -299,10 +314,13 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                 this.<MonographDTO>keepingSourceWorkId(
                     MigrationEntityType.MONOGRAPH, record, output,
                     (book, run) -> {
-                        mergeByPid(MigrationEntityType.MONOGRAPH, record, output, book,
+                        var pid = mergeByPid(MigrationEntityType.MONOGRAPH, record, output, book,
                             monographService::readMonographById, monographService::editMonograph,
                             bookRule(record, output));
-                        requireUnusedIdentifiers(book, null);
+                        // Only a held id needs the second lookup
+                        if (PidOutcome.HELD.equals(pid)) {
+                            requireUnusedIdentifiers(book, null);
+                        }
 
                         var existing = monographResolver.existingBook(output, book);
                         if (existing.isPresent()) {
@@ -401,13 +419,14 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
     }
 
     // An obvious duplicate sharing a PID is merged into the existing document (Dragan, 2026-11-19)
-    private <D extends DocumentDTO> void mergeByPid(MigrationEntityType type,
+    private <D extends DocumentDTO> PidOutcome mergeByPid(MigrationEntityType type,
                                                     HydratorCVModel.Curriculum record,
                                                     HydratorCVModel.Output output, D dto,
                                                     Function<Integer, ? extends D> reader,
                                                     BiConsumer<Integer, D> updater,
                                                     TypeRule<D> rule) {
-        pidMerger.resolve(type, converters.outputKey(record, output), dto, reader, updater, rule);
+        return pidMerger.resolve(type, converters.outputKey(record, output), dto, reader, updater,
+            rule);
     }
 
     private TypeRule<JournalPublicationDTO> journalRule(HydratorCVModel.Output output) {

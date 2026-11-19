@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Monograph;
@@ -64,6 +65,8 @@ public class HydratorMonographResolver implements RunScopedCache {
 
     private final Map<String, Integer> monographIds = new ConcurrentHashMap<>();
 
+    private final Set<Integer> untitledStubs = ConcurrentHashMap.newKeySet();
+
 
     public Integer resolveOrCreate(HydratorCVModel.Curriculum record,
                                    HydratorCVModel.Output output, boolean performIndex) {
@@ -76,6 +79,7 @@ public class HydratorMonographResolver implements RunScopedCache {
                     .orElseGet(() -> create(key, record, output, isbns, performIndex)));
 
             if (Objects.nonNull(existing)) {
+                nameUntitledStub(record, output, existing);
                 return existing;
             }
         }
@@ -126,6 +130,7 @@ public class HydratorMonographResolver implements RunScopedCache {
         }
 
         fill(existing, book);
+        untitledStubs.remove(monographId);
         if (Objects.isNull(existing.getPublisherId())) {
             existing.setPublisherId(publisherResolver.resolveOrCreate(output.book().publisher(),
                 converters.languageOf(record), output.book().publicationLocation()));
@@ -136,7 +141,41 @@ public class HydratorMonographResolver implements RunScopedCache {
         return "book filled the stub of monograph " + monographId;
     }
 
+    // A chapter naming the book of a stub created untitled from its ISBN
+    private void nameUntitledStub(HydratorCVModel.Curriculum record,
+                                  HydratorCVModel.Output output, Integer monographId) {
+        var bookTitle = output.bookChapter().bookTitle();
+
+        if (isBlank(bookTitle) || !untitledStubs.remove(monographId)) {
+            return;
+        }
+
+        var stub = monographService.readMonographById(monographId);
+        if (Objects.isNull(stub.getDocumentDate())) {
+            stub.setDocumentDate(conversionUtil.flexibleDate(
+                converters.yearDate(output.bookChapter().publicationYear())));
+        }
+
+        // Core cannot edit a monograph without a date
+        if (Objects.isNull(stub.getDocumentDate())) {
+            return;
+        }
+
+        stub.setTitle(
+            conversionUtil.multilingualContent(bookTitle.trim(), converters.languageOf(record)));
+        monographService.editMonograph(monographId, stub);
+    }
+
+    private boolean notInformed(List<MultilingualContentDTO> title) {
+        return isEmpty(title) || title.stream()
+            .allMatch(content -> NOT_INFORMED.equals(content.getContent()));
+    }
+
     private void fill(MonographDTO stub, MonographDTO book) {
+        if (notInformed(stub.getTitle()) && !notInformed(book.getTitle())) {
+            stub.setTitle(book.getTitle());
+        }
+
         var contributions = new ArrayList<>(stub.getContributions());
 
         for (var contribution : book.getContributions()) {
@@ -220,6 +259,7 @@ public class HydratorMonographResolver implements RunScopedCache {
     @Override
     public void clearCache() {
         monographIds.clear();
+        untitledStubs.clear();
     }
 
     private List<String> isbns(HydratorCVModel.Curriculum record, HydratorCVModel.Output output) {
@@ -329,6 +369,10 @@ public class HydratorMonographResolver implements RunScopedCache {
             .targetEntityId(created.getId())
             .processedAt(Instant.now())
             .build());
+
+        if (!isbns.isEmpty() && NOT_INFORMED.equals(title)) {
+            untitledStubs.add(created.getId());
+        }
 
         return created.getId();
     }

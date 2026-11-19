@@ -45,17 +45,20 @@ public class HydratorPidDuplicateMerger {
 
 
     /**
+     * @return what the PID lookup found, so the caller can skip a second lookup when nothing holds
+     *     the incoming ids
      * @throws ResolvedToExistingException when the incoming document was merged into another
      */
-    public <D extends DocumentDTO> void resolve(MigrationEntityType type, String key, D incoming,
-                                                Function<Integer, ? extends D> reader,
-                                                BiConsumer<Integer, D> updater,
-                                                TypeRule<D> rule) {
+    public <D extends DocumentDTO> PidOutcome resolve(MigrationEntityType type, String key,
+                                                      D incoming,
+                                                      Function<Integer, ? extends D> reader,
+                                                      BiConsumer<Integer, D> updater,
+                                                      TypeRule<D> rule) {
         var owner = documentPublicationService.findDocumentByCommonIdentifier(incoming.getDoi(),
             incoming.getOpenAlexId(), incoming.getScopusId(), incoming.getWebOfScienceId());
 
         if (owner.isEmpty()) {
-            return;
+            return PidOutcome.UNUSED;
         }
 
         var documentId = owner.get().getId();
@@ -65,7 +68,7 @@ public class HydratorPidDuplicateMerger {
             existing = reader.apply(documentId);
         } catch (Exception e) {
             // A document of another type; the duplicate failure handler decides
-            return;
+            return PidOutcome.HELD;
         }
 
         var differences = differences(existing, incoming);
@@ -77,7 +80,7 @@ public class HydratorPidDuplicateMerger {
                 HydratorMappingRule.cvWithoutRule(), "identifier held by document " + documentId +
                     ", not the same work (different " + String.join(", ", differences) +
                     "), created without that identifier");
-            return;
+            return PidOutcome.HELD;
         }
 
         var filler = new Filler();
@@ -260,6 +263,15 @@ public class HydratorPidDuplicateMerger {
 
     private boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    /**
+     * UNUSED: no document holds the incoming ids. HELD: one does and was not merged into (another
+     * type, or not the same work), so the ids still need the usual collision handling.
+     */
+    public enum PidOutcome {
+        UNUSED,
+        HELD
     }
 
     /**
