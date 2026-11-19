@@ -41,7 +41,9 @@ public class HydratorDocumentResolver implements RunScopedCache {
         new Kind("PerformanceRelatedOutput", "type", PerformanceRelatedOutputType.POSTER),
         MigrationEntityType.MONOGRAPH_PUBLICATION,
         new Kind("MonographPublication", "monographPublicationType",
-            MonographPublicationType.CHAPTER)
+            MonographPublicationType.CHAPTER),
+        // Chapter stubs have no authors, so only books with authors of their own match
+        MigrationEntityType.MONOGRAPH, new Kind("Monograph", null, null)
     );
 
     private final DocumentLookupRepository lookupRepository;

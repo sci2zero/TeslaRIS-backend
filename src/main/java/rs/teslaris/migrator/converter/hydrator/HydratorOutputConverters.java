@@ -20,6 +20,7 @@ import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
@@ -29,6 +30,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.MonographPublicationType;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationStatus;
@@ -61,6 +63,10 @@ public class HydratorOutputConverters {
 
     private static final Pattern ISBN_PREFIX = Pattern.compile("^ISBN[-:\\s]*",
         Pattern.CASE_INSENSITIVE);
+
+    // The ISBN format core accepts on a monograph
+    private static final Pattern VALID_ISBN =
+        Pattern.compile("^(?:(?:\\d[\\ |-]?){9}[\\dX]|(?:\\d[\\ |-]?){13})$");
 
     private static final String HANDLE_CODE = "handle";
 
@@ -151,6 +157,7 @@ public class HydratorOutputConverters {
         MigrationEntityType.CONFERENCE_ABSTRACT, new OutputRules(380, 382, 383, 384),
         MigrationEntityType.CONFERENCE_POSTER, new OutputRules(389, 391, 392, 393),
         MigrationEntityType.MONOGRAPH_PUBLICATION, new OutputRules(154, 160, 161, 163),
+        MigrationEntityType.MONOGRAPH, new OutputRules(116, 122, 123, 125),
         // Slides carry only the presentation date and the presenters
         MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
@@ -198,6 +205,9 @@ public class HydratorOutputConverters {
         dto.setStartPage(article.pageFrom());
         dto.setEndPage(article.pageTo());
 
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.JOURNAL_PUBLICATION,
+            article.authoringRole());
+
         return dto;
     }
 
@@ -243,6 +253,9 @@ public class HydratorOutputConverters {
                     "'");
         }
 
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.PROCEEDINGS_PUBLICATION,
+            paper.authoringRole());
+
         return dto;
     }
 
@@ -272,6 +285,9 @@ public class HydratorOutputConverters {
         dto.setStartPage(conferenceAbstract.pageFrom());
         dto.setEndPage(conferenceAbstract.pageTo());
 
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.CONFERENCE_ABSTRACT,
+            conferenceAbstract.authoringRole());
+
         return dto;
     }
 
@@ -300,6 +316,9 @@ public class HydratorOutputConverters {
             .map(MultilingualContentDTO::getLanguageTagId)
             .filter(Objects::nonNull)
             .forEach(dto.getLanguageTagIds()::add);
+
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.CONFERENCE_POSTER,
+            poster.authoringRole());
 
         return dto;
     }
@@ -333,7 +352,102 @@ public class HydratorOutputConverters {
         dto.setStartPage(chapter.pageFrom());
         dto.setEndPage(chapter.pageTo());
 
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.MONOGRAPH_PUBLICATION,
+            chapter.authoringRole());
+
         return dto;
+    }
+
+    /**
+     * CW-001-MAP-000109…126: a research monograph, or an edited book when the owner is its editor.
+     * Its publisher is resolved on creation, and a book already held by a chapter's stub fills that
+     * stub instead (see {@link HydratorMonographResolver}).
+     */
+    public MonographDTO toBook(HydratorCVModel.Curriculum record, HydratorCVModel.Output output) {
+        var book = output.book();
+
+        if (Objects.isNull(book) || isBlank(book.title())) {
+            return null;
+        }
+
+        var language = languageOf(record);
+        var dto = new MonographDTO();
+        var entityType = MigrationEntityType.MONOGRAPH;
+        var key = outputKey(record, output);
+
+        applyCommonFields(dto, record, output, entityType, book.title(), language,
+            yearDate(book.publicationYear()), book.url(), book.authors(), book.authoringRole());
+        applyIdentifiers(dto, record, output, entityType, book.identifiers(), ISBN_CODE);
+        dropPartOfIdentifiers(record, output, entityType, book.identifiers(), ISBN_CODE);
+
+        var contributions = new ArrayList<>(dto.getContributions());
+        contributions.addAll(editorContributions(record, book.editors()));
+        IntStream.range(0, contributions.size())
+            .forEach(i -> contributions.get(i).setOrderNumber(i + 1));
+        dto.setContributions(contributions);
+
+        dto.setKeywords(conversionUtil.multilingualContent(keywords(book.keywords()), language));
+        dto.setPublicationStatus(publicationStatus(book.publicationStatus()));
+        dto.setPeerReviewed(isTrue(book.refereed()));
+        dto.setMonographType(isEditorRole(book.authoringRole()) ? MonographType.EDITED_BOOK :
+            MonographType.RESEARCH_MONOGRAPH);
+        dto.setVolume(isBlank(book.volume()) ? null : book.volume().trim());
+        dto.setNumberOfPages(numberOfPages(record, output, book.numberOfPages()));
+
+        if (!isBlank(book.edition())) {
+            dto.setEdition(conversionUtil.multilingualContent(book.edition(), language));
+        }
+
+        var isbns = new ArrayList<String>();
+        bookIsbns(book.identifiers()).forEach(isbn -> {
+            if (VALID_ISBN.matcher(isbn).matches()) {
+                isbns.add(isbn);
+            } else {
+                dropValue(record, output, entityType, HydratorMappingRule.cv(122), isbn,
+                    "invalid isbn format");
+            }
+        });
+        dto.setPrintISBN(isbns.isEmpty() ? null : isbns.get(0));
+        dto.setEisbn(isbns.size() > 1 ? isbns.get(1) : null);
+
+        var languageId = conversionUtil.localeLanguageId(language);
+        dto.setLanguageIds(Objects.isNull(languageId) ? new ArrayList<>() :
+            new ArrayList<>(List.of(languageId)));
+        applyLocation(dto, language, book.publicationLocation());
+
+        // CW-001-MAP-000125: a monograph holds a single research area
+        var areas = conversionUtil.researchAreaIds(
+            researchClassifications(book.researchClassifications()),
+            reason -> migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
+                HydratorMappingRule.cv(125), reason));
+        areas.stream().findFirst().ifPresent(dto::setResearchAreaId);
+        areas.stream().skip(1).forEach(areaId -> migrationLog.valueDropped(HydratorSource.NAME,
+            entityType.name(), key, HydratorMappingRule.cv(125),
+            "a monograph holds one research area, dropped area " + areaId));
+
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.MONOGRAPH,
+            book.authoringRole());
+
+        return dto;
+    }
+
+    private boolean isEditorRole(HydratorCVModel.CodeValue role) {
+        return DocumentContributionType.EDITOR.equals(ownerContributionType(role));
+    }
+
+    private Integer numberOfPages(HydratorCVModel.Curriculum record,
+                                  HydratorCVModel.Output output, String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+
+        try {
+            return Integer.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            dropValue(record, output, MigrationEntityType.MONOGRAPH, HydratorMappingRule.cv(113),
+                value, "invalid number of pages");
+            return null;
+        }
     }
 
     HydratorCVModel.DateInfo yearDate(String year) {
@@ -491,6 +605,9 @@ public class HydratorOutputConverters {
         dropValue(record, output, entityType, HydratorMappingRule.cv(211),
             dissertation.classification(),
             "classification vocabulary is not defined");
+
+        ensureOwnerContribution(dto, record, output, MigrationEntityType.THESIS,
+            null);
 
         return dto;
     }
@@ -913,6 +1030,45 @@ public class HydratorOutputConverters {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
                 outputKey(record, output), rule, reason + ": '" + value.trim() + "'");
         }
+    }
+
+    /**
+     * A work listed in a curriculum without any author is the curriculum owner's: the owner is put
+     * first, in the role the curriculum gives them. A document the owner already takes part in, as
+     * an editor or an advisor, is left as it is.
+     */
+    private void ensureOwnerContribution(DocumentDTO dto, HydratorCVModel.Curriculum record,
+                                         HydratorCVModel.Output output,
+                                         MigrationEntityType entityType,
+                                         HydratorCVModel.CodeValue ownerRole) {
+        var contributions = dto.getContributions();
+
+        if (contributions.stream().anyMatch(contribution ->
+            DocumentContributionType.AUTHOR.equals(contribution.getContributionType()))) {
+            return;
+        }
+
+        var ownerId = personResolver.resolveOwner(record);
+        var ownerName = personResolver.ownerName(record);
+
+        if (Objects.isNull(ownerName) || contributions.stream().anyMatch(contribution ->
+            (Objects.nonNull(ownerId) && ownerId.equals(contribution.getPersonId())) ||
+                conversionUtil.namesMatch(ownerName, contribution.getPersonName()))) {
+            return;
+        }
+
+        var role = ownerContributionType(ownerRole);
+        var withOwner = new ArrayList<PersonDocumentContributionDTO>();
+        withOwner.add(contribution(role, 1, ownerName, ownerId));
+        withOwner.addAll(contributions);
+        IntStream.range(0, withOwner.size())
+            .forEach(i -> withOwner.get(i).setOrderNumber(i + 1));
+        dto.setContributions(withOwner);
+
+        migrationLog.valueDefaulted(HydratorSource.NAME, entityType.name(),
+            outputKey(record, output),
+            HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()),
+            "no authors in the source, curriculum owner added as " + role);
     }
 
     private void applyCommonFields(DocumentDTO dto, HydratorCVModel.Curriculum record,

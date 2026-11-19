@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -17,6 +18,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -59,6 +61,10 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
     private final HydratorMonographResolver monographResolver;
 
     private final HydratorDocumentResolver documentResolver;
+
+    private final MonographService monographService;
+
+    private final HydratorPublisherResolver publisherResolver;
 
     private final HydratorContributionLinker contributionLinker;
 
@@ -233,6 +239,41 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                         monographPublicationService.editMonographPublication(targetId, chapter);
                     }),
                 duplicateFailureHandler.forType(MonographPublicationDTO.class));
+        }
+
+        if (Objects.nonNull(output.book())) {
+            var dto = converters.toBook(record, output);
+
+            // The publisher is resolved on creation, so skipped or filtered books create no stubs
+            return Objects.isNull(dto) ? null : new MigrationItem<MonographDTO>(
+                MigrationEntityType.MONOGRAPH,
+                converters.outputKey(record, output),
+                null,
+                dto,
+                (book, run) -> {
+                    requireUnusedIdentifiers(book, null);
+
+                    var existing = monographResolver.existingBook(output, book);
+                    if (existing.isPresent()) {
+                        throw new ResolvedToExistingException(existing.get(),
+                            monographResolver.mergeBook(record, output, existing.get(), book));
+                    }
+
+                    resolveSameWork(MigrationEntityType.MONOGRAPH, record, book,
+                        monographService::readMonographById, monographService::editMonograph);
+                    book.setPublisherId(publisherResolver.resolveOrCreate(
+                        output.book().publisher(), converters.languageOf(record),
+                        output.book().publicationLocation()));
+                    return registered(MigrationEntityType.MONOGRAPH, book,
+                        monographService.createMonograph(book, run.isPerformIndex()).getId());
+                },
+                UpdatePlan.<MonographDTO>of(
+                    ExistingReader.of(monographService::readMonographById),
+                    (targetId, book, run) -> {
+                        requireUnusedIdentifiers(book, targetId);
+                        monographService.editMonograph(targetId, book);
+                    }),
+                duplicateFailureHandler.forType(MonographDTO.class));
         }
 
         if (Objects.nonNull(output.dissertation())) {

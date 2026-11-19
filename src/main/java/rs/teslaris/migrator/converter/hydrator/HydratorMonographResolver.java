@@ -2,16 +2,20 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.MonographDTO;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.service.interfaces.document.MonographService;
@@ -48,6 +52,8 @@ public class HydratorMonographResolver implements RunScopedCache {
 
     private final HydratorPublisherResolver publisherResolver;
 
+    private final HydratorContributionLinker contributionLinker;
+
     private final HydratorOutputConverters converters;
 
     private final HydratorConversionUtil conversionUtil;
@@ -77,11 +83,138 @@ public class HydratorMonographResolver implements RunScopedCache {
         var chapter = output.bookChapter();
         var key = isBlank(chapter.bookTitle()) ?
             "output:" + converters.outputKey(record, output) :
-            "title:" + TRAILING_PUNCTUATION.matcher(conversionUtil.normalise(chapter.bookTitle()))
-                .replaceFirst("") + "|" + Objects.toString(chapter.publicationYear(), "").trim();
+            titleKey(chapter.bookTitle(), chapter.publicationYear());
 
         return monographIds.computeIfAbsent(key, k -> storedStub(k)
             .orElseGet(() -> create(k, record, output, List.of(), performIndex)));
+    }
+
+    /**
+     * The monograph a book output describes, when one already exists: held by its ISBN (a chapter's
+     * stub, the same book entered again, or a co-author's), or a chapter's stub of its title and
+     * year.
+     */
+    public Optional<Integer> existingBook(HydratorCVModel.Output output, MonographDTO book) {
+        for (var isbn : Arrays.asList(book.getPrintISBN(), book.getEisbn())) {
+            if (isBlank(isbn)) {
+                continue;
+            }
+
+            var monograph = monographService.findMonographByIsbn(isbn, isbn);
+            if (Objects.nonNull(monograph)) {
+                return Optional.of(monograph.getId());
+            }
+        }
+
+        return storedStub(titleKey(output.book().title(), output.book().publicationYear()));
+    }
+
+    /**
+     * Brings a book output onto the monograph already holding it. A chapter's stub is filled from
+     * the book and stays an edited book, so its chapters stay valid; a monograph with authors of
+     * its own is the same book from another entry, which only gains the people linked here.
+     */
+    public String mergeBook(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
+                            Integer monographId, MonographDTO book) {
+        var existing = monographService.readMonographById(monographId);
+        var isStub = existing.getContributions().stream().noneMatch(contribution ->
+            DocumentContributionType.AUTHOR.equals(contribution.getContributionType()));
+
+        if (!isStub) {
+            return contributionLinker.link(monographId, book, monographService::readMonographById,
+                monographService::editMonograph);
+        }
+
+        fill(existing, book);
+        if (Objects.isNull(existing.getPublisherId())) {
+            existing.setPublisherId(publisherResolver.resolveOrCreate(output.book().publisher(),
+                converters.languageOf(record), output.book().publicationLocation()));
+        }
+
+        monographService.editMonograph(monographId, existing);
+
+        return "book filled the stub of monograph " + monographId;
+    }
+
+    private void fill(MonographDTO stub, MonographDTO book) {
+        var contributions = new ArrayList<>(stub.getContributions());
+
+        for (var contribution : book.getContributions()) {
+            var same = contributions.stream()
+                .filter(other -> Objects.equals(other.getContributionType(),
+                    contribution.getContributionType()) &&
+                    conversionUtil.namesMatch(other.getPersonName(), contribution.getPersonName()))
+                .findFirst();
+
+            if (same.isPresent()) {
+                if (Objects.isNull(same.get().getPersonId())) {
+                    same.get().setPersonId(contribution.getPersonId());
+                }
+                continue;
+            }
+
+            contribution.setOrderNumber(contributions.size() + 1);
+            contributions.add(contribution);
+        }
+
+        stub.setContributions(contributions);
+        stub.setVolume(firstNonBlank(stub.getVolume(), book.getVolume()));
+        stub.setPrintISBN(firstNonBlank(stub.getPrintISBN(), book.getPrintISBN()));
+        stub.setEisbn(firstNonBlank(stub.getEisbn(), book.getEisbn()));
+        stub.setDoi(firstNonBlank(stub.getDoi(), book.getDoi()));
+        stub.setScopusId(firstNonBlank(stub.getScopusId(), book.getScopusId()));
+        stub.setWebOfScienceId(firstNonBlank(stub.getWebOfScienceId(),
+            book.getWebOfScienceId()));
+        stub.setHandleId(firstNonBlank(stub.getHandleId(), book.getHandleId()));
+        stub.setNumberOfPages(firstNonNull(stub.getNumberOfPages(), book.getNumberOfPages()));
+        stub.setResearchAreaId(firstNonNull(stub.getResearchAreaId(), book.getResearchAreaId()));
+        stub.setCountryId(firstNonNull(stub.getCountryId(), book.getCountryId()));
+        stub.setPublicationStatus(firstNonNull(stub.getPublicationStatus(),
+            book.getPublicationStatus()));
+        stub.setPeerReviewed(Boolean.TRUE.equals(stub.getPeerReviewed()) ||
+            Boolean.TRUE.equals(book.getPeerReviewed()));
+
+        if (Objects.isNull(stub.getDocumentDate())) {
+            stub.setDocumentDate(book.getDocumentDate());
+        }
+
+        if (isEmpty(stub.getEdition())) {
+            stub.setEdition(book.getEdition());
+        }
+
+        if (isEmpty(stub.getCity())) {
+            stub.setCity(book.getCity());
+        }
+
+        if (isEmpty(stub.getKeywords())) {
+            stub.setKeywords(book.getKeywords());
+        }
+
+        if (isEmpty(stub.getLanguageIds())) {
+            stub.setLanguageIds(book.getLanguageIds());
+        }
+
+        var uris = new HashSet<>(Objects.requireNonNullElse(stub.getUris(), Set.<String>of()));
+        uris.addAll(Objects.requireNonNullElse(book.getUris(), Set.of()));
+        stub.setUris(uris);
+    }
+
+    private String titleKey(String title, String year) {
+        return "title:" + TRAILING_PUNCTUATION.matcher(conversionUtil.normalise(title))
+            .replaceFirst("") + "|" + Objects.toString(year, "").trim();
+    }
+
+    // Either may be null, unlike Objects.requireNonNullElse
+    private <T> T firstNonNull(T first, T second) {
+        return Objects.nonNull(first) ? first : second;
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return isBlank(first) ? (isBlank(second) ? first : second) : first;
+    }
+
+    private boolean isEmpty(Collection<?> values) {
+        return Objects.isNull(values) || values.isEmpty();
     }
 
     @Override
@@ -117,6 +250,20 @@ public class HydratorMonographResolver implements RunScopedCache {
             }
 
             if (MonographType.EDITED_BOOK.equals(monograph.getMonographType())) {
+                return Optional.of(monograph.getId());
+            }
+
+            // A migrated book turns out to have chapters, which core keeps in edited books only
+            if (recordLogRepository.isWrittenTarget(HydratorSource.NAME,
+                MigrationEntityType.MONOGRAPH, monograph.getId())) {
+                var book = monographService.readMonographById(monograph.getId());
+                book.setMonographType(MonographType.EDITED_BOOK);
+                monographService.editMonograph(monograph.getId(), book);
+                migrationLog.valueDropped(HydratorSource.NAME,
+                    MigrationEntityType.MONOGRAPH_PUBLICATION.name(),
+                    converters.outputKey(record, output), HydratorMappingRule.cv(109),
+                    "monograph " + monograph.getId() + " was a " + monograph.getMonographType() +
+                        ", switched to EDITED_BOOK to hold the chapter");
                 return Optional.of(monograph.getId());
             }
 

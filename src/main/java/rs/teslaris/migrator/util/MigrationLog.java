@@ -94,6 +94,15 @@ public class MigrationLog {
     }
 
     /**
+     * The source left a value out and the migration put in a default for it; the item proceeds.
+     */
+    public void valueDefaulted(String source, String entity, String key, String rule,
+                               String reason) {
+        log.info("source={} | entity={} | key={} | status=VALUE_DEFAULTED | rule={} | reason={}",
+            source, entity, key, rule, reason);
+    }
+
+    /**
      * The people an item links on a work were brought onto the existing document holding it.
      */
     public void peopleLinked(String source, String entity, String key, Integer targetId,
