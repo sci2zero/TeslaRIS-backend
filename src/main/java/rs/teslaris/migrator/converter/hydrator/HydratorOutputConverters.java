@@ -577,10 +577,10 @@ public class HydratorOutputConverters {
         dto.setThesisType(thesisType(dissertation.degreeType()));
         dto.setThesisDefenceDate(defenceDate(dissertation.completionDate()));
         var key = outputKey(record, output);
+        var institutions = dissertationInstitutions(record, dissertation, key);
         dto.setExternalOrganisationUnitName(conversionUtil.multilingualContent(
-            institutionName(key, dissertation.institutions(), HydratorMappingRule.cv(209)),
-            language));
-        applyThesisInstitution(dto, key, dissertation.institutions(), HydratorMappingRule.cv(209));
+            institutionName(key, institutions, HydratorMappingRule.cv(209)), language));
+        applyThesisInstitution(dto, key, institutions, HydratorMappingRule.cv(209));
         dto.setLanguageId(conversionUtil.localeLanguageId(language));
         dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
         dto.getContributions().addAll(supervisorContributions(dissertation.supervisors(),
@@ -900,6 +900,42 @@ public class HydratorOutputConverters {
         }
 
         return degree.institutions();
+    }
+
+    /**
+     * A dissertation listed without its institution takes the one of the degree the same thesis is
+     * listed under in the curriculum, where the institution usually is (Dragan, 2026-11-19).
+     */
+    private HydratorCVModel.Institutions dissertationInstitutions(
+        HydratorCVModel.Curriculum record, HydratorCVModel.Dissertation dissertation, String key) {
+        if (hasInstitution(dissertation.institutions()) ||
+            Objects.isNull(record.curriculum().degrees()) ||
+            Objects.isNull(record.curriculum().degrees().degree())) {
+            return dissertation.institutions();
+        }
+
+        var title = conversionUtil.titleKey(dissertation.title());
+
+        return record.curriculum().degrees().degree().stream()
+            .filter(degree -> Objects.nonNull(degree) && hasThesisTitle(degree) &&
+                title.equals(conversionUtil.titleKey(degree.thesis().title())))
+            .map(this::degreeThesisInstitutions)
+            .filter(this::hasInstitution)
+            .findFirst()
+            .map(institutions -> {
+                migrationLog.valueDefaulted(HydratorSource.NAME,
+                    MigrationEntityType.THESIS.name(), key, HydratorMappingRule.cv(209),
+                    "institution taken from the degree of the same thesis");
+                return institutions;
+            })
+            .orElse(dissertation.institutions());
+    }
+
+    private boolean hasInstitution(HydratorCVModel.Institutions institutions) {
+        return Objects.nonNull(institutions) && Objects.nonNull(institutions.institution()) &&
+            institutions.institution().stream()
+                .anyMatch(institution -> Objects.nonNull(institution) &&
+                    !isBlank(institution.name()));
     }
 
     // CW-001-MAP-000209: a thesis has one institution, kept by name until matched to an
