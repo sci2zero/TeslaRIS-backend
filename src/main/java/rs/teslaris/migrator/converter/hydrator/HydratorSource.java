@@ -17,6 +17,9 @@ public final class HydratorSource {
 
     public static final String SCIPROJ_FUNDING_IDENTIFIER_CODE = "SciPROJ_Funding_Id";
 
+    // Other identifier holding the curriculum's own id of an output ("cv-prod-id-…")
+    public static final String SOURCE_WORK_IDENTIFIER_CODE = "CienciaVitae_source_work_id";
+
     // Code of the project identifier before the rename, kept to migrate existing definitions
     public static final String LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE = "SCIPROJID";
 

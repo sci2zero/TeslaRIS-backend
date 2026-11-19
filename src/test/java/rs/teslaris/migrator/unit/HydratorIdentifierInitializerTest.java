@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,6 +34,8 @@ public class HydratorIdentifierInitializerTest {
 
     private static final String FUNDING_CODE = HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE;
 
+    private static final String SOURCE_WORK_CODE = HydratorSource.SOURCE_WORK_IDENTIFIER_CODE;
+
     @Mock
     private IdentifierRepository identifierRepository;
 
@@ -57,13 +60,13 @@ public class HydratorIdentifierInitializerTest {
     }
 
     @Test
-    public void shouldCreateProjectAndFundingIdentifiersWhenMissing() {
+    public void shouldCreateHydratorIdentifiersWhenMissing() {
         when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();
 
         var captor = ArgumentCaptor.forClass(Identifier.class);
-        verify(identifierRepository, times(2)).save(captor.capture());
+        verify(identifierRepository, times(3)).save(captor.capture());
         var project = captor.getAllValues().get(0);
         assertEquals(PROJECT_CODE, project.getCode());
         assertEquals("SciPROJ Project ID", project.getTitle().iterator().next().getContent());
@@ -81,6 +84,12 @@ public class HydratorIdentifierInitializerTest {
         assertEquals(Set.of(ApplicableEntityType.FUNDING), funding.getApplicableTypes());
         assertEquals(AccessLevel.OPEN, funding.getAccessLevel());
         assertEquals(SCIPROJ_URL_TEMPLATE, funding.getUrlTemplate());
+
+        var sourceWork = captor.getAllValues().get(2);
+        assertEquals(SOURCE_WORK_CODE, sourceWork.getCode());
+        assertEquals(Set.of(ApplicableEntityType.DOCUMENT), sourceWork.getApplicableTypes());
+        assertEquals(AccessLevel.OPEN, sourceWork.getAccessLevel());
+        assertNull(sourceWork.getUrlTemplate());
     }
 
     @Test
@@ -105,6 +114,7 @@ public class HydratorIdentifierInitializerTest {
         var funding = complete();
         when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(project);
         when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(funding);
+        when(identifierRepository.findByCode(SOURCE_WORK_CODE)).thenReturn(complete());
 
         initializer.ensureIdentifiers();
 

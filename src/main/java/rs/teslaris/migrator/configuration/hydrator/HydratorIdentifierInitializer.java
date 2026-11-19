@@ -35,10 +35,16 @@ public class HydratorIdentifierInitializer {
     private static final List<Definition> DEFINITIONS = List.of(
         new Definition(HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE,
             HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE, "SciPROJ Project ID",
-            "Identifier of the project in SciPROJ", ApplicableEntityType.PROJECT),
+            "Identifier of the project in SciPROJ", ApplicableEntityType.PROJECT,
+            SCIPROJ_URL_TEMPLATE),
         new Definition(HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE, null,
             "SciPROJ Funding ID", "Identifier of the funding in SciPROJ",
-            ApplicableEntityType.FUNDING));
+            ApplicableEntityType.FUNDING, SCIPROJ_URL_TEMPLATE),
+        // The curriculum's own id of an output has no public page to link to
+        new Definition(HydratorSource.SOURCE_WORK_IDENTIFIER_CODE, null,
+            "CIÊNCIA VITAE source work ID",
+            "Identifier of the output in its CIÊNCIA VITAE curriculum",
+            ApplicableEntityType.DOCUMENT, null));
 
     private final IdentifierRepository identifierRepository;
 
@@ -61,7 +67,7 @@ public class HydratorIdentifierInitializer {
         var english = languageTagService.findLanguageTagByValue(LanguageAbbreviations.ENGLISH);
         if (Objects.isNull(english.getId())) {
             log.error("Language tag '{}' does not exist, so identifier '{}' was not created and "
-                    + "SciPROJ ids will not be attached.", LanguageAbbreviations.ENGLISH,
+                    + "its ids will not be attached.", LanguageAbbreviations.ENGLISH,
                 definition.code());
             return;
         }
@@ -74,7 +80,7 @@ public class HydratorIdentifierInitializer {
             new MultiLingualContent(english, definition.description(), 1))));
         identifier.setAccessLevel(AccessLevel.OPEN);
         identifier.setApplicableTypes(new HashSet<>(Set.of(definition.type())));
-        identifier.setUrlTemplate(SCIPROJ_URL_TEMPLATE);
+        identifier.setUrlTemplate(definition.urlTemplate());
 
         identifierRepository.save(identifier);
         log.info("Created identifier '{}'.", definition.code());
@@ -103,8 +109,11 @@ public class HydratorIdentifierInitializer {
     private void addMissingValues(Identifier identifier, Definition definition) {
         var changed = false;
 
-        if (Objects.isNull(identifier.getUrlTemplate()) || identifier.getUrlTemplate().isBlank()) {
-            identifier.setUrlTemplate(SCIPROJ_URL_TEMPLATE);
+        var hasUrlTemplate = Objects.nonNull(identifier.getUrlTemplate()) &&
+            !identifier.getUrlTemplate().isBlank();
+
+        if (Objects.nonNull(definition.urlTemplate()) && !hasUrlTemplate) {
+            identifier.setUrlTemplate(definition.urlTemplate());
             changed = true;
         }
 
@@ -128,7 +137,8 @@ public class HydratorIdentifierInitializer {
         String legacyCode,
         String title,
         String description,
-        ApplicableEntityType type
+        ApplicableEntityType type,
+        String urlTemplate
     ) {
     }
 }
