@@ -257,14 +257,15 @@ public class ProjectEntityCreatorTest {
             null), RUN);
 
         verify(projectMigrationWriter).migrate(any(), any(),
-            eq(Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, "TEST001")));
+            eq(Map.of(HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE, "TEST001")));
     }
 
     @Test
     void shouldReportDroppedIdentifiers() {
         when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
             new ProjectMigrationWriter.MigratedProject(42, Map.of(), true,
-                Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, "no identifier is configured")));
+                Map.of(HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE,
+                    "no identifier is configured")));
 
         creator.create(new ProjectMigrationDTO("TEST001", new ProjectDTO(), List.of(), List.of(),
             null), RUN);

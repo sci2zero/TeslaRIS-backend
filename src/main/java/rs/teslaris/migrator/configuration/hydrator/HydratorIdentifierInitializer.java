@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.configuration.hydrator;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,13 @@ public class HydratorIdentifierInitializer {
     private static final String SCIPROJ_URL_TEMPLATE =
         "https://sciproj.ptcris.pt/" + IdentifierUtil.ID_PLACEHOLDER + "/";
 
-    private static final String SCIPROJ_DESCRIPTION = "Identifier of the project in SciPROJ";
+    private static final List<Definition> DEFINITIONS = List.of(
+        new Definition(HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE,
+            HydratorSource.LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE, "SciPROJ Project ID",
+            "Identifier of the project in SciPROJ", ApplicableEntityType.PROJECT),
+        new Definition(HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE, null,
+            "SciPROJ Funding ID", "Identifier of the funding in SciPROJ",
+            ApplicableEntityType.FUNDING));
 
     private final IdentifierRepository identifierRepository;
 
@@ -41,35 +48,59 @@ public class HydratorIdentifierInitializer {
     @Transactional
     @EventListener(ApplicationReadyEvent.class)
     public void ensureIdentifiers() {
-        var existing = identifierRepository.findByCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+        DEFINITIONS.forEach(this::ensure);
+    }
+
+    private void ensure(Definition definition) {
+        var existing = findOrRename(definition);
         if (Objects.nonNull(existing)) {
-            addMissingValues(existing);
+            addMissingValues(existing, definition);
             return;
         }
 
         var english = languageTagService.findLanguageTagByValue(LanguageAbbreviations.ENGLISH);
         if (Objects.isNull(english.getId())) {
             log.error("Language tag '{}' does not exist, so identifier '{}' was not created and "
-                    + "SciPROJ ids will not be attached to projects.", LanguageAbbreviations.ENGLISH,
-                HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+                    + "SciPROJ ids will not be attached.", LanguageAbbreviations.ENGLISH,
+                definition.code());
             return;
         }
 
         var identifier = new Identifier();
-        identifier.setCode(HydratorSource.SCIPROJ_IDENTIFIER_CODE);
-        identifier.setTitle(new HashSet<>(Set.of(new MultiLingualContent(english, "SciPROJ ID", 1))));
+        identifier.setCode(definition.code());
+        identifier.setTitle(
+            new HashSet<>(Set.of(new MultiLingualContent(english, definition.title(), 1))));
         identifier.setDescription(new HashSet<>(Set.of(
-            new MultiLingualContent(english, SCIPROJ_DESCRIPTION, 1))));
+            new MultiLingualContent(english, definition.description(), 1))));
         identifier.setAccessLevel(AccessLevel.OPEN);
-        identifier.setApplicableTypes(new HashSet<>(Set.of(ApplicableEntityType.PROJECT)));
+        identifier.setApplicableTypes(new HashSet<>(Set.of(definition.type())));
         identifier.setUrlTemplate(SCIPROJ_URL_TEMPLATE);
 
         identifierRepository.save(identifier);
-        log.info("Created identifier '{}'.", HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+        log.info("Created identifier '{}'.", definition.code());
+    }
+
+    // A definition created under the old code keeps its values and attached ids
+    private Identifier findOrRename(Definition definition) {
+        var existing = identifierRepository.findByCode(definition.code());
+        if (Objects.nonNull(existing) || Objects.isNull(definition.legacyCode())) {
+            return existing;
+        }
+
+        var legacy = identifierRepository.findByCode(definition.legacyCode());
+        if (Objects.isNull(legacy)) {
+            return null;
+        }
+
+        legacy.setCode(definition.code());
+        identifierRepository.save(legacy);
+        log.info("Renamed identifier '{}' to '{}'.", definition.legacyCode(), definition.code());
+
+        return legacy;
     }
 
     // Values set by an admin are left as they are
-    private void addMissingValues(Identifier identifier) {
+    private void addMissingValues(Identifier identifier, Definition definition) {
         var changed = false;
 
         if (Objects.isNull(identifier.getUrlTemplate()) || identifier.getUrlTemplate().isBlank()) {
@@ -81,15 +112,23 @@ public class HydratorIdentifierInitializer {
             var english = languageTagService.findLanguageTagByValue(LanguageAbbreviations.ENGLISH);
             if (Objects.nonNull(english.getId())) {
                 identifier.getDescription()
-                    .add(new MultiLingualContent(english, SCIPROJ_DESCRIPTION, 1));
+                    .add(new MultiLingualContent(english, definition.description(), 1));
                 changed = true;
             }
         }
 
         if (changed) {
             identifierRepository.save(identifier);
-            log.info("Added missing values to identifier '{}'.",
-                HydratorSource.SCIPROJ_IDENTIFIER_CODE);
+            log.info("Added missing values to identifier '{}'.", definition.code());
         }
+    }
+
+    private record Definition(
+        String code,
+        String legacyCode,
+        String title,
+        String description,
+        ApplicableEntityType type
+    ) {
     }
 }

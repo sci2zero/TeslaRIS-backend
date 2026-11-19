@@ -113,7 +113,7 @@ public class ProjectEntityCreator
                                                            ProjectDTO project,
                                                            Integer existingId) {
         var migrated = projectMigrationWriter.migrate(project, existingId,
-            Map.of(HydratorSource.SCIPROJ_IDENTIFIER_CODE, dto.sourceId()));
+            Map.of(HydratorSource.SCIPROJ_PROJECT_IDENTIFIER_CODE, dto.sourceId()));
 
         if (Objects.nonNull(migrated)) {
             migrated.droppedIdentifiers().forEach((code, reason) ->

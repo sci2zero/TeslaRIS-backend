@@ -83,7 +83,7 @@ public class CvFundingEntityCreator implements EntityCreator<CvFundingMigrationD
         }
 
         dto.funding().setProjectId(created.id());
-        return fundingMigrationWriter.migrate(dto.funding(), null).id();
+        return fundingMigrationWriter.migrate(dto.funding(), null, Map.of()).id();
     }
 
     // Returns only when no project matches; the fundings of a matched project are not touched yet

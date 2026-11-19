@@ -2,6 +2,8 @@ package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -78,5 +80,45 @@ public class MigrationIdResolverTest {
         assertEquals(11, entry.getTargetEntityId());
         assertEquals("run-1", entry.getRunId());
         assertEquals(4, run.getItemsCreated());
+    }
+
+    @Test
+    public void shouldNotRecordAgainWhenKeyAlreadyPointsToSameEntity() {
+        // given
+        var run = MigrationRun.builder().id("run-2").itemsCreated(0).build();
+        when(recordLogRepository.find("test-source", MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2")).thenReturn(Optional.of(
+            MigrationRecordLog.builder().runId("run-1").status(MigrationItemStatus.CREATED)
+                .targetEntityId(11).build()));
+
+        // when
+        idResolver.remember("test-source", MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2", 11, run);
+
+        // then
+        verify(recordLogRepository, never()).record(any());
+        assertEquals(0, run.getItemsCreated());
+    }
+
+    @Test
+    public void shouldRecordUpdateWhenKeyPointsToDifferentEntity() {
+        // given
+        var run = MigrationRun.builder().id("run-2").itemsCreated(0).build();
+        when(recordLogRepository.find("test-source", MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2")).thenReturn(Optional.of(
+            MigrationRecordLog.builder().runId("run-1").status(MigrationItemStatus.CREATED)
+                .targetEntityId(11).build()));
+
+        // when
+        idResolver.remember("test-source", MigrationEntityType.PROJECT_ORGANISATION,
+            "TEST001#consortium#2", 12, run);
+
+        // then
+        var captor = ArgumentCaptor.forClass(MigrationRecordLog.class);
+        verify(recordLogRepository).record(captor.capture());
+        assertEquals(MigrationItemStatus.UPDATED, captor.getValue().getStatus());
+        assertEquals(12, captor.getValue().getTargetEntityId());
+        assertEquals("run-2", captor.getValue().getRunId());
+        assertEquals(0, run.getItemsCreated());
     }
 }

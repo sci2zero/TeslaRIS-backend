@@ -114,8 +114,8 @@ public class CvFundingEntityCreatorTest {
 
         when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
             new ProjectMigrationWriter.MigratedProject(42, Map.of(), true, Map.of()));
-        when(fundingMigrationWriter.migrate(any(), any()))
-            .thenReturn(new FundingMigrationWriter.MigratedFunding(77, true));
+        when(fundingMigrationWriter.migrate(any(), any(), any()))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(77, true, Map.of()));
     }
 
     private static CvFundingMigrationDTO dto(String reference,
@@ -184,7 +184,7 @@ public class CvFundingEntityCreatorTest {
 
         assertNull(exception.getEntityId());
         verify(projectMigrationWriter, never()).migrate(any(), any(), any());
-        verify(fundingMigrationWriter, never()).migrate(any(), any());
+        verify(fundingMigrationWriter, never()).migrate(any(), any(), any());
         verify(migrationLog).valueDropped(anyString(), eq("CV_FUNDING"), eq("cv-1#funding#3"),
             eq("CW-001-MAP-000017"), eq("investigation role RESEARCHER not set"));
     }
