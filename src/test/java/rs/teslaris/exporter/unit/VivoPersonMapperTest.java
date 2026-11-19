@@ -53,7 +53,7 @@ public class VivoPersonMapperTest {
     private static PushTarget target() {
         return new PushTarget("vivo-local", "vivo", true, "http://vivo.example/api/sparqlUpdate",
             "http://graph.example", NS, new Auth(AuthType.NONE, null, null), 100, null, null,
-            List.of("persons"));
+            List.of("persons"), null);
     }
 
     private static ExportOrganisationUnit organisationUnit(Integer id) {
@@ -260,7 +260,7 @@ public class VivoPersonMapperTest {
         var target = new PushTarget("vivo-local", "vivo", true,
             "http://vivo.example/api/sparqlUpdate", "http://graph.example", NS,
             new Auth(AuthType.NONE, null, null), 100, null, List.of("EN", "SR", "DE"),
-            List.of("persons"));
+            List.of("persons"), null);
 
         // When
         var model = mapper.toRdf(person, target);

@@ -31,6 +31,7 @@ import rs.teslaris.core.applicationevent.RevisionCreateEvent;
 import rs.teslaris.core.applicationevent.RevisionType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.core.revision.RevisionRestorer;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -57,6 +58,8 @@ import rs.teslaris.revisioner.util.RevisionRestorerRegistry;
 public class RevisionServiceImpl implements RevisionService {
 
     private final EntityRevisionRepository revisionRepository;
+
+    private final AdvisoryLockRepository advisoryLockRepository;
 
     private final RevisionHydratorRegistry revisionHydratorRegistry;
 
@@ -94,7 +97,7 @@ public class RevisionServiceImpl implements RevisionService {
 
             var newHash = sha256(newJson);
 
-            revisionRepository.lockForRevisionWrite(event.entityType(), event.entityId());
+            lockForRevisionWrite(event.entityType(), event.entityId());
 
             var latestRevision =
                 revisionRepository.findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(
@@ -210,7 +213,7 @@ public class RevisionServiceImpl implements RevisionService {
         // of its own rather than outside one, or the event would never be delivered. The existence
         // check is repeated under the lock because an update may have recorded 1.0 meanwhile.
         var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
-            revisionRepository.lockForRevisionWrite(entityType, entityId);
+            lockForRevisionWrite(entityType, entityId);
 
             if (revisionRepository.existsByEntityTypeAndEntityId(entityType, entityId)) {
                 return false;
@@ -252,7 +255,7 @@ public class RevisionServiceImpl implements RevisionService {
 
         // The assessment listener reacts after commit, so the write needs a transaction of its own.
         var written = Boolean.TRUE.equals(newTransaction().execute(status -> {
-            revisionRepository.lockForRevisionWrite(entityType, entityId);
+            lockForRevisionWrite(entityType, entityId);
 
             var latestRevision = revisionRepository
                 .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId);
@@ -343,6 +346,14 @@ public class RevisionServiceImpl implements RevisionService {
         revision.setMinorVersion(latest.getMinorVersion() + 1);
     }
 
+    /**
+     * Serialises version assignment per entity; released when the surrounding transaction ends.
+     */
+    private void lockForRevisionWrite(String entityType, Integer entityId) {
+        advisoryLockRepository.lock(
+            AdvisoryLockRepository.REVISION_WRITE_SCOPE_PREFIX + entityType, entityId);
+    }
+
     private TransactionTemplate newTransaction() {
         var transactionTemplate = new TransactionTemplate(transactionManager);
         transactionTemplate.setPropagationBehavior(
@@ -406,7 +417,7 @@ public class RevisionServiceImpl implements RevisionService {
             .orElseThrow(() -> new RevisionRestoreException(
                 String.format("Restoring revisions of type %s is not supported.", entityType)));
 
-        revisionRepository.lockForRevisionWrite(entityType, entityId);
+        lockForRevisionWrite(entityType, entityId);
 
         var revision = revisionRepository
             .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
@@ -476,7 +487,7 @@ public class RevisionServiceImpl implements RevisionService {
             .orElseThrow(() -> new RevisionRestoreException(
                 String.format("Restoring revisions of type %s is not supported.", entityType)));
 
-        revisionRepository.lockForRevisionWrite(entityType, entityId);
+        lockForRevisionWrite(entityType, entityId);
 
         var baselineRevision = revisionRepository
             .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(entityType, entityId)

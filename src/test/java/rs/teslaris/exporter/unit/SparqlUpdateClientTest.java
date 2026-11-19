@@ -54,7 +54,7 @@ public class SparqlUpdateClientTest {
     private static PushTarget target(AuthType authType, String passwordEnv) {
         return new PushTarget("vivo-local", "vivo", true, URL, "http://graph.example",
             "http://vivo.example/individual/", new Auth(authType, "admin@vivo", passwordEnv), 2,
-            60, null, List.of("org_units"));
+            60, null, List.of("org_units"), null);
     }
 
     private static HttpServerErrorException serverError(String body) {

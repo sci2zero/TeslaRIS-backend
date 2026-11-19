@@ -37,7 +37,7 @@ public class VivoOrganisationUnitMapperTest {
     private static PushTarget target() {
         return new PushTarget("vivo-local", "vivo", true, "http://vivo.example/api/sparqlUpdate",
             "http://graph.example", NS, new Auth(AuthType.NONE, null, null), 100, null,
-            List.of("EN", "SR-CYR"), List.of("org_units"));
+            List.of("EN", "SR-CYR"), List.of("org_units"), null);
     }
 
     private static ExportOrganisationUnit organisationUnit(Integer id) {

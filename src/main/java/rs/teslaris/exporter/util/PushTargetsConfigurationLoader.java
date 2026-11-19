@@ -71,8 +71,16 @@ public class PushTargetsConfigurationLoader {
         @JsonProperty(value = "batchSize", required = true) int batchSize,
         @JsonProperty(value = "requestTimeoutSeconds") Integer requestTimeoutSeconds,
         @JsonProperty(value = "supportedLanguages") List<String> supportedLanguages,
-        @JsonProperty(value = "entityTypes", required = true) List<String> entityTypes
+        @JsonProperty(value = "entityTypes", required = true) List<String> entityTypes,
+        // An output of a project without funding parts is credited to every funding of the
+        // project (true, also when missing), or only when the project has exactly one funding.
+        @JsonProperty(value = "creditAllFundingsWithoutFundingParts")
+        Boolean creditAllFundingsWithoutFundingParts
     ) {
+
+        public boolean creditsAllFundingsWithoutFundingParts() {
+            return !Boolean.FALSE.equals(creditAllFundingsWithoutFundingParts);
+        }
     }
 
     public record Auth(

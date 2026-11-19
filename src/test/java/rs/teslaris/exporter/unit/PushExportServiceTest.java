@@ -57,7 +57,7 @@ public class PushExportServiceTest {
     private static final PushTarget TARGET =
         new PushTarget("vivo-local", "vivo", true, "http://vivo.example/api/sparqlUpdate",
             "http://graph.example", "http://vivo.example/individual/",
-            new Auth(AuthType.NONE, null, null), 100, null, null, List.of("org_units"));
+            new Auth(AuthType.NONE, null, null), 100, null, null, List.of("org_units"), null);
 
     private static final Date LAST_UPDATED = new Date(1_000L);
 

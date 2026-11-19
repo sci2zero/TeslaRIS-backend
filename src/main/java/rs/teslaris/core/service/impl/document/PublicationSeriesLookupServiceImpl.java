@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,18 +32,17 @@ public class PublicationSeriesLookupServiceImpl implements PublicationSeriesLook
 
     private final BookSeriesRepository bookSeriesRepository;
 
-    private Map<Class<? extends PublicationSeriesIndex>,
-        Function<Integer, Optional<? extends PublicationSeriesIndex>>> indexFinders;
+    private List<Function<Integer, Optional<? extends PublicationSeriesIndex>>> indexFinders;
 
     private Map<Class<? extends PublicationSeriesIndex>,
         Function<Integer, Optional<? extends PublicationSeries>>> seriesFinders;
 
 
     @PostConstruct
-    private void initMaps() {
-        indexFinders = Map.of(
-            JournalIndex.class, journalIndexRepository::findJournalIndexByDatabaseId,
-            BookSeriesIndex.class, bookSeriesIndexRepository::findBookSeriesIndexByDatabaseId
+    private void initFinders() {
+        indexFinders = List.of(
+            journalIndexRepository::findJournalIndexByDatabaseId,
+            bookSeriesIndexRepository::findBookSeriesIndexByDatabaseId
         );
 
         seriesFinders = Map.of(
@@ -72,7 +72,7 @@ public class PublicationSeriesLookupServiceImpl implements PublicationSeriesLook
     @Override
     @Nullable
     public PublicationSeriesIndex getPublicationSeriesIndex(Integer publicationSeriesId) {
-        return indexFinders.values().stream()
+        return indexFinders.stream()
             .map(finder -> finder.apply(publicationSeriesId))
             .filter(Optional::isPresent)
             .map(Optional::get)

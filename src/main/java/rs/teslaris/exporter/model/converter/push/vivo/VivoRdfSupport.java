@@ -6,19 +6,32 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.io.ClassPathResource;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.SharedNode;
+import rs.teslaris.exporter.util.push.SharedNodeKey;
 
 public final class VivoRdfSupport {
 
@@ -39,6 +52,11 @@ public final class VivoRdfSupport {
     public static final String FABIO = "http://purl.org/spar/fabio/";
 
     private static final Map<String, String> COUNTRY_URIS = loadCountryUris();
+
+    // Languages that have a messages file, so a code can be translated.
+    private static final Set<String> TRANSLATED_LANGUAGES = Set.of("en", "sr");
+
+    private static final List<String> DEFAULT_LANGUAGES = List.of("EN", "SR");
 
 
     private VivoRdfSupport() {
@@ -277,6 +295,146 @@ public final class VivoRdfSupport {
         dateTimeValue.addProperty(model.createProperty(VIVO + "dateTimePrecision"),
             model.createResource(VIVO + precision));
         return dateTimeValue;
+    }
+
+    private static String keyOf(String code) {
+        return code.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
+    }
+
+    /**
+     * Adds a link for each identifier that has a URL template, sorted by code and value. A URL
+     * that is already in the list is not added again. Keys are made from the code and are
+     * unique in the list.
+     */
+    public static void addIdentifierLinks(List<Link> links,
+                                          List<ExportEntityIdentifier> identifiers) {
+        if (Objects.isNull(identifiers)) {
+            return;
+        }
+
+        var keys = new HashSet<String>();
+        links.forEach(link -> keys.add(link.key()));
+        identifiers.stream()
+            .filter(identifier -> StringUtil.valueExists(identifier.getCode()))
+            .sorted(Comparator
+                .comparing(ExportEntityIdentifier::getCode)
+                .thenComparing(identifier -> String.valueOf(identifier.getValue())))
+            .forEach(identifier -> {
+                var url = IdentifierUtil.buildIdentifierUrl(identifier.getUrlTemplate(),
+                    identifier.getValue());
+                if (Objects.isNull(url) ||
+                    links.stream().anyMatch(link -> link.url().equals(url))) {
+                    return;
+                }
+
+                var key = keyOf(identifier.getCode());
+                for (int i = 2; keys.contains(key); i++) {
+                    key = keyOf(identifier.getCode()) + "-" + i;
+                }
+                keys.add(key);
+                links.add(new Link(key, identifier.getCode(), url));
+            });
+    }
+
+    /**
+     * The shared node of an external organisation (only a free-text name), or empty when the
+     * name has no text. The node has the type foaf:Organization and the names as labels. The
+     * caller writes only the links to the returned URI.
+     */
+    public static Optional<String> externalOrganisation(PushTarget target,
+                                                        List<ExportMultilingualContent> names,
+                                                        Map<String, SharedNode> sharedNodes) {
+        return SharedNodeKey.of(names).map(key -> {
+            var uri = externalOrganisationUnitUri(target, key);
+            sharedNodes.computeIfAbsent(uri, nodeUri -> {
+                var nodeModel = ModelFactory.createDefaultModel();
+                var node = nodeModel.createResource(nodeUri);
+                node.addProperty(RDF.type, nodeModel.createResource(FOAF + "Organization"));
+                addLabelsOrAny(nodeModel, node, names, target);
+                return new SharedNode(nodeUri, nodeModel);
+            });
+            return uri;
+        });
+    }
+
+    // Labels in the supported languages, or one without a language tag if there are none.
+    public static void addLabelsOrAny(Model model, Resource subject,
+                                      List<ExportMultilingualContent> names, PushTarget target) {
+        addLiterals(model, subject, RDFS.label, names, target);
+        if (!subject.hasProperty(RDFS.label) && Objects.nonNull(names)) {
+            names.stream().filter(name -> StringUtil.valueExists(name.getContent())).findFirst()
+                .ifPresent(name -> subject.addProperty(RDFS.label, name.getContent().trim()));
+        }
+    }
+
+    /**
+     * Translations of a message code, as BCP 47 language tag → text, for each supported
+     * language that has a messages file (en, sr; Cyrillic is transliterated). Empty when the
+     * code has no message.
+     */
+    public static Map<String, String> translations(MessageSource messageSource,
+                                                   PushTarget target, String code) {
+        var languages = Objects.nonNull(target.supportedLanguages()) &&
+            !target.supportedLanguages().isEmpty() ? target.supportedLanguages() :
+            DEFAULT_LANGUAGES;
+
+        var translations = new LinkedHashMap<String, String>();
+        languages.forEach(language -> {
+            var languageTag = toBcp47(language);
+            var locale = Locale.forLanguageTag(languageTag);
+            // Without this check, other languages get the text of the system locale.
+            if (!TRANSLATED_LANGUAGES.contains(locale.getLanguage())) {
+                return;
+            }
+
+            try {
+                var text = messageSource.getMessage(code, null, locale);
+                if (StringUtil.valueExists(text)) {
+                    translations.put(languageTag, text.trim());
+                }
+            } catch (NoSuchMessageException e) {
+                // No translation for this code.
+            }
+        });
+
+        return translations;
+    }
+
+    /**
+     * A vcard:Individual "{nodeUri}-vcard" for a person who is not in TeslaRIS, as VIVO does
+     * for external authors. The display name is "First [Middle] Last", so the last word is the
+     * family name.
+     */
+    public static Resource addExternalPersonVcard(Model model, String nodeUri,
+                                                  String displayName) {
+        var name = displayName.trim().replaceAll("\\s+", " ");
+        var vcard = model.createResource(nodeUri + "-vcard");
+        vcard.addProperty(RDF.type, model.createResource(VCARD + "Individual"));
+        vcard.addProperty(RDFS.label, name);
+
+        var vcardName = model.createResource(nodeUri + "-vcard-name");
+        vcardName.addProperty(RDF.type, model.createResource(VCARD + "Name"));
+        vcard.addProperty(model.createProperty(VCARD + "hasName"), vcardName);
+
+        var lastSpace = name.lastIndexOf(' ');
+        if (lastSpace > 0) {
+            vcardName.addProperty(model.createProperty(VCARD + "givenName"),
+                name.substring(0, lastSpace));
+            vcardName.addProperty(model.createProperty(VCARD + "familyName"),
+                name.substring(lastSpace + 1));
+        } else {
+            vcardName.addProperty(model.createProperty(VCARD + "familyName"), name);
+        }
+
+        return vcard;
+    }
+
+    public static String projectUri(PushTarget target, Integer databaseId) {
+        return target.namespace() + "teslaris-project-" + databaseId;
+    }
+
+    public static String fundingUri(PushTarget target, Integer databaseId) {
+        return target.namespace() + "teslaris-funding-" + databaseId;
     }
 
     public record Link(String key, String label, String url) {

@@ -3,7 +3,6 @@ package rs.teslaris.exporter.model.converter.push.vivo;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.BIBO;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.FABIO;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.OBO;
-import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VCARD;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VIVO;
 
 import java.util.ArrayList;
@@ -466,13 +465,7 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
             var nodeModel = ModelFactory.createDefaultModel();
             var node = nodeModel.createResource(nodeUri);
             node.addProperty(RDF.type, nodeModel.createResource(VIVO + "Publisher"));
-            VivoRdfSupport.addLiterals(nodeModel, node, RDFS.label, name, target);
-            if (!node.hasProperty(RDFS.label) && Objects.nonNull(name)) {
-                // No name is in a supported language, so send one without a language tag.
-                name.stream().filter(content -> hasText(content.getContent())).findFirst()
-                    .ifPresent(content -> node.addProperty(RDFS.label,
-                        content.getContent().trim()));
-            }
+            VivoRdfSupport.addLabelsOrAny(nodeModel, node, name, target);
             return new SharedNode(nodeUri, nodeModel, replaceWhenChanged);
         });
 
@@ -511,7 +504,8 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
                 references.add(
                     new EntityReference(PushEntityType.PERSONS, person.getDatabaseId()));
             } else if (hasText(contribution.getDisplayName())) {
-                agent = addExternalContributor(model, nodeUri, contribution.getDisplayName());
+                agent = VivoRdfSupport.addExternalPersonVcard(model, nodeUri,
+                    contribution.getDisplayName());
             } else {
                 continue;
             }
@@ -525,30 +519,6 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
             document.addProperty(relatedBy, node);
             agent.addProperty(relatedBy, node);
         }
-    }
-
-    // The display name is "First [Middle] Last", so the last word is the family name.
-    private Resource addExternalContributor(Model model, String nodeUri, String displayName) {
-        var name = displayName.trim().replaceAll("\\s+", " ");
-        var vcard = model.createResource(nodeUri + "-vcard");
-        vcard.addProperty(RDF.type, model.createResource(VCARD + "Individual"));
-        vcard.addProperty(RDFS.label, name);
-
-        var vcardName = model.createResource(nodeUri + "-vcard-name");
-        vcardName.addProperty(RDF.type, model.createResource(VCARD + "Name"));
-        vcard.addProperty(model.createProperty(VCARD + "hasName"), vcardName);
-
-        var lastSpace = name.lastIndexOf(' ');
-        if (lastSpace > 0) {
-            vcardName.addProperty(model.createProperty(VCARD + "givenName"),
-                name.substring(0, lastSpace));
-            vcardName.addProperty(model.createProperty(VCARD + "familyName"),
-                name.substring(lastSpace + 1));
-        } else {
-            vcardName.addProperty(model.createProperty(VCARD + "familyName"), name);
-        }
-
-        return vcard;
     }
 
     private void addThesisGrantor(Model model, Resource document, PushTarget target,

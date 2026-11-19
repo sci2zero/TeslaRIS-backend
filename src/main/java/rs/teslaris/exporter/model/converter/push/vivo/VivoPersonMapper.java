@@ -5,14 +5,10 @@ import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VCAR
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VIVO;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +18,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.context.MessageSource;
-import org.springframework.context.NoSuchMessageException;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.person.InvolvementType;
-import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEmployment;
-import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.Link;
@@ -36,16 +29,10 @@ import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
 import rs.teslaris.exporter.util.push.RdfMapper;
 import rs.teslaris.exporter.util.push.RdfMapping;
 import rs.teslaris.exporter.util.push.SharedNode;
-import rs.teslaris.exporter.util.push.SharedNodeKey;
 
 @Component
 @RequiredArgsConstructor
 public class VivoPersonMapper implements RdfMapper<ExportPerson> {
-
-    // Languages that have a messages file, so the type can be translated.
-    private static final Set<String> TRANSLATED_LANGUAGES = Set.of("en", "sr");
-
-    private static final List<String> DEFAULT_LANGUAGES = List.of("EN", "SR");
 
     private final VivoTeslarisLinks teslarisLinks;
 
@@ -64,10 +51,6 @@ public class VivoPersonMapper implements RdfMapper<ExportPerson> {
 
         return givenNames.isEmpty() ? name.getLastName().trim() :
             name.getLastName().trim() + ", " + givenNames;
-    }
-
-    private static String keyOf(String code) {
-        return code.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
     }
 
     @Override
@@ -167,63 +150,18 @@ public class VivoPersonMapper implements RdfMapper<ExportPerson> {
         VivoRdfSupport.addIdentifierLink(links, "openalex", "OpenAlex", "https://openalex.org/",
             snapshot.getOpenAlexId());
 
-        if (Objects.isNull(snapshot.getIdentifiers())) {
-            return links;
-        }
-
-        var keys = new HashSet<String>();
-        links.forEach(link -> keys.add(link.key()));
-        snapshot.getIdentifiers().stream()
-            .filter(identifier -> StringUtil.valueExists(identifier.getCode()))
-            .sorted(Comparator
-                .comparing(ExportEntityIdentifier::getCode)
-                .thenComparing(exportEntityIdentifier -> String.valueOf(
-                    exportEntityIdentifier.getValue())))
-            .forEach(identifier -> {
-                var url = IdentifierUtil.buildIdentifierUrl(identifier.getUrlTemplate(),
-                    identifier.getValue());
-                if (Objects.isNull(url) ||
-                    links.stream().anyMatch(link -> link.url().equals(url))) {
-                    return;
-                }
-
-                var key = keyOf(identifier.getCode());
-                for (int i = 2; keys.contains(key); i++) {
-                    key = keyOf(identifier.getCode()) + "-" + i;
-                }
-                keys.add(key);
-                links.add(new Link(key, identifier.getCode(), url));
-            });
-
+        VivoRdfSupport.addIdentifierLinks(links, snapshot.getIdentifiers());
         return links;
     }
 
     // Adds one label per supported language, with the involvement type translated.
     private void addInvolvementTypeLabels(Model model, Resource position, PushTarget target,
                                           InvolvementType involvementType) {
-        var languages = Objects.nonNull(target.supportedLanguages()) &&
-            !target.supportedLanguages().isEmpty() ? target.supportedLanguages() :
-            DEFAULT_LANGUAGES;
-
-        languages.forEach(language -> {
-            var languageTag = VivoRdfSupport.toBcp47(language);
-            var locale = Locale.forLanguageTag(languageTag);
-            // Without this check, other languages get the text of the system locale.
-            if (!TRANSLATED_LANGUAGES.contains(locale.getLanguage())) {
-                return;
-            }
-
-            try {
-                var label = messageSource.getMessage(
-                    "involvementType." + involvementType.name(), null, locale);
-                if (StringUtil.valueExists(label)) {
-                    position.addProperty(RDFS.label,
-                        model.createLiteral(label.trim(), languageTag));
-                }
-            } catch (NoSuchMessageException e) {
-                // Some types (for example CANDIDATE) have no translation. Send no label.
-            }
-        });
+        VivoRdfSupport.translations(messageSource, target,
+                "involvementType." + involvementType.name())
+            .forEach((languageTag, label) ->
+                position.addProperty(RDFS.label, model.createLiteral(label, languageTag)));
+        // Some types (for example CANDIDATE) have no translation, so they get no label.
     }
 
     // Returns null when the employment has no institution and no usable display name.
@@ -235,31 +173,10 @@ public class VivoPersonMapper implements RdfMapper<ExportPerson> {
                 VivoRdfSupport.organisationUnitUri(target, institution.getDatabaseId()) : null;
         }
 
-        var displayName = employment.getDisplayOrganisationUnit();
-        var key = SharedNodeKey.of(displayName);
-        if (key.isEmpty()) {
-            return null;
-        }
-
-        // The person only links to this node. The node's type and label are shared by all
-        // persons with the same external institution, so they go in a SharedNode.
-        var uri = VivoRdfSupport.externalOrganisationUnitUri(target, key.get());
-        sharedNodes.computeIfAbsent(uri, nodeUri -> {
-            var nodeModel = ModelFactory.createDefaultModel();
-            var node = nodeModel.createResource(nodeUri);
-            node.addProperty(RDF.type, nodeModel.createResource(FOAF + "Organization"));
-            VivoRdfSupport.addLiterals(nodeModel, node, RDFS.label, displayName, target);
-            if (!node.hasProperty(RDFS.label)) {
-                // No name is in a supported language, so send one without a language tag.
-                displayName.stream()
-                    .filter(name -> StringUtil.valueExists(name.getContent()))
-                    .findFirst()
-                    .ifPresent(name -> node.addProperty(RDFS.label, name.getContent().trim()));
-            }
-            return new SharedNode(nodeUri, nodeModel);
-        });
-
-        return uri;
+        // The person only links to this node. Its type and label are shared by all entities
+        // that link to the same external institution.
+        return VivoRdfSupport.externalOrganisation(target, employment.getDisplayOrganisationUnit(),
+            sharedNodes).orElse(null);
     }
 
     private void addPosition(Model model, Resource person, PushTarget target,

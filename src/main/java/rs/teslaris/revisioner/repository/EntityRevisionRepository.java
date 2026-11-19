@@ -34,9 +34,4 @@ public interface EntityRevisionRepository extends JpaRepository<EntityRevision, 
         "WHERE r.entityType = :entityType AND r.entityId = :entityId " +
         "ORDER BY r.revisionTimestamp DESC LIMIT 1")
     Optional<Integer> findLatestRevisionId(String entityType, Integer entityId);
-
-    // Serialises version assignment per entity; released when the surrounding transaction ends.
-    @Query(value = "SELECT pg_advisory_xact_lock(hashtext(:entityType), :entityId)",
-        nativeQuery = true)
-    void lockForRevisionWrite(String entityType, Integer entityId);
 }

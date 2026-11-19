@@ -42,7 +42,7 @@ public class VivoEventMapperTest {
     private static PushTarget target() {
         return new PushTarget("vivo-local", "vivo", true, "http://vivo.example/api/sparqlUpdate",
             "http://graph.example", NS, new Auth(AuthType.NONE, null, null), 100, null,
-            List.of("EN", "SR"), List.of("events"));
+            List.of("EN", "SR"), List.of("events"), null);
     }
 
     private static ExportEvent event(EventType eventType) {

@@ -360,6 +360,11 @@ public class CommonLoaderTest {
     }
 
     private JournalPublication stampedOldDocument(String source, String identifier) {
+        return stampedOldDocument(loadedRecord(source, identifier), new JournalPublication());
+    }
+
+    private JournalPublication stampedOldDocument(DocumentImport loadedRecord,
+                                                  JournalPublication oldDocument) {
         var userId = 1;
 
         var progressReport = new LoadProgressReport();
@@ -367,7 +372,6 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
-        var oldDocument = new JournalPublication();
         when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
             any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new DocumentPublicationIndex() {{
@@ -376,13 +380,77 @@ public class CommonLoaderTest {
         when(documentPublicationService.findOne(1)).thenReturn(oldDocument);
 
         var entityClass = DataSet.getClassForValue(DataSet.DOCUMENT_IMPORTS.getStringValue());
-        doReturn(loadedRecord(source, identifier)).when(mongoTemplate)
+        doReturn(loadedRecord).when(mongoTemplate)
             .findAndModify(any(Query.class), any(Update.class),
                 any(FindAndModifyOptions.class), eq(entityClass));
 
         commonLoader.markRecordAsLoaded(userId, null, 1, null);
 
         return oldDocument;
+    }
+
+    @Test
+    void shouldStampEveryIdentifierTheEnrichedRecordCarries() {
+        // Given
+        var enrichedRecord = loadedRecord("SCOPUS", "85123456789");
+        enrichedRecord.setOpenAlexId("W123456789");
+        enrichedRecord.setWebOfScienceId("000123456789012");
+
+        // When
+        var oldDocument = stampedOldDocument(enrichedRecord, new JournalPublication());
+
+        // Then
+        assertEquals("85123456789", oldDocument.getScopusId());
+        assertEquals("W123456789", oldDocument.getOpenAlexId());
+        assertEquals("000123456789012", oldDocument.getWebOfScienceId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldOverwriteOnlyIdentifierOfSourceTheRecordCameFrom() {
+        // Given
+        var enrichedRecord = loadedRecord("SCOPUS", "85123456789");
+        enrichedRecord.setOpenAlexId("W123456789");
+
+        var oldDocument = new JournalPublication();
+        oldDocument.setScopusId("85000000000");
+        oldDocument.setOpenAlexId("W999999999");
+
+        // When
+        stampedOldDocument(enrichedRecord, oldDocument);
+
+        // Then
+        assertEquals("85123456789", oldDocument.getScopusId());
+        assertEquals("W999999999", oldDocument.getOpenAlexId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldStampIdentifiersOfOtherSourcesWhenRecordHasNoIdentifierOfItsOwnSource() {
+        // Given
+        var enrichedRecord = loadedRecord("BIBTEX", "someCitationKey2024");
+        enrichedRecord.setScopusId("85123456789");
+
+        // When
+        var oldDocument = stampedOldDocument(enrichedRecord, new JournalPublication());
+
+        // Then
+        assertEquals("85123456789", oldDocument.getScopusId());
+        verify(documentPublicationService, times(1)).save(oldDocument);
+    }
+
+    @Test
+    void shouldNotSaveOldDocumentWhenItAlreadyHoldsTheHarvestedIdentifiers() {
+        // Given
+        var oldDocument = new JournalPublication();
+        oldDocument.setScopusId("85123456789");
+
+        // When
+        stampedOldDocument(loadedRecord("SCOPUS", "85123456789"), oldDocument);
+
+        // Then
+        assertEquals("85123456789", oldDocument.getScopusId());
+        verify(documentPublicationService, never()).save(any());
     }
 
     @Test

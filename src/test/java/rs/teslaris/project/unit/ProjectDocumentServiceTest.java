@@ -98,6 +98,9 @@ public class ProjectDocumentServiceTest {
         verify(projectService).findOne(1);
         verify(documentPublicationService).findOne(2);
         verify(projectDocumentRepository).save(any(ProjectDocument.class));
+        // The project is saved again, so the daily common export takes it.
+        assertNotNull(project.getLastModification());
+        verify(projectService).save(project);
         verify(indexBulkUpdateService).setIdFieldForRecord("document_publication", "databaseId", 2,
             "project_id", 1);
     }
@@ -255,6 +258,8 @@ public class ProjectDocumentServiceTest {
         verify(projectDocumentRepository).save(argThat(pd -> pd.getDeleted().equals(true)));
         verify(indexBulkUpdateService).setIdFieldForRecord(
             "document_publication", "databaseId", 2, "project_id", null);
+        assertNotNull(project.getLastModification());
+        verify(projectService).save(project);
     }
 
     @Test

@@ -23,8 +23,10 @@ import lombok.RequiredArgsConstructor;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportEvent;
+import rs.teslaris.exporter.model.common.ExportFunding;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 
 @Getter
@@ -37,7 +39,9 @@ public enum PushEntityType {
     // Not a push set. Journals and book series are pushed with "documents", but they have their
     // own ID sequence, so their states need their own type.
     PUBLICATION_SERIES(null, ExportDocument.class),
-    DOCUMENTS("documents", ExportDocument.class);
+    DOCUMENTS("documents", ExportDocument.class),
+    PROJECTS("projects", ExportProject.class),
+    FUNDINGS("fundings", ExportFunding.class);
 
     private final String code;
 

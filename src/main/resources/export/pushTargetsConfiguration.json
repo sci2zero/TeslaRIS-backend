@@ -22,8 +22,11 @@
         "org_units",
         "persons",
         "events",
-        "documents"
-      ]
+        "documents",
+        "projects",
+        "fundings"
+      ],
+      "creditAllFundingsWithoutFundingParts": true
     }
   ]
 }

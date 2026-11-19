@@ -446,9 +446,11 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     /**
-     * Stamps the document which the loaded record duplicates with the identifier of the source it
-     * came from. Sources which have no dedicated identifier column keep their harvest key in the
-     * internal identifiers only.
+     * Stamps the document which the loaded record duplicates with the identifiers the record
+     * carries. The identifier of the source the record came from always wins, while the
+     * identifiers it picked up from other sources during enrichment only fill a gap. Sources
+     * which have no dedicated identifier column keep their harvest key in the internal
+     * identifiers only.
      */
     private void handleDeduplication(Integer oldDocumentId, DocumentImport updatedRecord) {
         if (Objects.isNull(oldDocumentId) || oldDocumentId <= 0) {
@@ -462,28 +464,37 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         var oldDocument = documentPublicationService.findOne(oldDocumentId);
+        var source = Objects.requireNonNullElse(updatedRecord.getSource(), "");
 
-        var identifierSet = switch (Objects.requireNonNullElse(updatedRecord.getSource(), "")) {
-            case "SCOPUS" -> setHarvestedIdentifier(updatedRecord.getScopusId(),
-                oldDocument::setScopusId);
-            case "OPEN_ALEX" -> setHarvestedIdentifier(updatedRecord.getOpenAlexId(),
-                oldDocument::setOpenAlexId);
-            case "WEB_OF_SCIENCE" -> setHarvestedIdentifier(updatedRecord.getWebOfScienceId(),
-                oldDocument::setWebOfScienceId);
-            default -> false;
-        };
+        var identifierSet = stampIdentifier(updatedRecord.getScopusId(),
+            oldDocument.getScopusId(), oldDocument::setScopusId, "SCOPUS".equals(source));
+
+        identifierSet |= stampIdentifier(updatedRecord.getOpenAlexId(),
+            oldDocument.getOpenAlexId(), oldDocument::setOpenAlexId, "OPEN_ALEX".equals(source));
+
+        identifierSet |= stampIdentifier(updatedRecord.getWebOfScienceId(),
+            oldDocument.getWebOfScienceId(), oldDocument::setWebOfScienceId,
+            "WEB_OF_SCIENCE".equals(source));
 
         if (identifierSet) {
             documentPublicationService.save(oldDocument);
         }
     }
 
-    private boolean setHarvestedIdentifier(String identifier, Consumer<String> setter) {
-        if (!StringUtil.valueExists(identifier)) {
+    private boolean stampIdentifier(String harvestedIdentifier, String currentIdentifier,
+                                    Consumer<String> setter, boolean fromMatchingSource) {
+        if (!StringUtil.valueExists(harvestedIdentifier) ||
+            (!fromMatchingSource && StringUtil.valueExists(currentIdentifier))) {
             return false;
         }
 
-        setter.accept(StringUtil.normalizeIdentifier(identifier));
+        var normalizedIdentifier = StringUtil.normalizeIdentifier(harvestedIdentifier);
+
+        if (normalizedIdentifier.equals(currentIdentifier)) {
+            return false;
+        }
+
+        setter.accept(normalizedIdentifier);
         return true;
     }
 

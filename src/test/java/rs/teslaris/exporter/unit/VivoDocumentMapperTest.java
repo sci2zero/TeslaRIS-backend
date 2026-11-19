@@ -58,7 +58,7 @@ public class VivoDocumentMapperTest {
     private static PushTarget target() {
         return new PushTarget("vivo-local", "vivo", true, "http://vivo.example/api/sparqlUpdate",
             "http://graph.example", NS, new Auth(AuthType.NONE, null, null), 100, null,
-            List.of("EN", "SR"), List.of("documents"));
+            List.of("EN", "SR"), List.of("documents"), null);
     }
 
     private static List<ExportMultilingualContent> english(String content) {
@@ -436,8 +436,8 @@ public class VivoDocumentMapperTest {
         "PERFORMANCE_RELATED_OUTPUT,ARTISTIC_EXHIBITION,http://vivoweb.org/ontology/core#Exhibit"
     })
     public void shouldAddInformationContentEntityForOutputsOutsideIt(ExportPublicationType type,
-                                                                    String concreteType,
-                                                                    String expectedClass) {
+                                                                     String concreteType,
+                                                                     String expectedClass) {
         // Given
         var document = document(type, 80);
         if (type == ExportPublicationType.INTANGIBLE_PRODUCT) {
