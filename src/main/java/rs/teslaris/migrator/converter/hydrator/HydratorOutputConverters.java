@@ -568,8 +568,7 @@ public class HydratorOutputConverters {
 
         var classifications = researchClassifications(dissertation.researchClassifications());
         applyPublicationFields(dto, record, output, entityType, language, dissertation.keywords(),
-            null, new HydratorCVModel.ResearchClassifications(null,
-                classifications.stream().skip(1).toList()));
+            null, dissertation.researchClassifications());
 
         dto.setThesisType(thesisType(dissertation.degreeType()));
         dto.setThesisDefenceDate(defenceDate(dissertation.completionDate()));
