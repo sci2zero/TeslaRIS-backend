@@ -22,6 +22,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorDegreeRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorEmploymentExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorExaminationExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorFundingExtractor;
+import rs.teslaris.migrator.converter.hydrator.HydratorFundingOutputExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOrganisationUnitExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
@@ -32,6 +33,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.HydratorSupervisionExtractor;
 import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
 import rs.teslaris.migrator.converter.hydrator.PrizeEntityCreator;
+import rs.teslaris.migrator.converter.hydrator.ProjectDocumentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ProjectEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.ThesisContributionEntityCreator;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
@@ -66,7 +68,8 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     thesis followed by the education, then the theses of its completed supervisions and of its
  *     master and PhD examinations. A thesis is matched by title and author across curricula,
  *     whichever comes first: the author's own version replaces the fields and an advisor or
- *     examiner adds their role.</li>
+ *     examiner adds their role. Last come the curriculum's funding-output pairs, linking the
+ *     project of a funding with the document of an output.</li>
  * </ol>
  */
 @Configuration
@@ -104,6 +107,10 @@ public class HydratorPipelineConfiguration {
     private final HydratorSupervisionExtractor supervisionExtractor;
 
     private final HydratorExaminationExtractor examinationExtractor;
+
+    private final HydratorFundingOutputExtractor fundingOutputExtractor;
+
+    private final ProjectDocumentEntityCreator projectDocumentEntityCreator;
 
     private final ThesisContributionEntityCreator thesisContributionEntityCreator;
 
@@ -207,6 +214,12 @@ public class HydratorPipelineConfiguration {
                 MigrationEntityType.THESIS_EXAMINATION,
                 examinationExtractor,
                 thesisContributionEntityCreator,
+                FailureHandler.resolvedToExisting(),
+                (record, dto) -> dto.sourceKey()),
+            new SimpleMapping<>(
+                MigrationEntityType.PROJECT_DOCUMENT,
+                fundingOutputExtractor,
+                projectDocumentEntityCreator,
                 FailureHandler.resolvedToExisting(),
                 (record, dto) -> dto.sourceKey()))));
     }

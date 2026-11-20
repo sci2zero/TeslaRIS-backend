@@ -380,7 +380,7 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
 
         // The event is created on creation, so skipped or filtered items create no stubs
         return Objects.isNull(dto) ? null : new MigrationItem<PerformanceRelatedOutputDTO>(
-            MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
+            MigrationEntityType.CONFERENCE_PRESENTATION,
             converters.outputKey(record, output),
             null,
             dto,

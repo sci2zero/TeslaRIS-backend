@@ -277,8 +277,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         }
 
         var created = otherEventService.createOtherEvent(dto, performIndex);
-        migrationLog.stubCreated(HydratorSource.NAME, type.name(), key, created.getId(),
-            name.trim());
+        migrationLog.stubCreated(HydratorSource.NAME, Objects.toString(type, "OTHER_EVENT"), key,
+            created.getId(), name.trim());
 
         return created.getId();
     }

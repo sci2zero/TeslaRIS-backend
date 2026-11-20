@@ -6,7 +6,6 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
-import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -77,7 +76,7 @@ public class HydratorServiceRouter implements ItemRouter<HydratorCVModel.Curricu
                     resolveSameWork(record, presentation);
                     var source = service.nonResearchPresentation();
                     presentation.setEventId(eventResolver.createServiceEvent(
-                        converters.serviceKey(record, service), OtherEventType.LECTURE,
+                        converters.serviceKey(record, service), null,
                         source.conferenceEvent(), source.presentationDate(), null,
                         converters.languageOf(record), source.conferenceEventLocation(),
                         source.organizationPresentedTo(),
@@ -98,7 +97,7 @@ public class HydratorServiceRouter implements ItemRouter<HydratorCVModel.Curricu
                 item(record, service, dto, (interview, run) -> {
                     var source = service.broadcastInterview();
                     interview.setEventId(eventResolver.createServiceEvent(
-                        converters.serviceKey(record, service), OtherEventType.PERFORMANCE,
+                        converters.serviceKey(record, service), null,
                         source.program(), source.firstBroadcastDate(), source.endDate(),
                         converters.languageOf(record), null, null, List.of(),
                         run.isPerformIndex()));

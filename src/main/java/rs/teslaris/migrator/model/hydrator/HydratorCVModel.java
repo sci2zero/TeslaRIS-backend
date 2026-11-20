@@ -31,7 +31,35 @@ public class HydratorCVModel {
         Distinctions distinctions,
         Fundings fundings,
         Outputs outputs,
-        Services services
+        Services services,
+        Groups groups
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Groups(
+        Integer total,
+        FundingOutputs fundingOutputs
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingOutputs(
+        List<FundingOutput> fundingOutput
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingOutput(
+        GroupReference funding,
+        GroupReference output
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record GroupReference(
+        String id,
+        String title
     ) {
     }
 

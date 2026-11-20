@@ -161,7 +161,7 @@ public class HydratorOutputConverters {
         MigrationEntityType.MONOGRAPH_PUBLICATION, new OutputRules(154, 160, 161, 163),
         MigrationEntityType.MONOGRAPH, new OutputRules(116, 122, 123, 125),
         // Slides carry only the presentation date and the presenters
-        MigrationEntityType.PERFORMANCE_RELATED_OUTPUT, new OutputRules(90, 90, 91, 90),
+        MigrationEntityType.CONFERENCE_PRESENTATION, new OutputRules(90, 90, 91, 90),
         MigrationEntityType.THESIS, new OutputRules(212, 214, 215, 217)
     );
 
@@ -523,7 +523,7 @@ public class HydratorOutputConverters {
         }
 
         var dto = new PerformanceRelatedOutputDTO();
-        var entityType = MigrationEntityType.PERFORMANCE_RELATED_OUTPUT;
+        var entityType = MigrationEntityType.CONFERENCE_PRESENTATION;
 
         applyCommonFields(dto, record, output, entityType, paper.paperTitle(), languageOf(record),
             presentationDate(paper), null, null, null);
