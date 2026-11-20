@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -166,7 +167,8 @@ public class HydratorConversionUtil implements RunScopedCache {
 
     private Optional<Integer> findLanguageId(String code) {
         try {
-            return Optional.ofNullable(languageService.findLanguageByCode(code).getId());
+            return Optional.ofNullable(languageService.findLanguageByCode(code))
+                .map(Language::getId);
         } catch (NotFoundException e) {
             log.warn("Language '{}' is not in the language registry.", code);
             return Optional.empty();
