@@ -77,6 +77,7 @@ public class HydratorServiceConvertersTest {
         ownerName.setLastname("Doe");
         lenient().when(personResolver.resolveOwner(any())).thenReturn(OWNER_ID);
         lenient().when(personResolver.ownerName(any())).thenReturn(ownerName);
+        lenient().when(personResolver.resolveByCienciaId(any())).thenReturn(null);
     }
 
     private HydratorCVModel.Curriculum curriculum(String service) throws Exception {

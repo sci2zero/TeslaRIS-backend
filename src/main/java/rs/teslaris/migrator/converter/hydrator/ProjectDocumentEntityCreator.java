@@ -1,22 +1,18 @@
 package rs.teslaris.migrator.converter.hydrator;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.migration.FundingMigrationWriter;
+import rs.teslaris.core.migration.ProjectDocumentMigrationWriter;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
 import rs.teslaris.migrator.repository.MigrationRecordLogRepository;
 import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationException;
 import rs.teslaris.migrator.util.ResolvedToExistingException;
-import rs.teslaris.project.dto.project.ProjectDocumentDTO;
-import rs.teslaris.project.model.project.ProjectDocumentType;
-import rs.teslaris.project.repository.project.ProjectDocumentRepository;
-import rs.teslaris.project.service.interfaces.funding.FundingService;
-import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 
 /**
  * Links the project of a curriculum funding with the document of a curriculum output as a RESULT.
@@ -39,11 +35,9 @@ public class ProjectDocumentEntityCreator implements EntityCreator<ProjectDocume
 
     private final MigrationRecordLogRepository recordLogRepository;
 
-    private final FundingService fundingService;
+    private final FundingMigrationWriter fundingMigrationWriter;
 
-    private final ProjectDocumentService projectDocumentService;
-
-    private final ProjectDocumentRepository projectDocumentRepository;
+    private final ProjectDocumentMigrationWriter projectDocumentMigrationWriter;
 
 
     @Override
@@ -54,22 +48,14 @@ public class ProjectDocumentEntityCreator implements EntityCreator<ProjectDocume
             new MigrationException("output " + dto.outputKey() + " has no migrated document"));
         var projectId = projectId(dto.fundingKey());
 
-        projectDocumentRepository.findAllByProjectId(projectId).stream()
-            .filter(link -> Objects.nonNull(link.getDocument()) &&
-                documentId.equals(link.getDocument().getId()))
-            .findFirst()
-            .ifPresent(link -> {
-                throw new ResolvedToExistingException(link.getId(),
-                    "document " + documentId + " already linked to project " + projectId);
-            });
+        var link = projectDocumentMigrationWriter.linkResult(projectId, documentId);
 
-        var link = new ProjectDocumentDTO();
-        link.setProjectId(projectId);
-        link.setDocumentId(documentId);
-        link.setRelationType(ProjectDocumentType.RESULT);
-        link.setTextualDescription(new ArrayList<>());
+        if (!link.created()) {
+            throw new ResolvedToExistingException(link.id(),
+                "document " + documentId + " already linked to project " + projectId);
+        }
 
-        return projectDocumentService.createProjectDocument(link).getId();
+        return link.id();
     }
 
     private Optional<Integer> documentId(String outputKey) {
@@ -85,7 +71,7 @@ public class ProjectDocumentEntityCreator implements EntityCreator<ProjectDocume
         var fundingId = recordLogRepository.findTargetEntityId(HydratorSource.NAME,
             MigrationEntityType.CV_FUNDING, fundingKey).orElseThrow(() ->
             new MigrationException("funding " + fundingKey + " has no migrated funding"));
-        var projectId = fundingService.readFunding(fundingId).getProjectId();
+        var projectId = fundingMigrationWriter.read(fundingId).getProjectId();
 
         if (Objects.isNull(projectId)) {
             throw new MigrationException("funding " + fundingId + " has no project");
