@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -289,8 +290,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         updatePersonInvolvements((DocumentImport) updatedRecord);
 
-        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord,
-            progressReport);
+        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord);
 
         migrateInternalIdentifiers(newDocumentId, (DocumentImport) updatedRecord);
     }
@@ -445,20 +445,57 @@ public class CommonLoaderImpl implements CommonLoader {
         }
     }
 
-    private void handleDeduplication(Integer oldDocumentId,
-                                     DocumentImport updatedRecord,
-                                     LoadProgressReport progressReport) {
-        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0) {
-            var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
+    /**
+     * Stamps the document which the loaded record duplicates with the identifiers the record
+     * carries. The identifier of the source the record came from always wins, while the
+     * identifiers it picked up from other sources during enrichment only fill a gap. Sources
+     * which have no dedicated identifier column keep their harvest key in the internal
+     * identifiers only.
+     */
+    private void handleDeduplication(Integer oldDocumentId, DocumentImport updatedRecord) {
+        if (Objects.isNull(oldDocumentId) || oldDocumentId <= 0) {
+            return;
+        }
 
-            if (!potentialDuplicateIds.contains(oldDocumentId)) {
-                return;
-            }
+        var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
 
-            var oldDocument = documentPublicationService.findOne(oldDocumentId);
-            oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+        if (!potentialDuplicateIds.contains(oldDocumentId)) {
+            return;
+        }
+
+        var oldDocument = documentPublicationService.findOne(oldDocumentId);
+        var source = Objects.requireNonNullElse(updatedRecord.getSource(), "");
+
+        var identifierSet = stampIdentifier(updatedRecord.getScopusId(),
+            oldDocument.getScopusId(), oldDocument::setScopusId, "SCOPUS".equals(source));
+
+        identifierSet |= stampIdentifier(updatedRecord.getOpenAlexId(),
+            oldDocument.getOpenAlexId(), oldDocument::setOpenAlexId, "OPEN_ALEX".equals(source));
+
+        identifierSet |= stampIdentifier(updatedRecord.getWebOfScienceId(),
+            oldDocument.getWebOfScienceId(), oldDocument::setWebOfScienceId,
+            "WEB_OF_SCIENCE".equals(source));
+
+        if (identifierSet) {
             documentPublicationService.save(oldDocument);
         }
+    }
+
+    private boolean stampIdentifier(String harvestedIdentifier, String currentIdentifier,
+                                    Consumer<String> setter, boolean fromMatchingSource) {
+        if (!StringUtil.valueExists(harvestedIdentifier) ||
+            (!fromMatchingSource && StringUtil.valueExists(currentIdentifier))) {
+            return false;
+        }
+
+        var normalizedIdentifier = StringUtil.normalizeIdentifier(harvestedIdentifier);
+
+        if (normalizedIdentifier.equals(currentIdentifier)) {
+            return false;
+        }
+
+        setter.accept(normalizedIdentifier);
+        return true;
     }
 
     private void migrateInternalIdentifiers(Integer newDocumentId, DocumentImport updatedRecord) {

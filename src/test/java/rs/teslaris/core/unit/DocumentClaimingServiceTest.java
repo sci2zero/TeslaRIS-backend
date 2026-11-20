@@ -2,7 +2,6 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -17,16 +16,20 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.applicationevent.DocumentClaimedEvent;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.DeclinedDocumentClaim;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
 import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.impl.document.DocumentClaimingServiceImpl;
@@ -54,6 +57,12 @@ public class DocumentClaimingServiceTest {
 
     @Mock
     private DeclinedDocumentClaimRepository declinedDocumentClaimRepository;
+
+    @Mock
+    private AdvisoryLockRepository advisoryLockRepository;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private DocumentClaimingServiceImpl documentClaimingService;
@@ -116,12 +125,15 @@ public class DocumentClaimingServiceTest {
 
         // Then
         assertEquals(person, contribution.getPerson());
-        assertEquals(personId, documentIndex.getAuthorIds().get(0));
-        assertTrue(documentIndex.getClaimerIds().isEmpty());
-        assertTrue(documentIndex.getClaimerOrdinals().isEmpty());
 
+        verify(advisoryLockRepository).lock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE,
+            documentId);
         verify(documentPublicationService).save(document);
-        verify(documentPublicationIndexRepository).save(documentIndex);
+        verify(documentPublicationIndexRepository, never()).save(any());
+
+        var eventCaptor = ArgumentCaptor.forClass(DocumentClaimedEvent.class);
+        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+        assertEquals(new DocumentClaimedEvent(documentId, personId, 0), eventCaptor.getValue());
     }
 
     @Test
@@ -153,6 +165,7 @@ public class DocumentClaimingServiceTest {
         // Then
         verify(documentPublicationService, never()).save(any());
         verify(documentPublicationIndexRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any(DocumentClaimedEvent.class));
     }
 
     @Test

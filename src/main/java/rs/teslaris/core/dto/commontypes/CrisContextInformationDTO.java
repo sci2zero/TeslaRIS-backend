@@ -63,6 +63,8 @@ public record CrisContextInformationDTO(
 
     String documentNationalIdUrl,
 
+    List<Integer> thesisLibraryInstitutionIds,
+
     // Derived from the ORCID OAuth2 configuration, never persisted, ignored when saving.
     Boolean orcidLoginToggle
 ) {

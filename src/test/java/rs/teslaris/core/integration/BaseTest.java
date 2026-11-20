@@ -27,9 +27,16 @@ import rs.teslaris.core.util.functional.Pair;
 @SpringBootTest
 public abstract class BaseTest {
 
+    // Every header that Spring Security can write. A streaming response commits on the async
+    // thread and writes these again, while the test thread is still in the filter chain, and
+    // MockHttpServletResponse holds its headers in a map that is not thread safe.
     private static final Set<String> SECURITY_HEADERS = Set.of(
         "X-XSS-Protection", "Content-Security-Policy",
-        "X-Frame-Options", "Cache-Control", "Pragma", "Expires"
+        "Content-Security-Policy-Report-Only", "X-Frame-Options", "Cache-Control", "Pragma",
+        "Expires", "X-Content-Type-Options", "Strict-Transport-Security", "Referrer-Policy",
+        "Cross-Origin-Opener-Policy", "Cross-Origin-Embedder-Policy",
+        "Cross-Origin-Resource-Policy", "X-Permitted-Cross-Domain-Policies",
+        "Permissions-Policy", "Clear-Site-Data"
     );
     protected MockMvc mockMvc;
     @Autowired

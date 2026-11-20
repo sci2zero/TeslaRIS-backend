@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -41,13 +43,18 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
 
     private final ExpressionTransformer expressionTransformer;
 
+    private final OrganisationUnitService organisationUnitService;
+
 
     public ThesisSearchServiceImpl(SearchFieldsLoader searchFieldsLoader,
                                    SearchService<DocumentPublicationIndex> searchService,
-                                   ExpressionTransformer expressionTransformer) throws IOException {
+                                   ExpressionTransformer expressionTransformer,
+                                   OrganisationUnitService organisationUnitService)
+        throws IOException {
         this.searchFieldsLoader = searchFieldsLoader;
         this.searchService = searchService;
         this.expressionTransformer = expressionTransformer;
+        this.organisationUnitService = organisationUnitService;
         this.searchFieldsLoader.loadConfiguration(configFileName);
     }
 
@@ -128,7 +135,12 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                                      Boolean showOnlyOpenAccessTheses) {
         return BoolQuery.of(b -> {
             if (!facultyIds.isEmpty()) {
-                b.must(createIdTermsQuery("organisation_unit_ids", facultyIds));
+                var organisationUnitIds = new HashSet<Integer>();
+                facultyIds.forEach(facultyId -> organisationUnitIds.addAll(
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(facultyId,
+                        true)));
+                b.must(createIdTermsQuery("organisation_unit_ids",
+                    organisationUnitIds.stream().toList()));
             }
 
             if (!authorIds.isEmpty()) {
@@ -178,35 +190,47 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
     private Query buildTokenQuery(List<String> tokens, String minShouldMatch) {
         return BoolQuery.of(eq -> {
             tokens.forEach(token -> {
-                if (token.startsWith("\"") && token.endsWith("\"")) {
+                var isPhrase = token.startsWith("\"") && token.endsWith("\"");
+                var searchedValue = isPhrase ? token.replace("\"", "") : token;
+
+                if (isPhrase) {
                     eq.must(mp -> mp.bool(m -> m
                         .should(sb -> sb.matchPhrase(
-                            mq -> mq.field("title_sr").query(token.replace("\"", ""))))
+                            mq -> mq.field("title_sr").query(searchedValue)))
                         .should(sb -> sb.matchPhrase(
-                            mq -> mq.field("title_other").query(token.replace("\"", ""))))
+                            mq -> mq.field("title_other").query(searchedValue)))
                     ));
                 }
-                eq.should(sb -> sb.wildcard(
-                        m -> m.field("title_sr")
-                            .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
-                            .caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
+
+                var normalizedValue = StringUtil.performSimpleLatinPreprocessing(searchedValue);
+
+                eq.should(mp -> mp.bool(m -> m
                     .should(sb -> sb.wildcard(
-                        m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
-                    .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("description_other").query(token)))
-                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr")
-                        .value("*" + StringUtil.performSimpleLatinPreprocessing(token) + "*")))
+                        w -> w.field("title_sr").value(normalizedValue + "*")
+                            .caseInsensitive(true)))
+                    .should(sb -> sb.match(mq -> mq.field("title_sr").query(searchedValue)))
+                    .should(sb -> sb.wildcard(
+                        w -> w.field("title_other").value(searchedValue + "*")
+                            .caseInsensitive(true)))
+                    .should(sb -> sb.match(mq -> mq.field("description_sr").query(searchedValue)))
                     .should(
-                        sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
-                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))
-                    .should(sb -> sb.match(m -> m.field("full_text_other").query(token)))
-                    .should(sb -> sb.match(m -> m.field("author_names").query(token)))
-                    .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
-                    .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
-                    .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))
-                    .should(sb -> sb.match(m -> m.field("board_member_names").query(token)))
-                    .should(sb -> sb.match(m -> m.field("doi").query(token)));
+                        sb -> sb.match(mq -> mq.field("description_other").query(searchedValue)))
+                    .should(sb -> sb.wildcard(
+                        w -> w.field("keywords_sr").value("*" + normalizedValue + "*")
+                            .caseInsensitive(true)))
+                    .should(sb -> sb.wildcard(
+                        w -> w.field("keywords_other").value("*" + normalizedValue + "*")
+                            .caseInsensitive(true)))
+                    .should(sb -> sb.match(mq -> mq.field("full_text_sr").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("full_text_other").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("author_names").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("editor_names").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("reviewer_names").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("advisor_names").query(searchedValue)))
+                    .should(
+                        sb -> sb.match(mq -> mq.field("board_member_names").query(searchedValue)))
+                    .should(sb -> sb.match(mq -> mq.field("doi").query(searchedValue)))
+                ));
             });
             return eq.minimumShouldMatch(minShouldMatch);
         })._toQuery();

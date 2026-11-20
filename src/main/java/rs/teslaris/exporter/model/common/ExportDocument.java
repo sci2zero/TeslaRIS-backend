@@ -126,6 +126,10 @@ public class ExportDocument extends BaseExportEntity {
     @Field("publishers")
     private List<ExportPublisher> publishers = new ArrayList<>();
 
+    // Free-text publisher name. Used only when there is no publisher entity.
+    @Field("display_publisher")
+    private List<ExportMultilingualContent> displayPublisher = new ArrayList<>();
+
     @Field("journal_publication_type")
     private JournalPublicationType journalPublicationType;
 

@@ -997,19 +997,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var document = findOne(documentId);
 
         if (StringUtil.valueExists(requestDTO.getDoi())) {
-            document.setDoi(requestDTO.getDoi());
+            document.setDoi(StringUtil.normalizeIdentifier(requestDTO.getDoi()));
         }
 
         if (StringUtil.valueExists(requestDTO.getScopusId())) {
-            document.setScopusId(requestDTO.getScopusId());
+            document.setScopusId(StringUtil.normalizeIdentifier(requestDTO.getScopusId()));
         }
 
         if (StringUtil.valueExists(requestDTO.getOpenAlexId())) {
-            document.setOpenAlexId(requestDTO.getOpenAlexId());
+            document.setOpenAlexId(StringUtil.normalizeIdentifier(requestDTO.getOpenAlexId()));
         }
 
         if (StringUtil.valueExists(requestDTO.getWebOfScienceId())) {
-            document.setWebOfScienceId(requestDTO.getWebOfScienceId());
+            document.setWebOfScienceId(
+                StringUtil.normalizeIdentifier(requestDTO.getWebOfScienceId()));
         }
 
         save(document);

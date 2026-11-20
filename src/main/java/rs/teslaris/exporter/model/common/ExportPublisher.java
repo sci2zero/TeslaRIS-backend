@@ -15,4 +15,8 @@ public class ExportPublisher {
 
     @Field("name")
     private List<ExportMultilingualContent> name;
+
+    // Null in snapshots made before the field was added.
+    @Field("database_id")
+    private Integer databaseId;
 }

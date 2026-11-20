@@ -12,6 +12,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,7 +62,8 @@ public class CrisContextInformationServiceTest {
             ".*", ".*",
             License.CC0, "", "",
             "", "",
-            new HashMap<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>()
+            new HashMap<>(), new ArrayList<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(),
+            new HashSet<>()
         );
         configuration.setId(id);
         return configuration;
@@ -124,7 +127,8 @@ public class CrisContextInformationServiceTest {
         var dto = new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", true);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), true);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -199,7 +203,8 @@ public class CrisContextInformationServiceTest {
         var dto = new CrisContextInformationDTO(false, true, false, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -226,7 +231,8 @@ public class CrisContextInformationServiceTest {
         var dto = new CrisContextInformationDTO(true, false, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -243,6 +249,96 @@ public class CrisContextInformationServiceTest {
     }
 
     @Test
+    public void shouldReturnStoredThesisLibraryInstitutionIds() {
+        // Given
+        var stored = configuration(1, true, true, true);
+        stored.setThesisLibraryInstitutionIds(List.of(7, 9));
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(stored));
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertEquals(List.of(7, 9), result.thesisLibraryInstitutionIds());
+    }
+
+    @Test
+    public void shouldReturnNoThesisLibraryInstitutionIdsWhenNoneAreStored() {
+        // Given
+        var stored = configuration(1, true, true, true);
+        stored.setThesisLibraryInstitutionIds(null);
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(stored));
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertTrue(result.thesisLibraryInstitutionIds().isEmpty());
+    }
+
+    @Test
+    public void shouldReturnNoThesisLibraryInstitutionIdsInDefaultConfiguration() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        var result = service.readConfigurationForSystem();
+
+        // Then
+        assertTrue(result.thesisLibraryInstitutionIds().isEmpty());
+    }
+
+    @Test
+    public void shouldPersistEmptyThesisLibraryInstitutionIdsWhenNoneAreSent() {
+        // Given
+        var existing = configuration(1, true, true, true);
+        existing.setThesisLibraryInstitutionIds(new ArrayList<>(List.of(5)));
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(List.of(existing));
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var dto = new CrisContextInformationDTO(true, true, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            null, false);
+
+        // When
+        var result = service.saveConfiguration(dto);
+
+        // Then
+        assertTrue(existing.getThesisLibraryInstitutionIds().isEmpty());
+        assertTrue(result.thesisLibraryInstitutionIds().isEmpty());
+    }
+
+    @Test
+    public void shouldPersistDistinctThesisLibraryInstitutionIdsOnSave() {
+        // Given
+        when(crisContextInformationRepository.findAll(any(Sort.class)))
+            .thenReturn(Collections.emptyList());
+        when(crisContextInformationRepository.save(any(CrisContextInformation.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var dto = new CrisContextInformationDTO(true, true, true, true,
+            ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
+            Collections.emptyList(), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Arrays.asList(3, 1, 3, null, 1), false);
+
+        // When
+        service.saveConfiguration(dto);
+
+        // Then
+        var savedCaptor = ArgumentCaptor.forClass(CrisContextInformation.class);
+        verify(crisContextInformationRepository).save(savedCaptor.capture());
+        assertEquals(List.of(3, 1), savedCaptor.getValue().getThesisLibraryInstitutionIds());
+    }
+
+    @Test
     public void shouldDeleteRedundantConfigurationsAndUpdateOldestOnSave() {
         // Given
         var oldest = configuration(1, true, true, true);
@@ -255,7 +351,8 @@ public class CrisContextInformationServiceTest {
         var dto = new CrisContextInformationDTO(false, false, true, false,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), false);
 
         // When
         service.saveConfiguration(dto);
@@ -295,7 +392,8 @@ public class CrisContextInformationServiceTest {
         return new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, configuration,
             Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), Collections.emptyList(), "", "", "", "", false);
+            Collections.emptyList(), Collections.emptyList(), "", "", "", "",
+            Collections.emptyList(), false);
     }
 
     private CrisContextInformation configurationWithStoredPolicy(ApplicableEntityType entityType,
@@ -494,7 +592,7 @@ public class CrisContextInformationServiceTest {
         var dto = new CrisContextInformationDTO(true, true, true, true,
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             name, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            "", "", "", "", false);
+            "", "", "", "", Collections.emptyList(), false);
 
         // When
         var result = service.saveConfiguration(dto);
@@ -522,7 +620,8 @@ public class CrisContextInformationServiceTest {
             ".*", ".*", ".*", ".*", License.CC0, defaultIdentifierConfiguration(),
             Collections.emptyList(), Collections.emptyList(),
             Collections.emptyList(), Collections.emptyList(),
-            personUrl, organisationUnitUrl, projectUrl, documentUrl, false);
+            personUrl, organisationUnitUrl, projectUrl, documentUrl, Collections.emptyList(),
+            false);
     }
 
     @Test

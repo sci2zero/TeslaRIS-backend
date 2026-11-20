@@ -43,6 +43,11 @@ public class DataQualityFixatorPipeline extends BaseEntity {
     private List<String> matchedRemarkKeys = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "explicitly_skipped_remark_keys", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<String> explicitlySkippedRemarkKeys = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "applied_fixators", columnDefinition = "jsonb")
     @Builder.Default
     private List<String> appliedFixators = new ArrayList<>();

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -26,16 +25,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.applicationevent.DocumentValidationStatusChangedEvent;
 import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -56,8 +56,6 @@ public class OrganisationUnitTrustConfigurationServiceImpl
     extends JPAServiceImpl<OrganisationUnitTrustConfiguration> implements
     OrganisationUnitTrustConfigurationService {
 
-    private static final ConcurrentHashMap<Integer, Object> locks = new ConcurrentHashMap<>();
-
     private final OrganisationUnitTrustConfigurationRepository
         organisationUnitTrustConfigurationRepository;
 
@@ -65,7 +63,7 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
     private final DocumentRepository documentRepository;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+    private final AdvisoryLockRepository advisoryLockRepository;
 
     private final DocumentFileRepository documentFileRepository;
 
@@ -119,55 +117,53 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
     @Override
     public void approvePublicationMetadata(Integer documentId) {
-        var lock = locks.computeIfAbsent(documentId, id -> new Object());
+        if (!advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE,
+            documentId)) {
+            return;
+        }
+
         documentRepository.findById(documentId).ifPresent(document -> {
             if (document.getIsMetadataValid()) {
                 return;
             }
 
-            synchronized (lock) {
-                try {
-                    document.setIsMetadataValid(true);
-                    document.setApproveStatus(ApproveStatus.APPROVED);
-                    updateDocumentIndex(document);
-                    documentRepository.save(document);
-                    applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
-                        document.getDocumentType().name(), documentId,
-                        PublicVisibility.isPubliclyVisible(document)));
-                } finally {
-                    locks.remove(documentId);
-                }
-            }
+            document.setIsMetadataValid(true);
+            document.setApproveStatus(ApproveStatus.APPROVED);
+            documentRepository.save(document);
+
+            publishIndexUpdate(document);
+            applicationEventPublisher.publishEvent(new PublicVisibilityChangedEvent(
+                document.getDocumentType().name(), documentId,
+                PublicVisibility.isPubliclyVisible(document)));
         });
     }
 
     @Override
     public void approvePublicationUploadedDocuments(Integer documentId) {
-        var lock = locks.computeIfAbsent(documentId, id -> new Object());
+        if (!advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE,
+            documentId)) {
+            return;
+        }
+
         documentRepository.findById(documentId).ifPresent(document -> {
             if (document.getAreFilesValid()) {
                 return;
             }
 
-            synchronized (lock) {
-                try {
-                    document.getFileItems().forEach(file -> {
-                        file.setIsVerifiedData(true);
-                        documentFileRepository.save(file);
-                    });
+            document.getFileItems().forEach(file -> {
+                file.setIsVerifiedData(true);
+                documentFileRepository.save(file);
+            });
 
-                    document.getProofs().forEach(file -> {
-                        file.setIsVerifiedData(true);
-                        documentFileRepository.save(file);
-                    });
+            document.getProofs().forEach(file -> {
+                file.setIsVerifiedData(true);
+                documentFileRepository.save(file);
+            });
 
-                    document.setAreFilesValid(true);
-                    updateDocumentIndex(document);
-                    documentRepository.save(document);
-                } finally {
-                    locks.remove(documentId);
-                }
-            }
+            document.setAreFilesValid(true);
+            documentRepository.save(document);
+
+            publishIndexUpdate(document);
         });
     }
 
@@ -199,14 +195,10 @@ public class OrganisationUnitTrustConfigurationServiceImpl
             "document_publication");
     }
 
-    private void updateDocumentIndex(Document document) {
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            document.getId()).ifPresent(index -> {
-            index.setIsApproved(document.getIsMetadataValid());
-            index.setIsPubliclyVisible(PublicVisibility.isPubliclyVisible(document));
-            index.setAreFilesValid(document.getAreFilesValid());
-            documentPublicationIndexRepository.save(index);
-        });
+    private void publishIndexUpdate(Document document) {
+        applicationEventPublisher.publishEvent(new DocumentValidationStatusChangedEvent(
+            document.getId(), document.getIsMetadataValid(), document.getAreFilesValid(),
+            PublicVisibility.isPubliclyVisible(document)));
     }
 
     private Set<Integer> getInstitutionIds(Integer institutionId) {

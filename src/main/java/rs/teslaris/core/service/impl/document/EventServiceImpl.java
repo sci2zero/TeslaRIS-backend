@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -313,6 +314,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         newRelation.setEventsRelationType(eventsRelationDTO.getEventsRelationType());
 
         eventsRelationRepository.save(newRelation);
+        markRelationsChanged(sourceEvent);
     }
 
     @Override
@@ -325,6 +327,18 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         eventsRelationRepository.delete(relationToDelete.get());
+        markRelationsChanged(relationToDelete.get().getSource());
+    }
+
+    // The source event owns its relations in the common export. A relation is a separate
+    // entity, so this makes the daily export take the source event again.
+    private void markRelationsChanged(Event sourceEvent) {
+        if (Objects.isNull(sourceEvent)) {
+            return;
+        }
+
+        sourceEvent.setLastModification(new Date());
+        eventRepository.save(sourceEvent);
     }
 
     @Override

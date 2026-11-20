@@ -137,6 +137,16 @@ public class DataQualityFixatorRunServiceImpl implements DataQualityFixatorRunSe
             return;
         }
 
+        // A key in both lists excludes every record that the same key matches, thus the run finds
+        // nothing. A configuration file can hold such a mistake, thus this only warns.
+        var overlappingRemarkKeys = new ArrayList<>(pipeline.getMatchedRemarkKeys());
+        overlappingRemarkKeys.retainAll(skippedRemarkKeys(pipeline));
+
+        if (!overlappingRemarkKeys.isEmpty()) {
+            log.warn("Fixator pipeline '{}' matches and skips the same remark key(s): {}.",
+                pipelineName, String.join(", ", overlappingRemarkKeys));
+        }
+
         var fixators = resolveFixators(pipeline);
 
         if (fixators.isEmpty()) {
@@ -235,6 +245,10 @@ public class DataQualityFixatorRunServiceImpl implements DataQualityFixatorRunSe
         }
     }
 
+    private List<String> skippedRemarkKeys(DataQualityFixatorPipeline pipeline) {
+        return Objects.requireNonNullElse(pipeline.getExplicitlySkippedRemarkKeys(), List.of());
+    }
+
     private Query buildQuery(DataQualityFixatorPipeline pipeline, @Nullable Integer watermark) {
         return BoolQuery.of(b -> {
             b.must(TermQuery.of(t -> t.field("is_latest").value(true))._toQuery());
@@ -245,6 +259,18 @@ public class DataQualityFixatorRunServiceImpl implements DataQualityFixatorRunSe
                 .terms(values -> values.value(
                     pipeline.getMatchedRemarkKeys().stream().map(FieldValue::of).toList()))
             )._toQuery());
+
+            var skippedRemarkKeys = skippedRemarkKeys(pipeline);
+
+            // A record that carries a skipped remark is left alone as a whole, thus the clause
+            // excludes the record and not the remark.
+            if (!skippedRemarkKeys.isEmpty()) {
+                b.mustNot(TermsQuery.of(terms -> terms
+                    .field("failed_rule_keys")
+                    .terms(values -> values.value(
+                        skippedRemarkKeys.stream().map(FieldValue::of).toList()))
+                )._toQuery());
+            }
 
             if (Objects.nonNull(watermark)) {
                 b.must(RangeQuery.of(

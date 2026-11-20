@@ -63,6 +63,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId);
 
+    List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId,
+                                                         Boolean libraryOnly);
+
     Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId, Pageable pageable);
 
     OrganisationUnitDTO createOrganisationUnit(

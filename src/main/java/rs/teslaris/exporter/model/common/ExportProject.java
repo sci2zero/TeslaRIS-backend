@@ -73,4 +73,12 @@ public class ExportProject extends BaseExportEntity {
 
     @Field("organisations")
     private List<ExportProjectOrganisationContribution> organisations = new ArrayList<>();
+
+    // Documents linked to the project, without private entries.
+    @Field("documents")
+    private List<ExportProjectDocument> documents = new ArrayList<>();
+
+    // Number of (not deleted) fundings of the project. Null in older snapshots.
+    @Field("funding_count")
+    private Integer fundingCount;
 }

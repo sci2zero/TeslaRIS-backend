@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -30,15 +29,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
+import rs.teslaris.core.applicationevent.DocumentValidationStatusChangedEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitTrustConfigurationRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitTrustConfigurationServiceImpl;
@@ -60,7 +60,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     private DocumentRepository documentRepository;
 
     @Mock
-    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+    private AdvisoryLockRepository advisoryLockRepository;
 
     @Mock
     private SearchService<DocumentPublicationIndex> searchService;
@@ -155,18 +155,16 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     }
 
     @Test
-    public void shouldApproveMetadataAndIndexWhenFilesValid() {
+    public void shouldApproveMetadataAndPublishIndexUpdateWhenFilesValid() {
         // Given
         var document = new IntangibleProduct();
         document.setId(1);
         document.setAreFilesValid(true);
         document.setIsMetadataValid(false);
 
-        var index = new DocumentPublicationIndex();
-
         when(documentRepository.findById(1)).thenReturn(Optional.of(document));
-        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            1)).thenReturn(Optional.of(index));
+        when(advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, 1))
+            .thenReturn(true);
 
         // When
         service.approvePublicationMetadata(1);
@@ -174,13 +172,26 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         // Then
         assertTrue(document.getIsMetadataValid());
         assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
-        assertTrue(index.getIsApproved());
-        assertTrue(index.getIsPubliclyVisible());
 
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository).save(index);
+        verify(applicationEventPublisher).publishEvent(
+            new DocumentValidationStatusChangedEvent(1, true, true, true));
         verify(applicationEventPublisher).publishEvent(new PublicVisibilityChangedEvent(
             DocumentPublicationType.INTANGIBLE_PRODUCT.name(), 1, true));
+    }
+
+    @Test
+    public void shouldNotApproveMetadataWhenDocumentIsLockedByAnotherRequest() {
+        // Given
+        when(advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, 1))
+            .thenReturn(false);
+
+        // When
+        service.approvePublicationMetadata(1);
+
+        // Then
+        verifyNoInteractions(documentRepository);
+        verifyNoInteractions(applicationEventPublisher);
     }
 
     @Test
@@ -192,6 +203,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         document.setIsMetadataValid(false);
 
         when(documentRepository.findById(2)).thenReturn(Optional.of(document));
+        when(advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, 2))
+            .thenReturn(true);
 
         // When
         service.approvePublicationMetadata(2);
@@ -200,7 +213,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         assertTrue(document.getIsMetadataValid());
         assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository, never()).save(any());
+        verify(applicationEventPublisher).publishEvent(
+            new DocumentValidationStatusChangedEvent(2, true, false, true));
     }
 
     @Test
@@ -211,11 +225,9 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         document.setIsMetadataValid(true);
         document.setAreFilesValid(false);
 
-        var index = new DocumentPublicationIndex();
-
         when(documentRepository.findById(3)).thenReturn(Optional.of(document));
-        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            3)).thenReturn(Optional.of(index));
+        when(advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, 3))
+            .thenReturn(true);
 
         // When
         service.approvePublicationUploadedDocuments(3);
@@ -224,7 +236,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         assertTrue(document.getAreFilesValid());
 
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository).save(index);
+        verify(applicationEventPublisher).publishEvent(
+            new DocumentValidationStatusChangedEvent(3, true, true, false));
     }
 
     @Test
@@ -236,6 +249,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         document.setAreFilesValid(false);
 
         when(documentRepository.findById(4)).thenReturn(Optional.of(document));
+        when(advisoryLockRepository.tryLock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, 4))
+            .thenReturn(true);
 
         // When
         service.approvePublicationUploadedDocuments(4);
@@ -245,7 +260,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         assertNull(document.getApproveStatus());
 
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository, never()).save(any());
+        verify(applicationEventPublisher).publishEvent(
+            new DocumentValidationStatusChangedEvent(4, false, true, false));
     }
 
     @Test

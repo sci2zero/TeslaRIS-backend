@@ -1,5 +1,7 @@
 package rs.teslaris.project.repository.funding;
 
+import java.util.Collection;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,4 +32,10 @@ public interface FundingRepository extends JpaRepository<Funding, Integer> {
         countQuery = "SELECT COUNT(*) FROM fundings f " + MODIFIED_FILTER,
         nativeQuery = true)
     Page<Funding> findAllModified(Pageable pageable, boolean allTime);
+
+    // One query for a page in the common export. Returns [projectId, count] rows. Deleted
+    // fundings are not counted (SQLRestriction on Funding).
+    @Query("SELECT f.project.id, COUNT(f) FROM Funding f WHERE f.project.id IN :projectIds " +
+        "GROUP BY f.project.id")
+    List<Object[]> countFundingsForProjects(Collection<Integer> projectIds);
 }
