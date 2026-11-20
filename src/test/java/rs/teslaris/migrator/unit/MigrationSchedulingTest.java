@@ -2,11 +2,14 @@ package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,6 +19,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,10 +28,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
 import rs.teslaris.migrator.dto.MigrationScheduleRequestDTO;
 import rs.teslaris.migrator.model.MigrationRun;
@@ -62,6 +69,9 @@ public class MigrationSchedulingTest {
     @Mock
     private TaskManagerService taskManagerService;
 
+    @Mock
+    private UserService userService;
+
     private MigrationServiceImpl service;
 
     private static MigrationScheduleRequestDTO request(Integer modifiedAfterDays) {
@@ -77,8 +87,11 @@ public class MigrationSchedulingTest {
         when(taskManagerService.scheduleTask(anyString(), any(), any(), any(), any()))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
+        when(userService.findOne(5)).thenReturn(mock(User.class));
+
         service = new MigrationServiceImpl(pipelineRegistry, runExecutor, runRepository,
-            recordLogRepository, taskManagerService, new MigrationSourceProperties());
+            recordLogRepository, taskManagerService, new MigrationSourceProperties(),
+            userService);
     }
 
     @Test
@@ -122,6 +135,31 @@ public class MigrationSchedulingTest {
         assertTrue(run.getValue().isUpdate());
         verify(runExecutor).executeSynchronous(any(), any());
         verify(runExecutor, never()).execute(any(), any());
+    }
+
+    @Test
+    public void shouldRunAsTheUserWhoScheduledIt() {
+        // given
+        var user = mock(User.class);
+        when(userService.findOne(5)).thenReturn(user);
+        var principalDuringRun = new AtomicReference<Object>();
+        doAnswer(invocation -> {
+            principalDuringRun.set(
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+            return null;
+        }).when(runExecutor).executeSynchronous(any(), any());
+
+        service.scheduleRun(TIME_TO_RUN, request(3), RecurrenceType.DAILY);
+
+        var task = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskManagerService).scheduleTask(anyString(), any(), task.capture(), any(), any());
+
+        // when
+        task.getValue().run();
+
+        // then
+        assertSame(user, principalDuringRun.get());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test

@@ -80,6 +80,28 @@ public class HydratorEmploymentExtractorTest {
         assertEquals("Test University",
             item.employment().getDisplayOrganisationUnit().getFirst().getContent());
         assertEquals("Test Researcher", item.employment().getRole().getFirst().getContent());
+        assertEquals("1", item.positionCode());
+    }
+
+    @Test
+    void shouldTakePositionTypeCodeWhenTitleIsMissing() throws Exception {
+        var result = extractor.extract(curriculum("""
+            {"employment": [{"id": "1", "institution": [{"name": "Test University"}],
+              "employmentCategory": {"code": "T04"},
+              "positionType": {"code": "T04V00"}}]}
+            """));
+
+        assertEquals("T04V00", result.getFirst().positionCode());
+    }
+
+    @Test
+    void shouldTakeCategoryCodeWhenItIsTheOnlyLevel() throws Exception {
+        var result = extractor.extract(curriculum("""
+            {"employment": [{"id": "1", "institution": [{"name": "Test University"}],
+              "employmentCategory": {"code": "T00"}}]}
+            """));
+
+        assertEquals("T00", result.getFirst().positionCode());
     }
 
     @Test

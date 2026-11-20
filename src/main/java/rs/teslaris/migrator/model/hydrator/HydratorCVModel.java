@@ -479,10 +479,18 @@ public class HydratorCVModel {
     public record Employment(
         String id,
         List<Institution> institution,
+        EmploymentCategory employmentCategory,
         PositionType positionType,
         PositionTitle positionTitle,
         DateInfo startDate,
         DateInfo endDate
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record EmploymentCategory(
+        String code,
+        String value
     ) {
     }
 
