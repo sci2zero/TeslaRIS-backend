@@ -171,6 +171,20 @@ public class VivoProjectAndFundingMapperTest {
             model.createResource(object));
     }
 
+    private static ExportFunding fundingWithOutputs(Integer fundingCount,
+                                                    ExportProjectDocument... outputs) {
+        var funding = funding();
+        funding.getProject().setFundingCount(fundingCount);
+        funding.getProject().setDocuments(new ArrayList<>(List.of(outputs)));
+        return funding;
+    }
+
+    private static boolean supports(Model model, Integer documentId) {
+        var document = NS + "teslaris-document-" + documentId;
+        return has(model, FUNDING, VIVO + "supportedInformationResource", document) &&
+            has(model, document, VIVO + "informationResourceSupportedBy", FUNDING);
+    }
+
     @Test
     public void shouldMapProjectWithResearcherRoles() {
         // When
@@ -350,20 +364,6 @@ public class VivoProjectAndFundingMapperTest {
 
         // The project does not write the document's own data.
         assertFalse(model.contains(model.createResource(NS + "teslaris-document-20"), RDF.type));
-    }
-
-    private static ExportFunding fundingWithOutputs(Integer fundingCount,
-                                                    ExportProjectDocument... outputs) {
-        var funding = funding();
-        funding.getProject().setFundingCount(fundingCount);
-        funding.getProject().setDocuments(new ArrayList<>(List.of(outputs)));
-        return funding;
-    }
-
-    private static boolean supports(Model model, Integer documentId) {
-        var document = NS + "teslaris-document-" + documentId;
-        return has(model, FUNDING, VIVO + "supportedInformationResource", document) &&
-            has(model, document, VIVO + "informationResourceSupportedBy", FUNDING);
     }
 
     @Test

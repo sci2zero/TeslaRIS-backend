@@ -18,7 +18,6 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.Language;
-import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Getter
 @Setter
@@ -57,10 +56,6 @@ public non-sealed class Monograph extends Document
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<Language> languages = new HashSet<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "research_area_id")
-    private ResearchArea researchArea;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")

@@ -40,6 +40,7 @@ import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolve
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -101,6 +102,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentLookupService documentLookupService,
                                              CountryService countryService,
                                              AssessmentGroupResolver assessmentGroupResolver,
+                                             ResearchAreaService researchAreaService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
@@ -113,7 +115,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;

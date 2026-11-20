@@ -6,7 +6,6 @@ import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntangibleProductType;
@@ -25,11 +24,6 @@ public class IntangibleProductConverter extends DocumentPublicationConverter {
 
         intangibleProductDTO.setProductUsers(MultilingualContentConverter.getMultilingualContentDTO(
             intangibleProduct.getProductUsers()));
-
-        intangibleProduct.getResearchAreas().forEach(researchArea -> {
-            intangibleProductDTO.getResearchAreasId().add(researchArea.getId());
-            intangibleProductDTO.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
-        });
 
         if (Objects.nonNull(intangibleProduct.getPublisher())) {
             intangibleProductDTO.setPublisherId(intangibleProduct.getPublisher().getId());

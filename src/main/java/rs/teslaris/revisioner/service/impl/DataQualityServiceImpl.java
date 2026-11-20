@@ -1099,7 +1099,14 @@ public class DataQualityServiceImpl implements DataQualityService {
                     ruleKey));
         }
 
-        return IssueDetailsConverter.toDTO(assessment, ruleKey, occurrences);
+        var indexedAssessment = dataQualityAssessmentIndexRepository.findByDatabaseId(assessmentId);
+
+        return IssueDetailsConverter.toDTO(assessment, ruleKey, occurrences,
+            indexedAssessment.map(DataQualityAssessmentIndex::getEntityNameSr).orElse(null),
+            indexedAssessment.map(DataQualityAssessmentIndex::getEntityNameOther).orElse(null),
+            StringUtil.buildMultilingualContentDTO(languageTagService,
+                DataQualityAssessmentConfigurationLoader.getProfileName(
+                    assessment.getProfileName(), assessment.getProfileVersion())));
     }
 
     @Override

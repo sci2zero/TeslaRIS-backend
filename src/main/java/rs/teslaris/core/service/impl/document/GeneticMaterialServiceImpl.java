@@ -27,6 +27,7 @@ import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolve
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -80,6 +81,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                                       DocumentLookupService documentLookupService,
                                       CountryService countryService,
                                       AssessmentGroupResolver assessmentGroupResolver,
+                                      ResearchAreaService researchAreaService,
                                       GeneticMaterialJPAServiceImpl geneticMaterialJPAService,
                                       PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
@@ -88,7 +90,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.geneticMaterialJPAService = geneticMaterialJPAService;
         this.publisherService = publisherService;
     }

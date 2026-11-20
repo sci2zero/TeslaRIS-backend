@@ -29,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -85,6 +86,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
         DocumentLookupService documentLookupService,
         CountryService countryService,
         AssessmentGroupResolver assessmentGroupResolver,
+        ResearchAreaService researchAreaService,
         PerformanceRelatedOutputJPAServiceImpl performanceRelatedOutputJPAService,
         LanguageTagService languageTagService,
         PerformanceRelatedOutputRepository performanceRelatedOutputRepository) {
@@ -94,7 +96,7 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.performanceRelatedOutputJPAService = performanceRelatedOutputJPAService;
         this.languageTagService = languageTagService;
         this.performanceRelatedOutputRepository = performanceRelatedOutputRepository;

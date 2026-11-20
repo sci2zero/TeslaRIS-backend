@@ -453,18 +453,13 @@ public class DataQualityCalculator {
             reportIssue(assessment, "openAccessMissing");
         }
 
-        if ((dto instanceof IntangibleProductDTO intangibleProduct &&
-            !CollectionOperations.containsValues(intangibleProduct.getResearchAreasId())) ||
-            (dto instanceof MaterialProductDTO materialProduct &&
-                !CollectionOperations.containsValues(materialProduct.getResearchAreasId()))) {
+        // Only the product types report this, to keep the scores of other types stable.
+        if ((dto instanceof IntangibleProductDTO || dto instanceof MaterialProductDTO) &&
+            !CollectionOperations.containsValues(dto.getResearchAreasId())) {
             reportIssue(assessment, "researchAreasMissing");
         }
 
-        if (dto instanceof IntangibleProductDTO intangibleProduct) {
-            assessResearchAreas(intangibleProduct.getResearchAreas(), assessment);
-        } else if (dto instanceof MaterialProductDTO materialProduct) {
-            assessResearchAreas(materialProduct.getResearchAreas(), assessment);
-        }
+        assessResearchAreas(dto.getResearchAreas(), assessment);
 
         if (dto instanceof ThesisResponseDTO thesis) {
             validateRange(thesis.getNumberOfPages(), "numberOfPages", assessment);

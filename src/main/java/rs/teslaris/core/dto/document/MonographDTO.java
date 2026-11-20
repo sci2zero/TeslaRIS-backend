@@ -34,8 +34,6 @@ public class MonographDTO extends DocumentDTO implements PublishableDTO, InSerie
 
     private List<Integer> languageIds;
 
-    private Integer researchAreaId;
-
     @Positive(message = "Publisher ID cannot be negative or zero.")
     private Integer publisherId;
 

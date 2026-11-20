@@ -132,7 +132,8 @@ public class EmploymentMigrationWorker {
                               HashSet<Integer> handledPersonIds,
                               ArrayList<Integer> employmentIdsForDeletion,
                               ArrayList<Integer> personIdsForDeletion,
-                              LocalDate initialMigrationDate) {
+                              LocalDate initialMigrationDate,
+                              LocalDate alumniEmploymentEndDate) {
         var personInvolved = personService.findPersonById(employment.getPersonInvolved().getId());
 
         if (!handledPersonIds.contains(personInvolved.getId())) {
@@ -147,7 +148,7 @@ public class EmploymentMigrationWorker {
             }
 
             if (Objects.isNull(employment.getDateTo())) {
-                employment.setDateTo(LocalDate.of(2023, 12, 31));
+                employment.setDateTo(alumniEmploymentEndDate);
             }
 
             employmentRepository.save(employment);

@@ -41,6 +41,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationSer
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -116,6 +117,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentLookupService documentLookupService,
                                   CountryService countryService,
                                   AssessmentGroupResolver assessmentGroupResolver,
+                                  ResearchAreaService researchAreaService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageService languageService, JournalService journalService,
@@ -131,7 +133,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageService = languageService;

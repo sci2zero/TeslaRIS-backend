@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.FlexibleDateConverter;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
@@ -115,6 +116,11 @@ public class DocumentPublicationConverter {
 
         publication.getProofs()
             .forEach(proof -> publicationDTO.getProofs().add(DocumentFileConverter.toDTO(proof)));
+
+        publication.getResearchAreas().forEach(researchArea -> {
+            publicationDTO.getResearchAreasId().add(researchArea.getId());
+            publicationDTO.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
     }
 
     public static void setCommonFields(Document publication, BibTeXEntry entry,

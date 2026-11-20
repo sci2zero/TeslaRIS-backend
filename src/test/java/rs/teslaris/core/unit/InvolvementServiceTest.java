@@ -775,7 +775,7 @@ public class InvolvementServiceTest {
             .thenReturn(new PageImpl<>(List.of()));
 
         // When
-        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1), 1);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1), 1, null);
 
         // Then
         verify(personService, never()).findPersonByAccountingId(any());
@@ -820,7 +820,7 @@ public class InvolvementServiceTest {
         when(personService.save(any())).thenReturn(existingPerson);
 
         // When
-        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1), 1);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1), 1, null);
 
         // Then
         verify(employmentRepository, never()).save(any());
@@ -837,7 +837,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker, atLeastOnce()).processSingleMigration(
@@ -861,7 +861,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(100);
@@ -884,7 +884,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker, atLeastOnce()).processSingleMigration(
@@ -907,7 +907,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker).processSingleMigration(any(), any(), any());
@@ -922,7 +922,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker).processSingleMigration(any(), any(), any());
@@ -937,7 +937,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker, never()).processSingleMigration(any(), any(), any());
@@ -960,7 +960,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.migrateEmployment(request, initialMigrationDate,
-            additionalInstitutionToLook);
+            additionalInstitutionToLook, null);
 
         // Then
         verify(employmentMigrationWorker, atLeastOnce()).processSingleMigration(

@@ -5,7 +5,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -16,7 +15,6 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Getter
 @Setter
@@ -33,9 +31,6 @@ public non-sealed class IntangibleProduct extends Document implements PublisherP
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> productUsers = new HashSet<>();
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    private Set<ResearchArea> researchAreas = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")

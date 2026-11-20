@@ -18,7 +18,6 @@ import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -60,8 +59,6 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
 
     private final PublisherService publisherService;
 
-    private final ResearchAreaService researchAreaService;
-
 
     @Autowired
     public IntangibleProductServiceImpl(MultilingualContentService multilingualContentService,
@@ -93,10 +90,9 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.intangibleProductJPAService = intangibleProductJPAService;
         this.publisherService = publisherService;
-        this.researchAreaService = researchAreaService;
     }
 
     @Override
@@ -214,16 +210,6 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                 "publisherId",
                 "restorePublisherMissingMessage"));
         }
-
-        var requestedResearchAreaIds = intangibleProductDTO.getResearchAreasId().stream().toList();
-        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
-
-        RestorationSupport.reportMissingFromBulkLookup(
-            requestedResearchAreaIds,
-            researchAreas.stream().map(ResearchArea::getId).toList(),
-            "researchAreasId", "restoreResearchAreaMissingMessage");
-
-        intangibleProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     @Override

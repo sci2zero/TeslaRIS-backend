@@ -18,7 +18,6 @@ import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -60,8 +59,6 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
     private final PublisherService publisherService;
 
-    private final ResearchAreaService researchAreaService;
-
 
     @Autowired
     public MaterialProductServiceImpl(MultilingualContentService multilingualContentService,
@@ -93,10 +90,9 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
-        this.researchAreaService = researchAreaService;
     }
 
     @Override
@@ -182,7 +178,6 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         var oldContributorIds = clearCommonFields(materialProductToUpdate);
         setCommonFields(materialProductToUpdate, materialProductDTO, oldContributorIds);
 
-        materialProductToUpdate.getResearchAreas().clear();
         setMaterialProductRelatedFields(materialProductToUpdate, materialProductDTO);
 
         materialProductJPAService.save(materialProductToUpdate);
@@ -256,15 +251,6 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                 "publisherId",
                 "restorePublisherMissingMessage"));
         }
-
-        var requestedResearchAreaIds = materialProductDTO.getResearchAreasId().stream().toList();
-        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
-
-        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
-            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
-            "restoreResearchAreaMissingMessage");
-
-        materialProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     private DocumentPublicationIndex indexMaterialProduct(MaterialProduct materialProduct,

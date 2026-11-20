@@ -3,6 +3,7 @@ package rs.teslaris.revisioner.converter;
 import java.util.List;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueDetailsDTO;
 import rs.teslaris.revisioner.dto.DataQualityIssueOccurrenceDTO;
 import rs.teslaris.revisioner.model.qualityassessment.ConstraintEvaluationResult;
@@ -13,7 +14,10 @@ public class IssueDetailsConverter {
 
     public static DataQualityIssueDetailsDTO toDTO(DataQualityAssessment assessment,
                                                    String ruleKey,
-                                                   List<ConstraintEvaluationResult> occurrences) {
+                                                   List<ConstraintEvaluationResult> occurrences,
+                                                   String entityNameSr,
+                                                   String entityNameOther,
+                                                   List<MultilingualContentDTO> policyName) {
         var profileName = assessment.getProfileName();
         var profileVersion = assessment.getProfileVersion();
         var revision = assessment.getRevision();
@@ -28,6 +32,8 @@ public class IssueDetailsConverter {
             ruleKey,
             revision.getEntityType(),
             revision.getEntityId(),
+            entityNameSr,
+            entityNameOther,
             revision.getMajorVersion(),
             revision.getMinorVersion(),
             assessment.getFinishedAt(),
@@ -50,6 +56,7 @@ public class IssueDetailsConverter {
             remark.blocking(),
             profileName,
             profileVersion,
+            policyName,
             remark.dimension(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 DataQualityAssessmentConfigurationLoader.getDimensionDefinition(profileName,

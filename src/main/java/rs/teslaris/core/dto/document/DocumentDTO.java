@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.FlexibleDateDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.model.document.PublicationStatus;
 
 @Getter
@@ -89,7 +91,12 @@ public class DocumentDTO {
 
     private Boolean authorReprint;
 
+    private Set<Integer> researchAreasId = new HashSet<>();
+
     // Used only for responses
+
+    private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
 
     private List<DocumentFileResponseDTO> proofs = new ArrayList<>();

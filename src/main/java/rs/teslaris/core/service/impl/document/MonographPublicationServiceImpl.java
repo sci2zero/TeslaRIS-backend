@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolve
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -90,6 +91,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            DocumentLookupService documentLookupService,
                                            CountryService countryService,
                                            AssessmentGroupResolver assessmentGroupResolver,
+                                           ResearchAreaService researchAreaService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService,
                                            MonographPublicationRepository monographPublicationRepository) {
@@ -99,7 +101,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
         this.monographPublicationRepository = monographPublicationRepository;

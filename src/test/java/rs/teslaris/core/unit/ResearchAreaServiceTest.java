@@ -158,7 +158,7 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.findById(researchAreaId)).thenReturn(Optional.of(researchArea));
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
-        when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);
+        when(researchAreaRepository.isResearchedInDocument(researchAreaId)).thenReturn(false);
 
         // when
         researchAreaService.deleteResearchArea(researchAreaId);
@@ -166,7 +166,7 @@ public class ResearchAreaServiceTest {
         // then
         verify(researchAreaRepository, times(1)).isSuperArea(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedBySomeone(researchAreaId);
-        verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
+        verify(researchAreaRepository, times(1)).isResearchedInDocument(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
         verify(researchAreaRepository, times(1)).findById(any());
         verify(researchAreaRepository, times(1)).flush();

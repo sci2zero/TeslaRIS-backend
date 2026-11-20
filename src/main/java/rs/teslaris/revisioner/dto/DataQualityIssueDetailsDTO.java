@@ -16,6 +16,10 @@ public record DataQualityIssueDetailsDTO(
 
     Integer entityId,
 
+    String entityNameSr,
+
+    String entityNameOther,
+
     Integer recordMajorVersion,
 
     Integer recordMinorVersion,
@@ -45,6 +49,8 @@ public record DataQualityIssueDetailsDTO(
     String policy,
 
     String policyVersion,
+
+    List<MultilingualContentDTO> policyName,
 
     QualityDimension dimension,
 

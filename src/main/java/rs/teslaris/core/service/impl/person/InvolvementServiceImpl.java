@@ -252,7 +252,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     public void migrateEmployment(List<ExtraEmploymentMigrationDTO> request,
                                   LocalDate initialMigrationDate,
-                                  Integer additionalInstitutionToLook) {
+                                  Integer additionalInstitutionToLook,
+                                  LocalDate alumniEmploymentEndDate) {
+        var resolvedAlumniEmploymentEndDate = Objects.nonNull(alumniEmploymentEndDate)
+            ? alumniEmploymentEndDate
+            : LocalDate.of(LocalDate.now().getYear(), 12, 31);
+
         var handledInstitutionIds = new HashSet<Integer>();
 
         if (Objects.nonNull(additionalInstitutionToLook)) {
@@ -283,7 +288,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             for (var employment :
                 employmentRepository.findByEmploymentInstitutionId(institutionId)) {
                 employmentMigrationWorker.cleanupAlumni(employment, handledPersonIds,
-                    employmentIdsForDeletion, personIdsForDeletion, initialMigrationDate);
+                    employmentIdsForDeletion, personIdsForDeletion, initialMigrationDate,
+                    resolvedAlumniEmploymentEndDate);
             }
         }
 

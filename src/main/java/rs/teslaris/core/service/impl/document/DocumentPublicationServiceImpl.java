@@ -61,6 +61,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -81,6 +82,7 @@ import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolve
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -161,6 +163,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final CountryService countryService;
 
     private final AssessmentGroupResolver assessmentGroupResolver;
+
+    protected final ResearchAreaService researchAreaService;
 
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
@@ -1134,6 +1138,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentDTO.getCountryId(), countryService, countryService::findOne, "countryId",
             "restoreCountryMissingMessage"));
 
+        setResearchAreas(document, documentDTO);
+
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
         document.setAuthorReprint(documentDTO.getAuthorReprint());
@@ -1409,7 +1415,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             });
         publication.getContributors().clear();
 
+        publication.getResearchAreas().clear();
+
         return oldContributorIds;
+    }
+
+    private void setResearchAreas(Document document, DocumentDTO documentDTO) {
+        if (!CollectionOperations.containsValues(documentDTO.getResearchAreasId())) {
+            return;
+        }
+
+        var requestedResearchAreaIds = documentDTO.getResearchAreasId().stream().toList();
+        var researchAreas = researchAreaService.getResearchAreasByIds(requestedResearchAreaIds);
+
+        RestorationSupport.reportMissingFromBulkLookup(requestedResearchAreaIds,
+            researchAreas.stream().map(ResearchArea::getId).toList(), "researchAreasId",
+            "restoreResearchAreaMissingMessage");
+
+        document.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     private void clearCommonIndexFields(DocumentPublicationIndex index) {
