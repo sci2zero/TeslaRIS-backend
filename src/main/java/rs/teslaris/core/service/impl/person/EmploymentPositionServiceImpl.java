@@ -2,15 +2,19 @@ package rs.teslaris.core.service.impl.person;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.CachingConfiguration;
 import rs.teslaris.core.converter.person.EmploymentPositionConverter;
 import rs.teslaris.core.dto.person.involvement.EmploymentPositionDTO;
 import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
@@ -62,6 +66,8 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.EMPLOYMENT_POSITION_CODES_CACHE,
+        allEntries = true)
     public EmploymentPositionDTO createEmploymentPosition(
         EmploymentPositionDTO employmentPositionDTO) {
         var newEmploymentPosition = new EmploymentPositionHierarchy();
@@ -73,6 +79,8 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.EMPLOYMENT_POSITION_CODES_CACHE,
+        allEntries = true)
     public void editEmploymentPosition(EmploymentPositionDTO employmentPositionDTO,
                                        Integer employmentPositionId) {
         var employmentPositionToUpdate = findOne(employmentPositionId);
@@ -105,6 +113,8 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.EMPLOYMENT_POSITION_CODES_CACHE,
+        allEntries = true)
     public void deleteEmploymentPosition(Integer employmentPositionId) {
         if (!employmentPositionRepository.getChildEmploymentPositions(employmentPositionId, null)
             .isEmpty()) {
@@ -129,5 +139,15 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
         return fetchedEmploymentPositions.stream()
             .map(EmploymentPositionConverter::toDTO)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CachingConfiguration.EMPLOYMENT_POSITION_CODES_CACHE,
+        key = "#schemeName + ':' + #code", condition = "#code != null",
+        unless = "#result == null")
+    public Optional<Integer> findIdBySchemeNameAndCode(String schemeName, String code) {
+        return employmentPositionRepository.findBySchemeNameAndCode(schemeName, code)
+            .map(EmploymentPositionHierarchy::getId);
     }
 }

@@ -17,8 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
-import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
-import rs.teslaris.core.repository.person.EmploymentPositionRepository;
+import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentMigrationDTO;
@@ -52,7 +51,7 @@ public class EmploymentEntityCreatorTest {
     @Mock
     private MigrationMergePolicy mergePolicy;
     @Mock
-    private EmploymentPositionRepository employmentPositionRepository;
+    private EmploymentPositionService employmentPositionService;
 
     @InjectMocks
     private EmploymentEntityCreator creator;
@@ -121,14 +120,12 @@ public class EmploymentEntityCreatorTest {
     @Test
     void shouldLinkEmploymentPositionByCode() {
         var employment = new EmploymentDTO();
-        var position = new EmploymentPositionHierarchy();
-        position.setId(9);
         when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
             .thenReturn(5);
         when(institutionResolver.resolve(INSTITUTION))
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
-        when(employmentPositionRepository.findBySchemeNameAndCode("ptcris", "T01V01C11"))
-            .thenReturn(Optional.of(position));
+        when(employmentPositionService.findIdBySchemeNameAndCode("ptcris", "T01V01C11"))
+            .thenReturn(Optional.of(9));
 
         creator.create(
             new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, "T01V01C11", employment, null),
@@ -144,7 +141,7 @@ public class EmploymentEntityCreatorTest {
             .thenReturn(5);
         when(institutionResolver.resolve(INSTITUTION))
             .thenReturn(new HydratorInstitutionResolver.Match(7, null));
-        when(employmentPositionRepository.findBySchemeNameAndCode("ptcris", "T99"))
+        when(employmentPositionService.findIdBySchemeNameAndCode("ptcris", "T99"))
             .thenReturn(Optional.empty());
 
         creator.create(

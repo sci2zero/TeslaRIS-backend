@@ -21,6 +21,8 @@ public class CachingConfiguration {
 
     public static final String OU_HIERARCHY_CACHE = "organisationUnitHierarchy";
 
+    public static final String EMPLOYMENT_POSITION_CODES_CACHE = "employmentPositionCodes";
+
     public static final String GLOBAL_LEADERBOARDS_CACHE = "globalLeaderboards";
 
     // Global leaderboards are unparameterised, so this cache holds one entry per endpoint.
@@ -40,6 +42,7 @@ public class CachingConfiguration {
             new CaffeineCache(LANGUAGE_TAGS_CACHE, Caffeine.newBuilder().build()),
             new CaffeineCache(IDENTIFIERS_CACHE, Caffeine.newBuilder().build()),
             new CaffeineCache(OU_HIERARCHY_CACHE, Caffeine.newBuilder().build()),
+            new CaffeineCache(EMPLOYMENT_POSITION_CODES_CACHE, Caffeine.newBuilder().build()),
             new CaffeineCache(GLOBAL_LEADERBOARDS_CACHE, Caffeine.newBuilder()
                 .maximumSize(GLOBAL_LEADERBOARDS_MAX_ENTRIES)
                 .expireAfterWrite(leaderboardTtl)

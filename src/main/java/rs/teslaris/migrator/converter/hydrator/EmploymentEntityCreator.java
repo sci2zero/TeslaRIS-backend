@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
-import rs.teslaris.core.repository.person.EmploymentPositionRepository;
+import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -33,7 +33,7 @@ public class EmploymentEntityCreator
 
     private final HydratorInstitutionResolver institutionResolver;
 
-    private final EmploymentPositionRepository employmentPositionRepository;
+    private final EmploymentPositionService employmentPositionService;
 
     private final MigrationLog migrationLog;
 
@@ -74,10 +74,10 @@ public class EmploymentEntityCreator
             return;
         }
 
-        employmentPositionRepository.findBySchemeNameAndCode(
+        employmentPositionService.findIdBySchemeNameAndCode(
                 HydratorSource.EMPLOYMENT_POSITION_SCHEME, dto.positionCode())
             .ifPresentOrElse(
-                position -> dto.employment().setEmploymentPositionId(position.getId()),
+                positionId -> dto.employment().setEmploymentPositionId(positionId),
                 () -> migrationLog.valueDropped(HydratorSource.NAME,
                     MigrationEntityType.PERSON_EMPLOYMENT.name(), dto.sourceKey(),
                     HydratorMappingRule.cv(39),

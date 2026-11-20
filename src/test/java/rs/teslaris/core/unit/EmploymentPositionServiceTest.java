@@ -359,4 +359,20 @@ class EmploymentPositionServiceTest {
         assertEquals(employmentPositionId, result.id());
         verify(employmentPositionRepository).findById(employmentPositionId);
     }
+
+    @Test
+    void shouldFindIdBySchemeNameAndCode() {
+        // given
+        var employmentPosition = new EmploymentPositionHierarchy();
+        employmentPosition.setId(5);
+
+        when(employmentPositionRepository.findBySchemeNameAndCode("ptcris", "T01V01C11"))
+            .thenReturn(Optional.of(employmentPosition));
+
+        // when
+        var result = employmentPositionService.findIdBySchemeNameAndCode("ptcris", "T01V01C11");
+
+        // then
+        assertEquals(Optional.of(5), result);
+    }
 }
