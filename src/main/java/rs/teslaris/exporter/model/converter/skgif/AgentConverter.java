@@ -26,10 +26,14 @@ public class AgentConverter extends BaseConverter {
 
         var affiliations = person.getEmployments().stream()
             .map(employment -> {
-                String affiliationName =
-                    extractTitleFromMC(employment.getEmploymentInstitution().getName());
+                var institution = employment.getEmploymentInstitution();
 
-                var institutionId = employment.getEmploymentInstitution().getDatabaseId();
+                // An external institution has only a display name.
+                String affiliationName = extractTitleFromMC(Objects.nonNull(institution) ?
+                    institution.getName() : employment.getDisplayOrganisationUnit());
+
+                var institutionId =
+                    Objects.nonNull(institution) ? institution.getDatabaseId() : null;
                 if (Objects.nonNull(institutionId)) {
                     organisations.addAll(toSKGIF(employment.getEmploymentInstitution()));
                 }

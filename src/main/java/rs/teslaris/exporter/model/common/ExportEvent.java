@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.document.OtherEventType;
 
 @Getter
 @Setter
@@ -46,4 +48,19 @@ public class ExportEvent extends BaseExportEntity {
 
     @Field("place")
     private List<ExportMultilingualContent> place = new ArrayList<>();
+
+    @Field("event_type")
+    private EventType eventType;
+
+    // Set only for OTHER_EVENT.
+    @Field("other_event_type")
+    private OtherEventType otherEventType;
+
+    // ISO 3166-1 alpha-2 code of the event's country.
+    @Field("country_code")
+    private String countryCode;
+
+    // Relations where this event is the source. A serial event is never a source.
+    @Field("relations")
+    private List<ExportEventRelation> relations = new ArrayList<>();
 }

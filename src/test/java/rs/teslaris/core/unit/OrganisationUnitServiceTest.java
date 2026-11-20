@@ -161,7 +161,7 @@ public class OrganisationUnitServiceTest {
         when(crisContextInformationService.readConfigurationForSystem()).thenReturn(
             new CrisContextInformationDTO(true, true, true, false,
                 ".*", ".*", ".*", ".*", License.CC0, null,
-                List.of(), List.of(), List.of(), List.of(), "", "", "", "", false));
+                List.of(), List.of(), List.of(), List.of(), "", "", "", "", List.of(), false));
         ReflectionTestUtils.setField(organisationUnitService, "relationApprovedByDefault", true);
         ReflectionTestUtils.setField(organisationUnitService, "organisationUnitApprovedByDefault",
             true);
@@ -814,6 +814,59 @@ public class OrganisationUnitServiceTest {
 
         // then
         assertEquals(List.of(2, 3, 1), result);
+    }
+
+    @Test
+    public void shouldGetDigitalLibraryClientIdsFromSubHierarchyIncludingRoot() {
+        // given
+        var root = new OrganisationUnit();
+        root.setId(1);
+        root.setIsClientInstitutionDl(true);
+
+        when(organisationUnitsRelationRepository.getDigitalLibraryClientSubOUsRecursive(1))
+            .thenReturn(new ArrayList<>(List.of(2, 3)));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1))
+            .thenReturn(Optional.of(root));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, true);
+
+        // then
+        assertEquals(List.of(2, 3, 1), result);
+    }
+
+    @Test
+    public void shouldNotIncludeRootInDigitalLibraryClientSubHierarchyWhenItIsNotAClient() {
+        // given
+        var root = new OrganisationUnit();
+        root.setId(1);
+        root.setIsClientInstitutionDl(false);
+
+        when(organisationUnitsRelationRepository.getDigitalLibraryClientSubOUsRecursive(1))
+            .thenReturn(new ArrayList<>(List.of(2, 3)));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1))
+            .thenReturn(Optional.of(root));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, true);
+
+        // then
+        assertEquals(List.of(2, 3), result);
+    }
+
+    @Test
+    public void shouldGetWholeSubHierarchyWhenLibraryFilterIsNotRequested() {
+        // given
+        when(organisationUnitsRelationRepository.getSubOUsRecursive(1)).thenReturn(
+            new ArrayList<>(List.of(2, 3)));
+
+        // when
+        var result = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1, false);
+
+        // then
+        assertEquals(List.of(2, 3, 1), result);
+        verify(organisationUnitsRelationRepository, never())
+            .getDigitalLibraryClientSubOUsRecursive(anyInt());
     }
 
     @Test

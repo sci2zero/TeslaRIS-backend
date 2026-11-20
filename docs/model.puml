@@ -1782,7 +1782,255 @@ package project {
   FundingProgram "*" --> "0..1" institution.OrganisationUnit : funder
 }
 
-package Assessment {
+/'
+ TeslaRIS Research Infrastructure package -- initial draft (2026-11-05).
+ Assumptions:
+ - A single ResearchInfrastructure entity represents equipment, facilities and services.
+ - The mandatory primary kind is separate from a multi-level type classification.
+ - Manufacturer/model data are attributes of the instance, NOT a separate entity.
+ - ResearchInfrastructureRelation is the only relationship entity between infrastructure resources.
+ - Equipment commissions and operational availability are independent of ownership contributions.
+ - Existing TeslaRIS contribution / project / funding / document / expertise patterns are reused.
+'/
+package researchInfrastructure {
+
+	' Example: Research infrastructure in TeslaRIS
+	'
+	' FACILITY: Electron Microscopy Laboratory
+	'   A laboratory that houses scientific equipment and provides
+	'   an environment for conducting research.
+	'
+	' EQUIPMENT: Scanning Electron Microscope (SEM)
+	'   A specific scientific instrument located in the laboratory
+	'   and used for examining and analyzing samples.
+	'
+	' SERVICE: Electron Microscopy Analysis
+	'   A research service offered to researchers that uses the
+	'   scanning electron microscope to analyze samples.
+	'
+	' All three are instances of ResearchInfrastructure with different
+	' kind values. Their relationships are represented through
+	' ResearchInfrastructureRelation:
+	'
+	' Electron Microscopy Laboratory --HAS_PART--> Scanning Electron Microscope
+	' Scanning Electron Microscope --USED_TO_PROVIDE--> Electron Microscopy Analysis
+
+  enum ResearchInfrastructureKind {
+
+	  ' EQUIPMENT represents a physical device, instrument, or technical
+	  ' system used to conduct or support research.
+	  ' It may be operated independently or as part of a larger facility.
+	  ' Examples: electron microscope, mass spectrometer, telescope,
+	  ' DNA sequencer, high-performance computing server.
+	  EQUIPMENT
+
+	  ' FACILITY represents a physical, virtual, or distributed research
+	  ' environment that provides infrastructure for research activities.
+	  ' A facility may contain multiple pieces of equipment and support
+	  ' the provision of research services.
+	  ' It is distinct from the organisational unit that operates it.
+	  ' Examples: microscopy laboratory, observatory, cleanroom,
+	  ' research data centre, synchrotron facility.
+	  FACILITY
+
+	  ' SERVICE represents a research-related capability or activity
+	  ' offered to researchers, typically by an organisation or facility.
+	  ' A service may rely on equipment or facilities but is not itself
+	  ' a physical resource.
+	  ' Examples: DNA sequencing service, electron microscopy analysis,
+	  ' sample preparation service, computational analysis service,
+	  ' access to a scientific instrument.
+	  SERVICE
+  }
+
+  class ResearchInfrastructure {
+    Set<String> internalIds
+    Set<String> oldIds
+    Set<Integer> mergedIds
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
+    Set<String> uris
+    ResearchInfrastructureKind kind
+    ApproveStatus approveStatus
+    Set<GeoLocation> locations
+    Set<MultiLingualContent> accessInformation
+    Set<DocumentFile> files
+
+    /' Instrument / equipment details (only where applicable). '/
+    Set<String> manufacturerNames
+    String modelName
+    Set<MultiLingualContent> modelDescription
+    Set<MultiLingualContent> measuredVariables
+    FlexibleDate dateCommissioned
+    FlexibleDate dateDecommissioned
+  }
+
+  /' Controlled vocabulary; a type belongs to exactly one primary kind.
+     A child type must have the same kind as its parent. '/
+  class ResearchInfrastructureType {
+    String code
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    String processedName
+    String schemeName
+    String uri
+    ResearchInfrastructureKind kind
+  }
+  ResearchInfrastructure "*" --> "0..*" ResearchInfrastructureType : types
+  ResearchInfrastructureType "*" --> "0..1" ResearchInfrastructureType : superResearchInfrastructureType
+
+  /' The single, dated mechanism for relationships BETWEEN infrastructure resources.
+     PART_OF: source is a part of target (no cycles).
+     USED_TO_PROVIDE: source equipment/facility supports target service.
+     PROVIDES_ACCESS_TO: source service provides access to target resource.
+     REPLACES: source supersedes target. '/
+  class ResearchInfrastructureRelation {
+    ResearchInfrastructureRelationType relationType
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
+    Set<MultiLingualContent> relationDescription
+    ApproveStatus approveStatus
+    Set<DocumentFile> proofs
+  }
+  enum ResearchInfrastructureRelationType {
+    PART_OF
+    USED_TO_PROVIDE
+    PROVIDES_ACCESS_TO
+    REPLACES
+    RELATED_TO
+  }
+  ResearchInfrastructureRelation "*" --> "1" ResearchInfrastructure : sourceResearchInfrastructure
+  ResearchInfrastructureRelation "*" --> "1" ResearchInfrastructure : targetResearchInfrastructure
+
+  /' Operational periods describe the RESOURCE, not the tenure of any owner/operator.
+     Validate allowed statuses depending on the primary kind. '/
+  class ResearchInfrastructureOperationalPeriod {
+    ResearchInfrastructureOperationalStatus status
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
+    Set<MultiLingualContent> description
+  }
+  enum ResearchInfrastructureOperationalStatus {
+    OPERATIONAL
+    UNDER_MAINTENANCE
+    TEMPORARILY_UNAVAILABLE
+    OUT_OF_SERVICE
+    AVAILABLE
+    DISCONTINUED
+  }
+  ResearchInfrastructureOperationalPeriod "*" --> "1" ResearchInfrastructure : researchInfrastructure
+
+  /' The inherited PersonContribution already provides person, dates, affiliation,
+     funding parts, approval, proofs, free-text descriptions, and other TeslaRIS fields. '/
+  class PersonResearchInfrastructureContribution extends PersonContribution {
+    PersonResearchInfrastructureContributionType contributionType
+  }
+  enum PersonResearchInfrastructureContributionType {
+    RESPONSIBLE_PERSON
+    OPERATOR
+    MAINTAINER
+    TECHNICAL_CONTACT
+    TRAINER
+    USER
+  }
+  PersonResearchInfrastructureContribution "*" --> "0..1" ResearchInfrastructure : researchInfrastructure
+
+  /' The inherited OrganisationUnitContribution carries organization, dates,
+     funding parts, approval, proofs, and optional contact person. '/
+  class OrganisationUnitResearchInfrastructureContribution extends OrganisationUnitContribution {
+    OrganisationUnitResearchInfrastructureContributionType contributionType
+  }
+  enum OrganisationUnitResearchInfrastructureContributionType {
+    OWNER
+    OPERATOR
+    MAINTAINER
+    HOST
+    ACCESS_PROVIDER
+  }
+  OrganisationUnitResearchInfrastructureContribution "*" --> "0..1" ResearchInfrastructure : researchInfrastructure
+
+  /' Project involvement has its own interval, independent of project dates.
+     Link one or more existing FundingParts when financing is applicable;
+     ACQUIRED_THROUGH_PROJECT and PROVIDED_FOR_USE are semantically distinct. '/
+  class ProjectResearchInfrastructure {
+    ProjectResearchInfrastructureType relationType
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
+    Set<MultiLingualContent> relationDescription
+    ApproveStatus approveStatus
+    Set<DocumentFile> proofs
+  }
+  enum ProjectResearchInfrastructureType {
+    USED
+    PROVIDED_FOR_USE
+    ACQUIRED_THROUGH_PROJECT
+    DEVELOPED_IN_PROJECT
+  }
+  ProjectResearchInfrastructure "*" --> "1" Project : project
+  ProjectResearchInfrastructure "*" --> "1" ResearchInfrastructure : researchInfrastructure
+    /' Funding parts that financially support acquisition,
+   development or use of the infrastructure in the project.
+   Not required for non-monetary in-kind contributions. '/
+  ProjectResearchInfrastructure "0..1" --> "*" FundingPart : fundingParts
+
+  /' Organisation that provides the infrastructure
+   to the project, potentially as an in-kind contribution.
+   It may differ from the infrastructure's legal owner. '/
+  ProjectResearchInfrastructure "*" --> "0..1" OrganisationUnit : providedBy
+
+  /' Distinguish an instrument used in research (e.g. an article) from
+     a research product actually GENERATED by an instrument (e.g. a dataset). '/
+  class ResearchInfrastructureDocument {
+    ResearchInfrastructureDocumentType relationType
+    Set<MultiLingualContent> relationDescription
+    ApproveStatus approveStatus
+    Set<DocumentFile> proofs
+  }
+  enum ResearchInfrastructureDocumentType {
+    USED_IN_RESEARCH
+    GENERATED
+    DESCRIBED_IN
+  }
+  ResearchInfrastructureDocument "*" --> "1" ResearchInfrastructure : researchInfrastructure
+  ResearchInfrastructureDocument "*" --> "1" Document : document
+
+  /' An ExpertiseOrSkill already belongs to a Person in TeslaRIS.
+     At least one of the following must be linked: a specific instance or a
+     ResearchInfrastructureType. Skill does NOT automatically grant access. '/
+  class ResearchInfrastructureSkill extends ExpertiseOrSkill {
+    ResearchInfrastructureSkillType skillType
+	ResearchInfrastructureSkillLevel skillLevel
+  }
+  enum ResearchInfrastructureSkillType {
+    OPERATION
+    MAINTENANCE
+    CALIBRATION
+    TRAINING
+    SERVICE_DELIVERY
+  }
+
+  enum ResearchInfrastructureSkillLevel {
+    ' Basic knowledge; can operate equipment under supervision.
+    BASIC
+
+    ' Can independently perform standard operations.
+    INTERMEDIATE
+
+    ' Can perform advanced operations and troubleshoot problems.
+    ADVANCED
+
+    ' Has comprehensive expertise and can train other users.
+    EXPERT
+  }
+
+  ResearchInfrastructureSkill "*" --> "0..1" ResearchInfrastructure : researchInfrastructure
+  ResearchInfrastructureSkill "*" --> "0..1" ResearchInfrastructureType : researchInfrastructureType
+}
+
+package assessment {
   class AssessmentRulebook {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
@@ -2064,6 +2312,12 @@ package identifier {
   }
   
   ProjectIdentifier "0..*" --> "1" Project : project
+
+  class ResearchInfrastructureIdentifier extends EntityIdentifier {
+  }
+
+  ResearchInfrastructureIdentifier "0..*" --> "1" ResearchInfrastructure : researchInfrastructure
+
 
 }
 

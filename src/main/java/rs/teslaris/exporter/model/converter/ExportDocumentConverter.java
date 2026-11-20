@@ -305,6 +305,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         monograph.getLanguages().forEach(languageTag -> commonExportDocument.getLanguageTags()
             .add(languageTag.getLanguageCode()));
 
+        addPublisherInfo(commonExportDocument, monograph.getPublisher());
+
         return commonExportDocument;
     }
 
@@ -494,6 +496,13 @@ public class ExportDocumentConverter extends ExportConverterBase {
         }
 
         commonExportDocument.setIsArchived(document.getIsArchived());
+
+        if (Objects.nonNull(document.getDisplayPublisher()) &&
+            !document.getDisplayPublisher().isEmpty()) {
+            commonExportDocument.setDisplayPublisher(
+                ExportMultilingualContentConverter.toCommonExportModel(
+                    document.getDisplayPublisher()));
+        }
     }
 
     private static void addDocumentFileInformation(ExportDocument commonExportDocument,
@@ -575,7 +584,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
     private static void addPublisherInfo(ExportDocument commonExportDocument, Publisher publisher) {
         if (Objects.nonNull(publisher)) {
             commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(publisher.getName())));
+                ExportMultilingualContentConverter.toCommonExportModel(publisher.getName()),
+                publisher.getId()));
         }
     }
 

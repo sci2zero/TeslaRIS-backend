@@ -45,6 +45,7 @@ import rs.teslaris.core.util.restoration.RestorationContext;
 import rs.teslaris.revisioner.model.DataQualityAssessmentEvent;
 import rs.teslaris.revisioner.model.EntityRevision;
 import rs.teslaris.revisioner.model.qualityassessment.DataQualityAssessment;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.revisioner.repository.EntityRevisionRepository;
 import rs.teslaris.revisioner.service.impl.RevisionServiceImpl;
 import rs.teslaris.revisioner.util.CompressionUtil;
@@ -59,6 +60,9 @@ public class RevisionServiceTest {
 
     @Mock
     private EntityRevisionRepository revisionRepository;
+
+    @Mock
+    private AdvisoryLockRepository advisoryLockRepository;
 
     @Mock
     private RevisionHydratorRegistry revisionHydratorRegistry;
@@ -221,8 +225,9 @@ public class RevisionServiceTest {
             revisionService.createRevisionIfChanged(event);
 
             // then
-            var order = inOrder(revisionRepository);
-            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            var order = inOrder(advisoryLockRepository, revisionRepository);
+            order.verify(advisoryLockRepository).lock(
+                AdvisoryLockRepository.REVISION_WRITE_SCOPE_PREFIX + ENTITY_TYPE, 1);
             order.verify(revisionRepository)
                 .findFirstByEntityTypeAndEntityIdOrderByRevisionTimestampDesc(ENTITY_TYPE, 1);
             order.verify(revisionRepository).save(any());
@@ -462,9 +467,10 @@ public class RevisionServiceTest {
             // then
             assertFalse(created);
 
-            var order = inOrder(revisionRepository);
+            var order = inOrder(advisoryLockRepository, revisionRepository);
             order.verify(revisionRepository).existsByEntityTypeAndEntityId(ENTITY_TYPE, 1);
-            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            order.verify(advisoryLockRepository).lock(
+                AdvisoryLockRepository.REVISION_WRITE_SCOPE_PREFIX + ENTITY_TYPE, 1);
             order.verify(revisionRepository)
                 .existsByEntityTypeAndEntityId(ENTITY_TYPE, 1);
 
@@ -808,8 +814,9 @@ public class RevisionServiceTest {
             revisionService.restoreRevision(ENTITY_TYPE, 1, 4, 1);
 
             // then
-            var order = inOrder(revisionRepository);
-            order.verify(revisionRepository).lockForRevisionWrite(ENTITY_TYPE, 1);
+            var order = inOrder(advisoryLockRepository, revisionRepository);
+            order.verify(advisoryLockRepository).lock(
+                AdvisoryLockRepository.REVISION_WRITE_SCOPE_PREFIX + ENTITY_TYPE, 1);
             order.verify(revisionRepository)
                 .findFirstByEntityTypeAndEntityIdAndMajorVersionAndMinorVersionOrderByRevisionTimestampDesc(
                     ENTITY_TYPE, 1, 4, 1);

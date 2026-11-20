@@ -70,6 +70,27 @@ public interface OrganisationUnitsRelationRepository
 
     @Query(value = """
         WITH RECURSIVE hierarchy AS (
+            SELECT our.target_organisation_unit_id, our.source_organisation_unit_id
+            FROM organisation_units_relations our
+            WHERE our.target_organisation_unit_id = :sourceId
+              AND our.approve_status = 1
+              AND our.relation_type = 0
+              AND our.deleted = false
+            UNION ALL
+            SELECT our.target_organisation_unit_id, our.source_organisation_unit_id
+            FROM organisation_units_relations our
+            INNER JOIN hierarchy h ON our.target_organisation_unit_id = h.source_organisation_unit_id
+            WHERE our.approve_status = 1 AND our.relation_type = 0 AND our.deleted = false
+        )
+        SELECT h.source_organisation_unit_id
+        FROM hierarchy h
+        INNER JOIN organisation_units ou ON ou.id = h.source_organisation_unit_id
+        WHERE ou.is_client_institution_dl = true AND ou.deleted = false
+        """, nativeQuery = true)
+    List<Integer> getDigitalLibraryClientSubOUsRecursive(Integer sourceId);
+
+    @Query(value = """
+        WITH RECURSIVE hierarchy AS (
             SELECT our.source_organisation_unit_id, our.target_organisation_unit_id
             FROM organisation_units_relations our
             WHERE our.source_organisation_unit_id = :sourceId

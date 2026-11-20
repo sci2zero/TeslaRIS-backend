@@ -52,8 +52,22 @@ public interface ProjectExportSource {
         MonetaryAmount costs,
         List<PersonContributionRecord> persons,
         List<OrganisationContributionRecord> organisations,
+        // Documents linked to the project (ProjectDocument), without private entries.
+        List<DocumentLinkRecord> documents,
+        // Number of fundings of the project (not deleted). Used to credit outputs without
+        // funding parts only when the project has exactly one funding.
+        Integer fundingCount,
         Set<Integer> institutionIds
     ) {
+    }
+
+    /**
+     * @param relationType the name of the project module's ProjectDocumentType (REPORT,
+     *                     RESULT, USED, INTERNAL). A string, because core cannot use that enum.
+     * @param fundingIds   the fundings that paid for this output (its funding parts); empty
+     *                     when the output has no funding parts.
+     */
+    record DocumentLinkRecord(Integer documentId, String relationType, List<Integer> fundingIds) {
     }
 
     @Builder

@@ -6,6 +6,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import rs.teslaris.migrator.repository.MigrationRunRepository;
 
@@ -16,6 +17,10 @@ import rs.teslaris.migrator.repository.MigrationRunRepository;
  * restart. Its document, however, keeps the status it had when the application stopped, and nothing
  * else ever comes back to it. The sweep runs before the other startup listeners, so a run that
  * starts right after the application is ready is not mistaken for an interrupted one.
+ * <p>
+ * A failure is logged and never aborts startup. This listener runs on the startup thread, and an
+ * exception raised here leaves {@code SpringApplication.run} and takes the whole application with
+ * it, while a stale run status is only a bookkeeping flaw which the next startup sweeps.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,10 +33,16 @@ public class MigrationRunSweeper {
 
     @EventListener(ApplicationReadyEvent.class)
     public void failInterruptedRuns() {
-        var swept = runRepository.failRunningRuns();
+        try {
+            var swept = runRepository.failRunningRuns();
 
-        if (swept > 0) {
-            log.warn("Marked {} migration run(s) as failed, a restart interrupted them.", swept);
+            if (swept > 0) {
+                log.warn("Marked {} migration run(s) as failed, a restart interrupted them.",
+                    swept);
+            }
+        } catch (DataAccessException e) {
+            log.warn("Could not sweep interrupted migration runs, as Mongo is not reachable. " +
+                "The next startup tries again.", e);
         }
     }
 }

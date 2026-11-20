@@ -12,6 +12,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -141,6 +143,44 @@ public class DataQualityFixatorRunServiceTest {
 
         verify(revisionService, times(2)).applyFixedState(eq("PUBLISHER"), any(), any(),
             eq("revisionFixator:titles"));
+    }
+
+    @Test
+    public void shouldExcludeRecordsThatCarrySkippedRemarkKey() {
+        var pipeline = pipeline(List.of("titleTooLong"), List.of("typographicCharacter"), false);
+        pipeline.setExplicitlySkippedRemarkKeys(List.of("noIdentifierPresent", "titleMissing"));
+
+        stubPipeline(pipeline);
+        stubBatches(List.of(List.of()));
+
+        dataQualityFixatorRunService.runPipeline("titles", USER_ID);
+
+        var mustNot = capturedQuery().bool().mustNot();
+
+        assertEquals(1, mustNot.size());
+        assertEquals("failed_rule_keys", mustNot.getFirst().terms().field());
+        assertEquals(List.of("noIdentifierPresent", "titleMissing"),
+            mustNot.getFirst().terms().terms().value().stream().map(FieldValue::stringValue)
+                .toList());
+    }
+
+    @Test
+    public void shouldAddNoExclusionClauseWithoutSkippedRemarkKeys() {
+        stubPipeline(pipeline(List.of("titleTooLong"), List.of("typographicCharacter"), false));
+        stubBatches(List.of(List.of()));
+
+        dataQualityFixatorRunService.runPipeline("titles", USER_ID);
+
+        assertTrue(capturedQuery().bool().mustNot().isEmpty());
+    }
+
+    private Query capturedQuery() {
+        var captor = ArgumentCaptor.forClass(Query.class);
+
+        verify(searchService).runQueryWithoutTotal(captor.capture(), any(),
+            eq(DataQualityAssessmentIndex.class), anyString(), any());
+
+        return captor.getValue();
     }
 
     @Test

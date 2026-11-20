@@ -9,6 +9,24 @@ import rs.teslaris.core.util.search.StringUtil;
 public class StringUtilTest {
 
     @Test
+    void shouldStripSourceSchemeFromHarvestedIdentifier() {
+        assertEquals("85123456789", StringUtil.normalizeIdentifier("SCOPUS_ID:85123456789"));
+        assertEquals("85123456789", StringUtil.normalizeIdentifier("SCOPUS:85123456789"));
+        assertEquals("000123456789012", StringUtil.normalizeIdentifier("WOS:000123456789012"));
+        assertEquals("000123456789012",
+            StringUtil.normalizeIdentifier("WEB_OF_SCIENCE:000123456789012"));
+        assertEquals("W123456789", StringUtil.normalizeIdentifier("openalex:W123456789"));
+        assertEquals("W123456789", StringUtil.normalizeIdentifier("OPEN_ALEX:W123456789"));
+    }
+
+    @Test
+    void shouldStripResolverUrlAndLeaveBareIdentifierIntact() {
+        assertEquals("10.35802/110166",
+            StringUtil.normalizeIdentifier("https://doi.org/10.35802/110166"));
+        assertEquals("85123456789", StringUtil.normalizeIdentifier("85123456789"));
+    }
+
+    @Test
     void shouldEncodeUnsafeCharactersInHarvestedUrl() {
         var rawUrl =
             "https://europepmc.org/grantfinder/grantdetails?query=pi:\"%7BProfessor%7D\" gid:\"110166\"";

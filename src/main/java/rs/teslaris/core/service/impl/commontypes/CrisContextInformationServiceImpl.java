@@ -1,7 +1,10 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -116,6 +119,8 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
         configuration.setOrganisationUnitNationalIdUrl(dto.organisationUnitNationalIdUrl());
         configuration.setProjectNationalIdUrl(dto.projectNationalIdUrl());
         configuration.setDocumentNationalIdUrl(dto.documentNationalIdUrl());
+        configuration.setThesisLibraryInstitutionIds(
+            toDistinctInstitutionIds(dto.thesisLibraryInstitutionIds()));
         save(configuration);
 
         return CrisContextInformationConverter.toDTO(configuration, isOrcidLoginConfigured(),
@@ -156,7 +161,17 @@ public class CrisContextInformationServiceImpl extends JPAServiceImpl<CrisContex
             DEFAULT_NATIONAL_ID_PATTERN, DEFAULT_METADATA_LICENSE,
             CrisContextInformationConverter.toIdentifierConfigurationDTO(null),
             Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
-            Collections.emptyList(), "", "", "", "", isOrcidLoginConfigured());
+            Collections.emptyList(), "", "", "", "", Collections.emptyList(),
+            isOrcidLoginConfigured());
+    }
+
+    private List<Integer> toDistinctInstitutionIds(List<Integer> institutionIds) {
+        if (Objects.isNull(institutionIds)) {
+            return new ArrayList<>();
+        }
+
+        return new ArrayList<>(new LinkedHashSet<>(
+            institutionIds.stream().filter(Objects::nonNull).toList()));
     }
 
     private Map<ApplicableEntityType, Map<String, IdentifierConfiguration>>

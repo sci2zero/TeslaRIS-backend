@@ -64,6 +64,9 @@ public class StringUtil {
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
 
+    private static final Pattern SOURCE_SCHEME_PREFIX = Pattern.compile(
+        "^\\s*(?:scopus(?:_id)?|wos|web_of_science|open_?alex):", Pattern.CASE_INSENSITIVE);
+
     private static final Map<Character, String> UNSAFE_URL_CHARACTER_ENCODINGS = Map.of(
         ' ', "%20", '"', "%22", '<', "%3C", '>', "%3E", '{', "%7B",
         '}', "%7D", '|', "%7C", '\\', "%5C", '^', "%5E", '`', "%60"
@@ -381,7 +384,7 @@ public class StringUtil {
             identifier = identifier.replace(identifierUrlPrefix, "");
         }
 
-        return identifier;
+        return SOURCE_SCHEME_PREFIX.matcher(identifier).replaceFirst("");
     }
 
     public static String formatNameToLastNameFirst(String fullName) {

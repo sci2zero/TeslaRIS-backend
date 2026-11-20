@@ -1,5 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,6 +21,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.project.converter.project.ProjectDocumentConverter;
 import rs.teslaris.project.dto.project.ProjectDocumentDTO;
 import rs.teslaris.project.model.funding.FundingPart;
+import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.project.ProjectDocumentRepository;
@@ -103,6 +105,7 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         var savedProjectDocument = save(newProjectDocument);
 
         buildFundingParts(savedProjectDocument, projectDocumentDTO);
+        markProjectChanged(savedProjectDocument.getProject());
 
         if (Objects.nonNull(savedProjectDocument.getDocument())) {
             indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
@@ -121,11 +124,23 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         var document = projectDocument.getDocument();
 
         delete(projectDocumentId);
+        markProjectChanged(projectDocument.getProject());
 
         if (Objects.nonNull(document)) {
             indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
                 document.getId(), "project_id", null);
         }
+    }
+
+    // The project owns its document links in the common export. A ProjectDocument is a
+    // separate entity, so this makes the daily export take the project (and its fundings) again.
+    private void markProjectChanged(Project project) {
+        if (Objects.isNull(project)) {
+            return;
+        }
+
+        project.setLastModification(new Date());
+        projectService.save(project);
     }
 
     private void setCommonFields(ProjectDocument projectDocument, ProjectDocumentDTO dto) {

@@ -13,6 +13,7 @@ import rs.teslaris.exporter.model.common.ExportMonetaryAmount;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 import rs.teslaris.exporter.model.common.ExportProject;
+import rs.teslaris.exporter.model.common.ExportProjectDocument;
 import rs.teslaris.exporter.model.common.ExportProjectOrganisationContribution;
 import rs.teslaris.exporter.model.common.ExportProjectPersonContribution;
 
@@ -55,6 +56,13 @@ public class ExportProjectConverter extends ExportConverterBase {
             .add(toPersonContribution(contribution)));
         project.organisations().forEach(contribution -> commonExportProject.getOrganisations()
             .add(toOrganisationContribution(contribution)));
+        if (Objects.nonNull(project.documents())) {
+            project.documents().forEach(link -> commonExportProject.getDocuments()
+                .add(new ExportProjectDocument(link.documentId(), link.relationType(),
+                    Objects.nonNull(link.fundingIds()) ? new ArrayList<>(link.fundingIds()) :
+                        new ArrayList<>())));
+        }
+        commonExportProject.setFundingCount(project.fundingCount());
 
         if (computeRelations) {
             commonExportProject.getRelatedInstitutionIds().addAll(project.institutionIds());

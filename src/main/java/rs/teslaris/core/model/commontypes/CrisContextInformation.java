@@ -8,8 +8,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -75,6 +77,14 @@ public class CrisContextInformation extends BaseEntity {
     @Column(columnDefinition = "jsonb", name = "identifier_configuration")
     private Map<ApplicableEntityType, Map<String, IdentifierConfiguration>>
         identifierConfiguration = new HashMap<>();
+
+    /**
+     * Assign a new list rather than mutating this one, as an in place change to a JSON column is
+     * not reliably dirty checked.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "thesis_library_institution_ids")
+    private List<Integer> thesisLibraryInstitutionIds = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinTable(name = "cris_person_national_identifier_name",

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,10 +15,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.DocumentClaimedEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.person.DeclinedDocumentClaim;
+import rs.teslaris.core.repository.commontypes.AdvisoryLockRepository;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
 import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -49,6 +52,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     private final DocumentPublicationService documentPublicationService;
 
     private final DeclinedDocumentClaimRepository declinedDocumentClaimRepository;
+
+    private final AdvisoryLockRepository advisoryLockRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${refresh-potential-claims.allowed}")
     private Boolean refreshClaimsAllowed;
@@ -97,7 +104,9 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     @Override
-    public synchronized void claimDocument(Integer userId, Integer documentId) {
+    public void claimDocument(Integer userId, Integer documentId) {
+        advisoryLockRepository.lock(AdvisoryLockRepository.DOCUMENT_VALIDATION_SCOPE, documentId);
+
         personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId);
 
         var personId = personService.getPersonIdForUserId(userId);
@@ -121,13 +130,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
 
                 if (matchingContribution.isPresent()) {
                     matchingContribution.get().setPerson(person);
-                    documentIndex.getAuthorIds().set(authorIndex, person.getId());
-
-                    documentIndex.getClaimerIds().clear();
-                    documentIndex.getClaimerOrdinals().clear();
-
-                    documentPublicationIndexRepository.save(documentIndex);
                     documentPublicationService.save(document);
+
+                    applicationEventPublisher.publishEvent(
+                        new DocumentClaimedEvent(documentId, person.getId(), authorIndex));
                 }
             });
     }
