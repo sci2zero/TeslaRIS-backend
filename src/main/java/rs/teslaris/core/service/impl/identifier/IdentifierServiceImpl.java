@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.CachingConfiguration;
 import rs.teslaris.core.converter.identifier.IdentifierConverter;
 import rs.teslaris.core.dto.identifier.IdentifierDTO;
 import rs.teslaris.core.dto.identifier.IdentifierResponseDTO;
@@ -72,13 +75,20 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
         return findOne(identifierId).getAccessLevel();
     }
 
+    /**
+     * A cached identifier is detached, which is safe only while nothing mutates a resolved one and
+     * {@code EntityIdentifier.identifier} declares no cascade.
+     */
     @Override
+    @Cacheable(cacheNames = CachingConfiguration.IDENTIFIERS_CACHE, key = "#code",
+        condition = "#code != null", unless = "#result == null")
     public Identifier getIdentifierByCode(String code) {
         return identifierRepository.findByCode(code);
     }
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.IDENTIFIERS_CACHE, allEntries = true)
     public Identifier createIdentifier(IdentifierDTO identifier) {
         var newIdentifier = new Identifier();
 
@@ -89,6 +99,7 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.IDENTIFIERS_CACHE, allEntries = true)
     public void updateIdentifier(Integer identifierId, IdentifierDTO identifier) {
         var identifierToUpdate = findOne(identifierId);
 
@@ -129,6 +140,7 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = CachingConfiguration.IDENTIFIERS_CACHE, allEntries = true)
     public void deleteIdentifier(Integer identifierId) {
         if (identifierRepository.isInUse(identifierId)) {
             throw new IdentifierReferenceConstraintViolationException("identifierInUseMessage");

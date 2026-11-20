@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.service.impl;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -49,19 +50,31 @@ public class MigrationIdResolver {
     /**
      * For entities created as part of another one (a project's consortium contributions), which
      * have no item of their own in the record log. Counted as created by the run, like its items.
+     * Remembering a key that already points to the same entity, as an update run does, is a no-op.
      */
     public void remember(String source, MigrationEntityType entityType, String sourceKey,
                          Integer targetId, MigrationRun run) {
+        var existing = recordLogRepository.find(source, entityType, sourceKey);
+
+        if (existing.isPresent() &&
+            Objects.equals(existing.get().getTargetEntityId(), targetId)) {
+            return;
+        }
+
         recordLogRepository.record(MigrationRecordLog.builder()
             .runId(run.getId())
             .source(source)
             .entityType(entityType)
             .sourceKey(sourceKey)
-            .status(MigrationItemStatus.CREATED)
+            .status(existing.isPresent()
+                ? MigrationItemStatus.UPDATED
+                : MigrationItemStatus.CREATED)
             .targetEntityId(targetId)
             .processedAt(Instant.now())
             .build());
 
-        run.setItemsCreated(run.getItemsCreated() + 1);
+        if (existing.isEmpty()) {
+            run.setItemsCreated(run.getItemsCreated() + 1);
+        }
     }
 }

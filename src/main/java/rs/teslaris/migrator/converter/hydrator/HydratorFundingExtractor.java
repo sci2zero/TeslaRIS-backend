@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
@@ -25,13 +26,43 @@ import rs.teslaris.migrator.util.MigrationLog;
 public class HydratorFundingExtractor
     implements RecordExtractor<HydratorProjectModel.ProjectDocument, FundingMigrationDTO> {
 
-    // OpenAIRE funding types seen in the source; any other type is dropped
+    // OpenAIRE funding types; any other type is dropped
     private static final Map<String, FundingType> FUNDING_TYPES = Map.of(
-        "FundingProgramme", FundingType.FUNDING_PROGRAMME,
+        "FundingProgramme", FundingType.FUNDING_PROGRAM,
         "Grant", FundingType.GRANT,
         "Contract", FundingType.CONTRACT,
         "Gift", FundingType.GIFT,
-        "Call", FundingType.CALL);
+        "Call", FundingType.CALL,
+        "Tender", FundingType.TENDER,
+        "InternalFunding", FundingType.INTERNAL_FUNDING,
+        "Award", FundingType.AWARD);
+
+    private static final Pattern FUNDING_ID_SUFFIX = Pattern.compile("\\d+([A-Z][A-Z0-9]{2})");
+
+    // PT rule: the suffix of the funding id decides the type and overrides the OpenAIRE one
+    private static final Map<String, FundingType> FUNDING_TYPES_BY_ID_SUFFIX = Map.ofEntries(
+        Map.entry("ANI", FundingType.PROJECT),
+        Map.entry("B20", FundingType.PROJECT),
+        Map.entry("B30", FundingType.PROJECT),
+        Map.entry("COL", FundingType.INSTITUTIONAL_FUNDING),
+        Map.entry("DFA", FundingType.GRANT),
+        Map.entry("DRI", FundingType.PROJECT),
+        Map.entry("EEC", FundingType.EMPLOYMENT),
+        Map.entry("FAC", FundingType.GRANT),
+        Map.entry("FP1", FundingType.PROJECT),
+        Map.entry("FP2", FundingType.PROJECT),
+        Map.entry("FP3", FundingType.PROJECT),
+        Map.entry("FP4", FundingType.PROJECT),
+        Map.entry("FP5", FundingType.PROJECT),
+        Map.entry("FP6", FundingType.PROJECT),
+        Map.entry("FP7", FundingType.PROJECT),
+        Map.entry("H20", FundingType.PROJECT),
+        Map.entry("PCA", FundingType.PROJECT),
+        Map.entry("PRJ", FundingType.PROJECT),
+        Map.entry("PRR", FundingType.PROJECT),
+        Map.entry("QCA", FundingType.PROJECT),
+        Map.entry("QRE", FundingType.PROJECT),
+        Map.entry("UID", FundingType.INSTITUTIONAL_FUNDING));
 
     private final HydratorConversionUtil conversionUtil;
 
@@ -52,6 +83,10 @@ public class HydratorFundingExtractor
         }
 
         var result = new ArrayList<FundingMigrationDTO>();
+        var fundingProgram = identifierValue(project,
+            HydratorProjectConverter.FUNDING_PROGRAM_TYPE, "funding program");
+        var fundingProgramType = identifierValue(project,
+            HydratorProjectConverter.FUNDING_PROGRAM_TYPE_TYPE, "funding program type");
         var consortiumAmounts = HydratorProjectConverter.fundingCount(project) == 1 ?
             projectConverter.consortiumEntries(project.consortium()).stream()
                 .filter(entry -> Objects.nonNull(entry.amount()))
@@ -77,7 +112,10 @@ public class HydratorFundingExtractor
                     funding.name().language()));
             }
 
-            if (Objects.nonNull(funding.type()) && !isBlank(funding.type().value())) {
+            var typeFromId = typeFromIdSuffix(key, funding.id());
+            if (Objects.nonNull(typeFromId)) {
+                dto.getFundingTypes().add(typeFromId);
+            } else if (Objects.nonNull(funding.type()) && !isBlank(funding.type().value())) {
                 var type = typeName(funding.type().value());
                 if (FUNDING_TYPES.containsKey(type)) {
                     dto.getFundingTypes().add(FUNDING_TYPES.get(type));
@@ -86,6 +124,8 @@ public class HydratorFundingExtractor
                         "funding type '" + type + "' has no vocabulary");
                 }
             }
+
+            setProgramAndCall(dto, funding, fundingProgram, fundingProgramType);
 
             setIdentifiers(dto, funding.identifiers());
             if (!isBlank(funding.grantId())) {
@@ -110,6 +150,66 @@ public class HydratorFundingExtractor
         });
 
         return result;
+    }
+
+    private FundingType typeFromIdSuffix(String key, String fundingId) {
+        var matcher = FUNDING_ID_SUFFIX.matcher(fundingId.trim());
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        var suffix = matcher.group(1);
+        var type = FUNDING_TYPES_BY_ID_SUFFIX.get(suffix);
+        if (Objects.isNull(type)) {
+            dropped(key, HydratorMappingRule.sciproj(2),
+                "funding id suffix '" + suffix + "' has no funding type");
+        }
+
+        return type;
+    }
+
+    // PT rule: the type is the programme; the program name is the call unless it repeats the name
+    private void setProgramAndCall(FundingDTO dto, HydratorProjectModel.Funding funding,
+                                   String fundingProgram, String fundingProgramType) {
+        var repeatsName = Objects.nonNull(fundingProgram) &&
+            Objects.nonNull(funding.name()) && !isBlank(funding.name().value()) &&
+            normalised(fundingProgram).equalsIgnoreCase(normalised(funding.name().value()));
+
+        if (Objects.nonNull(fundingProgramType)) {
+            dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgramType, null));
+        } else if (repeatsName) {
+            dto.setDisplayProgram(conversionUtil.multilingualContent(fundingProgram, null));
+        }
+
+        if (Objects.nonNull(fundingProgram) && !repeatsName) {
+            dto.setDisplayCall(conversionUtil.multilingualContent(fundingProgram, null));
+        }
+    }
+
+    private String normalised(String value) {
+        return value.trim().replaceAll("\\s+", " ");
+    }
+
+    // CW-002-MAP-000019: the source keeps programme names in project identifiers
+    private String identifierValue(HydratorProjectModel.Project project, String identifierType,
+                                   String label) {
+        if (Objects.isNull(project.identifiers())) {
+            return null;
+        }
+
+        var values = project.identifiers().stream()
+            .filter(identifier -> Objects.nonNull(identifier) && !isBlank(identifier.value()) &&
+                identifierType.equals(typeName(identifier.type())))
+            .map(identifier -> identifier.value().trim())
+            .distinct()
+            .toList();
+
+        if (values.size() > 1) {
+            dropped(project.projectId(), HydratorMappingRule.sciproj(19),
+                (values.size() - 1) + " further " + label + "(s) not carried over");
+        }
+
+        return values.isEmpty() ? null : values.getFirst();
     }
 
     // DOI is the funding's strong id; project references and QREN codes are internal ids

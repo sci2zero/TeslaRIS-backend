@@ -27,6 +27,11 @@ public final class HydratorMappingRule {
         return format(SCIPROJ, rules);
     }
 
+    // A curriculum value the crosswalk has no rule for, mapped because its target is unambiguous
+    public static String cvWithoutRule() {
+        return CIENCIA_VITAE + "-NO-RULE";
+    }
+
     // Several rules covering one value share the prefix: CW-002-MAP-000016/000035
     private static String format(String crosswalk, int... rules) {
         return crosswalk + "-MAP-" + Arrays.stream(rules)

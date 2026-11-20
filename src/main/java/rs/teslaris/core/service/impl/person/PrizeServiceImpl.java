@@ -98,6 +98,12 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PrizeResponseDTO readPrize(Integer prizeId) {
+        return PrizeConverter.toDTO(findOne(prizeId));
+    }
+
+    @Override
     @Transactional
     public PrizeResponseDTO updatePrize(Integer prizeId, PrizeDTO dto) {
         var prizeToUpdate = findOne(prizeId);

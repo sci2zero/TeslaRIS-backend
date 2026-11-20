@@ -2,6 +2,7 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -57,7 +58,7 @@ public class FundingEntityCreator
             .resolve(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING, dto.sourceKey())
             .orElse(null);
 
-        var migrated = fundingMigrationWriter.migrate(funding, existingId);
+        var migrated = migrate(dto, funding, existingId);
 
         return Objects.isNull(migrated) ? null : migrated.id();
     }
@@ -70,7 +71,23 @@ public class FundingEntityCreator
             new MergeContext(HydratorSource.NAME, MigrationEntityType.PROJECT_FUNDING.name(),
                 dto.sourceKey()));
 
-        fundingMigrationWriter.migrate(merged, targetId);
+        migrate(dto, merged, targetId);
+    }
+
+    // The SciPROJ funding id goes in as an other identifier; one the writer could not attach is
+    // reported
+    private FundingMigrationWriter.MigratedFunding migrate(FundingMigrationDTO dto,
+                                                           FundingDTO funding,
+                                                           Integer existingId) {
+        var migrated = fundingMigrationWriter.migrate(funding, existingId,
+            Map.of(HydratorSource.SCIPROJ_FUNDING_IDENTIFIER_CODE, dto.sourceId()));
+
+        if (Objects.nonNull(migrated)) {
+            migrated.droppedIdentifiers().forEach((code, reason) ->
+                dropped(dto.sourceKey(), HydratorMappingRule.sciproj(1), reason));
+        }
+
+        return migrated;
     }
 
     private FundingDTO prepare(FundingMigrationDTO dto) {

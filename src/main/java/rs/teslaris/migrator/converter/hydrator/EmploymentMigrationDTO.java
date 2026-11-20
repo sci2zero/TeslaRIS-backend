@@ -11,6 +11,7 @@ public record EmploymentMigrationDTO(
     String personSourceKey,
     String sourceId,
     HydratorCVModel.Institution institution,
+    String positionCode,
     EmploymentDTO employment,
     String rejection
 ) implements MigrationDTO {

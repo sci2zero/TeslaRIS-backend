@@ -216,7 +216,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                 contribution.setNumberOfReviewsOrAssessment(
                     contributionDTO.getNumberOfReviewsOrAssessment());
             } else if (eventType.equals(EventType.OTHER_EVENT) &&
-                ((OtherEvent) event).getType().equals(OtherEventType.TRIAL) &&
+                OtherEventType.TRIAL.equals(((OtherEvent) event).getType()) &&
                 contribution.getContributionType().equals(EventContributionType.WITNESS)) {
                 contribution.setCaseName(multilingualContentService.getMultilingualContent(
                     contributionDTO.getCaseName()));
