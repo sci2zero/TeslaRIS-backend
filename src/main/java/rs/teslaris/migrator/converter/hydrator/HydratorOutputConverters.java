@@ -304,7 +304,8 @@ public class HydratorOutputConverters {
             poster.conferenceDate(), null, poster.authors(), poster.authoringRole());
         applyIdentifiers(dto, record, output, entityType, poster.identifiers(), null);
         dto.setKeywords(conversionUtil.multilingualContent(keywords(poster.keywords()), language));
-        dropResearchClassifications(record, output, entityType, poster.researchClassifications());
+        dto.setResearchAreasId(new HashSet<>(
+            researchAreas(record, output, entityType, poster.researchClassifications())));
         dropPartOfIdentifiers(record, output, entityType, poster.identifiers(), null);
 
         dto.setType(PerformanceRelatedOutputType.POSTER);
@@ -369,7 +370,6 @@ public class HydratorOutputConverters {
         var language = languageOf(record);
         var dto = new MonographDTO();
         var entityType = MigrationEntityType.MONOGRAPH;
-        var key = outputKey(record, output);
 
         applyCommonFields(dto, record, output, entityType, book.title(), language,
             yearDate(book.publicationYear()), book.url(), book.authors(), book.authoringRole());
@@ -411,15 +411,8 @@ public class HydratorOutputConverters {
             new ArrayList<>(List.of(languageId)));
         applyLocation(dto, language, book.publicationLocation());
 
-        // CW-001-MAP-000125: a monograph holds a single research area
-        var areas = conversionUtil.researchAreaIds(
-            researchClassifications(book.researchClassifications()),
-            reason -> migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
-                HydratorMappingRule.cv(125), reason));
-        areas.stream().findFirst().ifPresent(dto::setResearchAreaId);
-        areas.stream().skip(1).forEach(areaId -> migrationLog.valueDropped(HydratorSource.NAME,
-            entityType.name(), key, HydratorMappingRule.cv(125),
-            "a monograph holds one research area, dropped area " + areaId));
+        dto.setResearchAreasId(new HashSet<>(
+            researchAreas(record, output, entityType, book.researchClassifications())));
 
         ensureOwnerContribution(dto, record, output, MigrationEntityType.MONOGRAPH,
             book.authoringRole());
@@ -772,6 +765,8 @@ public class HydratorOutputConverters {
                 studentName, null));
         }
 
+        var classifications = researchClassifications(examination.researchClassifications());
+
         var ownerName = personResolver.ownerName(record);
         if (Objects.nonNull(ownerName)) {
             var role = Objects.isNull(examination.examinationRole()) ? "" :
@@ -780,6 +775,11 @@ public class HydratorOutputConverters {
                 EXAMINATION_ROLES.getOrDefault(role, DocumentContributionType.BOARD_MEMBER), 2,
                 ownerName, personResolver.resolveOwner(record));
             examiner.setIsBoardPresident(JURY_PRESIDENT.equals(role));
+            // CW-001-MAP-000826: the examiner's own research areas, on their contribution
+            examiner.setResearchAreasId(new HashSet<>(conversionUtil.researchAreaIds(
+                classifications, reason -> migrationLog.valueDropped(HydratorSource.NAME,
+                    MigrationEntityType.THESIS_EXAMINATION.name(), key,
+                    HydratorMappingRule.cv(826), reason))));
             dto.getContributions().add(examiner);
         }
 
@@ -792,7 +792,6 @@ public class HydratorOutputConverters {
         dto.setLanguageId(conversionUtil.localeLanguageId(language));
         dto.setWritingLanguageTagId(dto.getTitle().getFirst().getLanguageTagId());
 
-        var classifications = researchClassifications(examination.researchClassifications());
         if (!classifications.isEmpty()) {
             applyScientificArea(dto, classifications.getFirst().value());
         }
@@ -884,8 +883,8 @@ public class HydratorOutputConverters {
         dto.setProducer(conversionUtil.multilingualContent(interview.producer(), language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(844), null);
-        dropServiceResearchClassifications(key, HydratorMappingRule.cv(852),
-            interview.researchClassifications());
+        dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(852),
+            interview.researchClassifications()));
 
         return dto;
     }
@@ -909,8 +908,8 @@ public class HydratorOutputConverters {
             language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(854), null);
-        dropServiceResearchClassifications(key, HydratorMappingRule.cv(860),
-            interview.researchClassifications());
+        dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(860),
+            interview.researchClassifications()));
 
         return dto;
     }
@@ -944,13 +943,13 @@ public class HydratorOutputConverters {
         return dto;
     }
 
-    private void dropServiceResearchClassifications(String key, String rule,
-                                                    HydratorCVModel.ResearchClassifications
-                                                        classifications) {
-        researchClassifications(classifications).forEach(classification ->
-            migrationLog.valueDropped(HydratorSource.NAME,
-                MigrationEntityType.PERFORMANCE_RELATED_OUTPUT.name(), key, rule,
-                "document has no research areas: '" + classification.value() + "'"));
+    private Set<Integer> serviceResearchAreas(String key, String rule,
+                                              HydratorCVModel.ResearchClassifications
+                                                  classifications) {
+        return new HashSet<>(conversionUtil.researchAreaIds(
+            researchClassifications(classifications),
+            reason -> migrationLog.valueDropped(HydratorSource.NAME,
+                MigrationEntityType.PERFORMANCE_RELATED_OUTPUT.name(), key, rule, reason)));
     }
 
     private LocalDate supervisionDate(String key, HydratorCVModel.DateInfo date, String rule) {

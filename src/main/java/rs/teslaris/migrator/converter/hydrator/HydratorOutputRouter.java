@@ -594,8 +594,9 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                     existing::setVolume);
                 filler.value("number", existing.getNumber(), incoming.getNumber(),
                     existing::setNumber);
-                filler.value("researchArea", existing.getResearchAreaId(),
-                    incoming.getResearchAreaId(), existing::setResearchAreaId);
+                filler.union("researchAreas", existing.getResearchAreasId(),
+                    incoming.getResearchAreasId(),
+                    areas -> existing.setResearchAreasId(new HashSet<>(areas)));
                 filler.union("languages", existing.getLanguageIds(), incoming.getLanguageIds(),
                     existing::setLanguageIds);
 

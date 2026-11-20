@@ -22,6 +22,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
+import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorJournalResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputConverters;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
@@ -56,6 +57,9 @@ public class HydratorOutputConvertersTest {
     private HydratorPersonResolver personResolver;
 
     @Mock
+    private HydratorInstitutionResolver institutionResolver;
+
+    @Mock
     private CountryService countryService;
 
     @Mock
@@ -68,7 +72,7 @@ public class HydratorOutputConvertersTest {
     void setUp() {
         converters = new HydratorOutputConverters(
             new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
-            journalResolver, personResolver, countryService, migrationLog);
+            journalResolver, personResolver, institutionResolver, countryService, migrationLog);
     }
 
     private void withResearchAreaVocabulary() {

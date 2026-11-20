@@ -81,6 +81,10 @@ public class ThesisContributionEntityCreator
         String message;
         if (unlinked.isPresent()) {
             unlinked.get().setPersonId(owner.getPersonId());
+            if (Objects.isNull(unlinked.get().getResearchAreasId()) ||
+                unlinked.get().getResearchAreasId().isEmpty()) {
+                unlinked.get().setResearchAreasId(owner.getResearchAreasId());
+            }
             message = "owner linked to their " + unlinked.get().getContributionType() +
                 " contribution on thesis " + thesisId;
         } else {

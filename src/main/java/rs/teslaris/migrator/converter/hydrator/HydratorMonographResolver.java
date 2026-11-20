@@ -206,7 +206,9 @@ public class HydratorMonographResolver implements RunScopedCache {
             book.getWebOfScienceId()));
         stub.setHandleId(firstNonBlank(stub.getHandleId(), book.getHandleId()));
         stub.setNumberOfPages(firstNonNull(stub.getNumberOfPages(), book.getNumberOfPages()));
-        stub.setResearchAreaId(firstNonNull(stub.getResearchAreaId(), book.getResearchAreaId()));
+        if (Objects.isNull(stub.getResearchAreasId()) || stub.getResearchAreasId().isEmpty()) {
+            stub.setResearchAreasId(book.getResearchAreasId());
+        }
         stub.setCountryId(firstNonNull(stub.getCountryId(), book.getCountryId()));
         stub.setPublicationStatus(firstNonNull(stub.getPublicationStatus(),
             book.getPublicationStatus()));
