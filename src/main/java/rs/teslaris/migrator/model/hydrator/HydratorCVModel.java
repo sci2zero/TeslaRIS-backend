@@ -46,7 +46,51 @@ public class HydratorCVModel {
     public record Service(
         String id,
         Supervision researchBasedDegreeSupervision,
-        Examination graduateExamination
+        Examination graduateExamination,
+        NonResearchPresentation nonResearchPresentation,
+        BroadcastInterview broadcastInterview,
+        TextInterview textInterview
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record NonResearchPresentation(
+        String title,
+        DateInfo presentationDate,
+        String conferenceEvent,
+        PublicationLocation conferenceEventLocation,
+        String organizationPresentedTo,
+        OutputAuthors authors,
+        OutputAuthors presenters,
+        Boolean invited,
+        Boolean keynote,
+        Boolean competitive
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BroadcastInterview(
+        String theme,
+        DateInfo firstBroadcastDate,
+        DateInfo endDate,
+        String program,
+        String interviewerName,
+        String producer,
+        String url,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TextInterview(
+        String topic,
+        DateInfo publicationDate,
+        String forum,
+        String interviewerName,
+        String url,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
     ) {
     }
 

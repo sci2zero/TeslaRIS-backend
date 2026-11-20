@@ -98,6 +98,7 @@ public class HydratorIdentifierInitializerTest {
         existing.setUrlTemplate("");
         when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(existing);
         when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(complete());
+        when(identifierRepository.findByCode(SOURCE_WORK_CODE)).thenReturn(complete());
         when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();
@@ -129,6 +130,7 @@ public class HydratorIdentifierInitializerTest {
         existing.setUrlTemplate("https://example.com/{ID}");
         when(identifierRepository.findByCode(PROJECT_CODE)).thenReturn(complete());
         when(identifierRepository.findByCode(FUNDING_CODE)).thenReturn(existing);
+        when(identifierRepository.findByCode(SOURCE_WORK_CODE)).thenReturn(complete());
         when(languageTagService.findLanguageTagByValue("EN")).thenReturn(english());
 
         initializer.ensureIdentifiers();

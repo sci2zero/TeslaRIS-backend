@@ -27,6 +27,7 @@ import rs.teslaris.migrator.converter.hydrator.HydratorOutputRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonConverter;
 import rs.teslaris.migrator.converter.hydrator.HydratorPrizeExtractor;
 import rs.teslaris.migrator.converter.hydrator.HydratorProjectConverter;
+import rs.teslaris.migrator.converter.hydrator.HydratorServiceRouter;
 import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.converter.hydrator.HydratorSupervisionExtractor;
 import rs.teslaris.migrator.converter.hydrator.PersonMigrationWriter;
@@ -61,10 +62,11 @@ import rs.teslaris.migrator.util.MigrationEntityType;
  *     <li>{@code CV_FUNDING} - curriculum fundings, matched against the projects of the previous
  *     pass and created only when not found;</li>
  *     <li>{@code DOCUMENT} - runs after persons exist, so contributions can resolve. Each
- *     curriculum yields its outputs, then each degree's thesis followed by the education, then the
- *     theses of its completed supervisions and of its master and PhD examinations. A thesis is
- *     matched by title and author across curricula, whichever comes first: the author's own
- *     version replaces the fields and an advisor or examiner adds their role.</li>
+ *     curriculum yields its outputs, then its services mapped to outputs, then each degree's
+ *     thesis followed by the education, then the theses of its completed supervisions and of its
+ *     master and PhD examinations. A thesis is matched by title and author across curricula,
+ *     whichever comes first: the author's own version replaces the fields and an advisor or
+ *     examiner adds their role.</li>
  * </ol>
  */
 @Configuration
@@ -94,6 +96,8 @@ public class HydratorPipelineConfiguration {
     private final HydratorPrizeExtractor prizeExtractor;
 
     private final HydratorOutputRouter outputRouter;
+
+    private final HydratorServiceRouter serviceRouter;
 
     private final HydratorDegreeRouter degreeRouter;
 
@@ -191,6 +195,7 @@ public class HydratorPipelineConfiguration {
     public MigrationPipeline<HydratorCVModel.Curriculum> hydratorDocumentPipeline() {
         return pipeline(MigrationEntityType.DOCUMENT, ItemRouter.ordered(List.of(
             outputRouter,
+            serviceRouter,
             degreeRouter,
             new SimpleMapping<>(
                 MigrationEntityType.THESIS_SUPERVISION,

@@ -24,10 +24,12 @@ import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
@@ -803,6 +805,154 @@ public class HydratorOutputConverters {
         return record.id() + "#examination#" + Objects.toString(service.id(), "unknown");
     }
 
+    public String serviceKey(HydratorCVModel.Curriculum record, HydratorCVModel.Service service) {
+        return record.id() + "#service#" + Objects.toString(service.id(), "unknown");
+    }
+
+    /**
+     * CW-001-MAP-000945…956: an oral presentation. Its presenters are speakers on its event (see
+     * {@link #speakerContributions}), its authors are the document's authors.
+     */
+    public PerformanceRelatedOutputDTO toNonResearchPresentation(HydratorCVModel.Curriculum record,
+                                                                 HydratorCVModel.Service service) {
+        var presentation = service.nonResearchPresentation();
+
+        if (Objects.isNull(presentation) || isBlank(presentation.title())) {
+            return null;
+        }
+
+        var key = serviceKey(record, service);
+        var entityType = MigrationEntityType.PERFORMANCE_RELATED_OUTPUT;
+        var dto = serviceOutput(record, PerformanceRelatedOutputType.NON_RESEARCH_PRESENTATION,
+            presentation.title(), presentation.presentationDate(), null, null);
+
+        dto.setContributions(contributions(record, key, entityType, HydratorMappingRule.cv(955),
+            presentation.authors(), null));
+        ensureOwnerContribution(dto, record, key, entityType, HydratorMappingRule.cv(955), null);
+
+        if (Boolean.TRUE.equals(presentation.keynote())) {
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
+                HydratorMappingRule.cv(953), "event contribution has no keynote flag");
+        }
+
+        if (Boolean.TRUE.equals(presentation.competitive())) {
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
+                HydratorMappingRule.cv(954), "performance related output has no competitive flag");
+        }
+
+        return dto;
+    }
+
+    // CW-001-MAP-000956/952: the presenters, as speakers on the presentation's event
+    public List<PersonEventContributionDTO> speakerContributions(
+        HydratorCVModel.Curriculum record, HydratorCVModel.NonResearchPresentation presentation) {
+        return linkedContributions(record, presentation.presenters(),
+            DocumentContributionType.PRESENTER).stream()
+            .map(presenter -> {
+                var speaker = new PersonEventContributionDTO();
+                speaker.setEventContributionType(EventContributionType.SPEAKER);
+                speaker.setIsInvitedContributor(Boolean.TRUE.equals(presentation.invited()));
+                speaker.setIsMainContributor(false);
+                speaker.setOrderNumber(presenter.getOrderNumber());
+                speaker.setContributionDescription(List.of());
+                speaker.setDisplayAffiliationStatement(List.of());
+                speaker.setInstitutionIds(List.of());
+                speaker.setPersonName(presenter.getPersonName());
+                speaker.setPersonId(presenter.getPersonId());
+                return speaker;
+            })
+            .toList();
+    }
+
+    // CW-001-MAP-000844…853; the program is the event's name
+    public PerformanceRelatedOutputDTO toBroadcastInterview(HydratorCVModel.Curriculum record,
+                                                            HydratorCVModel.Service service) {
+        var interview = service.broadcastInterview();
+
+        if (Objects.isNull(interview) || isBlank(interview.theme())) {
+            return null;
+        }
+
+        var key = serviceKey(record, service);
+        var language = languageOf(record);
+        var dto = serviceOutput(record, PerformanceRelatedOutputType.BROADCAST_INTERVIEW,
+            interview.theme(), interview.firstBroadcastDate(), interview.url(),
+            interview.keywords());
+
+        dto.setOtherActors(conversionUtil.multilingualContent(interview.interviewerName(),
+            language));
+        dto.setProducer(conversionUtil.multilingualContent(interview.producer(), language));
+        ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
+            HydratorMappingRule.cv(844), null);
+        dropServiceResearchClassifications(key, HydratorMappingRule.cv(852),
+            interview.researchClassifications());
+
+        return dto;
+    }
+
+    // CW-001-MAP-000854…861
+    public PerformanceRelatedOutputDTO toTextInterview(HydratorCVModel.Curriculum record,
+                                                       HydratorCVModel.Service service) {
+        var interview = service.textInterview();
+
+        if (Objects.isNull(interview) || isBlank(interview.topic())) {
+            return null;
+        }
+
+        var key = serviceKey(record, service);
+        var language = languageOf(record);
+        var dto = serviceOutput(record, PerformanceRelatedOutputType.TEXT_INTERVIEW,
+            interview.topic(), interview.publicationDate(), interview.url(), interview.keywords());
+
+        dto.setDescription(conversionUtil.multilingualContent(interview.forum(), language));
+        dto.setOtherActors(conversionUtil.multilingualContent(interview.interviewerName(),
+            language));
+        ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
+            HydratorMappingRule.cv(854), null);
+        dropServiceResearchClassifications(key, HydratorMappingRule.cv(860),
+            interview.researchClassifications());
+
+        return dto;
+    }
+
+    private PerformanceRelatedOutputDTO serviceOutput(HydratorCVModel.Curriculum record,
+                                                      PerformanceRelatedOutputType type,
+                                                      String title, HydratorCVModel.DateInfo date,
+                                                      String url,
+                                                      HydratorCVModel.Keywords keywords) {
+        var language = languageOf(record);
+        var dto = new PerformanceRelatedOutputDTO();
+
+        dto.setType(type);
+        dto.setTitle(conversionUtil.multilingualContent(title, language));
+        dto.setSubTitle(List.of());
+        dto.setDescription(List.of());
+        dto.setKeywords(conversionUtil.multilingualContent(keywords(keywords), language));
+        dto.setUris(new HashSet<>());
+        dto.setDocumentDate(conversionUtil.flexibleDate(date));
+        dto.setContributions(new ArrayList<>());
+
+        if (!isBlank(url)) {
+            dto.getUris().add(url.trim());
+        }
+
+        dto.getTitle().stream()
+            .map(MultilingualContentDTO::getLanguageTagId)
+            .filter(Objects::nonNull)
+            .forEach(dto.getLanguageTagIds()::add);
+
+        return dto;
+    }
+
+    private void dropServiceResearchClassifications(String key, String rule,
+                                                    HydratorCVModel.ResearchClassifications
+                                                        classifications) {
+        researchClassifications(classifications).forEach(classification ->
+            migrationLog.valueDropped(HydratorSource.NAME,
+                MigrationEntityType.PERFORMANCE_RELATED_OUTPUT.name(), key, rule,
+                "document has no research areas: '" + classification.value() + "'"));
+    }
+
     private LocalDate supervisionDate(String key, HydratorCVModel.DateInfo date, String rule) {
         try {
             return conversionUtil.localDate(date);
@@ -1072,6 +1222,14 @@ public class HydratorOutputConverters {
                                          HydratorCVModel.Output output,
                                          MigrationEntityType entityType,
                                          HydratorCVModel.CodeValue ownerRole) {
+        ensureOwnerContribution(dto, record, outputKey(record, output), entityType,
+            HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()), ownerRole);
+    }
+
+    private void ensureOwnerContribution(DocumentDTO dto, HydratorCVModel.Curriculum record,
+                                         String key, MigrationEntityType entityType,
+                                         String authorsRule,
+                                         HydratorCVModel.CodeValue ownerRole) {
         var contributions = dto.getContributions();
 
         if (contributions.stream().anyMatch(contribution ->
@@ -1096,9 +1254,7 @@ public class HydratorOutputConverters {
             .forEach(i -> withOwner.get(i).setOrderNumber(i + 1));
         dto.setContributions(withOwner);
 
-        migrationLog.valueDefaulted(HydratorSource.NAME, entityType.name(),
-            outputKey(record, output),
-            HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()),
+        migrationLog.valueDefaulted(HydratorSource.NAME, entityType.name(), key, authorsRule,
             "no authors in the source, curriculum owner added as " + role);
     }
 
@@ -1344,6 +1500,16 @@ public class HydratorOutputConverters {
                                                               MigrationEntityType entityType,
                                                               HydratorCVModel.OutputAuthors authors,
                                                               HydratorCVModel.CodeValue ownerRole) {
+        return contributions(record, outputKey(record, output), entityType,
+            HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()), authors, ownerRole);
+    }
+
+    private List<PersonDocumentContributionDTO> contributions(HydratorCVModel.Curriculum record,
+                                                              String key,
+                                                              MigrationEntityType entityType,
+                                                              String authorsRule,
+                                                              HydratorCVModel.OutputAuthors authors,
+                                                              HydratorCVModel.CodeValue ownerRole) {
         var contributions = new ArrayList<PersonDocumentContributionDTO>();
 
         if (Objects.isNull(authors) || Objects.isNull(authors.author())) {
@@ -1362,7 +1528,7 @@ public class HydratorOutputConverters {
             }
         }
 
-        var ownerIndex = ownerIndex(record, output, entityType, people, names);
+        var ownerIndex = ownerIndex(record, key, entityType, authorsRule, people, names);
 
         for (int i = 0; i < people.size(); i++) {
             var isOwner = i == ownerIndex;
@@ -1455,8 +1621,8 @@ public class HydratorOutputConverters {
      *
      * @return the owner's position in {@code people}, or -1 when they cannot be told apart
      */
-    private int ownerIndex(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
-                           MigrationEntityType entityType,
+    private int ownerIndex(HydratorCVModel.Curriculum record, String key,
+                           MigrationEntityType entityType, String authorsRule,
                            List<HydratorCVModel.OutputAuthor> people, List<PersonNameDTO> names) {
         for (int i = 0; i < people.size(); i++) {
             if (Boolean.TRUE.equals(people.get(i).self())) {
@@ -1482,9 +1648,7 @@ public class HydratorOutputConverters {
         }
 
         if (match < 0 && !people.isEmpty()) {
-            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
-                outputKey(record, output),
-                HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).authors()),
+            migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key, authorsRule,
                 (match == -2 ? "several authors match the owner's name" :
                     "owner not identified") + " among " + people.size() + " authors");
             return -1;

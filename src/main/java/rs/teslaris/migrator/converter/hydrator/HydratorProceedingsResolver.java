@@ -19,6 +19,7 @@ import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
+import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.OtherEventType;
@@ -241,6 +242,57 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             paper.paperTitle().trim());
 
         return created.getId();
+    }
+
+    /**
+     * The event of a curriculum service (CW-001-MAP-000948…956, 000845…847), one per service.
+     *
+     * @return the event's id, or {@code null} when it has no name or no date to hold it on
+     */
+    public Integer createServiceEvent(String key, OtherEventType type, String name,
+                                      HydratorCVModel.DateInfo from, HydratorCVModel.DateInfo to,
+                                      String language,
+                                      HydratorCVModel.PublicationLocation location,
+                                      String organizer,
+                                      List<PersonEventContributionDTO> contributions,
+                                      boolean performIndex) {
+        var date = conversionUtil.flexibleDate(from);
+
+        if (isBlank(name) || Objects.isNull(date)) {
+            return null;
+        }
+
+        var dto = new OtherEventDTO();
+        dto.setType(type);
+        applyEventFields(dto, name.trim(), date, language, location);
+        dto.setDisplayOrganizer(conversionUtil.multilingualContent(organizer, language));
+        dto.setContributions(new ArrayList<>(contributions));
+
+        var end = conversionUtil.flexibleDate(to);
+        if (Objects.nonNull(end)) {
+            var dateTo = lastDay(end);
+            if (!dateTo.isBefore(dto.getDateFrom())) {
+                dto.setDateTo(dateTo);
+            }
+        }
+
+        var created = otherEventService.createOtherEvent(dto, performIndex);
+        migrationLog.stubCreated(HydratorSource.NAME, type.name(), key, created.getId(),
+            name.trim());
+
+        return created.getId();
+    }
+
+    private LocalDate lastDay(FlexibleDateDTO date) {
+        if (Objects.isNull(date.month())) {
+            return LocalDate.of(date.year(), 12, 31);
+        }
+
+        if (Objects.isNull(date.day())) {
+            return YearMonth.of(date.year(), date.month()).atEndOfMonth();
+        }
+
+        return LocalDate.of(date.year(), date.month(), date.day());
     }
 
     // A non-serial event needs both dates; the source has one, so it spans what it leaves open
