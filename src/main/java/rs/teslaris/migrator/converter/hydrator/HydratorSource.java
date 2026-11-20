@@ -20,6 +20,9 @@ public final class HydratorSource {
     // Other identifier holding the curriculum's own id of an output ("cv-prod-id-…")
     public static final String SOURCE_WORK_IDENTIFIER_CODE = "CienciaVitae_source_work_id";
 
+    // Scheme of the employment positions loaded by fill_employment_positions.py
+    public static final String EMPLOYMENT_POSITION_SCHEME = "ptcris";
+
     // Code of the project identifier before the rename, kept to migrate existing definitions
     public static final String LEGACY_SCIPROJ_PROJECT_IDENTIFIER_CODE = "SCIPROJID";
 

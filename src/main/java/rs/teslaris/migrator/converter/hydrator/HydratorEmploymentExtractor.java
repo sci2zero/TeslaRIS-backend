@@ -3,6 +3,7 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -77,11 +78,25 @@ public class HydratorEmploymentExtractor
                     employment.positionTitle().title(), language));
             }
 
-            result.add(new EmploymentMigrationDTO(record.id(), employment.id(), institution, dto,
-                rejection));
+            result.add(new EmploymentMigrationDTO(record.id(), employment.id(), institution,
+                positionCode(employment), dto, rejection));
         });
 
         return result;
+    }
+
+    // The deepest level the source gives: title, then type, then category
+    private String positionCode(HydratorCVModel.Employment employment) {
+        return Stream.of(
+                Objects.isNull(employment.positionTitle()) ? null :
+                    employment.positionTitle().code(),
+                Objects.isNull(employment.positionType()) ? null :
+                    employment.positionType().code(),
+                Objects.isNull(employment.employmentCategory()) ? null :
+                    employment.employmentCategory().code())
+            .filter(code -> Objects.nonNull(code) && !code.isBlank())
+            .findFirst()
+            .orElse(null);
     }
 
     private HydratorCVModel.Institution primaryInstitution(HydratorCVModel.Employment employment) {

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
+import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.converter.hydrator.EmploymentEntityCreator;
 import rs.teslaris.migrator.converter.hydrator.EmploymentMigrationDTO;
@@ -48,6 +51,8 @@ public class EmploymentEntityCreatorTest {
     private MigrationLog migrationLog;
     @Mock
     private MigrationMergePolicy mergePolicy;
+    @Mock
+    private EmploymentPositionRepository employmentPositionRepository;
 
     @InjectMocks
     private EmploymentEntityCreator creator;
@@ -65,7 +70,7 @@ public class EmploymentEntityCreatorTest {
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
 
         var id = creator.create(
-            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), RUN);
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, null, employment, null), RUN);
 
         assertEquals(42, id);
         assertEquals(7, employment.getOrganisationUnitId());
@@ -77,14 +82,14 @@ public class EmploymentEntityCreatorTest {
             .thenThrow(new MigrationException("not migrated"));
 
         assertThrows(MigrationException.class, () -> creator.create(
-            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, new EmploymentDTO(),
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, null, new EmploymentDTO(),
                 null), RUN));
         verify(involvementService, never()).addEmployment(anyInt(), any());
     }
 
     @Test
     void shouldFailItemWithInvalidSourceValue() {
-        var dto = new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, new EmploymentDTO(),
+        var dto = new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, null, new EmploymentDTO(),
             "invalid date (year='2015', month='2', day='30')");
 
         assertThrows(InvalidSourceValueException.class, () -> creator.create(dto, RUN));
@@ -103,7 +108,7 @@ public class EmploymentEntityCreatorTest {
         when(involvementService.addEmployment(5, employment)).thenReturn(created);
 
         var id = creator.create(
-            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, employment, null), RUN);
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, null, employment, null), RUN);
 
         assertEquals(43, id);
         assertNull(employment.getOrganisationUnitId());
@@ -111,5 +116,42 @@ public class EmploymentEntityCreatorTest {
             "cv-1#employment#1", "CW-001-MAP-000039",
             "organisation unit not linked, institution kept as display name: " +
                 "identifier not found");
+    }
+
+    @Test
+    void shouldLinkEmploymentPositionByCode() {
+        var employment = new EmploymentDTO();
+        var position = new EmploymentPositionHierarchy();
+        position.setId(9);
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
+            .thenReturn(5);
+        when(institutionResolver.resolve(INSTITUTION))
+            .thenReturn(new HydratorInstitutionResolver.Match(7, null));
+        when(employmentPositionRepository.findBySchemeNameAndCode("ptcris", "T01V01C11"))
+            .thenReturn(Optional.of(position));
+
+        creator.create(
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, "T01V01C11", employment, null),
+            RUN);
+
+        assertEquals(9, employment.getEmploymentPositionId());
+    }
+
+    @Test
+    void shouldLogWhenEmploymentPositionIsNotFound() {
+        var employment = new EmploymentDTO();
+        when(idResolver.require(HydratorSource.NAME, MigrationEntityType.PERSON, "cv-1"))
+            .thenReturn(5);
+        when(institutionResolver.resolve(INSTITUTION))
+            .thenReturn(new HydratorInstitutionResolver.Match(7, null));
+        when(employmentPositionRepository.findBySchemeNameAndCode("ptcris", "T99"))
+            .thenReturn(Optional.empty());
+
+        creator.create(
+            new EmploymentMigrationDTO("cv-1", "1", INSTITUTION, "T99", employment, null), RUN);
+
+        assertNull(employment.getEmploymentPositionId());
+        verify(migrationLog).valueDropped(HydratorSource.NAME, "PERSON_EMPLOYMENT",
+            "cv-1#employment#1", "CW-001-MAP-000039", "employment position not linked: T99");
     }
 }
