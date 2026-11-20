@@ -77,6 +77,14 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
             .toList();
     }
 
+    private static String join(String type, String investigationRole) {
+        if (Objects.isNull(type)) {
+            return investigationRole;
+        }
+
+        return Objects.isNull(investigationRole) ? type : type + " (" + investigationRole + ")";
+    }
+
     @Override
     public String profile() {
         return VivoRdfSupport.PROFILE;
@@ -197,14 +205,6 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
             Objects.nonNull(investigationRole) ?
                 roleTexts.getOrDefault(tag, readable(investigationRole)) : null)));
         return labels;
-    }
-
-    private static String join(String type, String investigationRole) {
-        if (Objects.isNull(type)) {
-            return investigationRole;
-        }
-
-        return Objects.isNull(investigationRole) ? type : type + " (" + investigationRole + ")";
     }
 
     // VIVO has no organisation role that shows on a project, so the plain "has participant" /

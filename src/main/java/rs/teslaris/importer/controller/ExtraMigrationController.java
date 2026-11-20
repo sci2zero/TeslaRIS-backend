@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,6 +48,9 @@ public class ExtraMigrationController {
     private final LanguageTagService languageTagService;
 
     private final PersonContributionService personContributionService;
+
+    @Value("${migration.initial-employment-migration-date}")
+    private LocalDate initialEmploymentMigrationDate;
 
 
     @PatchMapping("/event")
@@ -93,10 +97,12 @@ public class ExtraMigrationController {
     @ResponseStatus(HttpStatus.CREATED)
     public void migrateEmploymentNew(
         @Valid @RequestBody List<ExtraEmploymentMigrationDTO> employmentMigrationDTO,
-        @RequestParam(required = false) Integer institutionId) {
+        @RequestParam(required = false) Integer institutionId,
+        @RequestParam(required = false) LocalDate alumniEmploymentEndDate) {
         involvementService.migrateEmployment(employmentMigrationDTO,
-            LocalDate.of(2025, 11, 6),
-            institutionId);
+            initialEmploymentMigrationDate,
+            institutionId,
+            alumniEmploymentEndDate);
     }
 
     @PostMapping("/migrate-languages")

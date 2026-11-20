@@ -5,7 +5,6 @@ import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.MaterialProductType;
@@ -25,11 +24,6 @@ public class MaterialProductConverter extends DocumentPublicationConverter {
 
         materialProductDTO.setProductUsers(MultilingualContentConverter.getMultilingualContentDTO(
             materialProduct.getProductUsers()));
-
-        materialProduct.getResearchAreas().forEach(researchArea -> {
-            materialProductDTO.getResearchAreasId().add(researchArea.getId());
-            materialProductDTO.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
-        });
 
         if (Objects.nonNull(materialProduct.getPublisher())) {
             materialProductDTO.setPublisherId(materialProduct.getPublisher().getId());

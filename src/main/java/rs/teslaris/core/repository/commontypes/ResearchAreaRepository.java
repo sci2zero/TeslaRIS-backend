@@ -35,8 +35,10 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("SELECT COUNT(p) > 0 FROM Person p JOIN p.researchAreas ra WHERE ra.id = :researchAreaId")
     boolean isResearchedBySomeone(Integer researchAreaId);
 
-    @Query("SELECT COUNT(m) > 0 FROM Monograph m JOIN m.researchArea WHERE m.researchArea.id = :researchAreaId")
-    boolean isResearchedInMonograph(Integer researchAreaId);
+    // Native query, because JPQL on Document makes a UNION ALL of all subclass tables.
+    @Query(value = "SELECT COUNT(*) > 0 FROM documents_research_areas " +
+        "WHERE research_areas_id = :researchAreaId", nativeQuery = true)
+    boolean isResearchedInDocument(Integer researchAreaId);
 
     @Query(value =
         "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE " +

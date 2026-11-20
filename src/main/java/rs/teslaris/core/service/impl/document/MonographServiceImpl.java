@@ -82,8 +82,6 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final BookSeriesService bookSeriesService;
 
-    private final ResearchAreaService researchAreaService;
-
     private final MonographRepository monographRepository;
 
     private final PublisherService publisherService;
@@ -131,12 +129,11 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
-        this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
         this.publisherService = publisherService;
         this.indexBulkUpdateService = indexBulkUpdateService;
@@ -395,13 +392,6 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                 monograph.setPublicationSeries(bookSeries);
             }
         }
-
-        // Single reference, so the bulk "skip what is missing" lookup other types use does not
-        // apply here.
-        monograph.setResearchArea(RestorationSupport.resolveOptional(
-            monographDTO.getResearchAreaId(), researchAreaService, researchAreaService::findOne,
-            "researchAreaId",
-            "restoreResearchAreaMissingMessage"));
 
         monograph.setAuthorReprint(false);
         monograph.setPublisher(null);

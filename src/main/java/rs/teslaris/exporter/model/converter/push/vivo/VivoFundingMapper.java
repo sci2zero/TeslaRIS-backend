@@ -73,6 +73,31 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
             number + " " + amount.getCurrencyCode().trim() : number;
     }
 
+    /**
+     * Whether this funding is credited with the output. With funding parts, only the fundings
+     * named there are. Without funding parts:
+     * <ul>
+     *     <li>{@code creditAllWithoutParts = true}: every funding of the project is credited
+     *     (it is not known which one paid, so possibly more than the real ones);</li>
+     *     <li>{@code false}: only when the project has exactly one funding (this one). Older
+     *     snapshots have no funding count, so they are not credited.</li>
+     * </ul>
+     */
+    static boolean supports(ExportFunding funding, ExportProjectDocument output,
+                            boolean creditAllWithoutParts) {
+        if (Objects.nonNull(output.getFundingIds()) && !output.getFundingIds().isEmpty()) {
+            return output.getFundingIds().contains(funding.getDatabaseId());
+        }
+
+        if (creditAllWithoutParts) {
+            return true;
+        }
+
+        var project = funding.getProject();
+        return Objects.nonNull(project) && Objects.nonNull(project.getFundingCount()) &&
+            project.getFundingCount() == 1;
+    }
+
     @Override
     public String profile() {
         return VivoRdfSupport.PROFILE;
@@ -249,31 +274,6 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
             role.addProperty(model.createProperty(OBO + "RO_0000052"), organisation);
             organisation.addProperty(model.createProperty(OBO + "RO_0000053"), role);
         }
-    }
-
-    /**
-     * Whether this funding is credited with the output. With funding parts, only the fundings
-     * named there are. Without funding parts:
-     * <ul>
-     *     <li>{@code creditAllWithoutParts = true}: every funding of the project is credited
-     *     (it is not known which one paid, so possibly more than the real ones);</li>
-     *     <li>{@code false}: only when the project has exactly one funding (this one). Older
-     *     snapshots have no funding count, so they are not credited.</li>
-     * </ul>
-     */
-    static boolean supports(ExportFunding funding, ExportProjectDocument output,
-                            boolean creditAllWithoutParts) {
-        if (Objects.nonNull(output.getFundingIds()) && !output.getFundingIds().isEmpty()) {
-            return output.getFundingIds().contains(funding.getDatabaseId());
-        }
-
-        if (creditAllWithoutParts) {
-            return true;
-        }
-
-        var project = funding.getProject();
-        return Objects.nonNull(project) && Objects.nonNull(project.getFundingCount()) &&
-            project.getFundingCount() == 1;
     }
 
     // VIVO: "supported publications or other works" on the grant, "supported by" on the

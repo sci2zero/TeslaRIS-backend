@@ -1979,6 +1979,10 @@ public class DataQualityServiceTest {
             .when(() -> DataQualityAssessmentConfigurationLoader.getDimensionDefinition(
                 anyString(), anyString(), any()))
             .thenReturn(Set.of(multilingualContent("This dimension ensures accuracy.")));
+        configurationLoader
+            .when(() -> DataQualityAssessmentConfigurationLoader.getProfileName(
+                anyString(), anyString()))
+            .thenReturn(Map.of("en", "PTCRIS data quality policy"));
     }
 
     @Test
@@ -1989,6 +1993,19 @@ public class DataQualityServiceTest {
 
         when(dataQualityAssessmentRepository.findWithRevisionById(7))
             .thenReturn(Optional.of(assessment));
+
+        var languageTag = new LanguageTag();
+        languageTag.setId(1);
+        languageTag.setLanguageTag("EN");
+
+        when(languageTagService.findLanguageTagByValue("EN")).thenReturn(languageTag);
+
+        var indexedAssessment = new DataQualityAssessmentIndex();
+        indexedAssessment.setEntityNameSr("Petar Petrovic");
+        indexedAssessment.setEntityNameOther("Peter Peterson");
+
+        when(dataQualityAssessmentIndexRepository.findByDatabaseId(7))
+            .thenReturn(Optional.of(indexedAssessment));
 
         try (var configurationLoader = mockStatic(
             DataQualityAssessmentConfigurationLoader.class)) {
@@ -2022,6 +2039,11 @@ public class DataQualityServiceTest {
             assertTrue(result.blocking());
             assertEquals("PTCRIS", result.policy());
             assertEquals("1.3", result.policyVersion());
+            assertEquals("PTCRIS data quality policy",
+                result.policyName().getFirst().getContent());
+
+            assertEquals("Petar Petrovic", result.entityNameSr());
+            assertEquals("Peter Peterson", result.entityNameOther());
 
             assertEquals("Resolvable ORCID", result.title().getFirst().getContent());
             assertEquals("This dimension ensures accuracy.",

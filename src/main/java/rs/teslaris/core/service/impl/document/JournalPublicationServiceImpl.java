@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.classification.AssessmentGroupResolve
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -91,6 +92,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentLookupService documentLookupService,
                                          CountryService countryService,
                                          AssessmentGroupResolver assessmentGroupResolver,
+                                         ResearchAreaService researchAreaService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -101,7 +103,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -378,10 +379,7 @@ public class HydratorOutputConverters {
         return documentDate;
     }
 
-    /**
-     * Fields the published output types share: keywords and status. Research classifications
-     * are only logged under the type's own rule.
-     */
+    // Fields the published output types share
     private void applyPublicationFields(DocumentDTO dto, HydratorCVModel.Curriculum record,
                                         HydratorCVModel.Output output,
                                         MigrationEntityType entityType, String language,
@@ -390,7 +388,8 @@ public class HydratorOutputConverters {
                                         HydratorCVModel.ResearchClassifications classifications) {
         dto.setKeywords(conversionUtil.multilingualContent(keywords(keywords), language));
         dto.setPublicationStatus(publicationStatus(status));
-        dropResearchClassifications(record, output, entityType, classifications);
+        dto.setResearchAreasId(
+            new HashSet<>(researchAreas(record, output, entityType, classifications)));
     }
 
     void applyLocation(DocumentDTO dto, String language,
@@ -409,23 +408,20 @@ public class HydratorOutputConverters {
         }
     }
 
-    // Documents have no research areas in TeslaRIS, so the values are only logged
-    private void dropResearchClassifications(HydratorCVModel.Curriculum record,
-                                             HydratorCVModel.Output output,
-                                             MigrationEntityType entityType,
-                                             HydratorCVModel.ResearchClassifications
-                                                 classifications) {
+    private Set<Integer> researchAreas(HydratorCVModel.Curriculum record,
+                                       HydratorCVModel.Output output,
+                                       MigrationEntityType entityType,
+                                       HydratorCVModel.ResearchClassifications classifications) {
         if (Objects.isNull(classifications) ||
             Objects.isNull(classifications.researchClassification())) {
-            return;
+            return Set.of();
         }
 
-        classifications.researchClassification().stream()
-            .filter(Objects::nonNull)
-            .forEach(classification -> migrationLog.valueDropped(HydratorSource.NAME,
-                entityType.name(), outputKey(record, output),
+        return conversionUtil.researchAreaIds(classifications.researchClassification(),
+            reason -> migrationLog.valueDropped(HydratorSource.NAME, entityType.name(),
+                outputKey(record, output),
                 HydratorMappingRule.cv(OUTPUT_RULES.get(entityType).researchClassifications()),
-                "document has no research areas: '" + classification.value() + "'"));
+                reason));
     }
 
     /**

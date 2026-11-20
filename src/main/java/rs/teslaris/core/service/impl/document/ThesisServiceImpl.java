@@ -82,6 +82,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CrisContextInformationSer
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -188,6 +189,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentLookupService documentLookupService,
                              CountryService countryService,
                              AssessmentGroupResolver assessmentGroupResolver,
+                             ResearchAreaService researchAreaService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -205,7 +207,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
             organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService, documentLookupService, countryService,
-            assessmentGroupResolver);
+            assessmentGroupResolver, researchAreaService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;

@@ -33,6 +33,7 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -183,6 +184,10 @@ public abstract class Document extends BaseEntity implements Mergeable, Publicat
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayPublisher = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
 
 
     protected Document(DocumentPublicationType documentType) {
