@@ -10,12 +10,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.jwt.TokenBasedAuthentication;
 import rs.teslaris.migrator.configuration.MigrationSourceProperties;
 import rs.teslaris.migrator.dto.MigrationFailureDTO;
 import rs.teslaris.migrator.dto.MigrationPipelineResponseDTO;
@@ -48,6 +51,8 @@ public class MigrationServiceImpl implements MigrationService {
     private final TaskManagerService taskManagerService;
 
     private final MigrationSourceProperties sourceProperties;
+
+    private final UserService userService;
 
 
     @Override
@@ -83,7 +88,8 @@ public class MigrationServiceImpl implements MigrationService {
         var taskId = taskManagerService.scheduleTask(
             "Migration_Sync-" + request.source() + "-" + request.entityType() + "-" +
                 UUID.randomUUID(), timeToRun,
-            () -> runSynchronously(request.toRunRequest(modifiedAfterOf(request))),
+            () -> asUser(request.triggeredByUserId(),
+                () -> runSynchronously(request.toRunRequest(modifiedAfterOf(request)))),
             request.triggeredByUserId(), recurrence);
 
         try {
@@ -155,6 +161,22 @@ public class MigrationServiceImpl implements MigrationService {
             .map(pipeline -> MigrationPipelineResponseDTO.of(pipeline,
                 runExecutor.isRunning(pipeline.sourceName(), pipeline.entityType().name())))
             .toList();
+    }
+
+    /**
+     * A scheduled task has no security context, so without the user who scheduled it the
+     * readers return person data filtered as for an anonymous visitor.
+     */
+    private void asUser(Integer userId, Runnable run) {
+        var previousAuthentication = SecurityContextHolder.getContext().getAuthentication();
+
+        try {
+            SecurityContextHolder.getContext().setAuthentication(
+                new TokenBasedAuthentication(userService.findOne(userId)));
+            run.run();
+        } finally {
+            SecurityContextHolder.getContext().setAuthentication(previousAuthentication);
+        }
     }
 
     private ResolvedPipeline<Object> resolvePipeline(String source,
