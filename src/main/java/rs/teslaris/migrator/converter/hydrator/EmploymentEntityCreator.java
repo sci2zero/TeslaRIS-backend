@@ -2,6 +2,7 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
@@ -36,6 +37,9 @@ public class EmploymentEntityCreator
     private final EmploymentPositionService employmentPositionService;
 
     private final MigrationLog migrationLog;
+
+    @Value("${employment.position.scheme}")
+    private String employmentPositionScheme;
 
 
     @Override
@@ -74,8 +78,8 @@ public class EmploymentEntityCreator
             return;
         }
 
-        employmentPositionService.findIdBySchemeNameAndCode(
-                HydratorSource.EMPLOYMENT_POSITION_SCHEME, dto.positionCode())
+        employmentPositionService.findIdBySchemeNameAndCode(employmentPositionScheme,
+                dto.positionCode())
             .ifPresentOrElse(
                 positionId -> dto.employment().setEmploymentPositionId(positionId),
                 () -> migrationLog.valueDropped(HydratorSource.NAME,
