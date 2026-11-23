@@ -236,7 +236,7 @@ public class HydratorProjectConverter implements
     }
 
     // CW-002-MAP-000018/000033/000034: one entry per language, in source order
-    private List<MultilingualContentDTO> multilingual(List<HydratorProjectModel.LangValue> values) {
+    public List<MultilingualContentDTO> multilingual(List<HydratorProjectModel.LangValue> values) {
         var result = new ArrayList<MultilingualContentDTO>();
 
         if (Objects.isNull(values)) {

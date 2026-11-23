@@ -107,9 +107,12 @@ public class HydratorFundingExtractor
             dto.getOldIds().add(funding.id().trim());
             dto.setImportSource(HydratorSource.PROJECTS_IMPORT_SOURCE);
 
-            if (Objects.nonNull(funding.name())) {
+            if (Objects.nonNull(funding.name()) && !isBlank(funding.name().value())) {
                 dto.setName(conversionUtil.multilingualContent(funding.name().value(),
                     funding.name().language()));
+            } else {
+                // Funding without a name takes the project title
+                dto.setName(projectConverter.multilingual(project.titles()));
             }
 
             var typeFromId = typeFromIdSuffix(key, funding.id());

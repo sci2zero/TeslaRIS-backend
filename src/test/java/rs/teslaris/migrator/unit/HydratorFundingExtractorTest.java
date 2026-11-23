@@ -311,6 +311,23 @@ public class HydratorFundingExtractorTest {
     }
 
     @Test
+    void shouldFallBackToProjectTitleWhenFundingHasNoName() throws Exception {
+        var funded = funding("F1", "2020-01-01")
+            .replace("\"name\": {\"language\": \"en\", \"value\": \"Test Programme 2020\"},", "");
+        var record = MAPPER.readValue("""
+            {"id": "doc-1", "record": {"metadata": {"project": {
+              "projectId": "TEST001",
+              "titles": [{"language": "en", "value": "Test Project"},
+                         {"language": "pt", "value": "Projeto Teste"}],
+              "funded": [%s]}}}}
+            """.formatted(funded), HydratorProjectModel.ProjectDocument.class);
+
+        var dto = extractor.extract(record).getFirst().funding();
+
+        assertEquals(List.of("Test Project", "Projeto Teste"), contents(dto.getName()));
+    }
+
+    @Test
     void shouldMapEveryFundingOfProject() throws Exception {
         var result = extractor.extract(document(
             "[" + funding("F1", "2020-01-01") + "," + funding("F2", "2020-06-01") + "]"));
