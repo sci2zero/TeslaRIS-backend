@@ -72,4 +72,12 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     @Query("UPDATE PersonEventContribution pec SET pec.deleted = true " +
         "WHERE pec.event.id = :eventId")
     void deleteEventContributions(Integer eventId);
+
+    // A bulk update skips @UpdateTimestamp, so the time is set here.
+    @Modifying
+    @Query("UPDATE PerformanceRelatedOutput p SET p.lastModification = CURRENT_TIMESTAMP " +
+        "WHERE p.event.id = :eventId AND " +
+        "p.type = rs.teslaris.core.model.document.PerformanceRelatedOutputType" +
+        ".NON_RESEARCH_PRESENTATION")
+    void markPresentationsChanged(Integer eventId);
 }

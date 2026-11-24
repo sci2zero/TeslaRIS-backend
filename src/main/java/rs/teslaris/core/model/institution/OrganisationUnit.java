@@ -86,10 +86,10 @@ public class OrganisationUnit extends BaseEntity
     private String ringgold;
 
     @Column(name = "fundref")
-    private String fundref; // https://bioregistry.io/registry/funderregistry
+    private String fundref;
 
     @Column(name = "isni")
-    private String isni; // https://bioregistry.io/registry/isni
+    private String isni;
 
     @Column(name = "fct_id")
     private String fctId;

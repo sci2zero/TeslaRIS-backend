@@ -108,7 +108,8 @@ public class DbInitializer implements ApplicationRunner {
         ///////////////////// TESTING DATA /////////////////////
         if (environment.acceptsProfiles(Profiles.of(INTEGRATION_TEST_PROFILE))) {
             testingDataInitializer.initializeIntegrationTestingData(languages.serbianTag(),
-                languages.serbianLanguage(), languages.englishTag(), languages.germanTag(),
+                languages.serbianLanguage(), languages.englishLanguage(),
+                languages.englishTag(), languages.germanTag(),
                 researchAreaLeaf, authorities.researcher(), authorities.commission(),
                 authorities.viceDeanForScience(), authorities.institutionalEditor(),
                 authorities.institutionalLibrarian(), authorities.headOfLibrary(),

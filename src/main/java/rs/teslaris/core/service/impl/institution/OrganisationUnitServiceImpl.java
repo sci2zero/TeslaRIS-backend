@@ -750,7 +750,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         IdentifierUtil.validateAndSetIdentifier(
             organisationUnitDTO.getTaxNumber(),
             organisationUnit.getId(),
-            "^[0-9]+$",
+            "^[A-Z]{0,2}[0-9]+$",
             organisationUnitRepository::existsByTaxNumber,
             organisationUnit::setTaxNumber,
             "taxNumberFormatError",

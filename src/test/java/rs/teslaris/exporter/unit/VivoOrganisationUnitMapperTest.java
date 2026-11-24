@@ -12,6 +12,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import rs.teslaris.core.model.institution.OrganisationUnitSector;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoOrganisationUnitMapper;
@@ -178,6 +181,56 @@ public class VivoOrganisationUnitMapperTest {
         // Then
         assertEquals(first, second);
         assertEquals(first.stream().sorted().toList(), first);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "ACADEMIC,0,University",
+        "ACADEMIC,1,College",
+        "ACADEMIC,2,AcademicDepartment",
+        "COMPANY,0,Company",
+        "HEALTH,1,Hospital",
+        "INSTITUTION,0,Institute",
+        "GOVERNMENT,0,GovernmentAgency"
+    })
+    public void shouldAddSectorSubclass(OrganisationUnitSector sector, int depth,
+                                        String expectedClass) {
+        // Given
+        var organisationUnit = organisationUnit(5);
+        organisationUnit.setSector(sector);
+        var current = organisationUnit;
+        for (int i = 0; i < depth; i++) {
+            var parent = organisationUnit(10 + i);
+            current.setSuperOU(parent);
+            current = parent;
+        }
+
+        // When
+        var model = mapper.toRdf(organisationUnit, target());
+
+        // Then
+        var subject = model.createResource(NS + "teslaris-ou-5");
+        assertEquals(2, model.listObjectsOfProperty(subject, RDF.type).toList().size());
+        assertTrue(model.contains(subject, RDF.type,
+            model.createResource("http://xmlns.com/foaf/0.1/Organization")));
+        assertTrue(model.contains(subject, RDF.type,
+            model.createResource("http://vivoweb.org/ontology/core#" + expectedClass)));
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {"OTHER", "NULL"}, nullValues = "NULL")
+    public void shouldAddNoSubclassForOtherOrMissingSector(OrganisationUnitSector sector) {
+        // Given
+        var organisationUnit = organisationUnit(5);
+        organisationUnit.setSector(sector);
+
+        // When
+        var model = mapper.toRdf(organisationUnit, target());
+
+        // Then
+        var subject = model.createResource(NS + "teslaris-ou-5");
+        assertEquals(List.of(model.createResource("http://xmlns.com/foaf/0.1/Organization")),
+            model.listObjectsOfProperty(subject, RDF.type).toList());
     }
 
     @Test

@@ -104,6 +104,8 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
 import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
+import rs.teslaris.core.model.person.LanguageLevel;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.MembershipType;
 import rs.teslaris.core.model.person.Person;
@@ -255,7 +257,8 @@ public class TestingDataInitializer {
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
-                                                 LanguageTag englishTag, LanguageTag germanTag,
+                                                 Language englishLanguage, LanguageTag englishTag,
+                                                 LanguageTag germanTag,
                                                  ResearchArea researchArea3,
                                                  Authority researcherAuthority,
                                                  Authority commissionAuthority,
@@ -540,6 +543,35 @@ public class TestingDataInitializer {
             Set.of(new MultiLingualContent(englishTag,
                 "VIVO\nVitro\nTeslaRIS", 1)),
             new HashSet<>(), false, person1));
+        var serbianKnowledge = new LanguageKnowledge();
+        serbianKnowledge.setPerson(person1);
+        serbianKnowledge.setName(
+            new HashSet<>(List.of(new MultiLingualContent(englishTag, "Serbian", 1))));
+        serbianKnowledge.setLanguage(serbianLanguage);
+        serbianKnowledge.setMotherTongue(true);
+        serbianKnowledge.setReading(LanguageLevel.C2);
+        serbianKnowledge.setWriting(LanguageLevel.C2);
+        serbianKnowledge.setSpeaking(LanguageLevel.C2);
+        serbianKnowledge.setListening(LanguageLevel.C2);
+        serbianKnowledge.setAcademicReview(LanguageLevel.C2);
+        serbianKnowledge.setAcademicWriting(LanguageLevel.C2);
+        serbianKnowledge.setOverall(LanguageLevel.C2);
+        person1.getExpertisesAndSkills().add(serbianKnowledge);
+
+        var englishKnowledge = new LanguageKnowledge();
+        englishKnowledge.setPerson(person1);
+        englishKnowledge.setName(
+            new HashSet<>(List.of(new MultiLingualContent(englishTag, "English", 1))));
+        englishKnowledge.setLanguage(englishLanguage);
+        englishKnowledge.setMotherTongue(false);
+        englishKnowledge.setReading(LanguageLevel.C1);
+        englishKnowledge.setWriting(LanguageLevel.B2);
+        englishKnowledge.setSpeaking(LanguageLevel.B2);
+        englishKnowledge.setListening(LanguageLevel.C1);
+        englishKnowledge.setAcademicWriting(LanguageLevel.B1);
+        englishKnowledge.setOverall(LanguageLevel.B2);
+        person1.getExpertisesAndSkills().add(englishKnowledge);
+
         person1.getPrizes().add(new Prize(
             Set.of(
                 new MultiLingualContent(englishTag, "Serbian Cybersecurity Challenge - 1st place",

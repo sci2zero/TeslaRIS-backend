@@ -144,6 +144,30 @@ public class EventServiceTest {
         // then
         verify(personContributionService, times(1))
             .setPersonEventContributionForEvent(conference, EventType.CONFERENCE, conferenceDTO);
+        verify(eventRepository, never()).markPresentationsChanged(any());
+    }
+
+    @Test
+    public void shouldMarkPresentationsChangedWhenContributionsOfSavedEventChange() {
+        // given
+        var conference = new Conference();
+        conference.setId(7);
+        var conferenceDTO = new ConferenceDTO();
+        conferenceDTO.setName(new ArrayList<>());
+        conferenceDTO.setNameAbbreviation(new ArrayList<>());
+        conferenceDTO.setPlace(new ArrayList<>());
+        conferenceDTO.setCountryId(1);
+        conferenceDTO.setDateFrom(LocalDate.now());
+        conferenceDTO.setDateTo(LocalDate.now());
+        conferenceDTO.setContributions(new ArrayList<>());
+
+        // when
+        when(countryService.findOne(1)).thenReturn(new Country());
+        eventService.setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO,
+            new HashSet<>());
+
+        // then
+        verify(eventRepository).markPresentationsChanged(7);
     }
 
     @Test

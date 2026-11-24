@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import rs.teslaris.core.model.institution.OrganisationUnitSector;
 
 @Getter
 @Setter
@@ -42,4 +43,7 @@ public class ExportOrganisationUnit extends BaseExportEntity {
 
     @Field("is_legal_entity")
     private Boolean isLegalEntity;
+
+    @Field("sector")
+    private OrganisationUnitSector sector;
 }

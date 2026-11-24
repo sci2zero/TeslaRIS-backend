@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -27,7 +28,12 @@ import rs.teslaris.core.model.document.DocumentFile;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "prizes")
+@Table(
+    name = "prizes",
+    indexes = {
+        @Index(name = "idx_prize_person_id", columnList = "person_id")
+    }
+)
 @SQLRestriction("deleted=false")
 public class Prize extends BaseEntity {
 

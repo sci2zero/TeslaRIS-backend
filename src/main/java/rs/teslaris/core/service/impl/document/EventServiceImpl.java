@@ -157,6 +157,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
             applicationEventPublisher.publishEvent(
                 new PersonContributionsChangeEvent(oldContributorIds));
+
+            // The common export of a presentation says whether one of its authors is an
+            // invited speaker of its event, so the daily export has to take them again.
+            if (Objects.nonNull(event.getId())) {
+                eventRepository.markPresentationsChanged(event.getId());
+            }
         }
 
         if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {
