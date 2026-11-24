@@ -10,11 +10,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
@@ -55,6 +57,11 @@ public class EmploymentEntityCreatorTest {
 
     @InjectMocks
     private EmploymentEntityCreator creator;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(creator, "employmentPositionScheme", "ptcris");
+    }
 
 
     @Test
