@@ -60,6 +60,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.PolicyValidationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PrizeAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
@@ -103,6 +104,15 @@ public class ErrorHandlerConfiguration {
             .forEach(e -> errors.put(e.getObjectName(), e.getDefaultMessage()));
 
         return buildErrorObject(request, ex.getLocalizedMessage(), HttpStatus.BAD_REQUEST, errors);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(PolicyValidationException.class)
+    @ResponseBody
+    ErrorObject handlePolicyValidationException(HttpServletRequest request,
+                                                PolicyValidationException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST,
+            ex.getViolations());
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

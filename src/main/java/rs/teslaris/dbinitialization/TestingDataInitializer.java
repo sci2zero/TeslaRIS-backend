@@ -318,6 +318,10 @@ public class TestingDataInitializer {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
         dummyOU.setApproveStatus(ApproveStatus.APPROVED);
+        // A description is a blocking PTCRIS rule; without it the OU is hidden from anonymous reads.
+        dummyOU.setDescription(new HashSet<>(List.of(
+            new MultiLingualContent(englishTag, "Faculty of Technical Sciences in Novi Sad.", 1),
+            new MultiLingualContent(serbianTag, "Fakultet tehničkih nauka u Novom Sadu.", 2))));
         dummyOU.setScopusAfid("60068801");
         dummyOU.setRor("00xa57a59");
         dummyOU.setOpenAlexId("I4401727005");
@@ -348,6 +352,10 @@ public class TestingDataInitializer {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
+        dummyOU2.setDescription(new HashSet<>(List.of(
+            new MultiLingualContent(englishTag, "Faculty of Sciences in Novi Sad.", 1),
+            new MultiLingualContent(serbianTag, "Prirodno-matematički fakultet u Novom Sadu.",
+                2))));
         dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667", null, null));
         dummyOU2.setScopusAfid("60068802");
@@ -475,6 +483,8 @@ public class TestingDataInitializer {
         sci2zero.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(serbianTag, "Science 2.0 Alliance", 1)})));
         sci2zero.setApproveStatus(ApproveStatus.APPROVED);
+        sci2zero.setDescription(new HashSet<>(List.of(
+            new MultiLingualContent(serbianTag, "Savez za nauku 2.0.", 1))));
         sci2zero.setContact(new Contact("info@sci2zero.com", "021555666", "12345", null));
         organisationUnitRepository.save(sci2zero);
 
