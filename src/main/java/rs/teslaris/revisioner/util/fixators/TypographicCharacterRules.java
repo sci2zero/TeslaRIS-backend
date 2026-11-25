@@ -47,8 +47,8 @@ public final class TypographicCharacterRules {
     }
 
     /**
-     * The text with every known typographic character replaced and its horizontal whitespace
-     * collapsed, or the text untouched when normalising would leave nothing behind.
+     * The text with every known typographic character replaced, its horizontal whitespace
+     * collapsed and an enclosing symbol pair removed, or the text untouched when normalising would leave nothing behind.
      */
     public static String normalise(String text) {
         if (Objects.isNull(text) || text.isBlank()) {
@@ -64,7 +64,8 @@ public final class TypographicCharacterRules {
             replaced.append(Objects.nonNull(replacement) ? replacement : character);
         }
 
-        var normalised = HORIZONTAL_WHITESPACE.matcher(replaced).replaceAll(" ").strip();
+        var normalised = stripEnclosingSymbol(
+            HORIZONTAL_WHITESPACE.matcher(replaced).replaceAll(" ").strip());
         return normalised.isBlank() ? text : normalised;
     }
 
@@ -75,6 +76,27 @@ public final class TypographicCharacterRules {
 
         multilingualContent.stream().filter(Objects::nonNull)
             .forEach(content -> content.setContent(normalise(content.getContent())));
+    }
+
+    /**
+     * Removes the symbol the text starts and ends with, when it appears nowhere in between.
+     */
+    private static String stripEnclosingSymbol(String text) {
+        var length = text.length();
+
+        if (length < 2) {
+            return text;
+        }
+
+        var symbol = text.charAt(0);
+
+        if (symbol != text.charAt(length - 1) || Character.isLetterOrDigit(symbol) ||
+            Character.isWhitespace(symbol) || text.indexOf(symbol, 1) != length - 1) {
+            return text;
+        }
+
+        var stripped = text.substring(1, length - 1).strip();
+        return stripped.isEmpty() ? text : stripped;
     }
 
     /**

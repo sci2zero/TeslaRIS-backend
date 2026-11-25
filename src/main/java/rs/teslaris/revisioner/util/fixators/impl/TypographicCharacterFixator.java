@@ -15,7 +15,8 @@ import rs.teslaris.core.revision.DataQualityFixator;
 import rs.teslaris.revisioner.util.fixators.TypographicCharacterRules;
 
 /**
- * Replaces the typographic characters harvested metadata arrives with by their plain equivalents.
+ * Replaces the typographic characters harvested metadata arrives with by their plain equivalents
+ * and removes a symbol pair enclosing the whole text.
  */
 @Component
 public class TypographicCharacterFixator implements DataQualityFixator {
@@ -27,7 +28,7 @@ public class TypographicCharacterFixator implements DataQualityFixator {
 
     @Override
     public String name() {
-        return "Typographic character replacement";
+        return "Typographic character replacement and enclosing symbol removal";
     }
 
     @Override
