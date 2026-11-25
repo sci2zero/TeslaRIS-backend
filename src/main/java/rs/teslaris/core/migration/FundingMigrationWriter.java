@@ -1,6 +1,7 @@
 package rs.teslaris.core.migration;
 
 import jakarta.annotation.Nullable;
+import java.util.Map;
 import rs.teslaris.core.dto.funding.FundingDTO;
 
 /**
@@ -16,8 +17,12 @@ public interface FundingMigrationWriter {
      * @param funding           the funding to write
      * @param existingFundingId id a previous run produced for the same source record, or
      *                          {@code null} when this record has not been migrated yet
+     * @param otherIdentifiers  value per identifier code, attached on the same terms as
+     *                          {@link ProjectMigrationWriter#migrate}; skipped codes are reported
+     *                          in {@link MigratedFunding#droppedIdentifiers}
      */
-    MigratedFunding migrate(FundingDTO funding, @Nullable Integer existingFundingId);
+    MigratedFunding migrate(FundingDTO funding, @Nullable Integer existingFundingId,
+                            Map<String, String> otherIdentifiers);
 
     /**
      * The written funding as it stands now, which a sync run merges the changed source record into.
@@ -25,9 +30,11 @@ public interface FundingMigrationWriter {
     FundingDTO read(Integer fundingId);
 
     /**
-     * @param id      the written funding
-     * @param created false when an existing funding was updated instead
+     * @param id                 the written funding
+     * @param created            false when an existing funding was updated instead
+     * @param droppedIdentifiers reason per identifier code that was not attached, for the caller
+     *                           to report
      */
-    record MigratedFunding(Integer id, boolean created) {
+    record MigratedFunding(Integer id, boolean created, Map<String, String> droppedIdentifiers) {
     }
 }

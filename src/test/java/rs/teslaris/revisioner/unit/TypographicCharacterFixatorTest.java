@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
@@ -174,6 +176,40 @@ public class TypographicCharacterFixatorTest {
         assertEquals("Bolsa \"Horizonte\"", funding.getName().getFirst().getContent());
         assertEquals("Comissão Europeia",
             funding.getDisplayFunder().getFirst().getContent());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '`', value = {
+        "\"Neki naslov\"|Neki naslov",
+        "“Neki naslov”|Neki naslov",
+        "«Neki naslov»|Neki naslov",
+        "?Neki naslov?|Neki naslov",
+        "'Neki naslov'|Neki naslov",
+        "\" Naslov \"|Naslov",
+        "\"Početak\"nastavak|\"Početak\"nastavak",
+        "\"Početak\" sadržaj \"kraj\"|\"Početak\" sadržaj \"kraj\"",
+        "'O'Neill'|'O'Neill'",
+        "\"\"|\"\"",
+        "\"|\"",
+        "(Neki naslov)|(Neki naslov)"
+    })
+    public void shouldStripSymbolPairEnclosingWholeTitle(String title, String expected) {
+        var document = new JournalPublicationDTO();
+        document.setTitle(List.of(content(title)));
+
+        typographicCharacterFixator.applyFix(document);
+
+        assertEquals(expected, document.getTitle().getFirst().getContent());
+    }
+
+    @Test
+    public void shouldStripEnclosingSymbolPairInOtherTextFields() {
+        var project = new ProjectDTO();
+        project.setDescription(List.of(content("*Opis projekta*")));
+
+        typographicCharacterFixator.applyFix(project);
+
+        assertEquals("Opis projekta", project.getDescription().getFirst().getContent());
     }
 
     @Test

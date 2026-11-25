@@ -9,8 +9,13 @@ import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.migrator.converter.hydrator.HydratorContributionLinker;
+import rs.teslaris.migrator.converter.hydrator.HydratorSource;
 import rs.teslaris.migrator.pipeline.FailureHandler;
 import rs.teslaris.migrator.pipeline.FailureResolution;
+import rs.teslaris.migrator.pipeline.MigrationItem;
+import rs.teslaris.migrator.util.MigrationLog;
+import rs.teslaris.migrator.util.ResolvedToExistingException;
 
 /**
  * Port of {@code OAIPMHLoaderImpl.saveWithDuplicateCheck}.
@@ -27,10 +32,19 @@ public class DocumentDuplicateFailureHandler {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final HydratorContributionLinker contributionLinker;
+
+    private final MigrationLog migrationLog;
+
 
     public <D extends DocumentDTO> FailureHandler<D> forType(Class<D> dtoClass) {
         return (item, exception, attempt) -> {
             var dto = item.dto();
+
+            // The router matched the work by title and authors and already linked the owner
+            if (exception instanceof ResolvedToExistingException resolved) {
+                return FailureResolution.resolved(resolved.getEntityId());
+            }
 
             if (attempt > 1) {
                 // Identifiers were already stripped and it still failed.
@@ -48,6 +62,7 @@ public class DocumentDuplicateFailureHandler {
 
             if (isSameWork(dto, duplicate)) {
                 enrichIdentifiers(dto, duplicate);
+                linkPeople(item, duplicate.getId());
                 return FailureResolution.resolved(duplicate.getId());
             }
 
@@ -61,6 +76,29 @@ public class DocumentDuplicateFailureHandler {
 
             return FailureResolution.retry();
         };
+    }
+
+    /**
+     * The people this curriculum links on the work join the existing document. A duplicate of
+     * another type (a chapter matching a conference paper) cannot be read as this item's type, so
+     * it keeps its contributions.
+     */
+    private <D extends DocumentDTO> void linkPeople(MigrationItem<D> item, Integer documentId) {
+        if (!item.hasReader() || !item.canUpdate()) {
+            return;
+        }
+
+        String reason;
+
+        try {
+            reason = contributionLinker.link(documentId, item.dto(), item::readExisting,
+                (id, merged) -> item.update(id, merged, null));
+        } catch (Exception e) {
+            reason = "people not linked: " + e.getMessage();
+        }
+
+        migrationLog.peopleLinked(HydratorSource.NAME, item.type().name(), item.sourceKey(),
+            documentId, reason);
     }
 
     private boolean isSameWork(DocumentDTO dto, Document duplicate) {

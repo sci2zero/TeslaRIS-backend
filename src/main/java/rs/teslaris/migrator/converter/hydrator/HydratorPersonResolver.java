@@ -182,6 +182,24 @@ public class HydratorPersonResolver implements RunScopedCache {
         return personService.findPersonByIdentifier(identifier).map(Person::getId);
     }
 
+    // The owner's name as the person pass imports it: names and surnames, else the full name
+    public PersonNameDTO ownerName(HydratorCVModel.Curriculum record) {
+        var info = identifyingInfo(record);
+        var personInfo = Objects.isNull(info) ? null : info.personInfo();
+
+        if (Objects.isNull(personInfo)) {
+            return conversionUtil.splitName(record.fullName(), null);
+        }
+
+        if (!isBlank(personInfo.names()) && !isBlank(personInfo.surnames())) {
+            return conversionUtil.personName(personInfo.names().trim(),
+                personInfo.surnames().trim(), null);
+        }
+
+        return conversionUtil.splitName(
+            isBlank(personInfo.fullName()) ? record.fullName() : personInfo.fullName(), null);
+    }
+
     private HydratorCVModel.IdentifyingInfo identifyingInfo(HydratorCVModel.Curriculum record) {
         return Objects.isNull(record.curriculum()) ? null :
             record.curriculum().identifyingInfo();

@@ -19,6 +19,7 @@ import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.OtherEventDTO;
+import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.OtherEventType;
@@ -35,9 +36,9 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * The proceedings of a conference paper, its conference and the event it was presented at are
- * only named in the curriculum, so all are created on demand as stubs (CW-001-MAP-000073…083,
- * 000087, 000090).
+ * The proceedings of a conference paper or abstract, its conference (also a poster's) and the event
+ * a paper was presented at are only named in the curriculum, so all are created on demand as stubs
+ * (CW-001-MAP-000073…083, 000087, 000090, 000372…376, 000380, 000388/389).
  * <p>
  * Proceedings are matched by their ISBN (CW-001-MAP-000085), otherwise by conference and title;
  * conferences by name and year. Missing names fall back to "Not informed" per crosswalk.
@@ -55,6 +56,8 @@ public class HydratorProceedingsResolver implements RunScopedCache {
     private final ConferenceService conferenceService;
 
     private final ProceedingsService proceedingsService;
+
+    private final HydratorPublisherResolver publisherResolver;
 
     private final OtherEventService otherEventService;
 
@@ -75,9 +78,9 @@ public class HydratorProceedingsResolver implements RunScopedCache {
 
     public Container resolveOrCreate(HydratorCVModel.Curriculum record,
                                      HydratorCVModel.Output output, boolean performIndex) {
-        var paper = output.conferencePaper();
+        var source = source(output);
         var language = converters.languageOf(record);
-        var isbn = isbn(record, output, paper);
+        var isbn = isbn(record, output, source);
 
         if (Objects.nonNull(isbn)) {
             return containers.computeIfAbsent("isbn:" + isbn,
@@ -90,10 +93,16 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         var conferenceId = resolveConference(record, output, language, performIndex);
 
         return containers.computeIfAbsent(
-            "conference:" + conferenceId + "|" + conversionUtil.normalise(title(paper)),
+            "conference:" + conferenceId + "|" + conversionUtil.normalise(title(source)),
             key -> storedStub(MigrationEntityType.PROCEEDINGS, key)
                 .map(this::container)
                 .orElseGet(() -> create(key, record, output, language, null, performIndex)));
+    }
+
+    // A poster is held at its conference directly, the same stub its papers and abstracts use
+    public Integer resolveConference(HydratorCVModel.Curriculum record,
+                                     HydratorCVModel.Output output, boolean performIndex) {
+        return resolveConference(record, output, converters.languageOf(record), performIndex);
     }
 
     @Override
@@ -105,27 +114,32 @@ public class HydratorProceedingsResolver implements RunScopedCache {
     private Container create(String key, HydratorCVModel.Curriculum record,
                              HydratorCVModel.Output output, String language, String isbn,
                              boolean performIndex) {
-        var paper = output.conferencePaper();
+        var source = source(output);
         var dto = new ProceedingsDTO();
-        dto.setTitle(conversionUtil.multilingualContent(title(paper), language));
+        dto.setTitle(conversionUtil.multilingualContent(title(source), language));
         dto.setSubTitle(List.of());
         dto.setDescription(List.of());
         dto.setKeywords(List.of());
         dto.setUris(new HashSet<>());
-        dto.setDocumentDate(conversionUtil.flexibleDate(paper.conferenceDate()));
-        dto.setContributions(converters.editorContributions(record, paper.proceedingsEditors()));
+        dto.setDocumentDate(conversionUtil.flexibleDate(source.proceedingsDate()));
+        dto.setContributions(converters.editorContributions(record, source.editors()));
         dto.setEventId(resolveConference(record, output, language, performIndex));
         dto.setPrintISBN(isbn);
+        dto.setPublicationSeriesVolume(source.volume());
+        dto.setPublicationSeriesIssue(source.issue());
 
         var languageId = conversionUtil.localeLanguageId(language);
         dto.setLanguageIds(Objects.isNull(languageId) ? new ArrayList<>() :
             new ArrayList<>(List.of(languageId)));
 
-        converters.applyLocation(dto, language, paper.publicationLocation());
+        converters.applyLocation(dto, language, source.publicationLocation());
+        // CW-001-MAP-000083: the publisher is a stub too, as for books
+        dto.setPublisherId(publisherResolver.resolveOrCreate(source.publisher(), language,
+            source.publicationLocation()));
 
         var created = proceedingsService.createProceedings(dto, performIndex);
         migrationLog.stubCreated(HydratorSource.NAME, "PROCEEDINGS", key, created.getId(),
-            title(paper));
+            title(source));
         storeStub(MigrationEntityType.PROCEEDINGS, key, created.getId());
 
         return new Container(created.getId(), dto.getEventId());
@@ -156,19 +170,22 @@ public class HydratorProceedingsResolver implements RunScopedCache {
     private Integer resolveConference(HydratorCVModel.Curriculum record,
                                       HydratorCVModel.Output output, String language,
                                       boolean performIndex) {
-        var paper = output.conferencePaper();
-        var isNamed = !isBlank(paper.conferenceName());
-        var name = isNamed ? paper.conferenceName().trim() : NOT_INFORMED;
-        var date = conversionUtil.flexibleDate(paper.conferenceDate());
-        var key = isNamed ? "name:" + conversionUtil.normalise(name) + "|" +
-            (Objects.isNull(date) ? "" : date.year()) :
+        var source = source(output);
+        var isNamed = !isBlank(source.conferenceName());
+        var name = isNamed ? source.conferenceName().trim() : NOT_INFORMED;
+        var date = conversionUtil.flexibleDate(source.conferenceDate());
+        var year = Objects.isNull(date) ? "" : String.valueOf(date.year());
+        var key = isNamed ? "name:" + conferenceKey(name, year) + "|" + year :
             "output:" + converters.outputKey(record, output);
+        // Stubs of runs before the looser key stay found under the key they were stored with
+        var legacyKey = isNamed ? "name:" + conversionUtil.normalise(name) + "|" + year : key;
 
         return conferenceIds.computeIfAbsent(key, k -> storedStub(MigrationEntityType.CONFERENCE, k)
+            .or(() -> storedStub(MigrationEntityType.CONFERENCE, legacyKey))
             .orElseGet(() -> {
                 var conference = Objects.isNull(date) ?
-                    createUndated(name, language) : createDated(name, date, language, paper,
-                    performIndex);
+                    createUndated(name, language) :
+                    createDated(name, date, language, source.conferenceLocation(), performIndex);
                 migrationLog.stubCreated(HydratorSource.NAME, "CONFERENCE", k,
                     conference.getId(), name);
                 storeStub(MigrationEntityType.CONFERENCE, k, conference.getId());
@@ -177,10 +194,23 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             }));
     }
 
+    /**
+     * One conference written several ways ("COMUNICON" and "Comunicon 2016", "FÓRUM" and "FORUM",
+     * "–" and "-", a closing ", 2016.") gets one key: accents, case, punctuation and its own year
+     * in the name are left out.
+     */
+    private String conferenceKey(String name, String year) {
+        var withoutYear = year.isEmpty() ? name : name.replaceAll("\\b" + year + "\\b", " ");
+        var key = conversionUtil.titleKey(withoutYear);
+
+        return key.isEmpty() ? conversionUtil.titleKey(name) : key;
+    }
+
     private Conference createDated(String name, FlexibleDateDTO date, String language,
-                                   HydratorCVModel.ConferencePaper paper, boolean performIndex) {
+                                   HydratorCVModel.PublicationLocation location,
+                                   boolean performIndex) {
         var dto = new ConferenceDTO();
-        applyEventFields(dto, name, date, language, paper.conferenceLocation());
+        applyEventFields(dto, name, date, language, location);
 
         return conferenceService.createConference(dto, performIndex);
     }
@@ -212,6 +242,57 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             paper.paperTitle().trim());
 
         return created.getId();
+    }
+
+    /**
+     * The event of a curriculum service (CW-001-MAP-000948…956, 000845…847), one per service.
+     *
+     * @return the event's id, or {@code null} when it has no name or no date to hold it on
+     */
+    public Integer createServiceEvent(String key, OtherEventType type, String name,
+                                      HydratorCVModel.DateInfo from, HydratorCVModel.DateInfo to,
+                                      String language,
+                                      HydratorCVModel.PublicationLocation location,
+                                      String organizer,
+                                      List<PersonEventContributionDTO> contributions,
+                                      boolean performIndex) {
+        var date = conversionUtil.flexibleDate(from);
+
+        if (isBlank(name) || Objects.isNull(date)) {
+            return null;
+        }
+
+        var dto = new OtherEventDTO();
+        dto.setType(type);
+        applyEventFields(dto, name.trim(), date, language, location);
+        dto.setDisplayOrganizer(conversionUtil.multilingualContent(organizer, language));
+        dto.setContributions(new ArrayList<>(contributions));
+
+        var end = conversionUtil.flexibleDate(to);
+        if (Objects.nonNull(end)) {
+            var dateTo = lastDay(end);
+            if (!dateTo.isBefore(dto.getDateFrom())) {
+                dto.setDateTo(dateTo);
+            }
+        }
+
+        var created = otherEventService.createOtherEvent(dto, performIndex);
+        migrationLog.stubCreated(HydratorSource.NAME, Objects.toString(type, "OTHER_EVENT"), key,
+            created.getId(), name.trim());
+
+        return created.getId();
+    }
+
+    private LocalDate lastDay(FlexibleDateDTO date) {
+        if (Objects.isNull(date.month())) {
+            return LocalDate.of(date.year(), 12, 31);
+        }
+
+        if (Objects.isNull(date.day())) {
+            return YearMonth.of(date.year(), date.month()).atEndOfMonth();
+        }
+
+        return LocalDate.of(date.year(), date.month(), date.day());
     }
 
     // A non-serial event needs both dates; the source has one, so it spans what it leaves open
@@ -262,19 +343,18 @@ public class HydratorProceedingsResolver implements RunScopedCache {
     }
 
     private String isbn(HydratorCVModel.Curriculum record, HydratorCVModel.Output output,
-                        HydratorCVModel.ConferencePaper paper) {
-        var value = converters.proceedingsIsbn(paper.identifiers());
+                        Source source) {
+        var value = converters.proceedingsIsbn(source.identifiers());
 
         if (isBlank(value)) {
             return null;
         }
 
-        var isbn = value.trim().toUpperCase(Locale.ROOT);
+        var isbn = value.trim().toUpperCase(Locale.ROOT).replaceAll("[\\s-]", "");
 
         if (!ISBN.matcher(isbn).matches()) {
-            migrationLog.valueDropped(HydratorSource.NAME,
-                MigrationEntityType.PROCEEDINGS_PUBLICATION.name(),
-                converters.outputKey(record, output), HydratorMappingRule.cv(85),
+            migrationLog.valueDropped(HydratorSource.NAME, source.entityType().name(),
+                converters.outputKey(record, output), HydratorMappingRule.cv(source.isbnRule()),
                 "invalid isbn format: '" + isbn + "'");
             return null;
         }
@@ -282,12 +362,53 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         return isbn;
     }
 
-    private String title(HydratorCVModel.ConferencePaper paper) {
-        return isBlank(paper.proceedingsTitle()) ? NOT_INFORMED : paper.proceedingsTitle().trim();
+    private String title(Source source) {
+        return isBlank(source.proceedingsTitle()) ? NOT_INFORMED :
+            source.proceedingsTitle().trim();
+    }
+
+    // CW-001-MAP-000077…085, 000372…376, 000380, 000388/389
+    private Source source(HydratorCVModel.Output output) {
+        var paper = output.conferencePaper();
+
+        if (Objects.nonNull(paper)) {
+            return new Source(paper.conferenceName(), paper.conferenceDate(),
+                paper.conferenceLocation(), paper.proceedingsTitle(), paper.conferenceDate(),
+                paper.identifiers(), paper.proceedingsEditors(), paper.publicationLocation(), null,
+                null, paper.proceedingsPublisher(), MigrationEntityType.PROCEEDINGS_PUBLICATION,
+                85);
+        }
+
+        var poster = output.conferencePoster();
+
+        // CW-001-MAP-000388/389: a poster has a conference only, no location and no proceedings
+        if (Objects.nonNull(poster)) {
+            return new Source(poster.conferenceName(), poster.conferenceDate(), null, null, null,
+                poster.identifiers(), null, null, null, null, null,
+                MigrationEntityType.CONFERENCE_POSTER, 391);
+        }
+
+        var conferenceAbstract = output.conferenceAbstract();
+
+        return new Source(conferenceAbstract.conferenceName(),
+            conferenceAbstract.publicationDate(), conferenceAbstract.conferenceLocation(), null,
+            conferenceAbstract.publicationDate(), conferenceAbstract.identifiers(), null, null,
+            conferenceAbstract.volume(), conferenceAbstract.issue(), null,
+            MigrationEntityType.CONFERENCE_ABSTRACT, 382);
     }
 
     private boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    private record Source(String conferenceName, HydratorCVModel.DateInfo conferenceDate,
+                          HydratorCVModel.PublicationLocation conferenceLocation,
+                          String proceedingsTitle, HydratorCVModel.DateInfo proceedingsDate,
+                          HydratorCVModel.OutputIdentifiers identifiers,
+                          HydratorCVModel.OutputAuthors editors,
+                          HydratorCVModel.PublicationLocation publicationLocation, String volume,
+                          String issue, String publisher, MigrationEntityType entityType,
+                          int isbnRule) {
     }
 
     // Core takes the paper's event from the DTO, not from its proceedings

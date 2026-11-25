@@ -613,6 +613,9 @@ package institution {
     INSTITUTION
     GOVERNMENT
     OTHER
+    RESEARCH_INSTITUTE
+    SME
+    PRIVATE_NON_PROFIT
   }
 
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
@@ -1561,6 +1564,13 @@ package project {
     SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
     SCIENTIFIC_EXPEDITION
     OTHER
+    CO_SUPERVISOR
+    SCIENCE_AND_TECHNOLOGY_MOBILITY_FELLOW
+    INSTITUTION_ENTERPRISE_MOBILITY_FELLOW
+    INTERNATIONAL_INTERNSHIP_FELLOW
+    SABBATICAL_LEAVE_FELLOW
+    RESIDENT_PHD_STUDENT_SUBSIDY
+    TECHNOLOGICAL_CONSULTANCY_FELLOW
   }
     
   ProjectsRelation "*" --> "0..1" Project : sourceProject
@@ -1613,8 +1623,10 @@ package project {
     SUBMITTED
     UNDER_EVALUATION
     ONGOING
-    CANCELLED 
-    CONCLUDED 
+    CANCELLED
+    CONCLUDED
+    CLOSED
+    INACTIVE
   }
   
   class FundingApplication {
@@ -1671,7 +1683,8 @@ package project {
     Boolean OAMandated
     String OAMandateUrl
     Boolean internalInvestment
-    Set<DocumentFile> documents 
+    FundingLocationType fundingLocationType
+    Set<DocumentFile> documents
   }
   
   Funding "*" -- "0..1" FundingCall : funding / call
@@ -1706,9 +1719,25 @@ package project {
   FundingCall "*" --> "0..1" institution.OrganisationUnit : funder
   
   enum FundingType {
-    GRANT 
-    CALL 
+    GRANT
+    CALL
+    FUNDING_PROGRAM
+    CONTRACT
+    GIFT
+    TENDER
+    INTERNAL_FUNDING
+    AWARD
+    PROJECT
+    EMPLOYMENT
+    INSTITUTIONAL_FUNDING
+    RESOURCE_ALLOCATION
     OTHER
+  }
+
+  enum FundingLocationType {
+    NATIONAL
+    ABROAD
+    MIXED
   }
 
   enum FundingCallContributionType {
