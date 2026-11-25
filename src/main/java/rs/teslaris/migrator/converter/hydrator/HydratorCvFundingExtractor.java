@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.funding.FundingDTO;
 import rs.teslaris.core.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.core.dto.project.ProjectDTO;
@@ -28,7 +29,7 @@ import rs.teslaris.migrator.util.MigrationLog;
 
 /**
  * Fundings of one curriculum (CW-001-MAP-000001…000017), each with the project it belongs to and
- * the owner's part in it. The source has no funding name, so the funding stays unnamed.
+ * the owner's part in it. The source has no funding name, so the funding takes its project's.
  */
 @Component
 @RequiredArgsConstructor
@@ -109,6 +110,9 @@ public class HydratorCvFundingExtractor
             var project = project(key, funding, reference, references, language);
             var owner = owner(key, funding);
             var fundingDTO = funding(key, funding, references, language);
+            fundingDTO.setName(new ArrayList<>(project.getName().stream()
+                .map(MultilingualContentDTO::new)
+                .toList()));
             try {
                 project.setDateFrom(conversionUtil.localDate(funding.startDate()));
                 project.setDateTo(conversionUtil.localDate(funding.endDate()));
