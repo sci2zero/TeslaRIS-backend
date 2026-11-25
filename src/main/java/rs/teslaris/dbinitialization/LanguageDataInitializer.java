@@ -104,7 +104,7 @@ public class LanguageDataInitializer {
                 slovenianLanguage, hungarianLanguage, portugueseLanguage));
 
         return new SeededLanguages(englishTag, serbianTag, serbianCyrillicTag, germanTag,
-            serbianLanguage);
+            serbianLanguage, englishLanguage);
     }
 
     public record SeededLanguages(
@@ -112,7 +112,8 @@ public class LanguageDataInitializer {
         LanguageTag serbianTag,
         LanguageTag serbianCyrillicTag,
         LanguageTag germanTag,
-        Language serbianLanguage
+        Language serbianLanguage,
+        Language englishLanguage
     ) {
     }
 }

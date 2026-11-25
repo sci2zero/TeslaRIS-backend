@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
@@ -53,19 +54,22 @@ public class PersonalInfo {
             joinTable = @JoinTable(
                 name = "person_prof_street",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_prof_street_person_id", columnList = "person_id"))),
         @AssociationOverride(
             name = "city",
             joinTable = @JoinTable(
                 name = "person_prof_city",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_prof_city_person_id", columnList = "person_id"))),
         @AssociationOverride(
             name = "state",
             joinTable = @JoinTable(
                 name = "person_prof_state",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id")
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_prof_state_person_id", columnList = "person_id")
             )
         )
     })
@@ -84,19 +88,22 @@ public class PersonalInfo {
             joinTable = @JoinTable(
                 name = "person_priv_street",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_priv_street_person_id", columnList = "person_id"))),
         @AssociationOverride(
             name = "city",
             joinTable = @JoinTable(
                 name = "person_priv_city",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_priv_city_person_id", columnList = "person_id"))),
         @AssociationOverride(
             name = "state",
             joinTable = @JoinTable(
                 name = "person_priv_state",
                 joinColumns = @JoinColumn(name = "person_id"),
-                inverseJoinColumns = @JoinColumn(name = "mlc_id")))
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"),
+                indexes = @Index(name = "idx_person_priv_state_person_id", columnList = "person_id")))
     })
     private PostalAddress privatePostalAddress;
 
@@ -123,5 +130,10 @@ public class PersonalInfo {
     private Set<String> uris = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(
+        name = "persons_display_title",
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "display_title_id"),
+        indexes = @Index(name = "idx_persons_display_title_person_id", columnList = "person_id"))
     private Set<MultiLingualContent> displayTitle = new HashSet<>();
 }

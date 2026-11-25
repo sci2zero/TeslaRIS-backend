@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -55,6 +56,11 @@ public class Person extends BaseEntity implements Mergeable, Accounted, Publicat
     private PersonName name;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(
+        name = "persons_other_names",
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "other_names_id"),
+        indexes = @Index(name = "idx_persons_other_names_person_id", columnList = "person_id"))
     private Set<PersonName> otherNames = new HashSet<>();
 
     @Embedded
@@ -73,9 +79,19 @@ public class Person extends BaseEntity implements Mergeable, Accounted, Publicat
     private Set<Prize> prizes = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+        name = "persons_biography",
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "biography_id"),
+        indexes = @Index(name = "idx_persons_biography_person_id", columnList = "person_id"))
     private Set<MultiLingualContent> biography = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+        name = "persons_keyword",
+        joinColumns = @JoinColumn(name = "person_id"),
+        inverseJoinColumns = @JoinColumn(name = "keyword_id"),
+        indexes = @Index(name = "idx_persons_keyword_person_id", columnList = "person_id"))
     private Set<MultiLingualContent> keyword = new HashSet<>();
 
     @Embedded

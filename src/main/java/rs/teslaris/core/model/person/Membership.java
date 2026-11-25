@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -27,7 +28,12 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "memberships")
+@Table(
+    name = "memberships",
+    indexes = {
+        @Index(name = "idx_membership_person_id", columnList = "person_id")
+    }
+)
 @SQLRestriction("deleted=false")
 public class Membership extends Involvement {
 

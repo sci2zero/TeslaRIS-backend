@@ -164,7 +164,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private final AssessmentGroupResolver assessmentGroupResolver;
 
-    protected final ResearchAreaService researchAreaService;
+    private final ResearchAreaService researchAreaService;
 
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);

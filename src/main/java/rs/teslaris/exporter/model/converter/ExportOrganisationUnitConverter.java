@@ -59,6 +59,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
         commonExportOU.setRor(organisationUnit.getRor());
         commonExportOU.setOpenAlex(organisationUnit.getOpenAlexId());
+        commonExportOU.setSector(organisationUnit.getSector());
         commonExportOU.getOldIds().addAll(organisationUnit.getOldIds());
 
         if (Objects.nonNull(organisationUnit.getUris()) && !organisationUnit.getUris().isEmpty()) {

@@ -92,11 +92,11 @@ public class OrganisationUnit extends BaseEntity
 
     @EqualsAndHashCode.Include
     @Column(name = "fundref")
-    private String fundref; // https://bioregistry.io/registry/funderregistry
+    private String fundref;
 
     @EqualsAndHashCode.Include
     @Column(name = "isni")
-    private String isni; // https://bioregistry.io/registry/isni
+    private String isni;
 
     @EqualsAndHashCode.Include
     @Column(name = "fct_id")

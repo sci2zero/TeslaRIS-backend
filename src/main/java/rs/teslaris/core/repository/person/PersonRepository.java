@@ -13,7 +13,13 @@ import rs.teslaris.core.model.user.User;
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Integer> {
 
-    @Query("SELECT p FROM Person p WHERE p.id = :id AND p.approveStatus = 1")
+    @Query("SELECT p FROM Person p " +
+        "LEFT JOIN FETCH p.name " +
+        "LEFT JOIN FETCH p.otherNames " +
+        "LEFT JOIN FETCH p.biography " +
+        "LEFT JOIN FETCH p.keyword " +
+        "LEFT JOIN FETCH p.personalInfo.displayTitle " +
+        "WHERE p.id = :id AND p.approveStatus = 1")
     Optional<Person> findApprovedPersonById(Integer id);
 
     @Query("SELECT p FROM Person p LEFT JOIN FETCH p.otherNames " +
