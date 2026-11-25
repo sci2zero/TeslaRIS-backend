@@ -1761,7 +1761,7 @@ public class DataQualityCalculator {
             }
 
             boolean trial = eventType.equals(EventType.OTHER_EVENT) &&
-                otherEventType.equals(OtherEventType.TRIAL);
+                OtherEventType.TRIAL.equals(otherEventType);
 
             if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
                 reportIssue(assessment, "caseOnlyForTrial", "", activityType, activityName);

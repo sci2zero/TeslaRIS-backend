@@ -193,7 +193,9 @@ public class VivoOrganisationUnitMapperTest {
         "COMPANY,0,Company",
         "HEALTH,1,Hospital",
         "INSTITUTION,0,Institute",
-        "GOVERNMENT,0,GovernmentAgency"
+        "GOVERNMENT,0,GovernmentAgency",
+        "RESEARCH_INSTITUTE,0,ResearchOrganization",
+        "SME,0,Company"
     })
     public void shouldAddSectorSubclass(OrganisationUnitSector sector, int depth,
                                         String expectedClass) {
@@ -220,7 +222,7 @@ public class VivoOrganisationUnitMapperTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = {"OTHER", "NULL"}, nullValues = "NULL")
+    @CsvSource(value = {"OTHER", "PRIVATE_NON_PROFIT", "NULL"}, nullValues = "NULL")
     public void shouldAddNoSubclassForOtherOrMissingSector(OrganisationUnitSector sector) {
         // Given
         var organisationUnit = organisationUnit(5);

@@ -93,6 +93,24 @@ public class MigrationLog {
             source, entity, key, targetId, label);
     }
 
+    /**
+     * The source left a value out and the migration put in a default for it; the item proceeds.
+     */
+    public void valueDefaulted(String source, String entity, String key, String rule,
+                               String reason) {
+        log.info("source={} | entity={} | key={} | status=VALUE_DEFAULTED | rule={} | reason={}",
+            source, entity, key, rule, reason);
+    }
+
+    /**
+     * The people an item links on a work were brought onto the existing document holding it.
+     */
+    public void peopleLinked(String source, String entity, String key, Integer targetId,
+                             String reason) {
+        log.info("source={} | entity={} | key={} | status=PEOPLE_LINKED | targetId={} | reason={}",
+            source, entity, key, targetId, reason);
+    }
+
     public void itemFailed(MigrationRun run, MigrationItem<?> item, Exception exception) {
         log.warn("runId={} | source={} | entity={} | key={} | status=FAILED | reason={}",
             run.getId(), run.getSource(), item.type(), item.sourceKey(), exception.getMessage(),

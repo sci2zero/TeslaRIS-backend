@@ -30,7 +30,7 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
     /**
      * The VIVO subclass of foaf:Organization for the sector. An academic unit is a university at
      * the top level, a college (faculty) one level down and an academic department below that.
-     * OTHER and a missing sector add no subclass.
+     * OTHER, PRIVATE_NON_PROFIT and a missing sector add no subclass.
      */
     static Optional<String> sectorClass(ExportOrganisationUnit snapshot) {
         if (Objects.isNull(snapshot.getSector())) {
@@ -39,11 +39,12 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
 
         return switch (snapshot.getSector()) {
             case ACADEMIC -> Optional.of(VIVO + academicClass(snapshot));
-            case COMPANY -> Optional.of(VIVO + "Company");
+            case COMPANY, SME -> Optional.of(VIVO + "Company");
             case HEALTH -> Optional.of(VIVO + "Hospital");
             case INSTITUTION -> Optional.of(VIVO + "Institute");
+            case RESEARCH_INSTITUTE -> Optional.of(VIVO + "ResearchOrganization");
             case GOVERNMENT -> Optional.of(VIVO + "GovernmentAgency");
-            case OTHER -> Optional.empty();
+            case OTHER, PRIVATE_NON_PROFIT -> Optional.empty();
         };
     }
 

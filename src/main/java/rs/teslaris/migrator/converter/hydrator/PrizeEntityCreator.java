@@ -3,7 +3,6 @@ package rs.teslaris.migrator.converter.hydrator;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import rs.teslaris.core.converter.person.PrizeConverter;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -45,8 +44,7 @@ public class PrizeEntityCreator
     public void update(Integer targetId, PrizeMigrationDTO dto, MigrationRun run) {
         dto.throwIfRejected();
 
-        var merged = mergePolicy.merge(dto.prize(),
-            PrizeConverter.toDTO(prizeService.findOne(targetId)),
+        var merged = mergePolicy.merge(dto.prize(), prizeService.readPrize(targetId),
             new MergeContext(HydratorSource.NAME, MigrationEntityType.PERSON_PRIZE.name(),
                 dto.sourceKey()));
 

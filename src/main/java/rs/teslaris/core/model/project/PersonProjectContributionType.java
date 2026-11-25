@@ -6,5 +6,6 @@ public enum PersonProjectContributionType {
     CONTACT,
     INKIND_CONTRIBUTOR,
     CONTRACTOR,
-    PARTICIPATION
+    PARTICIPATION,
+    CO_PRINCIPLE_INVESTIGATOR
 }

@@ -16,6 +16,7 @@ public class EmploymentPositionConverter {
                 employmentPosition.getDescription()),
             employmentPosition.getProcessedName(),
             employmentPosition.getSchemeName(),
+            employmentPosition.getCode(),
             Objects.requireNonNullElse(
                 employmentPosition.getSuperEmploymentPosition(),
                 new EmploymentPositionHierarchy()
