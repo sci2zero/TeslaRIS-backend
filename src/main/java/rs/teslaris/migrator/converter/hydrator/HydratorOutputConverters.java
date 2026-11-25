@@ -1,6 +1,7 @@
 package rs.teslaris.migrator.converter.hydrator;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -827,6 +828,7 @@ public class HydratorOutputConverters {
         dto.setContributions(contributions(record, key, entityType, HydratorMappingRule.cv(955),
             presentation.authors(), null));
         ensureOwnerContribution(dto, record, key, entityType, HydratorMappingRule.cv(955), null);
+        addPresenters(dto, record, key, HydratorMappingRule.cv(956), presentation.presenters());
 
         if (Boolean.TRUE.equals(presentation.keynote())) {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
@@ -841,15 +843,22 @@ public class HydratorOutputConverters {
         return dto;
     }
 
-    // CW-001-MAP-000956/952: the presenters, as speakers on the presentation's event
-    public List<PersonEventContributionDTO> speakerContributions(
-        HydratorCVModel.Curriculum record, HydratorCVModel.NonResearchPresentation presentation) {
-        return linkedContributions(record, presentation.presenters(),
-            DocumentContributionType.PRESENTER).stream()
+    // CW-001-MAP-000956/952: every presenter is a speaker on the output's event, for the output's
+    // date (Dragan, 2026-11-25)
+    public List<PersonEventContributionDTO> speakerContributions(PerformanceRelatedOutputDTO output,
+                                                                 HydratorCVModel.DateInfo date,
+                                                                 Boolean invited) {
+        var flexibleDate = conversionUtil.flexibleDate(date);
+        var dateFrom = firstDay(flexibleDate);
+        var dateTo = lastDay(flexibleDate);
+
+        return output.getContributions().stream()
+            .filter(contribution ->
+                DocumentContributionType.PRESENTER.equals(contribution.getContributionType()))
             .map(presenter -> {
                 var speaker = new PersonEventContributionDTO();
                 speaker.setEventContributionType(EventContributionType.SPEAKER);
-                speaker.setIsInvitedContributor(Boolean.TRUE.equals(presentation.invited()));
+                speaker.setIsInvitedContributor(Boolean.TRUE.equals(invited));
                 speaker.setIsMainContributor(false);
                 speaker.setOrderNumber(presenter.getOrderNumber());
                 speaker.setContributionDescription(List.of());
@@ -857,9 +866,68 @@ public class HydratorOutputConverters {
                 speaker.setInstitutionIds(List.of());
                 speaker.setPersonName(presenter.getPersonName());
                 speaker.setPersonId(presenter.getPersonId());
+                speaker.setDateFrom(dateFrom);
+                speaker.setDateTo(dateTo);
                 return speaker;
             })
             .toList();
+    }
+
+    // The presenters, or the curriculum owner when the source lists none
+    private void addPresenters(PerformanceRelatedOutputDTO dto, HydratorCVModel.Curriculum record,
+                               String key, String rule, HydratorCVModel.OutputAuthors presenters) {
+        var added = linkedContributions(record, presenters, DocumentContributionType.PRESENTER);
+        var ownerName = personResolver.ownerName(record);
+        var ownerId = personResolver.resolveOwner(record);
+
+        if (Objects.nonNull(ownerName) && Objects.nonNull(ownerId) && added.stream()
+            .noneMatch(presenter -> ownerId.equals(presenter.getPersonId()))) {
+            added.stream()
+                .filter(presenter -> Objects.isNull(presenter.getPersonId()) &&
+                    conversionUtil.namesMatch(ownerName, presenter.getPersonName()))
+                .findFirst()
+                .ifPresent(presenter -> presenter.setPersonId(ownerId));
+        }
+
+        if (added.isEmpty()) {
+            if (Objects.isNull(ownerName)) {
+                return;
+            }
+
+            added.add(contribution(DocumentContributionType.PRESENTER, 1, ownerName, ownerId));
+            migrationLog.valueDefaulted(HydratorSource.NAME,
+                MigrationEntityType.PERFORMANCE_RELATED_OUTPUT.name(), key, rule,
+                "no presenters in the source, curriculum owner added as PRESENTER");
+        }
+
+        var contributions = new ArrayList<>(dto.getContributions());
+        contributions.addAll(added);
+        dto.setContributions(contributions);
+    }
+
+    private LocalDate firstDay(FlexibleDateDTO date) {
+        if (Objects.isNull(date)) {
+            return null;
+        }
+
+        return LocalDate.of(date.year(), Objects.requireNonNullElse(date.month(), 1),
+            Objects.requireNonNullElse(date.day(), 1));
+    }
+
+    private LocalDate lastDay(FlexibleDateDTO date) {
+        if (Objects.isNull(date)) {
+            return null;
+        }
+
+        if (Objects.nonNull(date.day())) {
+            return LocalDate.of(date.year(), date.month(), date.day());
+        }
+
+        if (Objects.nonNull(date.month())) {
+            return YearMonth.of(date.year(), date.month()).atEndOfMonth();
+        }
+
+        return LocalDate.of(date.year(), 12, 31);
     }
 
     // CW-001-MAP-000844…853; the program is the event's name
@@ -882,6 +950,7 @@ public class HydratorOutputConverters {
         dto.setProducer(conversionUtil.multilingualContent(interview.producer(), language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(844), null);
+        addPresenters(dto, record, key, HydratorMappingRule.cv(844), null);
         dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(852),
             interview.researchClassifications()));
 
@@ -907,6 +976,7 @@ public class HydratorOutputConverters {
             language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(854), null);
+        addPresenters(dto, record, key, HydratorMappingRule.cv(854), null);
         dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(860),
             interview.researchClassifications()));
 

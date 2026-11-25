@@ -80,7 +80,8 @@ public class HydratorServiceRouter implements ItemRouter<HydratorCVModel.Curricu
                         source.conferenceEvent(), source.presentationDate(), null,
                         converters.languageOf(record), source.conferenceEventLocation(),
                         source.organizationPresentedTo(),
-                        converters.speakerContributions(record, source), run.isPerformIndex()));
+                        converters.speakerContributions(presentation, source.presentationDate(),
+                            source.invited()), run.isPerformIndex()));
 
                     var id = performanceRelatedOutputService.createPerformanceRelatedOutput(
                         presentation, run.isPerformIndex()).getId();
@@ -99,8 +100,9 @@ public class HydratorServiceRouter implements ItemRouter<HydratorCVModel.Curricu
                     interview.setEventId(eventResolver.createServiceEvent(
                         converters.serviceKey(record, service), null,
                         source.program(), source.firstBroadcastDate(), source.endDate(),
-                        converters.languageOf(record), null, null, List.of(),
-                        run.isPerformIndex()));
+                        converters.languageOf(record), null, null,
+                        converters.speakerContributions(interview, source.firstBroadcastDate(),
+                            null), run.isPerformIndex()));
 
                     return performanceRelatedOutputService.createPerformanceRelatedOutput(
                         interview, run.isPerformIndex()).getId();
