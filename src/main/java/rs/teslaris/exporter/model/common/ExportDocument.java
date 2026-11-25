@@ -194,4 +194,8 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("substituted_by")
     private Integer substitutedBy;
+
+    // IDs of the research areas, sorted. Pushed as links to the research area snapshots.
+    @Field("research_area_ids")
+    private List<Integer> researchAreaIds = new ArrayList<>();
 }

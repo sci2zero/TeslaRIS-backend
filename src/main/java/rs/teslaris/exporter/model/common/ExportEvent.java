@@ -63,4 +63,8 @@ public class ExportEvent extends BaseExportEntity {
     // Relations where this event is the source. A serial event is never a source.
     @Field("relations")
     private List<ExportEventRelation> relations = new ArrayList<>();
+
+    // IDs of the research areas, sorted. Pushed as links to the research area snapshots.
+    @Field("research_area_ids")
+    private List<Integer> researchAreaIds = new ArrayList<>();
 }

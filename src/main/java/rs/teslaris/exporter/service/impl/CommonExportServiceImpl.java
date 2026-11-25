@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.export.ProjectExportSource;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Course;
@@ -37,6 +38,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
@@ -63,6 +65,7 @@ import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
+import rs.teslaris.exporter.model.common.ExportResearchArea;
 import rs.teslaris.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.exporter.model.converter.ExportEventConverter;
 import rs.teslaris.exporter.model.converter.ExportFundingConverter;
@@ -70,6 +73,7 @@ import rs.teslaris.exporter.model.converter.ExportOrganisationUnitConverter;
 import rs.teslaris.exporter.model.converter.ExportPersonConverter;
 import rs.teslaris.exporter.model.converter.ExportProjectConverter;
 import rs.teslaris.exporter.model.converter.ExportPublicationSeriesConverter;
+import rs.teslaris.exporter.model.converter.ExportResearchAreaConverter;
 import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
 @Service
@@ -120,6 +124,8 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private final ProjectExportSource projectExportSource;
 
+    private final ResearchAreaRepository researchAreaRepository;
+
     private final ReentrantLock organisationUnitExportLock = new ReentrantLock();
 
     private final ReentrantLock personExportLock = new ReentrantLock();
@@ -131,6 +137,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ReentrantLock projectExportLock = new ReentrantLock();
 
     private final ReentrantLock fundingExportLock = new ReentrantLock();
+
+    private final ReentrantLock researchAreaExportLock = new ReentrantLock();
 
     @Value("${export-to-common.allowed}")
     private Boolean exportAllowed;
@@ -313,6 +321,30 @@ public class CommonExportServiceImpl implements CommonExportService {
             log.error("Funding export set not completed due to an error.", e);
         } finally {
             fundingExportLock.unlock();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void exportResearchAreasToCommonModel(boolean allTime) {
+        if (!researchAreaExportLock.tryLock()) {
+            log.info("Research area export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            commonExportWorker.exportEntities(
+                researchAreaRepository::findAllModified,
+                ExportResearchAreaConverter::toCommonExportModel,
+                ExportResearchArea.class,
+                ResearchArea::getId,
+                allTime,
+                null
+            );
+        } catch (Exception e) {
+            log.error("Research area export set not completed due to an error.", e);
+        } finally {
+            researchAreaExportLock.unlock();
         }
     }
 
@@ -544,5 +576,14 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
 
         exportFundingsToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.research-area}")
+    protected void performScheduledResearchAreaExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportResearchAreasToCommonModel(false);
     }
 }

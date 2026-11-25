@@ -40,6 +40,15 @@ public final class SharedNodeKey {
             .map(name -> sha1(normalise(name.getContent())));
     }
 
+    // For a plain-text name, for example a research area's scheme name.
+    public static Optional<String> of(String name) {
+        if (Objects.isNull(name) || name.isBlank()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(sha1(normalise(name)));
+    }
+
     static String normalise(String name) {
         return Normalizer.normalize(name, Normalizer.Form.NFKC)
             .toLowerCase(Locale.ROOT)

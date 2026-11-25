@@ -159,6 +159,7 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInDocument(researchAreaId)).thenReturn(false);
+        when(researchAreaRepository.isUsedByOtherEntities(researchAreaId)).thenReturn(false);
 
         // when
         researchAreaService.deleteResearchArea(researchAreaId);
@@ -167,6 +168,7 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isSuperArea(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedBySomeone(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInDocument(researchAreaId);
+        verify(researchAreaRepository, times(1)).isUsedByOtherEntities(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
         verify(researchAreaRepository, times(1)).findById(any());
         verify(researchAreaRepository, times(1)).flush();
@@ -188,6 +190,24 @@ public class ResearchAreaServiceTest {
         // then
         verify(researchAreaRepository, times(1)).isSuperArea(researchAreaId);
         verifyNoMoreInteractions(researchAreaRepository);
+    }
+
+    @Test
+    void shouldNotDeleteResearchAreaUsedByOtherEntities() {
+        // given
+        var researchAreaId = 1;
+
+        when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
+        when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
+        when(researchAreaRepository.isResearchedInDocument(researchAreaId)).thenReturn(false);
+        when(researchAreaRepository.isUsedByOtherEntities(researchAreaId)).thenReturn(true);
+
+        // when
+        assertThrows(ResearchAreaReferenceConstraintViolationException.class,
+            () -> researchAreaService.deleteResearchArea(researchAreaId));
+
+        // then
+        verify(researchAreaRepository, never()).save(any());
     }
 
     @Test

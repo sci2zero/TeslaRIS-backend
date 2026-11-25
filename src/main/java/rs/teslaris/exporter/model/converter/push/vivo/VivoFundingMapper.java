@@ -150,6 +150,8 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
         addPrincipalInvestigators(model, grant, uri, target, snapshot, references);
         addAdministrators(model, grant, uri, target, snapshot, sharedNodes, references);
         addSupportedOutputs(model, grant, target, snapshot, references);
+        VivoRdfSupport.addResearchAreas(model, grant, target, snapshot.getResearchAreaIds(), false,
+            references);
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {

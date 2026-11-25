@@ -481,6 +481,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setOpenAlex(document.getOpenAlexId());
         commonExportDocument.setWebOfScience(document.getWebOfScienceId());
         commonExportDocument.getOldIds().addAll(document.getOldIds());
+        commonExportDocument.setResearchAreaIds(
+            ExportResearchAreaConverter.researchAreaIds(document.getResearchAreas()));
 
         if (Objects.nonNull(document.getEvent())) {
             var event = new ExportEvent();

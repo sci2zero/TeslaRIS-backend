@@ -28,11 +28,14 @@ import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
+import rs.teslaris.exporter.model.common.ExportResearchArea;
 
 @Getter
 @RequiredArgsConstructor
 public enum PushEntityType {
 
+    // First, so the concepts are in the target before the entities that link to them.
+    RESEARCH_AREAS("research_areas", ExportResearchArea.class),
     ORGANISATION_UNITS("org_units", ExportOrganisationUnit.class),
     PERSONS("persons", ExportPerson.class),
     EVENTS("events", ExportEvent.class),

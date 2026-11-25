@@ -5,6 +5,7 @@ import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.EVEN
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.OBO;
 import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VIVO;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,9 @@ import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.RdfMapper;
+import rs.teslaris.exporter.util.push.RdfMapping;
 
 @Component
 @RequiredArgsConstructor
@@ -87,7 +90,13 @@ public class VivoEventMapper implements RdfMapper<ExportEvent> {
 
     @Override
     public Model toRdf(ExportEvent snapshot, PushTarget target) {
+        return map(snapshot, target).model();
+    }
+
+    @Override
+    public RdfMapping map(ExportEvent snapshot, PushTarget target) {
         var model = ModelFactory.createDefaultModel();
+        var references = new ArrayList<EntityReference>();
         var uri = VivoRdfSupport.eventUri(target, snapshot.getDatabaseId());
         var event = model.createResource(uri);
 
@@ -103,6 +112,8 @@ public class VivoEventMapper implements RdfMapper<ExportEvent> {
             snapshot.getDateTo());
         VivoRdfSupport.addCountry(model, event, snapshot.getCountryCode());
         addRelations(model, event, target, snapshot);
+        VivoRdfSupport.addResearchAreas(model, event, target, snapshot.getResearchAreaIds(), false,
+            references);
 
         // Old snapshots have no event type, so they get no TeslaRIS link.
         var path = frontendPath(snapshot.getEventType());
@@ -112,7 +123,7 @@ public class VivoEventMapper implements RdfMapper<ExportEvent> {
                 List.of(teslarisLinks.profileLink(path, snapshot.getDatabaseId())));
         }
 
-        return model;
+        return new RdfMapping(model, List.of(), List.copyOf(references));
     }
 
     // VIVO shows BFO_0000050 / BFO_0000051 as "occurs within event" / "includes event" between

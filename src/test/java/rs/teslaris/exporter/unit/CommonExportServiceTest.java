@@ -34,6 +34,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
@@ -60,6 +61,7 @@ import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
+import rs.teslaris.exporter.model.common.ExportResearchArea;
 import rs.teslaris.exporter.service.impl.CommonExportServiceImpl;
 import rs.teslaris.exporter.service.impl.CommonExportWorkerImpl;
 
@@ -127,6 +129,9 @@ public class CommonExportServiceTest {
     private MaterialProductRepository materialProductRepository;
 
     @Mock
+    private ResearchAreaRepository researchAreaRepository;
+
+    @Mock
     private ProjectExportSource projectExportSource;
 
     @Mock
@@ -190,6 +195,17 @@ public class CommonExportServiceTest {
         // Then
         verify(commonExportWorker, times(1)).exportEntities(
             any(), any(), eq(ExportProject.class), any(), eq(allTime), eq(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldExportResearchAreas(boolean allTime) {
+        // When
+        commonExportService.exportResearchAreasToCommonModel(allTime);
+
+        // Then
+        verify(commonExportWorker, times(1)).exportEntities(
+            any(), any(), eq(ExportResearchArea.class), any(), eq(allTime), eq(null));
     }
 
     @ParameterizedTest

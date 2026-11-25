@@ -61,6 +61,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         commonExportOU.setOpenAlex(organisationUnit.getOpenAlexId());
         commonExportOU.setSector(organisationUnit.getSector());
         commonExportOU.getOldIds().addAll(organisationUnit.getOldIds());
+        commonExportOU.setResearchAreaIds(
+            ExportResearchAreaConverter.researchAreaIds(organisationUnit.getResearchAreas()));
 
         if (Objects.nonNull(organisationUnit.getUris()) && !organisationUnit.getUris().isEmpty()) {
             commonExportOU.setUris(organisationUnit.getUris().stream().toList());

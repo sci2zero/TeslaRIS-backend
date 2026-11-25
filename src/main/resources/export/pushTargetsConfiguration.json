@@ -19,6 +19,7 @@
         "SR"
       ],
       "entityTypes": [
+        "research_areas",
         "org_units",
         "persons",
         "events",

@@ -100,6 +100,7 @@ public class ProjectDataInitializer {
         project1.setResearchType(ProjectResearchType.OTHER);
         project1.setDateFrom(LocalDate.of(2023, 1, 1));
         project1.setDateTo(LocalDate.of(2026, 12, 31));
+        project1.setNationalId("TEST-PROJ-0001");
 
         var project2 = new Project();
         project2.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 2", 1)));
@@ -108,6 +109,7 @@ public class ProjectDataInitializer {
         project2.setResearchType(ProjectResearchType.OTHER);
         project2.setDateFrom(LocalDate.of(2020, 6, 1));
         project2.setDateTo(LocalDate.of(2023, 5, 31));
+        project2.setNationalId("TEST-PROJ-0002");
 
         var project3 = new Project();
         project3.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 3", 1)));
@@ -116,6 +118,7 @@ public class ProjectDataInitializer {
         project3.setResearchType(ProjectResearchType.OTHER);
         project3.setDateFrom(LocalDate.of(2023, 1, 1));
         project3.setDateTo(LocalDate.of(2026, 12, 31));
+        project3.setNationalId("TEST-PROJ-0003");
         project3.setCosts(new MonetaryAmount(100000, currencyEuro));
 
         projectRepository.saveAll(List.of(project1, project2, project3));

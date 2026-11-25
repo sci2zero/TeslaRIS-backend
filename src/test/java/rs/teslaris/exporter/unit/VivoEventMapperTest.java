@@ -22,9 +22,11 @@ import rs.teslaris.exporter.model.common.ExportEventRelation;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoEventMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoTeslarisLinks;
+import rs.teslaris.exporter.model.push.PushEntityType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.Auth;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.AuthType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.NTriplesSerializer;
 
 public class VivoEventMapperTest {
@@ -216,5 +218,29 @@ public class VivoEventMapperTest {
             model.createProperty(VIVO + "dateTimeInterval")));
         assertFalse(model.containsResource(model.createResource(URI + "-url-teslaris")));
         NTriplesSerializer.toLines(model);
+    }
+
+    @Test
+    public void shouldLinkSubjectAreas() {
+        // Given
+        var event = event(EventType.CONFERENCE);
+        event.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = mapper.map(event, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(URI);
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#subjectAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
     }
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -36,7 +37,9 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
@@ -422,5 +425,109 @@ public class PerformanceRelatedOutputServiceTest {
         assertNotNull(result);
         verify(performanceRelatedOutputRepository).findPerformanceRelatedOutputByOldIdsContains(
             oldId);
+    }
+
+    @Test
+    public void shouldReadEventNameOfPerformanceRelatedOutput() {
+        // Given
+        var outputId = 1;
+        var output = new PerformanceRelatedOutput();
+        output.setId(outputId);
+        output.setApproveStatus(ApproveStatus.APPROVED);
+        output.setEvent(conference(5, "Conference name"));
+
+        when(performanceRelatedOutputJPAService.findOne(outputId)).thenReturn(output);
+
+        // When
+        var result = performanceRelatedOutputService.readPerformanceRelatedOutputById(outputId);
+
+        // Then
+        assertEquals(5, result.getEventId().intValue());
+        assertEquals(1, result.getEventName().size());
+        assertEquals("Conference name", result.getEventName().getFirst().getContent());
+    }
+
+    @Test
+    public void shouldSetEventWhenEditingWithEventId() {
+        // Given
+        var outputId = 1;
+        var dto = new PerformanceRelatedOutputDTO();
+        dto.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
+        dto.setType(PerformanceRelatedOutputType.MUSICAL_PERFORMANCE);
+        dto.setEventId(5);
+
+        var outputToUpdate = outputToUpdate();
+        var conference = conference(5, "Conference name");
+
+        when(performanceRelatedOutputJPAService.findOne(outputId)).thenReturn(outputToUpdate);
+        when(performanceRelatedOutputJPAService.save(any())).thenReturn(
+            new PerformanceRelatedOutput());
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(outputId))
+            .thenReturn(Optional.of(new DocumentPublicationIndex()));
+        when(eventService.findOne(5)).thenReturn(conference);
+
+        mockLoggedInUser();
+
+        // When
+        performanceRelatedOutputService.editPerformanceRelatedOutput(outputId, dto);
+
+        // Then
+        assertEquals(conference, outputToUpdate.getEvent());
+    }
+
+    @Test
+    public void shouldClearEventWhenEditingWithoutEventId() {
+        // Given
+        var outputId = 1;
+        var dto = new PerformanceRelatedOutputDTO();
+        dto.setDocumentDate(new FlexibleDateDTO(2024, null, null, null));
+        dto.setType(PerformanceRelatedOutputType.MUSICAL_PERFORMANCE);
+        dto.setEventId(null);
+
+        var outputToUpdate = outputToUpdate();
+        outputToUpdate.setEvent(conference(5, "Conference name"));
+
+        when(performanceRelatedOutputJPAService.findOne(outputId)).thenReturn(outputToUpdate);
+        when(performanceRelatedOutputJPAService.save(any())).thenReturn(
+            new PerformanceRelatedOutput());
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(outputId))
+            .thenReturn(Optional.of(new DocumentPublicationIndex()));
+
+        mockLoggedInUser();
+
+        // When
+        performanceRelatedOutputService.editPerformanceRelatedOutput(outputId, dto);
+
+        // Then
+        assertNull(outputToUpdate.getEvent());
+        verify(eventService, never()).findOne(any());
+    }
+
+    private PerformanceRelatedOutput outputToUpdate() {
+        var output = new PerformanceRelatedOutput();
+        output.setApproveStatus(ApproveStatus.REQUESTED);
+        output.setDocumentDate(new FlexibleDate(2023));
+        output.setContributors(new HashSet<>());
+        output.setLanguages(new HashSet<>());
+        return output;
+    }
+
+    private Conference conference(Integer id, String name) {
+        var languageTag = new LanguageTag("EN", "English");
+        languageTag.setId(1);
+
+        var conference = new Conference();
+        conference.setId(id);
+        conference.setSerialEvent(false);
+        conference.setName(new HashSet<>(Set.of(new MultiLingualContent(languageTag, name, 1))));
+        return conference;
+    }
+
+    private void mockLoggedInUser() {
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User());
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 }

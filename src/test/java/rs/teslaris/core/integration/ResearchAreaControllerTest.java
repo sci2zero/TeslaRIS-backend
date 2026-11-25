@@ -78,12 +78,36 @@ public class ResearchAreaControllerTest extends BaseTest {
     public void testDeleteResearchArea() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
+        var createResponse = mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/research-area")
+                    .content(objectMapper.writeValueAsString(getTestPayload()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_RESEARCH_AREA_DELETE"))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+        var researchAreaId =
+            objectMapper.readValue(createResponse, ResearchAreaDTO.class).getId();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.delete(
+                        "http://localhost:8081/api/research-area/{researchAreaId}",
+                        researchAreaId).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testDeleteResearchAreaInUse() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
         mockMvc.perform(
                 MockMvcRequestBuilders.delete(
                         "http://localhost:8081/api/research-area/{researchAreaId}",
                         3).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isConflict());
     }
 
     @Test

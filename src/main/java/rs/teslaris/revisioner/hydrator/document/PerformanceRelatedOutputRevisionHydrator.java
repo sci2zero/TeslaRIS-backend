@@ -5,11 +5,13 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.LanguageTagResponseDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.revisioner.hydrator.RevisionHydrator;
 
@@ -19,12 +21,16 @@ public class PerformanceRelatedOutputRevisionHydrator
 
     private final LanguageTagService languageTagService;
 
+    private final EventService eventService;
+
 
     @Autowired
     public PerformanceRelatedOutputRevisionHydrator(
-        CountryService countryService, LanguageTagService languageTagService) {
+        CountryService countryService, LanguageTagService languageTagService,
+        EventService eventService) {
         super(countryService);
         this.languageTagService = languageTagService;
+        this.eventService = eventService;
     }
 
     @Override
@@ -36,6 +42,12 @@ public class PerformanceRelatedOutputRevisionHydrator
     @Transactional(readOnly = true)
     public void hydrate(PerformanceRelatedOutputDTO dto) {
         hydrateCommonFields(dto);
+
+        // A revision can point to an event that no longer exists.
+        if (Objects.nonNull(dto.getEventId()) && eventService.exists(dto.getEventId())) {
+            dto.setEventName(MultilingualContentConverter.getMultilingualContentDTO(
+                eventService.findOne(dto.getEventId()).getName()));
+        }
 
         if (CollectionOperations.containsValues(dto.getLanguageTagIds())) {
             if (Objects.isNull(dto.getLanguageTags())) {

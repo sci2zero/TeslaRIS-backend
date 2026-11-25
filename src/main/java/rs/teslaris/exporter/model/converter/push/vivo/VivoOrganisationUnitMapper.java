@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.Link;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.RdfMapper;
+import rs.teslaris.exporter.util.push.RdfMapping;
 
 @Component
 @RequiredArgsConstructor
@@ -66,7 +68,13 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
 
     @Override
     public Model toRdf(ExportOrganisationUnit snapshot, PushTarget target) {
+        return map(snapshot, target).model();
+    }
+
+    @Override
+    public RdfMapping map(ExportOrganisationUnit snapshot, PushTarget target) {
         var model = ModelFactory.createDefaultModel();
+        var references = new ArrayList<EntityReference>();
         var uri = VivoRdfSupport.organisationUnitUri(target, snapshot.getDatabaseId());
         var organisationUnit = model.createResource(uri);
 
@@ -87,6 +95,8 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
         }
 
         VivoRdfSupport.addCountry(model, organisationUnit, snapshot.getCountry());
+        VivoRdfSupport.addResearchAreas(model, organisationUnit, target,
+            snapshot.getResearchAreaIds(), true, references);
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {
@@ -94,7 +104,7 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
             VivoRdfSupport.addUrls(model, vcard, uri, links);
         }
 
-        return model;
+        return new RdfMapping(model, List.of(), List.copyOf(references));
     }
 
     // VIVO has no organisation identifier properties, so the links show the identifiers.

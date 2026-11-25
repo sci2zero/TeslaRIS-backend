@@ -481,4 +481,28 @@ public class VivoDocumentMapperTest {
         assertTrue(has(model, uri, RDF.type.getURI(),
             "http://purl.obolibrary.org/obo/IAO_0000030"));
     }
+
+    @Test
+    public void shouldLinkSubjectAreas() {
+        // Given
+        var document = article();
+        document.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = mapper.map(document, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(VivoDocumentMapper.uri(target(), document));
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#subjectAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
+    }
 }

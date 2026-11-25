@@ -459,4 +459,103 @@ public class VivoProjectAndFundingMapperTest {
         // Then
         assertTrue(supports(model, 53));
     }
+
+    @Test
+    public void shouldLinkProjectSubjectAreas() {
+        // Given
+        var project = project();
+        project.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = projectMapper.map(project, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(NS + "teslaris-project-" + project.getDatabaseId());
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#subjectAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
+    }
+
+    @Test
+    public void shouldLinkFundingSubjectAreas() {
+        // Given
+        var funding = funding();
+        funding.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = fundingMapper.map(funding, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(NS + "teslaris-funding-" + funding.getDatabaseId());
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#subjectAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasSubjectArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
+    }
+
+    @Test
+    public void shouldFallBackToUnsupportedLanguageWithoutLanguageTag() {
+        // Given
+        var funding = funding();
+        funding.setName(new ArrayList<>(List.of(
+            new ExportMultilingualContent("PT", "F. Estratégico UID - 2013/2015", 1))));
+        funding.setDescription(new ArrayList<>(List.of(
+            new ExportMultilingualContent("HU", "Leírás", 2),
+            new ExportMultilingualContent("PT", "Descrição", 1))));
+        funding.setKeywords(new ArrayList<>(List.of(
+            new ExportMultilingualContent("PT", "energia\nredes", 1))));
+
+        // When
+        var model = fundingMapper.toRdf(funding, target());
+
+        // Then
+        var grant = model.createResource(FUNDING);
+        var description = model.createProperty(VIVO + "description");
+        var keyword = model.createProperty(VIVO + "freetextKeyword");
+        assertTrue(model.contains(grant, RDFS.label,
+            model.createLiteral("F. Estratégico UID - 2013/2015")));
+        assertEquals(1, model.listObjectsOfProperty(grant, RDFS.label).toList().size());
+
+        // Only the values of the language with the lowest priority number.
+        assertTrue(model.contains(grant, description, model.createLiteral("Descrição")));
+        assertEquals(1, model.listObjectsOfProperty(grant, description).toList().size());
+
+        // Every keyword of that language is kept.
+        assertTrue(model.contains(grant, keyword, model.createLiteral("energia")));
+        assertTrue(model.contains(grant, keyword, model.createLiteral("redes")));
+        assertEquals(2, model.listObjectsOfProperty(grant, keyword).toList().size());
+    }
+
+    @Test
+    public void shouldNotFallBackWhenASupportedLanguageExists() {
+        // Given
+        var funding = funding();
+        funding.setName(new ArrayList<>(List.of(
+            new ExportMultilingualContent("PT", "Nome", 1),
+            new ExportMultilingualContent("EN", "Name", 2))));
+
+        // When
+        var model = fundingMapper.toRdf(funding, target());
+
+        // Then
+        var grant = model.createResource(FUNDING);
+        assertTrue(model.contains(grant, RDFS.label, model.createLiteral("Name", "en")));
+        assertFalse(model.contains(grant, RDFS.label, model.createLiteral("Nome")));
+        assertEquals(1, model.listObjectsOfProperty(grant, RDFS.label).toList().size());
+    }
 }

@@ -25,9 +25,11 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoPersonMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoTeslarisLinks;
+import rs.teslaris.exporter.model.push.PushEntityType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.Auth;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.AuthType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.NTriplesSerializer;
 
 public class VivoPersonMapperTest {
@@ -286,5 +288,29 @@ public class VivoPersonMapperTest {
         assertEquals(List.of("Teaching Assistant"),
             model.listObjectsOfProperty(position, RDFS.label).toList().stream()
                 .map(label -> label.asLiteral().getString()).toList());
+    }
+
+    @Test
+    public void shouldLinkResearchAreas() {
+        // Given
+        var person = person();
+        person.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = mapper.map(person, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(NS + "teslaris-person-" + person.getDatabaseId());
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasResearchArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#researchAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasResearchArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
     }
 }

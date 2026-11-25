@@ -26,6 +26,7 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.Link;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.RdfMapper;
 import rs.teslaris.exporter.util.push.RdfMapping;
 import rs.teslaris.exporter.util.push.SharedNode;
@@ -106,7 +107,11 @@ public class VivoPersonMapper implements RdfMapper<ExportPerson> {
                 employment -> addPosition(model, person, target, employment, sharedNodes));
         }
 
-        return new RdfMapping(model, List.copyOf(sharedNodes.values()));
+        var references = new ArrayList<EntityReference>();
+        VivoRdfSupport.addResearchAreas(model, person, target, snapshot.getResearchAreaIds(),
+            true, references);
+
+        return new RdfMapping(model, List.copyOf(sharedNodes.values()), List.copyOf(references));
     }
 
     private void addName(Model model, Resource vcard, String uri, ExportPersonName name) {

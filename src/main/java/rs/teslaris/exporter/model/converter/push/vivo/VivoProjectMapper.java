@@ -122,6 +122,8 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
         addResearcherRoles(model, project, uri, target, snapshot, references);
         addParticipants(model, project, target, snapshot, sharedNodes, references);
         addOutputs(model, project, target, snapshot, references);
+        VivoRdfSupport.addResearchAreas(model, project, target, snapshot.getResearchAreaIds(),
+            false, references);
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {

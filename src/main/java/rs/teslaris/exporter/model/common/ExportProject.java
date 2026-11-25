@@ -81,4 +81,8 @@ public class ExportProject extends BaseExportEntity {
     // Number of (not deleted) fundings of the project. Null in older snapshots.
     @Field("funding_count")
     private Integer fundingCount;
+
+    // IDs of the research areas, sorted. Pushed as links to the research area snapshots.
+    @Field("research_area_ids")
+    private List<Integer> researchAreaIds = new ArrayList<>();
 }

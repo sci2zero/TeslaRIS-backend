@@ -109,6 +109,8 @@ public class ExportEventConverter extends ExportConverterBase {
         }
 
         commonExportEvent.getOldIds().addAll(event.getOldIds());
+        commonExportEvent.setResearchAreaIds(
+            ExportResearchAreaConverter.researchAreaIds(event.getResearchAreas()));
 
         eventsRelationRepository.getRelationsForOneTimeEvent(event.getId()).stream()
             .filter(relation -> Objects.nonNull(relation.getTarget()))

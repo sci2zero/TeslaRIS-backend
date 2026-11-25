@@ -73,6 +73,8 @@ public class ExportPersonConverter extends ExportConverterBase {
                 .add(person.getPersonalInfo().getProfessionalContact().getContactEmail());
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
+        commonExportPerson.setResearchAreaIds(
+            ExportResearchAreaConverter.researchAreaIds(person.getResearchAreas()));
 
         var involvements = involvementRepository.findActiveEmployments(person.getId());
         involvements.forEach(involvement -> {

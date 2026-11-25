@@ -63,6 +63,9 @@ public class ExportProjectConverter extends ExportConverterBase {
                         new ArrayList<>())));
         }
         commonExportProject.setFundingCount(project.fundingCount());
+        if (Objects.nonNull(project.researchAreaIds())) {
+            commonExportProject.setResearchAreaIds(new ArrayList<>(project.researchAreaIds()));
+        }
 
         if (computeRelations) {
             commonExportProject.getRelatedInstitutionIds().addAll(project.institutionIds());

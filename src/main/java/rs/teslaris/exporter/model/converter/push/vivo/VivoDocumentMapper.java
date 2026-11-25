@@ -303,6 +303,9 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
             addThesisGrantor(model, document, target, snapshot, references);
         }
 
+        VivoRdfSupport.addResearchAreas(model, document, target, snapshot.getResearchAreaIds(),
+            false, references);
+
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {
             var vcard = VivoRdfSupport.addVcard(model, document, uri, "Kind");
@@ -470,7 +473,7 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
             var nodeModel = ModelFactory.createDefaultModel();
             var node = nodeModel.createResource(nodeUri);
             node.addProperty(RDF.type, nodeModel.createResource(VIVO + "Publisher"));
-            VivoRdfSupport.addLabelsOrAny(nodeModel, node, name, target);
+            VivoRdfSupport.addLiterals(nodeModel, node, RDFS.label, name, target);
             return new SharedNode(nodeUri, nodeModel, replaceWhenChanged);
         });
 

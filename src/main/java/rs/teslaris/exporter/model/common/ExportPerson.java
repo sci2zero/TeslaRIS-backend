@@ -40,4 +40,8 @@ public class ExportPerson extends BaseExportEntity {
 
     @Field("employments")
     private List<ExportEmployment> employments = new ArrayList<>();
+
+    // IDs of the research areas, sorted. Pushed as links to the research area snapshots.
+    @Field("research_area_ids")
+    private List<Integer> researchAreaIds = new ArrayList<>();
 }
