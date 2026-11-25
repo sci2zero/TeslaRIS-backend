@@ -50,7 +50,8 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
 
     // Classes used for outputs that are not under obo:IAO_0000030 in the VIVO ontology.
     private static final Set<String> NOT_INFORMATION_CONTENT_ENTITIES =
-        Set.of(OBO + "ERO_0000071", BIBO + "Performance", VIVO + "Exhibit");
+        Set.of(OBO + "ERO_0000071", BIBO + "Performance", VIVO + "Exhibit",
+            VIVO + "Presentation", VIVO + "InvitedTalk", BIBO + "Interview");
 
     private final VivoTeslarisLinks teslarisLinks;
 
@@ -95,7 +96,8 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
     /**
      * VIVO shows the authors (faux property on vivo:relatedBy → vivo:Authorship) only for
      * subclasses of obo:IAO_0000030. Software (obo:ERO_0000071) is a material entity, and
-     * bibo:Performance and vivo:Exhibit are events, so these also get obo:IAO_0000030.
+     * bibo:Performance, vivo:Exhibit, vivo:Presentation, vivo:InvitedTalk and bibo:Interview are
+     * events, so these also get obo:IAO_0000030.
      */
     private static List<String> asOutput(String vivoClass) {
         return NOT_INFORMATION_CONTENT_ENTITIES.contains(vivoClass) ?
@@ -135,6 +137,9 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
             case CATALOGUE -> VIVO + "Catalog";
             case ARTISTIC_EXHIBITION, CURATORIAL_MUSEUM_EXHIBITION -> VIVO + "Exhibit";
             case MUSICAL_PERFORMANCE, ART_PERFORMANCE, THEATRIC_PLAY -> BIBO + "Performance";
+            case NON_RESEARCH_PRESENTATION -> Boolean.TRUE.equals(snapshot.getInvitedTalk()) ?
+                VIVO + "InvitedTalk" : VIVO + "Presentation";
+            case BROADCAST_INTERVIEW, TEXT_INTERVIEW -> BIBO + "Interview";
             default -> INFORMATION_CONTENT_ENTITY;
         };
     }

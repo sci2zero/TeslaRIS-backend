@@ -226,6 +226,7 @@ public class AuthorityDataInitializer {
         var assessDataQuality = new Privilege("ASSESS_DATA_QUALITY");
         var saveModuleAccessConfiguration = new Privilege("SAVE_MODULE_ACCESS_CONFIGURATION");
         var manageDataQualityFixators = new Privilege("MANAGE_DATA_QUALITY_FIXATORS");
+        var manageDataQualityPolicy = new Privilege("MANAGE_DATA_QUALITY_POLICY");
         var editCurrencies = new Privilege("EDIT_CURRENCIES");
         var pushExportData = new Privilege("PUSH_EXPORT_DATA");
 
@@ -281,7 +282,7 @@ public class AuthorityDataInitializer {
                 unbindYourselfFromProject, unbindEmployeesFromProject,
                 restoreEntityRevision, backfillEntityRevision, assessDataQuality,
                 saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies,
-                pushExportData
+                pushExportData, manageDataQualityPolicy
             ));
 
         return new Privileges(
@@ -343,7 +344,7 @@ public class AuthorityDataInitializer {
             unbindYourselfFromProject, unbindEmployeesFromProject,
             restoreEntityRevision, backfillEntityRevision, assessDataQuality,
             saveModuleAccessConfiguration, manageDataQualityFixators, editCurrencies,
-            pushExportData);
+            pushExportData, manageDataQualityPolicy);
     }
 
     private Authority adminAuthority(Privileges p) {
@@ -429,6 +430,7 @@ public class AuthorityDataInitializer {
                 p.deleteProjects(),
                 p.restoreEntityRevision(), p.backfillEntityRevision(), p.assessDataQuality(),
                 p.saveModuleAccessConfiguration(), p.manageDataQualityFixators(),
+                p.manageDataQualityPolicy(),
                 p.editCurrencies(), p.pushExportData()
             )));
     }
@@ -712,7 +714,8 @@ public class AuthorityDataInitializer {
         Privilege saveModuleAccessConfiguration,
         Privilege manageDataQualityFixators,
         Privilege editCurrencies,
-        Privilege pushExportData
+        Privilege pushExportData,
+        Privilege manageDataQualityPolicy
     ) {
     }
 }

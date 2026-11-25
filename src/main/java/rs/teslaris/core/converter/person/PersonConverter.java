@@ -17,6 +17,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ExpertiseOrSkillResponseDTO;
+import rs.teslaris.core.dto.person.LanguageKnowledgeResponseDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonSnapshotDTO;
@@ -34,6 +35,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
+import rs.teslaris.core.model.person.LanguageKnowledge;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
@@ -76,7 +78,8 @@ public class PersonConverter {
         setPersonInvolvementIds(person, employmentIds, educationIds, membershipIds);
 
         var expertisesOrSkills = new ArrayList<ExpertiseOrSkillResponseDTO>();
-        setExpertisesAndSkills(person, expertisesOrSkills);
+        var languageKnowledges = new ArrayList<LanguageKnowledgeResponseDTO>();
+        setExpertisesAndSkills(person, expertisesOrSkills, languageKnowledges);
 
         var prizes = new ArrayList<PrizeResponseDTO>();
         person.getPrizes().stream()
@@ -95,7 +98,7 @@ public class PersonConverter {
             MultilingualContentConverter.getMultilingualContentDTO(person.getKeyword()),
             person.getApproveStatus(),
             employmentIds, educationIds, membershipIds,
-            expertisesOrSkills, prizes,
+            expertisesOrSkills, languageKnowledges, prizes,
             Objects.nonNull(person.getProfilePhoto()) ?
                 person.getProfilePhoto().getImageServerName() : null,
             false
@@ -247,13 +250,22 @@ public class PersonConverter {
         }
     }
 
+    /**
+     * A language a person knows shares the table with an expertise, but it is no expertise, so it
+     * goes into its own list.
+     */
     private static void setExpertisesAndSkills(Person person,
-                                               ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills) {
+                                               ArrayList<ExpertiseOrSkillResponseDTO> expertisesOrSkills,
+                                               ArrayList<LanguageKnowledgeResponseDTO> languageKnowledges) {
         person.getExpertisesAndSkills().stream()
             .sorted(Comparator.comparing(ExpertiseOrSkill::getId))
-            .forEach(expertiseOrSkill ->
-                expertisesOrSkills.add(ExpertiseOrSkillConverter.toDTO(expertiseOrSkill))
-            );
+            .forEach(expertiseOrSkill -> {
+                if (expertiseOrSkill instanceof LanguageKnowledge languageKnowledge) {
+                    languageKnowledges.add(LanguageKnowledgeConverter.toDTO(languageKnowledge));
+                } else {
+                    expertisesOrSkills.add(ExpertiseOrSkillConverter.toDTO(expertiseOrSkill));
+                }
+            });
     }
 
     public static PersonUserResponseDTO toDTOWithUser(Person person) {
@@ -327,6 +339,11 @@ public class PersonConverter {
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse, Person person) {
+        // An admin sees every field, so the configuration is of no use here.
+        if (SessionUtil.isUserLoggedInAndAdmin()) {
+            return;
+        }
+
         var fieldVisibilityConfiguration =
             personFieldVisibilityRepository.getFieldVisibilityConfiguration(person.getId())
                 .orElse(new PersonFieldVisibility());
@@ -370,7 +387,7 @@ public class PersonConverter {
             personResponse.getPersonalInfo().getPrivatePostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPrivatePostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
-        } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
+        } else {
             if (fieldVisibilityConfiguration.getDateOfBirthVisible()) {
                 personResponse.setShowFullBirthdate(true);
                 return;

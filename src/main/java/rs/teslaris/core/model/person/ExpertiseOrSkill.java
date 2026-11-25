@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -29,7 +30,12 @@ import rs.teslaris.core.model.document.DocumentFile;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "expertise_or_skills")
+@Table(
+    name = "expertise_or_skills",
+    indexes = {
+        @Index(name = "idx_expertise_or_skill_person_id", columnList = "person_id")
+    }
+)
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class ExpertiseOrSkill extends BaseEntity {

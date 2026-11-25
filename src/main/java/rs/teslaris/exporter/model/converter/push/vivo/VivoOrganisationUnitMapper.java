@@ -7,6 +7,7 @@ import static rs.teslaris.exporter.model.converter.push.vivo.VivoRdfSupport.VIVO
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -24,6 +25,34 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
 
     private final VivoTeslarisLinks teslarisLinks;
 
+    /**
+     * The VIVO subclass of foaf:Organization for the sector. An academic unit is a university at
+     * the top level, a college (faculty) one level down and an academic department below that.
+     * OTHER and a missing sector add no subclass.
+     */
+    static Optional<String> sectorClass(ExportOrganisationUnit snapshot) {
+        if (Objects.isNull(snapshot.getSector())) {
+            return Optional.empty();
+        }
+
+        return switch (snapshot.getSector()) {
+            case ACADEMIC -> Optional.of(VIVO + academicClass(snapshot));
+            case COMPANY -> Optional.of(VIVO + "Company");
+            case HEALTH -> Optional.of(VIVO + "Hospital");
+            case INSTITUTION -> Optional.of(VIVO + "Institute");
+            case GOVERNMENT -> Optional.of(VIVO + "GovernmentAgency");
+            case OTHER -> Optional.empty();
+        };
+    }
+
+    private static String academicClass(ExportOrganisationUnit snapshot) {
+        var superOU = snapshot.getSuperOU();
+        if (Objects.isNull(superOU)) {
+            return "University";
+        }
+
+        return Objects.isNull(superOU.getSuperOU()) ? "College" : "AcademicDepartment";
+    }
 
     @Override
     public String profile() {
@@ -42,6 +71,8 @@ public class VivoOrganisationUnitMapper implements RdfMapper<ExportOrganisationU
         var organisationUnit = model.createResource(uri);
 
         organisationUnit.addProperty(RDF.type, model.createResource(FOAF + "Organization"));
+        sectorClass(snapshot).ifPresent(vivoClass ->
+            organisationUnit.addProperty(RDF.type, model.createResource(vivoClass)));
         VivoRdfSupport.addLiterals(model, organisationUnit, RDFS.label, snapshot.getName(),
             target);
         VivoRdfSupport.addLiterals(model, organisationUnit,

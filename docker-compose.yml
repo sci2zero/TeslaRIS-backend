@@ -61,6 +61,9 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/snapshots
+    volumes:
+      - ./snapshots:/usr/share/elasticsearch/snapshots
     ports:
       - "9200:9200"
     networks:

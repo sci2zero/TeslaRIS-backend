@@ -163,6 +163,11 @@ public class ExportDocument extends BaseExportEntity {
     @Field("performance_related_output_type")
     private PerformanceRelatedOutputType performanceRelatedOutputType;
 
+    // Set only for a NON_RESEARCH_PRESENTATION: true when the event lists one of the authors as
+    // an invited speaker.
+    @Field("invited_talk")
+    private Boolean invitedTalk;
+
     @Field("intellectual_property_type")
     private IntellectualPropertyType intellectualPropertyType;
 

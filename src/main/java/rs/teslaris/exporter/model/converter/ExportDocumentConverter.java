@@ -23,6 +23,7 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.IntellectualProperty;
@@ -32,6 +33,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
+import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -169,8 +171,36 @@ public class ExportDocumentConverter extends ExportConverterBase {
         setCommonFields(commonExportDocument, performanceRelatedOutput, computeRelations);
 
         commonExportDocument.setPerformanceRelatedOutputType(performanceRelatedOutput.getType());
+        if (performanceRelatedOutput.getType() ==
+            PerformanceRelatedOutputType.NON_RESEARCH_PRESENTATION) {
+            commonExportDocument.setInvitedTalk(isInvitedTalk(performanceRelatedOutput));
+        }
 
         return commonExportDocument;
+    }
+
+    // True when one of the authors is an invited speaker of the output's event.
+    private static boolean isInvitedTalk(PerformanceRelatedOutput performanceRelatedOutput) {
+        var event = performanceRelatedOutput.getEvent();
+        if (Objects.isNull(event) || Objects.isNull(event.getContributions())) {
+            return false;
+        }
+
+        var invitedSpeakerIds = event.getContributions().stream()
+            .filter(contribution ->
+                contribution.getContributionType() == EventContributionType.INVITED_SPEAKER &&
+                    Objects.nonNull(contribution.getPerson()))
+            .map(contribution -> contribution.getPerson().getId())
+            .collect(Collectors.toSet());
+        if (invitedSpeakerIds.isEmpty()) {
+            return false;
+        }
+
+        return performanceRelatedOutput.getContributors().stream()
+            .anyMatch(contribution ->
+                contribution.getContributionType() == DocumentContributionType.AUTHOR &&
+                    Objects.nonNull(contribution.getPerson()) &&
+                    invitedSpeakerIds.contains(contribution.getPerson().getId()));
     }
 
     public static ExportDocument toCommonExportModel(IntellectualProperty intellectualProperty,

@@ -86,62 +86,11 @@ public class DataQualityAssessmentIndexer {
 
 
     public void index(DataQualityAssessment assessment, List<String> targets, Object dto) {
-        var target = targets.getFirst();
         try {
-            var revision = assessment.getRevision();
-            var entityType = revision.getEntityType();
-            var entityId = revision.getEntityId();
-            var assessmentDate =
-                LocalDateTime.ofInstant(assessment.getFinishedAt(), ZoneOffset.UTC);
+            var index = buildIndex(assessment, targets, dto);
 
-            var index = new DataQualityAssessmentIndex();
-            index.setId(String.valueOf(assessment.getId()));
-            index.setEntityType(entityType);
-            index.setTarget(target);
-            index.setEntityId(entityId);
-            // One lookup answers owners and display name for the entity types whose index the
-            // indexer cannot read itself.
-            var externalScope = resolveExternalScope(entityType, entityId);
-
-            index.setRelatedPersonIds(
-                resolveRelatedPersonIds(target, entityId, dto, externalScope));
-            index.setOrganisationUnitIds(
-                resolveOrganisationUnitIds(target, entityId, dto, externalScope));
-            index.setAssessmentDate(assessmentDate);
-            index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
-            index.setLatest(true);
-            index.setRecordMajorVersion(revision.getMajorVersion());
-            index.setRecordMinorVersion(revision.getMinorVersion());
-            index.setProfileName(assessment.getProfileName());
-            index.setProfileVersion(assessment.getProfileVersion());
-            index.setValid(assessment.getValid());
-            index.setQualityScore(assessment.getQualityScore());
-            index.setQualityScoreFair(assessment.getQualityScoreFair());
-            index.setPassedRules(assessment.getPassedRules());
-            index.setInfoFailedRules(assessment.getInfoFailedRules());
-            index.setBlockingFailedRules(assessment.getBlockingFailedRules());
-            index.setWarningFailedRules(assessment.getWarningFailedRules());
-            index.setErrorFailedRules(assessment.getErrorFailedRules());
-            index.setActivitiesCount(assessment.getActivitiesCount());
-            index.setActivityPublicationCandidatesCount(
-                assessment.getActivityPublicationCandidatesCount());
-            index.setActivityScoreSum(assessment.getActivityScoreSum());
-            index.setActivityErrorIssues(assessment.getActivityErrorIssues());
-            index.setActivityWarningIssues(assessment.getActivityWarningIssues());
-            index.setActivityInfoIssues(assessment.getActivityInfoIssues());
-            index.setActivityDimensionScoreSums(
-                new HashMap<>(assessment.getActivityDimensionScoreSums()));
-            index.setActivityFairScoreSum(assessment.getActivityFairScoreSum());
-            index.setDatabaseId(assessment.getId());
-            index.setPublicationCandidate(assessment.getPublicationCandidate());
-
-            populateRuleKeys(index, assessment, targets);
-            populateDimensionBreakdown(index, assessment, targets);
-
-            supersedePreviousLatest(entityType, entityId, assessment.getProfileName(),
-                assessmentDate);
-
-            setEntityName(index, externalScope);
+            supersedePreviousLatest(index.getEntityType(), index.getEntityId(),
+                index.getProfileName(), index.getAssessmentDate());
 
             indexRepository.save(index);
         } catch (Exception e) {
@@ -150,6 +99,68 @@ public class DataQualityAssessmentIndexer {
                 assessment.getId(), e
             );
         }
+    }
+
+    /**
+     * Builds the document as the latest one in its chain, without reading or writing the index.
+     * Chaining it to its predecessor (is_latest/valid_to) is left to the caller.
+     */
+    public DataQualityAssessmentIndex buildIndex(DataQualityAssessment assessment,
+                                                 List<String> targets, Object dto) {
+        var target = targets.getFirst();
+        var revision = assessment.getRevision();
+        var entityType = revision.getEntityType();
+        var entityId = revision.getEntityId();
+        var assessmentDate =
+            LocalDateTime.ofInstant(assessment.getFinishedAt(), ZoneOffset.UTC);
+
+        var index = new DataQualityAssessmentIndex();
+        index.setId(String.valueOf(assessment.getId()));
+        index.setEntityType(entityType);
+        index.setTarget(target);
+        index.setEntityId(entityId);
+        // One lookup answers owners and display name for the entity types whose index the
+        // indexer cannot read itself.
+        var externalScope = resolveExternalScope(entityType, entityId);
+
+        index.setRelatedPersonIds(
+            resolveRelatedPersonIds(target, entityId, dto, externalScope));
+        index.setOrganisationUnitIds(
+            resolveOrganisationUnitIds(target, entityId, dto, externalScope));
+        index.setAssessmentDate(assessmentDate);
+        index.setValidTo(DataQualityAssessmentIndex.OPEN_INTERVAL_END);
+        index.setLatest(true);
+        index.setRecordMajorVersion(revision.getMajorVersion());
+        index.setRecordMinorVersion(revision.getMinorVersion());
+        index.setProfileName(assessment.getProfileName());
+        index.setProfileVersion(assessment.getProfileVersion());
+        index.setValid(assessment.getValid());
+        index.setQualityScore(assessment.getQualityScore());
+        index.setQualityScoreFair(assessment.getQualityScoreFair());
+        index.setPassedRules(assessment.getPassedRules());
+        index.setInfoFailedRules(assessment.getInfoFailedRules());
+        index.setBlockingFailedRules(assessment.getBlockingFailedRules());
+        index.setWarningFailedRules(assessment.getWarningFailedRules());
+        index.setErrorFailedRules(assessment.getErrorFailedRules());
+        index.setActivitiesCount(assessment.getActivitiesCount());
+        index.setActivityPublicationCandidatesCount(
+            assessment.getActivityPublicationCandidatesCount());
+        index.setActivityScoreSum(assessment.getActivityScoreSum());
+        index.setActivityErrorIssues(assessment.getActivityErrorIssues());
+        index.setActivityWarningIssues(assessment.getActivityWarningIssues());
+        index.setActivityInfoIssues(assessment.getActivityInfoIssues());
+        index.setActivityDimensionScoreSums(
+            new HashMap<>(assessment.getActivityDimensionScoreSums()));
+        index.setActivityFairScoreSum(assessment.getActivityFairScoreSum());
+        index.setDatabaseId(assessment.getId());
+        index.setPublicationCandidate(assessment.getPublicationCandidate());
+
+        populateRuleKeys(index, assessment, targets);
+        populateDimensionBreakdown(index, assessment, targets);
+
+        setEntityName(index, externalScope);
+
+        return index;
     }
 
     private void supersedePreviousLatest(String entityType, Integer entityId, String profileName,

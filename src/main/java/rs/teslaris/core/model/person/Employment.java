@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -29,7 +30,12 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "employments")
+@Table(
+    name = "employments",
+    indexes = {
+        @Index(name = "idx_employment_person_id", columnList = "person_id")
+    }
+)
 @SQLRestriction("deleted=false")
 public class Employment extends Involvement {
 

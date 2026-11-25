@@ -433,7 +433,10 @@ public class VivoDocumentMapperTest {
         "INTANGIBLE_PRODUCT,SOFTWARE,http://purl.obolibrary.org/obo/ERO_0000071",
         "PERFORMANCE_RELATED_OUTPUT,THEATRIC_PLAY,http://purl.org/ontology/bibo/Performance",
         "PERFORMANCE_RELATED_OUTPUT,MUSICAL_PERFORMANCE,http://purl.org/ontology/bibo/Performance",
-        "PERFORMANCE_RELATED_OUTPUT,ARTISTIC_EXHIBITION,http://vivoweb.org/ontology/core#Exhibit"
+        "PERFORMANCE_RELATED_OUTPUT,ARTISTIC_EXHIBITION,http://vivoweb.org/ontology/core#Exhibit",
+        "PERFORMANCE_RELATED_OUTPUT,NON_RESEARCH_PRESENTATION,http://vivoweb.org/ontology/core#Presentation",
+        "PERFORMANCE_RELATED_OUTPUT,BROADCAST_INTERVIEW,http://purl.org/ontology/bibo/Interview",
+        "PERFORMANCE_RELATED_OUTPUT,TEXT_INTERVIEW,http://purl.org/ontology/bibo/Interview"
     })
     public void shouldAddInformationContentEntityForOutputsOutsideIt(ExportPublicationType type,
                                                                      String concreteType,
@@ -455,6 +458,26 @@ public class VivoDocumentMapperTest {
         assertEquals(2,
             model.listObjectsOfProperty(model.createResource(uri), RDF.type).toList().size());
         assertTrue(has(model, uri, RDF.type.getURI(), expectedClass));
+        assertTrue(has(model, uri, RDF.type.getURI(),
+            "http://purl.obolibrary.org/obo/IAO_0000030"));
+    }
+
+    @Test
+    public void shouldMapPresentationOfInvitedSpeakerAsInvitedTalk() {
+        // Given
+        var presentation = document(ExportPublicationType.PERFORMANCE_RELATED_OUTPUT, 81);
+        presentation.setPerformanceRelatedOutputType(
+            PerformanceRelatedOutputType.NON_RESEARCH_PRESENTATION);
+        presentation.setInvitedTalk(true);
+
+        // When
+        var model = mapper.toRdf(presentation, target());
+
+        // Then
+        var uri = NS + "teslaris-document-81";
+        assertEquals(2,
+            model.listObjectsOfProperty(model.createResource(uri), RDF.type).toList().size());
+        assertTrue(has(model, uri, RDF.type.getURI(), VIVO + "InvitedTalk"));
         assertTrue(has(model, uri, RDF.type.getURI(),
             "http://purl.obolibrary.org/obo/IAO_0000030"));
     }

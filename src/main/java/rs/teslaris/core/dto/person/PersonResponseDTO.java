@@ -39,6 +39,8 @@ public class PersonResponseDTO {
 
     private List<ExpertiseOrSkillResponseDTO> expertisesOrSkills;
 
+    private List<LanguageKnowledgeResponseDTO> languageKnowledges;
+
     private List<PrizeResponseDTO> prizes;
 
     private String imageServerFilename;
@@ -70,6 +72,10 @@ public class PersonResponseDTO {
             Objects.nonNull(other.membershipIds) ? new ArrayList<>(other.membershipIds) : null;
         this.expertisesOrSkills = Objects.nonNull(other.expertisesOrSkills)
             ? other.expertisesOrSkills.stream().map(ExpertiseOrSkillResponseDTO::new)
+            .collect(Collectors.toList())
+            : null;
+        this.languageKnowledges = Objects.nonNull(other.languageKnowledges)
+            ? other.languageKnowledges.stream().map(LanguageKnowledgeResponseDTO::new)
             .collect(Collectors.toList())
             : null;
         this.prizes = Objects.nonNull(other.prizes)

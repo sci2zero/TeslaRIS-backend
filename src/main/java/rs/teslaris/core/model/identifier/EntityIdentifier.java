@@ -27,7 +27,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @Table(
     name = "entity_identifiers",
     indexes = {
-        @Index(name = "idx_entity_identifier_value_type", columnList = "value, entity_type")
+        @Index(name = "idx_entity_identifier_type_person", columnList = "entity_type, person_id")
     }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

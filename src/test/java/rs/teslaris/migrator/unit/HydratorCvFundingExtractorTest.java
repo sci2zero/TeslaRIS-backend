@@ -2,6 +2,7 @@ package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -117,7 +118,8 @@ public class HydratorCvFundingExtractorTest {
         assertEquals(LocalDate.of(2020, 1, 1), owner.getDateTo());
 
         var funding = item.funding();
-        assertTrue(funding.getName().isEmpty());
+        assertEquals("Test Project", funding.getName().getFirst().getContent());
+        assertNotSame(project.getName().getFirst(), funding.getName().getFirst());
         assertEquals(Set.of(FundingType.GRANT), funding.getFundingTypes());
         assertEquals("Test Programme", funding.getDisplayProgram().getFirst().getContent());
         assertTrue(funding.getDisplayFunder().isEmpty());
