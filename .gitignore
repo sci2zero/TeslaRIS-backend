@@ -50,3 +50,5 @@ src/main/resources/*.p12
 src/main/resources/*.pem
 
 .env
+
+snapshots/
