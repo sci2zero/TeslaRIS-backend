@@ -10,6 +10,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,11 +114,14 @@ public class HydratorServiceConvertersTest {
         assertEquals(2019, dto.getDocumentDate().year());
         assertEquals(5, dto.getDocumentDate().month());
         assertEquals(14, dto.getDocumentDate().day());
-        assertEquals(2, dto.getContributions().size());
-        assertTrue(dto.getContributions().stream().allMatch(contribution ->
+        assertEquals(3, dto.getContributions().size());
+        assertTrue(dto.getContributions().subList(0, 2).stream().allMatch(contribution ->
             DocumentContributionType.AUTHOR.equals(contribution.getContributionType())));
         assertEquals(OWNER_ID, dto.getContributions().getFirst().getPersonId());
         assertNull(dto.getContributions().get(1).getPersonId());
+        assertEquals(DocumentContributionType.PRESENTER,
+            dto.getContributions().get(2).getContributionType());
+        assertEquals(OWNER_ID, dto.getContributions().get(2).getPersonId());
     }
 
     @Test
@@ -132,12 +136,33 @@ public class HydratorServiceConvertersTest {
         var dto = converters.toNonResearchPresentation(record, service(record));
 
         // then
-        assertEquals(1, dto.getContributions().size());
+        assertEquals(2, dto.getContributions().size());
         assertEquals(DocumentContributionType.AUTHOR,
             dto.getContributions().getFirst().getContributionType());
         assertEquals(OWNER_ID, dto.getContributions().getFirst().getPersonId());
         verify(migrationLog).valueDefaulted(anyString(), eq("PERFORMANCE_RELATED_OUTPUT"),
             eq("cv-1#service#9"), eq("CW-001-MAP-000955"), anyString());
+    }
+
+    @Test
+    void shouldAddOwnerAsPresenterWhenOralPresentationHasNoPresenters() throws Exception {
+        // given
+        var record = curriculum("""
+            {"id": "9", "nonResearchPresentation": {"title": "Test Talk",
+              "presentationDate": {"year": "2019"},
+              "authors": {"total": 1, "author": [{"name": "Smith, Jane"}]}}}
+            """);
+
+        // when
+        var dto = converters.toNonResearchPresentation(record, service(record));
+
+        // then
+        var presenter = dto.getContributions().getLast();
+        assertEquals(DocumentContributionType.PRESENTER, presenter.getContributionType());
+        assertEquals(OWNER_ID, presenter.getPersonId());
+        assertEquals(1, presenter.getOrderNumber());
+        verify(migrationLog).valueDefaulted(anyString(), eq("PERFORMANCE_RELATED_OUTPUT"),
+            eq("cv-1#service#9"), eq("CW-001-MAP-000956"), anyString());
     }
 
     @Test
@@ -178,24 +203,75 @@ public class HydratorServiceConvertersTest {
         // given
         var record = curriculum("""
             {"id": "9", "nonResearchPresentation": {"title": "Test Talk",
+              "presentationDate": {"year": "2019", "month": "5", "day": "14"},
               "presenters": {"total": 2, "author": [{"self": true, "name": "Doe, John"},
                 {"name": "Smith, Jane"}]},
               "invited": true}}
             """);
+        var source = service(record).nonResearchPresentation();
+        var dto = converters.toNonResearchPresentation(record, service(record));
 
         // when
-        var speakers = converters.speakerContributions(record,
-            service(record).nonResearchPresentation());
+        var speakers = converters.speakerContributions(dto, source.presentationDate(),
+            source.invited());
 
         // then
         assertEquals(2, speakers.size());
         assertTrue(speakers.stream().allMatch(speaker ->
             EventContributionType.SPEAKER.equals(speaker.getEventContributionType()) &&
-                Boolean.TRUE.equals(speaker.getIsInvitedContributor())));
+                Boolean.TRUE.equals(speaker.getIsInvitedContributor()) &&
+                LocalDate.of(2019, 5, 14).equals(speaker.getDateFrom()) &&
+                LocalDate.of(2019, 5, 14).equals(speaker.getDateTo())));
         assertEquals(OWNER_ID, speakers.getFirst().getPersonId());
         assertEquals(1, speakers.getFirst().getOrderNumber());
         assertEquals("Smith", speakers.get(1).getPersonName().getLastname());
         assertEquals(2, speakers.get(1).getOrderNumber());
+    }
+
+    @Test
+    void shouldLinkOwnerWhenPresenterIsListedByNameWithoutSelf() throws Exception {
+        // given
+        var record = curriculum("""
+            {"id": "9", "nonResearchPresentation": {"title": "Test Talk",
+              "presentationDate": {"year": "2019"},
+              "presenters": {"total": 2, "author": [{"name": "Smith, Jane"},
+                {"name": "John Doe "}]}}}
+            """);
+
+        // when
+        var dto = converters.toNonResearchPresentation(record, service(record));
+
+        // then
+        var presenters = dto.getContributions().stream()
+            .filter(contribution ->
+                DocumentContributionType.PRESENTER.equals(contribution.getContributionType()))
+            .toList();
+        assertEquals(2, presenters.size());
+        assertNull(presenters.getFirst().getPersonId());
+        assertEquals(OWNER_ID, presenters.get(1).getPersonId());
+    }
+
+    @Test
+    void shouldMakeOwnerSpeakerForWholeMonthWhenBroadcastInterviewDateHasNoDay()
+        throws Exception {
+        // given
+        var record = curriculum("""
+            {"id": "3", "broadcastInterview": {"theme": "Test Theme",
+              "firstBroadcastDate": {"year": "2020", "month": "2"},
+              "program": "Test Program"}}
+            """);
+        var source = service(record).broadcastInterview();
+        var dto = converters.toBroadcastInterview(record, service(record));
+
+        // when
+        var speakers = converters.speakerContributions(dto, source.firstBroadcastDate(), null);
+
+        // then
+        assertEquals(1, speakers.size());
+        assertEquals(OWNER_ID, speakers.getFirst().getPersonId());
+        assertEquals(LocalDate.of(2020, 2, 1), speakers.getFirst().getDateFrom());
+        assertEquals(LocalDate.of(2020, 2, 29), speakers.getFirst().getDateTo());
+        assertEquals(false, speakers.getFirst().getIsInvitedContributor());
     }
 
     @Test
