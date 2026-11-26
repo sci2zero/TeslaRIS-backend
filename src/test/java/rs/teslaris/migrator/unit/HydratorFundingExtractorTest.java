@@ -75,6 +75,10 @@ public class HydratorFundingExtractorTest {
             """.formatted(ID_TYPES, id, type, startDate, ID_TYPES, ID_TYPES, ID_TYPES);
     }
 
+    private static List<String> contents(List<MultilingualContentDTO> values) {
+        return values.stream().map(MultilingualContentDTO::getContent).toList();
+    }
+
     @BeforeEach
     void setUp() {
         var conversionUtil =
@@ -136,14 +140,10 @@ public class HydratorFundingExtractorTest {
         }
 
         return MAPPER.readValue("""
-            {"id": "doc-1", "record": {"metadata": {"project": {
-              "projectId": "TEST001", "identifiers": [%s], "funded": [%s]}}}}
-            """.formatted(String.join(",", identifiers), funded),
+                {"id": "doc-1", "record": {"metadata": {"project": {
+                  "projectId": "TEST001", "identifiers": [%s], "funded": [%s]}}}}
+                """.formatted(String.join(",", identifiers), funded),
             HydratorProjectModel.ProjectDocument.class);
-    }
-
-    private static List<String> contents(List<MultilingualContentDTO> values) {
-        return values.stream().map(MultilingualContentDTO::getContent).toList();
     }
 
     @Test
@@ -206,12 +206,12 @@ public class HydratorFundingExtractorTest {
     @Test
     void shouldReportFurtherFundingPrograms() throws Exception {
         var record = MAPPER.readValue("""
-            {"id": "doc-1", "record": {"metadata": {"project": {
-              "projectId": "TEST001",
-              "identifiers": [{"type": "%sFundingProgram", "value": "Test Programme"},
-                              {"type": "%sFundingProgram", "value": "Other Programme"}],
-              "funded": [%s]}}}}
-            """.formatted(ID_TYPES, ID_TYPES, funding("F1", "2020-01-01")),
+                {"id": "doc-1", "record": {"metadata": {"project": {
+                  "projectId": "TEST001",
+                  "identifiers": [{"type": "%sFundingProgram", "value": "Test Programme"},
+                                  {"type": "%sFundingProgram", "value": "Other Programme"}],
+                  "funded": [%s]}}}}
+                """.formatted(ID_TYPES, ID_TYPES, funding("F1", "2020-01-01")),
             HydratorProjectModel.ProjectDocument.class);
 
         var result = extractor.extract(record);

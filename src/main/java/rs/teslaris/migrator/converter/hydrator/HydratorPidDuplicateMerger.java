@@ -46,7 +46,7 @@ public class HydratorPidDuplicateMerger {
 
     /**
      * @return what the PID lookup found, so the caller can skip a second lookup when nothing holds
-     *     the incoming ids
+     * the incoming ids
      * @throws ResolvedToExistingException when the incoming document was merged into another
      */
     public <D extends DocumentDTO> PidOutcome resolve(MigrationEntityType type, String key,

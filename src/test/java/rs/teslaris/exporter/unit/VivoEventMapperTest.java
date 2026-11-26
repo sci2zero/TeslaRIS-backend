@@ -114,7 +114,7 @@ public class VivoEventMapperTest {
         assertTrue(has(model, URI + "-interval", VIVO + "end", URI + "-end"));
         assertTrue(model.contains(model.createResource(URI + "-end"),
             model.createProperty(VIVO + "dateTime"),
-            model.createTypedLiteral("2025-05-14T00:00:00", XSDDatatype.XSDdateTime)));
+            model.createTypedLiteral("2025-05-14T12:00:00Z", XSDDatatype.XSDdateTime)));
 
         assertTrue(has(model, URI, "http://purl.obolibrary.org/obo/RO_0001025",
             "http://aims.fao.org/aos/geopolitical.owl#Serbia"));

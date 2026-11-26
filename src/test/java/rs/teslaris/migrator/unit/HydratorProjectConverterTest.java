@@ -143,9 +143,9 @@ public class HydratorProjectConverterTest {
     @Test
     void shouldNotReportFundingProgramTypeAsUnmapped() throws Exception {
         var dto = converter.toDTO(document(FULL_PROJECT
-            .replace("#FundingProgram\"", "#FundingProgramType\"")
-            .replace("\"acronym\"",
-                "\"funded\": [{\"fundedAs\": {\"funding\": {\"id\": \"F1\"}}}], \"acronym\"")))
+                .replace("#FundingProgram\"", "#FundingProgramType\"")
+                .replace("\"acronym\"",
+                    "\"funded\": [{\"fundedAs\": {\"funding\": {\"id\": \"F1\"}}}], \"acronym\"")))
             .project();
 
         assertEquals(Set.of("TEST/0001/2020", "QREN-1"), dto.getInternalIdentifiers());

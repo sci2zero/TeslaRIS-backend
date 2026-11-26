@@ -30,17 +30,12 @@ import rs.teslaris.migrator.util.MigrationLog;
 public class HydratorProjectConverter implements
     RecordExtractor.RecordConverter<HydratorProjectModel.ProjectDocument, ProjectMigrationDTO> {
 
+    static final String FUNDING_PROGRAM_TYPE = "FundingProgram";
+    static final String FUNDING_PROGRAM_TYPE_TYPE = "FundingProgramType";
     // FCT's reference of the project, Portugal's national project identifier
     private static final String FCT_REFERENCE_TYPE = "ProjectReference";
-
     private static final Set<String> PROJECT_IDENTIFIER_TYPES = Set.of(FCT_REFERENCE_TYPE, "QREN");
-
     private static final String URL_TYPE = "URL";
-
-    static final String FUNDING_PROGRAM_TYPE = "FundingProgram";
-
-    static final String FUNDING_PROGRAM_TYPE_TYPE = "FundingProgramType";
-
     private static final String ENGLISH = "en";
 
     // Wikidata property used by SciPROJ for the Ciência ID
@@ -65,6 +60,21 @@ public class HydratorProjectConverter implements
 
     private static boolean isBlank(String value) {
         return Objects.isNull(value) || value.isBlank();
+    }
+
+    // Missing dateFrom counts as started, missing dateTo as open-ended; also for curricula
+    static ProjectStatus status(LocalDate dateFrom, LocalDate dateTo) {
+        var today = LocalDate.now();
+
+        if (Objects.nonNull(dateFrom) && dateFrom.isAfter(today)) {
+            return ProjectStatus.SUBMITTED;
+        }
+
+        if (Objects.nonNull(dateTo) && dateTo.isBefore(today)) {
+            return ProjectStatus.CONCLUDED;
+        }
+
+        return ProjectStatus.ONGOING;
     }
 
     @Override
@@ -323,21 +333,6 @@ public class HydratorProjectConverter implements
 
         return conversionUtil.researchAreaIds(classifications,
             reason -> dropped(key, HydratorMappingRule.sciproj(32), reason));
-    }
-
-    // Missing dateFrom counts as started, missing dateTo as open-ended; also for curricula
-    static ProjectStatus status(LocalDate dateFrom, LocalDate dateTo) {
-        var today = LocalDate.now();
-
-        if (Objects.nonNull(dateFrom) && dateFrom.isAfter(today)) {
-            return ProjectStatus.SUBMITTED;
-        }
-
-        if (Objects.nonNull(dateTo) && dateTo.isBefore(today)) {
-            return ProjectStatus.CONCLUDED;
-        }
-
-        return ProjectStatus.ONGOING;
     }
 
     private String typeName(String type) {

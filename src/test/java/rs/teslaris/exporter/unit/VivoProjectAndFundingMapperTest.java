@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
@@ -58,7 +59,8 @@ public class VivoProjectAndFundingMapperTest {
     private final VivoProjectMapper projectMapper =
         new VivoProjectMapper(LINKS, messageSource());
 
-    private final VivoFundingMapper fundingMapper = new VivoFundingMapper(LINKS);
+    private final VivoFundingMapper fundingMapper =
+        new VivoFundingMapper(LINKS, messageSource());
 
 
     private static StaticMessageSource messageSource() {
@@ -72,6 +74,15 @@ public class VivoProjectAndFundingMapperTest {
             Locale.ENGLISH, "PhD student fellow");
         messageSource.addMessage("personProjectInvestigationRole.PHD_STUDENT_FELLOW", serbian,
             "Doktorand");
+        messageSource.addMessage("organisationUnitProjectContributionType.COORDINATOR",
+            Locale.ENGLISH, "Coordinator");
+        messageSource.addMessage("organisationUnitProjectContributionType.COORDINATOR", serbian,
+            "Koordinator");
+        var portuguese = Locale.forLanguageTag("pt");
+        messageSource.addMessage("personProjectContributionType.TEAM_MEMBER", portuguese,
+            "Membro da equipa");
+        messageSource.addMessage("personProjectInvestigationRole.PHD_STUDENT_FELLOW", portuguese,
+            "Bolseiro de doutoramento");
         return messageSource;
     }
 
@@ -219,9 +230,6 @@ public class VivoProjectAndFundingMapperTest {
         assertEquals(1, model.listObjectsOfProperty(model.createResource(PROJECT + "-role-1"),
             RDFS.label).toList().size());
 
-        // Contributions without a TeslaRIS person are not sent on the project.
-        assertFalse(model.containsResource(model.createResource(PROJECT + "-role-3")));
-        assertFalse(model.containsResource(model.createResource(PROJECT + "-role-4")));
         assertTrue(mapping.references().contains(new EntityReference(PushEntityType.PERSONS, 8)));
     }
 
@@ -233,13 +241,27 @@ public class VivoProjectAndFundingMapperTest {
         // Then
         var model = mapping.model();
         var organisationUnit = NS + "teslaris-ou-2";
-        assertTrue(has(model, PROJECT, OBO + "RO_0000057", organisationUnit));
-        assertTrue(has(model, organisationUnit, OBO + "RO_0000056", PROJECT));
+        var coordinatorRole = PROJECT + "-org-role-1";
+        assertTrue(has(model, coordinatorRole, RDF.type.getURI(), VIVO + "LeaderRole"));
+        assertTrue(has(model, coordinatorRole, OBO + "RO_0000052", organisationUnit));
+        assertTrue(has(model, organisationUnit, OBO + "RO_0000053", coordinatorRole));
+        assertTrue(has(model, coordinatorRole, OBO + "BFO_0000054", PROJECT));
+        assertTrue(has(model, PROJECT, OBO + "BFO_0000055", coordinatorRole));
+        assertTrue(model.contains(model.createResource(coordinatorRole), RDFS.label,
+            model.createLiteral("Coordinator", "en")));
+        assertTrue(model.contains(model.createResource(coordinatorRole), RDFS.label,
+            model.createLiteral("Koordinator", "sr")));
+
+        // A partner is a member, with the readable type name when there is no message.
+        var partnerRole = PROJECT + "-org-role-2";
+        assertTrue(has(model, partnerRole, RDF.type.getURI(), VIVO + "MemberRole"));
+        assertTrue(model.contains(model.createResource(partnerRole), RDFS.label,
+            model.createLiteral("Partner")));
 
         assertEquals(1, mapping.sharedNodes().size());
         var external = mapping.sharedNodes().getFirst().uri();
         assertTrue(external.startsWith(NS + "teslaris-external-org-"));
-        assertTrue(has(model, PROJECT, OBO + "RO_0000057", external));
+        assertTrue(has(model, partnerRole, OBO + "RO_0000052", external));
         assertFalse(model.contains(model.createResource(external), RDFS.label));
 
         assertTrue(model.contains(model.createResource(PROJECT + "-url-raid"),
@@ -557,5 +579,131 @@ public class VivoProjectAndFundingMapperTest {
         assertTrue(model.contains(grant, RDFS.label, model.createLiteral("Name", "en")));
         assertFalse(model.contains(grant, RDFS.label, model.createLiteral("Nome")));
         assertEquals(1, model.listObjectsOfProperty(grant, RDFS.label).toList().size());
+    }
+
+    @Test
+    public void shouldMapPortugueseTextWhenTheTargetSupportsIt() {
+        // Given
+        var target = new PushTarget("vivo-local", "vivo", true,
+            "http://vivo.example/api/sparqlUpdate", "http://graph.example", NS,
+            new Auth(AuthType.NONE, null, null), 100, null, List.of("EN", "SR", "PT"),
+            List.of("projects", "fundings"), null);
+        var project = project();
+        project.setName(new ArrayList<>(List.of(
+            new ExportMultilingualContent("PT", "Redes Inteligentes", 1))));
+
+        // When
+        var model = projectMapper.map(project, target).model();
+
+        // Then
+        assertTrue(model.contains(model.createResource(PROJECT), RDFS.label,
+            model.createLiteral("Redes Inteligentes", "pt")));
+        assertEquals(1, model.listObjectsOfProperty(model.createResource(PROJECT),
+            RDFS.label).toList().size());
+
+        // Translated role labels follow the supported languages, Portuguese included.
+        assertTrue(model.contains(model.createResource(PROJECT + "-role-2"), RDFS.label,
+            model.createLiteral("Membro da equipa (Bolseiro de doutoramento)", "pt")));
+        assertTrue(model.contains(model.createResource(PROJECT + "-role-2"), RDFS.label,
+            model.createLiteral("Team member (PhD student fellow)", "en")));
+    }
+
+    @Test
+    public void shouldLabelFundingRoles() {
+        // When
+        var model = fundingMapper.toRdf(funding(), target());
+
+        // Then
+        // No translation for PRINCIPLE_INVESTIGATOR in this message source: the readable enum
+        // name without a language tag.
+        var investigator = model.createResource(FUNDING + "-pi-1");
+        assertTrue(model.contains(investigator, RDFS.label,
+            model.createLiteral("Principle investigator")));
+
+        var administrator = model.createResource(FUNDING + "-admin-1");
+        assertTrue(model.contains(administrator, RDFS.label,
+            model.createLiteral("Coordinator", "en")));
+        assertTrue(model.contains(administrator, RDFS.label,
+            model.createLiteral("Koordinator", "sr")));
+    }
+
+    @Test
+    public void shouldPushDatesAtMiddayUtc() {
+        // When
+        var model = projectMapper.map(project(), target()).model();
+
+        // Then
+        var dateTime = model.createProperty(VIVO + "dateTime");
+        assertTrue(model.contains(model.createResource(PROJECT + "-start"), dateTime,
+            model.createTypedLiteral("2023-01-01T12:00:00Z", XSDDatatype.XSDdateTime)));
+        assertTrue(model.contains(model.createResource(PROJECT + "-end"), dateTime,
+            model.createTypedLiteral("2025-12-31T12:00:00Z", XSDDatatype.XSDdateTime)));
+        assertTrue(model.contains(model.createResource(PROJECT + "-start"),
+            model.createProperty(VIVO + "dateTimePrecision"),
+            model.createResource(VIVO + "yearMonthDayPrecision")));
+    }
+
+    @Test
+    public void shouldTypeProjectPrincipalInvestigatorRole() {
+        // When
+        var model = projectMapper.map(project(), target()).model();
+
+        // Then
+        assertTrue(has(model, PROJECT + "-role-1", RDF.type.getURI(),
+            VIVO + "PrincipalInvestigatorRole"));
+        assertFalse(has(model, PROJECT + "-role-1", RDF.type.getURI(), VIVO + "ResearcherRole"));
+
+        // Every other contributor keeps the general role.
+        assertTrue(has(model, PROJECT + "-role-2", RDF.type.getURI(), VIVO + "ResearcherRole"));
+        assertFalse(has(model, PROJECT + "-role-2", RDF.type.getURI(),
+            VIVO + "PrincipalInvestigatorRole"));
+
+        // The role is realized in the project, which is how VIVO reaches it from the person.
+        assertTrue(has(model, PROJECT + "-role-1", OBO + "BFO_0000054", PROJECT));
+        assertTrue(has(model, PROJECT, OBO + "BFO_0000055", PROJECT + "-role-1"));
+    }
+
+    @Test
+    public void shouldMapContributorWithoutProfileAsVcard() {
+        // When
+        var mapping = projectMapper.map(project(), target());
+
+        // Then
+        var model = mapping.model();
+        var role = PROJECT + "-role-3";
+        var vcard = role + "-vcard";
+        assertTrue(has(model, role, RDF.type.getURI(), VIVO + "PrincipalInvestigatorRole"));
+        assertTrue(has(model, role, OBO + "RO_0000052", vcard));
+        assertTrue(has(model, vcard, OBO + "RO_0000053", role));
+        assertTrue(has(model, role, OBO + "BFO_0000054", PROJECT));
+        assertTrue(has(model, PROJECT, OBO + "BFO_0000055", role));
+        assertTrue(has(model, vcard, RDF.type.getURI(), VCARD + "Individual"));
+        assertTrue(model.contains(model.createResource(vcard), RDFS.label,
+            model.createLiteral("Marko Markovic")));
+        assertTrue(model.contains(model.createResource(vcard + "-name"),
+            model.createProperty(VCARD + "familyName"), "Markovic"));
+    }
+
+    @Test
+    public void shouldSplitCitationStyleNameOnTheComma() {
+        // Given
+        var project = project();
+        project.getPersons().forEach(contribution -> {
+            if (Objects.isNull(contribution.getPerson())) {
+                contribution.setDisplayName("Martins, Luis F. G.");
+            }
+        });
+
+        // When
+        var model = projectMapper.map(project, target()).model();
+
+        // Then
+        var vcardName = model.createResource(PROJECT + "-role-3-vcard-name");
+        assertTrue(model.contains(vcardName, model.createProperty(VCARD + "familyName"),
+            "Martins"));
+        assertTrue(model.contains(vcardName, model.createProperty(VCARD + "givenName"),
+            "Luis F. G."));
+        assertTrue(model.contains(model.createResource(PROJECT + "-role-3-vcard"), RDFS.label,
+            model.createLiteral("Martins, Luis F. G.")));
     }
 }

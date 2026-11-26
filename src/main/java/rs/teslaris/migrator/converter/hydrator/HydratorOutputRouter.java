@@ -420,11 +420,11 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
 
     // An obvious duplicate sharing a PID is merged into the existing document (Dragan, 2026-11-19)
     private <D extends DocumentDTO> PidOutcome mergeByPid(MigrationEntityType type,
-                                                    HydratorCVModel.Curriculum record,
-                                                    HydratorCVModel.Output output, D dto,
-                                                    Function<Integer, ? extends D> reader,
-                                                    BiConsumer<Integer, D> updater,
-                                                    TypeRule<D> rule) {
+                                                          HydratorCVModel.Curriculum record,
+                                                          HydratorCVModel.Output output, D dto,
+                                                          Function<Integer, ? extends D> reader,
+                                                          BiConsumer<Integer, D> updater,
+                                                          TypeRule<D> rule) {
         return pidMerger.resolve(type, converters.outputKey(record, output), dto, reader, updater,
             rule);
     }

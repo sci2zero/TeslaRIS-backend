@@ -34,14 +34,14 @@ public class DocumentLookupRepository {
     @Transactional(readOnly = true)
     public List<Object[]> findAuthors(String entity, String subtypeAttribute, Enum<?> subtype) {
         return narrowed(entityManager.createQuery(
-                "SELECT c.document.id, n.firstname, n.lastname, p.id " +
-                    "FROM PersonDocumentContribution c " +
-                    "JOIN c.affiliationStatement a " +
-                    "JOIN a.displayPersonName n " +
-                    "LEFT JOIN c.person p " +
-                    "WHERE c.contributionType = :type " +
-                    "AND c.document.id IN (SELECT d.id FROM " + entity + " d" +
-                    where(subtypeAttribute) + ")", Object[].class), subtype)
+            "SELECT c.document.id, n.firstname, n.lastname, p.id " +
+                "FROM PersonDocumentContribution c " +
+                "JOIN c.affiliationStatement a " +
+                "JOIN a.displayPersonName n " +
+                "LEFT JOIN c.person p " +
+                "WHERE c.contributionType = :type " +
+                "AND c.document.id IN (SELECT d.id FROM " + entity + " d" +
+                where(subtypeAttribute) + ")", Object[].class), subtype)
             .setParameter("type", DocumentContributionType.AUTHOR)
             .getResultList();
     }

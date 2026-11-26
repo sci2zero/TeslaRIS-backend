@@ -141,7 +141,7 @@ public class VivoDocumentMapperTest {
         assertTrue(has(model, ARTICLE, VIVO + "dateTimeValue", ARTICLE + "-date"));
         assertTrue(model.contains(model.createResource(ARTICLE + "-date"),
             model.createProperty(VIVO + "dateTime"),
-            model.createTypedLiteral("2024-05-01T00:00:00", XSDDatatype.XSDdateTime)));
+            model.createTypedLiteral("2024-05-01T12:00:00Z", XSDDatatype.XSDdateTime)));
         assertTrue(has(model, ARTICLE + "-date", VIVO + "dateTimePrecision",
             VIVO + "yearMonthPrecision"));
 

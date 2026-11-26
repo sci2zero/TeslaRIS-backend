@@ -15,8 +15,10 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.StaticMessageSource;
+import rs.teslaris.core.model.person.DegreeType;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.exporter.model.common.ExportEducation;
 import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -40,12 +42,16 @@ public class VivoPersonMapperTest {
 
     private static final String VCARD = "http://www.w3.org/2006/vcard/ns#";
 
+    private static final String OBO = "http://purl.obolibrary.org/obo/";
+
     private final VivoPersonMapper mapper = new VivoPersonMapper(
         new VivoTeslarisLinks("http://localhost:5173/", "sr,en", "CRIS UNS"), messageSource());
 
 
     static StaticMessageSource messageSource() {
         var messageSource = new StaticMessageSource();
+        messageSource.addMessage("degreeType.PHD", Locale.ENGLISH, "Doctorate");
+        messageSource.addMessage("degreeTypeAbbreviation.PHD", Locale.ENGLISH, "PhD");
         messageSource.addMessage("involvementType.EMPLOYED_AT", Locale.ENGLISH, "Employment");
         messageSource.addMessage("involvementType.EMPLOYED_AT", Locale.forLanguageTag("sr"),
             "Zaposlenje");
@@ -153,7 +159,7 @@ public class VivoPersonMapperTest {
         assertTrue(has(model, position + "-interval", VIVO + "start", position + "-start"));
         assertTrue(model.contains(model.createResource(position + "-start"),
             model.createProperty(VIVO + "dateTime"),
-            model.createTypedLiteral("2020-03-01T00:00:00", XSDDatatype.XSDdateTime)));
+            model.createTypedLiteral("2020-03-01T12:00:00Z", XSDDatatype.XSDdateTime)));
         assertFalse(model.contains(model.createResource(position + "-interval"),
             model.createProperty(VIVO + "end")));
     }
@@ -312,5 +318,80 @@ public class VivoPersonMapperTest {
         assertTrue(mapping.references().containsAll(List.of(
             new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
             new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
+    }
+
+    @Test
+    public void shouldMapPastEmploymentAsAPositionWithAnEndDate() {
+        // Given
+        var person = person();
+        person.setPastEmployments(new ArrayList<>(List.of(
+            new ExportEmployment(organisationUnit(9), LocalDate.of(2015, 2, 1),
+                LocalDate.of(2019, 12, 31), "Researcher", 77, InvolvementType.EMPLOYED_AT,
+                new ArrayList<>()))));
+
+        // When
+        var model = mapper.toRdf(person, target());
+
+        // Then
+        var position = NS + "teslaris-position-77";
+        assertTrue(has(model, position, RDF.type.getURI(), VIVO + "Position"));
+        assertTrue(has(model, position, VIVO + "relates", NS + "teslaris-person-7"));
+        assertTrue(has(model, position, VIVO + "relates", NS + "teslaris-ou-9"));
+        assertTrue(model.contains(model.createResource(position), RDFS.label, "Researcher"));
+        assertTrue(model.contains(model.createResource(position + "-end"),
+            model.createProperty(VIVO + "dateTime"),
+            model.createTypedLiteral("2019-12-31T12:00:00Z", XSDDatatype.XSDdateTime)));
+    }
+
+    @Test
+    public void shouldMapEducationAsEducationalProcess() {
+        // Given
+        var person = person();
+        var education = new ExportEducation(5, organisationUnit(2), new ArrayList<>(),
+            new ArrayList<>(List.of(new ExportMultilingualContent("EN", "Computer science", 1))),
+            new ArrayList<>(List.of(new ExportMultilingualContent("EN", "Summa cum laude", 1))),
+            DegreeType.PHD, LocalDate.of(2016, 10, 1), LocalDate.of(2021, 6, 30));
+        person.setEducations(new ArrayList<>(List.of(education)));
+
+        // When
+        var mapping = mapper.map(person, target());
+
+        // Then
+        var model = mapping.model();
+        var personUri = NS + "teslaris-person-7";
+        var process = personUri + "-education-5";
+        var degree = NS + "teslaris-degree-phd";
+
+        assertTrue(has(model, process, RDF.type.getURI(), VIVO + "EducationalProcess"));
+        assertTrue(has(model, personUri, OBO + "RO_0000056", process));
+        assertTrue(has(model, process, OBO + "RO_0000057", personUri));
+        assertTrue(has(model, process, OBO + "RO_0000057", NS + "teslaris-ou-2"));
+        assertTrue(has(model, NS + "teslaris-ou-2", OBO + "RO_0000056", process));
+        assertTrue(model.contains(model.createResource(process),
+            model.createProperty(VIVO + "majorField"),
+            model.createLiteral("Computer science", "en")));
+        assertTrue(model.contains(model.createResource(process),
+            model.createProperty(VIVO + "supplementalInformation"),
+            model.createLiteral("Summa cum laude", "en")));
+        assertTrue(model.contains(model.createResource(process + "-start"),
+            model.createProperty(VIVO + "dateTime"),
+            model.createTypedLiteral("2016-10-01T12:00:00Z", XSDDatatype.XSDdateTime)));
+
+        // The degree relationship belongs to the person, the degree itself is shared.
+        var awardedDegree = process + "-degree";
+        assertTrue(has(model, awardedDegree, RDF.type.getURI(), VIVO + "AwardedDegree"));
+        assertTrue(has(model, awardedDegree, VIVO + "relates", degree));
+        assertTrue(has(model, awardedDegree, VIVO + "relates", personUri));
+        assertTrue(has(model, process, OBO + "RO_0002234", awardedDegree));
+        assertFalse(model.contains(model.createResource(degree), RDFS.label));
+
+        var node = mapping.sharedNodes().stream()
+            .filter(sharedNode -> sharedNode.uri().equals(degree)).findFirst().orElseThrow();
+        assertTrue(has(node.model(), degree, RDF.type.getURI(), VIVO + "AcademicDegree"));
+        assertTrue(node.model().contains(node.model().createResource(degree), RDFS.label,
+            node.model().createLiteral("Doctorate", "en")));
+        assertTrue(node.model().contains(node.model().createResource(degree),
+            node.model().createProperty(VIVO + "abbreviation"),
+            node.model().createLiteral("PhD", "en")));
     }
 }

@@ -511,6 +511,14 @@ public class TestingDataInitializer {
                 Set.of(new MultiLingualContent(englishTag,
                     "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
         person1.addInvolvement(
+            new Employment(LocalDate.of(2015, 2, 1), LocalDate.of(2019, 12, 31),
+                ApproveStatus.APPROVED,
+                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                dummyOU2, false, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                EmploymentPosition.RESEARCHER,
+                Set.of(new MultiLingualContent(englishTag, "Research Assistant", 1))));
+        person1.addInvolvement(
             new Membership(LocalDate.of(2021, 10, 3), null,
                 ApproveStatus.APPROVED, new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(),
                 null, sci2zero, false, new HashSet<>(),
@@ -529,7 +537,9 @@ public class TestingDataInitializer {
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
                 DegreeType.MASTER, EducationStatus.CONCLUDED,
-                new HashSet<>(), new HashSet<>(), new HashSet<>(), null, new HashSet<>(),
+                new HashSet<>(),
+                Set.of(new MultiLingualContent(englishTag, "Summa cum laude", 1)),
+                new HashSet<>(), null, new HashSet<>(),
                 new HashSet<>()));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
@@ -1543,7 +1553,8 @@ public class TestingDataInitializer {
 
         thesisRepository.save(dummyDocument);
 
-        projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU, dummyDocument);
+        projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU, dummyOU2,
+            person1, dummyDocument);
     }
 
     private PersonEventContribution eventContribution(Person person, OrganisationUnit institution,

@@ -141,7 +141,8 @@ public class HydratorCvFundingExtractor
         }
 
         return funding.fundingIdentifiers().fundingIdentifier().stream()
-            .filter(identifier -> Objects.nonNull(identifier) && StringUtil.valueExists(identifier.reference()))
+            .filter(identifier -> Objects.nonNull(identifier) &&
+                StringUtil.valueExists(identifier.reference()))
             .map(identifier -> HydratorFundingReference.of(identifier.reference()))
             .toList();
     }
@@ -231,7 +232,8 @@ public class HydratorCvFundingExtractor
         investigators.investigator().stream()
             .filter(Objects::nonNull)
             .forEach(investigator -> {
-                var name = !StringUtil.valueExists(investigator.name()) ? null : investigator.name().trim();
+                var name = !StringUtil.valueExists(investigator.name()) ? null :
+                    investigator.name().trim();
                 var cienciaId = !StringUtil.valueExists(investigator.cienciaId()) ? null :
                     investigator.cienciaId().trim();
 

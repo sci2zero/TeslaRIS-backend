@@ -63,23 +63,6 @@ public class ProjectMigrationSupplementerTest {
 
     private Project project;
 
-
-    @BeforeEach
-    void setUp() {
-        project = new Project();
-        project.setId(9);
-        when(projectRepository.findById(9)).thenReturn(Optional.of(project));
-        when(personProjectContributionService.createContribution(any(), eq(project)))
-            .thenAnswer(invocation -> {
-                PersonProjectContributionDTO dto = invocation.getArgument(0);
-                // Saved by the service, so it has an id: entities with a null id collapse in a Set
-                var contribution = new PersonProjectContribution();
-                contribution.setId(1000 + dto.getOrderNumber());
-                contribution.setOrderNumber(dto.getOrderNumber());
-                return contribution;
-            });
-    }
-
     private static PersonProjectContribution contribution(Integer personId, String name,
                                                           int orderNumber) {
         var contribution = new PersonProjectContribution();
@@ -118,6 +101,22 @@ public class ProjectMigrationSupplementerTest {
         dto.setNationalId("PTDC/ABC/1234/2020");
         dto.setInternalIdentifiers(Set.of("PTDC/ABC/1234/2020"));
         return dto;
+    }
+
+    @BeforeEach
+    void setUp() {
+        project = new Project();
+        project.setId(9);
+        when(projectRepository.findById(9)).thenReturn(Optional.of(project));
+        when(personProjectContributionService.createContribution(any(), eq(project)))
+            .thenAnswer(invocation -> {
+                PersonProjectContributionDTO dto = invocation.getArgument(0);
+                // Saved by the service, so it has an id: entities with a null id collapse in a Set
+                var contribution = new PersonProjectContribution();
+                contribution.setId(1000 + dto.getOrderNumber());
+                contribution.setOrderNumber(dto.getOrderNumber());
+                return contribution;
+            });
     }
 
     @Test
@@ -186,9 +185,9 @@ public class ProjectMigrationSupplementerTest {
         assertEquals(PersonProjectContributionType.TEAM_MEMBER, existing.getContributionType());
         assertEquals(PersonProjectInvestigationRole.SUPERVISOR, existing.getInvestigationRole());
         assertEquals(List.of(
-            "contribution type PRINCIPLE_INVESTIGATOR of contribution 1 not set: it already " +
-                "has TEAM_MEMBER",
-            "investigation role RESEARCHER of contribution 1 not set: it already has SUPERVISOR"),
+                "contribution type PRINCIPLE_INVESTIGATOR of contribution 1 not set: it already " +
+                    "has TEAM_MEMBER",
+                "investigation role RESEARCHER of contribution 1 not set: it already has SUPERVISOR"),
             dropped);
     }
 }

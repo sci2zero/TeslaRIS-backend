@@ -8,8 +8,7 @@ import rs.teslaris.core.model.person.DegreeType;
 import rs.teslaris.migrator.model.hydrator.HydratorCVModel;
 
 /**
- * CIÊNCIA VITAE degree-type codes. The crosswalk defines no vocabulary for them, so the table is
- * our own (thesis-mapiranje.md, section 7).
+ * CIÊNCIA VITAE degree-type codes.
  */
 public final class HydratorDegreeTypes {
 

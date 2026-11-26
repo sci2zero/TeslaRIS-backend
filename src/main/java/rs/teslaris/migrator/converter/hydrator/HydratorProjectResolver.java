@@ -22,7 +22,8 @@ public class HydratorProjectResolver {
     public Match resolve(HydratorFundingReference reference) {
         List<Integer> projectIds = switch (reference.kind()) {
             case FCT -> projectMigrationLookup.findIdsByNationalId(reference.lookupValue());
-            case QREN -> projectMigrationLookup.findIdsByInternalIdentifier(reference.lookupValue());
+            case QREN ->
+                projectMigrationLookup.findIdsByInternalIdentifier(reference.lookupValue());
             case WEAK -> null;
         };
 

@@ -16,9 +16,7 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * Education of one degree (CW-001-MAP-000038). The crosswalk maps the degree to
- * {@code Person.involvements} only, so the field mapping is our own (thesis-mapiranje.md, section
- * 7).
+ * Education of one degree (CW-001-MAP-000038).
  */
 @Component
 @RequiredArgsConstructor

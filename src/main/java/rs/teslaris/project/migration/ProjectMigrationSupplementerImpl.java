@@ -121,9 +121,10 @@ public class ProjectMigrationSupplementerImpl implements ProjectMigrationSupplem
             contribution.setInvestigationRole(member.getInvestigationRole());
         } else if (Objects.nonNull(member.getInvestigationRole()) &&
             member.getInvestigationRole() != contribution.getInvestigationRole()) {
-            dropped.add("investigation role " + member.getInvestigationRole() + " of contribution " +
-                contribution.getId() + " not set: it already has " +
-                contribution.getInvestigationRole());
+            dropped.add(
+                "investigation role " + member.getInvestigationRole() + " of contribution " +
+                    contribution.getId() + " not set: it already has " +
+                    contribution.getInvestigationRole());
         }
 
         if (Objects.isNull(contribution.getDateFrom())) {

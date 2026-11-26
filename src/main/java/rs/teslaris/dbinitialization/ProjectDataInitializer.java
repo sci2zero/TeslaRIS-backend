@@ -1,16 +1,24 @@
 package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectInvestigationRole;
 import rs.teslaris.core.model.project.ProjectCollaborationType;
 import rs.teslaris.core.model.project.ProjectResearchType;
 import rs.teslaris.core.model.project.ProjectStatus;
@@ -21,6 +29,8 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectDocumentType;
@@ -56,6 +66,7 @@ public class ProjectDataInitializer {
     private final ProjectDocumentRepository projectDocumentRepository;
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1,
+                                             OrganisationUnit partner1, Person person1,
                                              Thesis document1) {
         var currencyEuro = currencyRepository.findByCode("EUR").orElseThrow();
 
@@ -120,6 +131,46 @@ public class ProjectDataInitializer {
         project3.setDateTo(LocalDate.of(2026, 12, 31));
         project3.setNationalId("TEST-PROJ-0003");
         project3.setCosts(new MonetaryAmount(100000, currencyEuro));
+
+        var investigator = new PersonProjectContribution();
+        investigator.setPerson(person1);
+        investigator.setContributionType(
+            PersonProjectContributionType.PRINCIPLE_INVESTIGATOR);
+        investigator.setOrderNumber(1);
+        investigator.setApproveStatus(ApproveStatus.APPROVED);
+        investigator.setProject(project1);
+
+        var externalName = new PersonName();
+        externalName.setLastname("Martins, Luis F. G.");
+        var externalStatement = new AffiliationStatement();
+        externalStatement.setDisplayPersonName(externalName);
+
+        var externalMember = new PersonProjectContribution();
+        externalMember.setAffiliationStatement(externalStatement);
+        externalMember.setContributionType(PersonProjectContributionType.TEAM_MEMBER);
+        externalMember.setInvestigationRole(PersonProjectInvestigationRole.RESEARCH_FELLOW);
+        externalMember.setOrderNumber(2);
+        externalMember.setApproveStatus(ApproveStatus.APPROVED);
+        externalMember.setProject(project1);
+
+        project1.setPersons(new HashSet<>(Set.of(investigator, externalMember)));
+
+        var coordinator = new OrganisationUnitProjectContribution();
+        coordinator.setOrganisationUnit(funder1);
+        coordinator.setContributionType(OrganisationUnitProjectContributionType.COORDINATOR);
+        coordinator.setOrderNumber(1);
+        coordinator.setApproveStatus(ApproveStatus.APPROVED);
+        coordinator.setProject(project1);
+
+        var consortiumMember = new OrganisationUnitProjectContribution();
+        consortiumMember.setOrganisationUnit(partner1);
+        consortiumMember.setContributionType(
+            OrganisationUnitProjectContributionType.CONSORTIUM_MEMBER);
+        consortiumMember.setOrderNumber(2);
+        consortiumMember.setApproveStatus(ApproveStatus.APPROVED);
+        consortiumMember.setProject(project1);
+
+        project1.setOrganisations(new HashSet<>(Set.of(coordinator, consortiumMember)));
 
         projectRepository.saveAll(List.of(project1, project2, project3));
 

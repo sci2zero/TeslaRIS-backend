@@ -17,6 +17,7 @@ import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
+import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.util.identifier.PublicPersonIdentifiers;
@@ -24,6 +25,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.exporter.model.common.ExportEducation;
 import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportPerson;
@@ -77,18 +79,24 @@ public class ExportPersonConverter extends ExportConverterBase {
             ExportResearchAreaConverter.researchAreaIds(person.getResearchAreas()));
 
         var involvements = involvementRepository.findActiveEmployments(person.getId());
-        involvements.forEach(involvement -> {
-            var hasInstitution = Objects.nonNull(involvement.getOrganisationUnit());
-            commonExportPerson.getEmployments().add(new ExportEmployment(
+        involvements.forEach(involvement -> commonExportPerson.getEmployments()
+            .add(toCommonExportModel(involvement)));
+        involvementRepository.findPastEmployments(person.getId())
+            .forEach(involvement -> commonExportPerson.getPastEmployments()
+                .add(toCommonExportModel(involvement)));
+        involvementRepository.findEducations(person.getId()).forEach(education -> {
+            var hasInstitution = Objects.nonNull(education.getOrganisationUnit());
+            commonExportPerson.getEducations().add(new ExportEducation(
+                education.getId(),
                 hasInstitution ? ExportOrganisationUnitConverter.toCommonExportModel(
-                    involvement.getOrganisationUnit(), false) : null,
-                involvement.getDateFrom(), involvement.getDateTo(),
-                StringUtil.getStringContent(involvement.getRole(),
-                    LanguageAbbreviations.ENGLISH), involvement.getId(),
-                involvement.getInvolvementType(),
+                    education.getOrganisationUnit(), false) : null,
                 hasInstitution ? new ArrayList<>() :
                     ExportMultilingualContentConverter.toCommonExportModel(
-                        involvement.getDisplayOrganisationUnit())));
+                        education.getDisplayOrganisationUnit()),
+                ExportMultilingualContentConverter.toCommonExportModel(education.getTitle()),
+                ExportMultilingualContentConverter.toCommonExportModel(
+                    education.getDegreeClassification()),
+                education.getDegreeType(), education.getDateFrom(), education.getDateTo()));
         });
 
         if (computeRelations) {
@@ -98,6 +106,19 @@ public class ExportPersonConverter extends ExportConverterBase {
                 .addAll(getRelatedInstitutions(person, true));
         }
         return commonExportPerson;
+    }
+
+    private static ExportEmployment toCommonExportModel(Employment employment) {
+        var hasInstitution = Objects.nonNull(employment.getOrganisationUnit());
+        return new ExportEmployment(
+            hasInstitution ? ExportOrganisationUnitConverter.toCommonExportModel(
+                employment.getOrganisationUnit(), false) : null,
+            employment.getDateFrom(), employment.getDateTo(),
+            StringUtil.getStringContent(employment.getRole(), LanguageAbbreviations.ENGLISH),
+            employment.getId(), employment.getInvolvementType(),
+            hasInstitution ? new ArrayList<>() :
+                ExportMultilingualContentConverter.toCommonExportModel(
+                    employment.getDisplayOrganisationUnit()));
     }
 
     private static Set<Integer> getRelatedInstitutions(Person person, boolean onlyActive) {

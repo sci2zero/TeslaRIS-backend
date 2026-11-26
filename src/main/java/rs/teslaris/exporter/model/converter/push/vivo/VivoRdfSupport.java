@@ -26,6 +26,7 @@ import org.apache.jena.vocabulary.RDFS;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.io.ClassPathResource;
+import rs.teslaris.core.model.person.DegreeType;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
@@ -59,10 +60,15 @@ public final class VivoRdfSupport {
     private static final Map<String, String> COUNTRY_URIS = loadCountryUris();
 
     // Languages that have a messages file, so a code can be translated.
-    private static final Set<String> TRANSLATED_LANGUAGES = Set.of("en", "sr");
+    private static final Set<String> TRANSLATED_LANGUAGES = Set.of("en", "sr", "pt");
 
     private static final List<String> DEFAULT_LANGUAGES = List.of("EN", "SR");
-
+    /**
+     * Midday UTC for a date without a time. VIVO shows only the date, but it converts the value
+     * between time zones, and midnight becomes the day before in a zone behind the one that VIVO
+     * reads the value in.
+     */
+    private static final String DAY_TIME = "T12:00:00Z";
 
     private VivoRdfSupport() {
     }
@@ -273,7 +279,7 @@ public final class VivoRdfSupport {
         var value = model.createResource(uri);
         value.addProperty(RDF.type, model.createResource(VIVO + "DateTimeValue"));
         value.addProperty(model.createProperty(VIVO + "dateTime"),
-            model.createTypedLiteral(date + "T00:00:00", XSDDatatype.XSDdateTime));
+            model.createTypedLiteral(date + DAY_TIME, XSDDatatype.XSDdateTime));
         value.addProperty(model.createProperty(VIVO + "dateTimePrecision"),
             model.createResource(VIVO + "yearMonthDayPrecision"));
         return value;
@@ -315,13 +321,13 @@ public final class VivoRdfSupport {
         String dateTime;
         String precision;
         if (value.matches("\\d{4}")) {
-            dateTime = value + "-01-01T00:00:00";
+            dateTime = value + "-01-01" + DAY_TIME;
             precision = "yearPrecision";
         } else if (value.matches("\\d{4}-\\d{2}")) {
-            dateTime = value + "-01T00:00:00";
+            dateTime = value + "-01" + DAY_TIME;
             precision = "yearMonthPrecision";
         } else if (value.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            dateTime = value + "T00:00:00";
+            dateTime = value + DAY_TIME;
             precision = "yearMonthDayPrecision";
         } else {
             return null;
@@ -445,14 +451,17 @@ public final class VivoRdfSupport {
         vcardName.addProperty(RDF.type, model.createResource(VCARD + "Name"));
         vcard.addProperty(model.createProperty(VCARD + "hasName"), vcardName);
 
-        var lastSpace = name.lastIndexOf(' ');
-        if (lastSpace > 0) {
-            vcardName.addProperty(model.createProperty(VCARD + "givenName"),
-                name.substring(0, lastSpace));
-            vcardName.addProperty(model.createProperty(VCARD + "familyName"),
-                name.substring(lastSpace + 1));
-        } else {
-            vcardName.addProperty(model.createProperty(VCARD + "familyName"), name);
+        // "Martins, Luis F. G." is a family name and given names, "Luis Martins" the other way
+        // round.
+        var comma = name.indexOf(',');
+        var split = comma > 0 ? comma : name.lastIndexOf(' ');
+        var family = comma > 0 ? name.substring(0, comma) : name.substring(split + 1);
+        var given = comma > 0 ? name.substring(comma + 1).trim() :
+            name.substring(0, Math.max(split, 0));
+
+        vcardName.addProperty(model.createProperty(VCARD + "familyName"), family);
+        if (split > 0 && !given.isEmpty()) {
+            vcardName.addProperty(model.createProperty(VCARD + "givenName"), given);
         }
 
         return vcard;
@@ -464,6 +473,11 @@ public final class VivoRdfSupport {
 
     public static String fundingUri(PushTarget target, Integer databaseId) {
         return target.namespace() + "teslaris-funding-" + databaseId;
+    }
+
+    public static String academicDegreeUri(PushTarget target, DegreeType degreeType) {
+        return target.namespace() + "teslaris-degree-" +
+            degreeType.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
     public static String researchAreaUri(PushTarget target, Integer databaseId) {

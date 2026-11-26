@@ -16,7 +16,8 @@
       "requestTimeoutSeconds": 120,
       "supportedLanguages": [
         "EN",
-        "SR"
+        "SR",
+        "PT"
       ],
       "entityTypes": [
         "research_areas",

@@ -3,8 +3,6 @@
 Harvests entities from an external HTTP source (currently the **hydrator** service), converts them
 to core DTOs, and creates them through the existing core services.
 
-Full design: `migrator-design.md`.
-
 ## Pipeline
 
 ```

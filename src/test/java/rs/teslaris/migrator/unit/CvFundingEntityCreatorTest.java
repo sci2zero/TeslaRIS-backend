@@ -98,26 +98,6 @@ public class CvFundingEntityCreatorTest {
 
     private CvFundingEntityCreator creator;
 
-
-    @BeforeEach
-    void setUp() {
-        var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
-            mock(LanguageService.class), mock(ResearchAreaService.class));
-        creator = new CvFundingEntityCreator(projectMigrationWriter, fundingMigrationWriter,
-            projectSupplementer, currencyService, projectResolver, institutionResolver,
-            personResolver, conversionUtil, idResolver, migrationLog);
-
-        when(idResolver.require("hydrator", MigrationEntityType.PERSON, "cv-1"))
-            .thenReturn(OWNER_ID);
-        when(institutionResolver.resolve(any()))
-            .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
-
-        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
-            new ProjectMigrationWriter.MigratedProject(42, Map.of(), true, Map.of()));
-        when(fundingMigrationWriter.migrate(any(), any(), any()))
-            .thenReturn(new FundingMigrationWriter.MigratedFunding(77, true, Map.of()));
-    }
-
     private static CvFundingMigrationDTO dto(String reference,
                                              List<ProjectMigrationDTO.TeamEntry> investigators,
                                              FundingDTO funding, String rejection) {
@@ -141,6 +121,25 @@ public class CvFundingEntityCreatorTest {
                                                               int order) {
         return new ProjectMigrationDTO.TeamEntry(PersonProjectContributionType.TEAM_MEMBER, name,
             cienciaId, null, order);
+    }
+
+    @BeforeEach
+    void setUp() {
+        var conversionUtil = new HydratorConversionUtil(mock(LanguageTagService.class),
+            mock(LanguageService.class), mock(ResearchAreaService.class));
+        creator = new CvFundingEntityCreator(projectMigrationWriter, fundingMigrationWriter,
+            projectSupplementer, currencyService, projectResolver, institutionResolver,
+            personResolver, conversionUtil, idResolver, migrationLog);
+
+        when(idResolver.require("hydrator", MigrationEntityType.PERSON, "cv-1"))
+            .thenReturn(OWNER_ID);
+        when(institutionResolver.resolve(any()))
+            .thenReturn(new HydratorInstitutionResolver.Match(null, "identifier not found"));
+
+        when(projectMigrationWriter.migrate(any(), any(), any())).thenReturn(
+            new ProjectMigrationWriter.MigratedProject(42, Map.of(), true, Map.of()));
+        when(fundingMigrationWriter.migrate(any(), any(), any()))
+            .thenReturn(new FundingMigrationWriter.MigratedFunding(77, true, Map.of()));
     }
 
     @Test
