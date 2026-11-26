@@ -2282,7 +2282,7 @@
       "points": 3,
       "usedForFairCompliance": true,
       "constraints": {
-        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'()&/\\-]+$"
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,;'()&/\\-]+$"
       }
     },
     "organisationUnitDescriptionMissing": {

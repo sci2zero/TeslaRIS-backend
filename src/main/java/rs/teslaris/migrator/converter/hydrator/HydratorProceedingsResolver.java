@@ -223,7 +223,9 @@ public class HydratorProceedingsResolver implements RunScopedCache {
      * @return the event's id, or {@code null} when there is no date to hold it on
      */
     public Integer createPresentationEvent(HydratorCVModel.Curriculum record,
-                                           HydratorCVModel.Output output, boolean performIndex) {
+                                           HydratorCVModel.Output output,
+                                           List<PersonEventContributionDTO> speakers,
+                                           boolean performIndex) {
         var paper = output.conferencePaper();
         var date = conversionUtil.flexibleDate(converters.presentationDate(paper));
 
@@ -235,6 +237,7 @@ public class HydratorProceedingsResolver implements RunScopedCache {
         dto.setType(OtherEventType.PERFORMANCE);
         applyEventFields(dto, paper.paperTitle().trim(), date, converters.languageOf(record),
             paper.conferenceLocation());
+        dto.setContributions(new ArrayList<>(speakers));
 
         var created = otherEventService.createOtherEvent(dto, performIndex);
         migrationLog.stubCreated(HydratorSource.NAME, "PERFORMANCE",
@@ -242,6 +245,20 @@ public class HydratorProceedingsResolver implements RunScopedCache {
             paper.paperTitle().trim());
 
         return created.getId();
+    }
+
+    // A conference is shared by its papers and posters, so speakers are added to the stored one
+    public void addConferenceSpeakers(Integer conferenceId,
+                                      List<PersonEventContributionDTO> speakers) {
+        if (Objects.isNull(conferenceId) || speakers.isEmpty()) {
+            return;
+        }
+
+        var conference = conferenceService.readConference(conferenceId);
+        var contributions = new ArrayList<>(conference.getContributions());
+        contributions.addAll(speakers);
+        conference.setContributions(contributions);
+        conferenceService.updateConference(conferenceId, conference);
     }
 
     /**
