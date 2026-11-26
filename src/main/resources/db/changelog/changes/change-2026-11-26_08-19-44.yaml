@@ -1,0 +1,105 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 1795681184-1
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.projects
+              ADD CONSTRAINT projects_status_check
+              CHECK (status >= 0 AND status <= 6);
+
+  - changeSet:
+      id: 1795681184-2
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_project_contribution
+              ADD CONSTRAINT person_project_contribution_investigation_role_check
+              CHECK (investigation_role >= 0 AND investigation_role <= 21);
+
+  - changeSet:
+      id: 1795681184-3
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_project_contribution
+              ADD CONSTRAINT person_project_contribution_contribution_type_check
+              CHECK (contribution_type >= 0 AND contribution_type <= 6);
+
+  - changeSet:
+      id: 1795681184-4
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_units
+              ADD CONSTRAINT organisation_units_sector_check
+              CHECK (sector >= 0 AND sector <= 8);
+
+  - changeSet:
+      id: 1795681184-5
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.fundings
+              ADD CONSTRAINT fundings_funding_location_type_check
+              CHECK (funding_location_type >= 0 AND funding_location_type <= 2);
+
+  - changeSet:
+      id: 1795681184-6
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.projects
+              DROP CONSTRAINT projects_status_check;
+
+  - changeSet:
+      id: 1795681184-7
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_project_contribution
+              DROP CONSTRAINT person_project_contribution_investigation_role_check;
+
+  - changeSet:
+      id: 1795681184-8
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.person_project_contribution
+              DROP CONSTRAINT person_project_contribution_contribution_type_check;
+
+  - changeSet:
+      id: 1795681184-9
+      author: constraints-drift-script
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE public.organisation_units
+              DROP CONSTRAINT organisation_units_sector_check;

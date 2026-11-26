@@ -1,0 +1,171 @@
+databaseChangeLog:
+- changeSet:
+    id: 1795681066288-1
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_education_person_id
+        tableName: educations
+- changeSet:
+    id: 1795681066288-2
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_employment_person_id
+        tableName: employments
+- changeSet:
+    id: 1795681066288-3
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: entity_type
+        - column:
+            name: person_id
+        indexName: idx_entity_identifier_type_person
+        tableName: entity_identifiers
+- changeSet:
+    id: 1795681066288-4
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_expertise_or_skill_person_id
+        tableName: expertise_or_skills
+- changeSet:
+    id: 1795681066288-5
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_membership_person_id
+        tableName: memberships
+- changeSet:
+    id: 1795681066288-6
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_prize_person_id
+        tableName: prizes
+- changeSet:
+    id: 1795681066288-7
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_priv_city_person_id
+        tableName: person_priv_city
+- changeSet:
+    id: 1795681066288-8
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_priv_state_person_id
+        tableName: person_priv_state
+- changeSet:
+    id: 1795681066288-9
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_priv_street_person_id
+        tableName: person_priv_street
+- changeSet:
+    id: 1795681066288-10
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_prof_city_person_id
+        tableName: person_prof_city
+- changeSet:
+    id: 1795681066288-11
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_prof_state_person_id
+        tableName: person_prof_state
+- changeSet:
+    id: 1795681066288-12
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_person_prof_street_person_id
+        tableName: person_prof_street
+- changeSet:
+    id: 1795681066288-13
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_persons_biography_person_id
+        tableName: persons_biography
+- changeSet:
+    id: 1795681066288-14
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_persons_display_title_person_id
+        tableName: persons_display_title
+- changeSet:
+    id: 1795681066288-15
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_persons_keyword_person_id
+        tableName: persons_keyword
+- changeSet:
+    id: 1795681066288-16
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: person_id
+        indexName: idx_persons_other_names_person_id
+        tableName: persons_other_names
+- changeSet:
+    id: 1795681066288-17
+    author: milospopovic (generated)
+    changes:
+    - dropIndex:
+        indexName: idx_entity_identifier_value_type
+        tableName: entity_identifiers
+
