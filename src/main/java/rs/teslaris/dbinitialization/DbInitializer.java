@@ -140,7 +140,7 @@ public class DbInitializer implements ApplicationRunner {
             .registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-//                    researchAreaDataInitializer.loadResearchAreaTaxonomy();
+                   researchAreaDataInitializer.loadResearchAreaTaxonomy();
                     reindexService
                         .reindexDatabase(Arrays.asList(EntityType.values()),
                             false, null);
