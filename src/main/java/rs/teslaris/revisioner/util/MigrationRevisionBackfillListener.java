@@ -3,27 +3,21 @@ package rs.teslaris.revisioner.util;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.applicationevent.MigrationRunFinishedEvent;
-import rs.teslaris.revisioner.model.QualityAssessmentTarget;
-import rs.teslaris.revisioner.service.interfaces.QualityAssessmentBackfillService;
 import rs.teslaris.revisioner.service.interfaces.RevisionService;
 
 /**
- * Gives the entities a migration produced the baseline revision and quality assessment it skipped
- * while running.
+ * Records a revision of a new major line for every entity a migration run updated, which also
+ * carries its reassessment.
  * <p>
- * A run that enumerated what it created is backfilled exactly; one that did not is backfilled per
- * type over the whole repository, which skips whatever already has a revision and so also catches
- * entities an earlier run left behind. An entity the run updated already has a revision, so a
- * backfill would pass over it: it gets a revision of a new major line instead, which also carries
- * its reassessment.
+ * Entities a run created are not backfilled here: a later pass can still add to them (a person's
+ * educations come with the documents), so their baseline revision is left to a backfill run after
+ * all passes.
  */
 @Component
 @RequiredArgsConstructor
@@ -32,8 +26,6 @@ public class MigrationRevisionBackfillListener {
 
     private final RevisionService revisionService;
 
-    private final QualityAssessmentBackfillService qualityAssessmentBackfillService;
-
 
     @Async
     @EventListener
@@ -41,27 +33,10 @@ public class MigrationRevisionBackfillListener {
         if (event.hasUpdatedEntities()) {
             recordUpdated(event);
         }
-
-        if (event.hasEnumeratedEntities()) {
-            backfillEnumerated(event);
-            return;
-        }
-
-        backfillEveryEntityOfCreatedTypes(event);
-    }
-
-    private void backfillEnumerated(MigrationRunFinishedEvent event) {
-        var tally = applyToEnumerated(event, event.createdEntityIdsByType(),
-            revisionService::createRevisionFromCurrentState, "created");
-
-        log.info("Backfilled {} revision(s) of the entities created by migration run {} of " +
-                "source '{}', {} skipped, {} failed.", tally.recorded(), event.runId(),
-            event.source(), tally.skipped(), tally.failed());
     }
 
     private void recordUpdated(MigrationRunFinishedEvent event) {
-        var tally = applyToEnumerated(event, event.updatedEntityIdsByType(),
-            revisionService::recordRevisionFromCurrentState, "updated");
+        var tally = applyToEnumerated(event, event.updatedEntityIdsByType());
 
         log.info("Recorded {} revision(s) of the entities updated by migration run {} of " +
                 "source '{}', {} unchanged, {} failed.", tally.recorded(), event.runId(),
@@ -69,8 +44,7 @@ public class MigrationRevisionBackfillListener {
     }
 
     private Tally applyToEnumerated(MigrationRunFinishedEvent event,
-                                    Map<String, List<Integer>> entityIdsByType,
-                                    RevisionWrite write, String outcome) {
+                                    Map<String, List<Integer>> entityIdsByType) {
         var recorded = 0;
         var skipped = 0;
         var failed = 0;
@@ -86,7 +60,8 @@ public class MigrationRevisionBackfillListener {
                 try {
                     // Entity types without a revision restorer, and entities whose state is
                     // already recorded, are reported as not recorded rather than as a failure.
-                    if (write.apply(entityType, entityId, null)) {
+                    if (revisionService.recordRevisionFromCurrentState(entityType, entityId,
+                        null)) {
                         recorded++;
                     } else {
                         skipped++;
@@ -94,61 +69,14 @@ public class MigrationRevisionBackfillListener {
                 } catch (Exception e) {
                     // One unreadable entity must not cost the rest of the run its history.
                     failed++;
-                    log.warn("Unable to record a revision of entity '{}' (ID={}) {} by " +
-                            "migration run {}. Reason: {}", entityType, entityId, outcome,
+                    log.warn("Unable to record a revision of entity '{}' (ID={}) updated by " +
+                            "migration run {}. Reason: {}", entityType, entityId,
                         event.runId(), e.getMessage());
                 }
             }
         }
 
         return new Tally(recorded, skipped, failed);
-    }
-
-    private void backfillEveryEntityOfCreatedTypes(MigrationRunFinishedEvent event) {
-        var targets = resolveTargets(event.createdEntityTypes());
-
-        if (targets.isEmpty()) {
-            log.info("Migration run {} of source '{}' created only types without a backfill " +
-                    "target ({}), nothing to backfill.", event.runId(), event.source(),
-                event.createdEntityTypes());
-            return;
-        }
-
-        log.info("Backfilling revisions and quality assessments for {} after migration run {} " +
-            "of source '{}'.", targets, event.runId(), event.source());
-
-        // Existing assessments are left alone: this is about the records that have none.
-        qualityAssessmentBackfillService.performBackfill(targets, List.of(), List.of(), null,
-            false);
-    }
-
-    /**
-     * Maps the migrator's entity types onto backfill targets. Document subtypes all share the
-     * single DOCUMENT target, and types without one - a person employment, for instance, which is
-     * part of a person rather than an entity of its own - are dropped.
-     */
-    private List<QualityAssessmentTarget> resolveTargets(Set<String> createdEntityTypes) {
-        return createdEntityTypes.stream()
-            .map(this::toTarget)
-            .filter(Objects::nonNull)
-            .distinct()
-            .collect(Collectors.toList());
-    }
-
-    private QualityAssessmentTarget toTarget(String migrationEntityType) {
-        return switch (migrationEntityType) {
-            case "PERSON" -> QualityAssessmentTarget.PERSON;
-            case "ORGANISATION_UNIT" -> QualityAssessmentTarget.ORGANISATION_UNIT;
-            case "DOCUMENT", "JOURNAL_PUBLICATION", "PROCEEDINGS_PUBLICATION", "THESIS",
-                 "MONOGRAPH", "MONOGRAPH_PUBLICATION" -> QualityAssessmentTarget.DOCUMENT;
-            default -> null;
-        };
-    }
-
-    @FunctionalInterface
-    private interface RevisionWrite {
-
-        boolean apply(String entityType, Integer entityId, String profileName);
     }
 
     private record Tally(int recorded, int skipped, int failed) {

@@ -245,9 +245,13 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
                         poster.setEventId(
                             proceedingsResolver.resolveConference(record, output,
                                 run.isPerformIndex()));
-                        return registered(MigrationEntityType.CONFERENCE_POSTER, poster,
+                        var id = registered(MigrationEntityType.CONFERENCE_POSTER, poster,
                             performanceRelatedOutputService.createPerformanceRelatedOutput(poster,
                                 run.isPerformIndex()).getId());
+                        proceedingsResolver.addConferenceSpeakers(poster.getEventId(),
+                            converters.speakerContributions(poster,
+                                output.conferencePoster().conferenceDate(), null));
+                        return id;
                     }),
                 // The merge keeps the present conference, so an update creates no second stub
                 UpdatePlan.<PerformanceRelatedOutputDTO>of(
@@ -387,6 +391,8 @@ public class HydratorOutputRouter implements ItemRouter<HydratorCVModel.Curricul
             (slides, run) -> {
                 slides.setEventId(
                     proceedingsResolver.createPresentationEvent(record, output,
+                        converters.speakerContributions(slides,
+                            converters.presentationDate(output.conferencePaper()), null),
                         run.isPerformIndex()));
                 return performanceRelatedOutputService.createPerformanceRelatedOutput(slides,
                     run.isPerformIndex()).getId();

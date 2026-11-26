@@ -317,6 +317,8 @@ public class HydratorOutputConverters {
 
         ensureOwnerContribution(dto, record, output, MigrationEntityType.CONFERENCE_POSTER,
             poster.authoringRole());
+        addPresenters(dto, record, outputKey(record, output), entityType,
+            HydratorMappingRule.cv(392), null);
 
         return dto;
     }
@@ -522,8 +524,9 @@ public class HydratorOutputConverters {
         applyCommonFields(dto, record, output, entityType, paper.paperTitle(), languageOf(record),
             presentationDate(paper), null, null, null);
         dto.setType(PerformanceRelatedOutputType.SLIDES);
-        dto.setContributions(linkedContributions(record, paper.presenters(),
-            DocumentContributionType.PRESENTER));
+        dto.setContributions(new ArrayList<>());
+        addPresenters(dto, record, outputKey(record, output), entityType,
+            HydratorMappingRule.cv(91), paper.presenters());
         dto.getTitle().stream()
             .map(MultilingualContentDTO::getLanguageTagId)
             .filter(Objects::nonNull)
@@ -828,7 +831,8 @@ public class HydratorOutputConverters {
         dto.setContributions(contributions(record, key, entityType, HydratorMappingRule.cv(955),
             presentation.authors(), null));
         ensureOwnerContribution(dto, record, key, entityType, HydratorMappingRule.cv(955), null);
-        addPresenters(dto, record, key, HydratorMappingRule.cv(956), presentation.presenters());
+        addPresenters(dto, record, key, entityType, HydratorMappingRule.cv(956),
+            presentation.presenters());
 
         if (Boolean.TRUE.equals(presentation.keynote())) {
             migrationLog.valueDropped(HydratorSource.NAME, entityType.name(), key,
@@ -875,7 +879,8 @@ public class HydratorOutputConverters {
 
     // The presenters, or the curriculum owner when the source lists none
     private void addPresenters(PerformanceRelatedOutputDTO dto, HydratorCVModel.Curriculum record,
-                               String key, String rule, HydratorCVModel.OutputAuthors presenters) {
+                               String key, MigrationEntityType entityType, String rule,
+                               HydratorCVModel.OutputAuthors presenters) {
         var added = linkedContributions(record, presenters, DocumentContributionType.PRESENTER);
         var ownerName = personResolver.ownerName(record);
         var ownerId = personResolver.resolveOwner(record);
@@ -895,8 +900,7 @@ public class HydratorOutputConverters {
             }
 
             added.add(contribution(DocumentContributionType.PRESENTER, 1, ownerName, ownerId));
-            migrationLog.valueDefaulted(HydratorSource.NAME,
-                MigrationEntityType.PERFORMANCE_RELATED_OUTPUT.name(), key, rule,
+            migrationLog.valueDefaulted(HydratorSource.NAME, entityType.name(), key, rule,
                 "no presenters in the source, curriculum owner added as PRESENTER");
         }
 
@@ -950,7 +954,8 @@ public class HydratorOutputConverters {
         dto.setProducer(conversionUtil.multilingualContent(interview.producer(), language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(844), null);
-        addPresenters(dto, record, key, HydratorMappingRule.cv(844), null);
+        addPresenters(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
+            HydratorMappingRule.cv(844), null);
         dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(852),
             interview.researchClassifications()));
 
@@ -976,7 +981,8 @@ public class HydratorOutputConverters {
             language));
         ensureOwnerContribution(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
             HydratorMappingRule.cv(854), null);
-        addPresenters(dto, record, key, HydratorMappingRule.cv(854), null);
+        addPresenters(dto, record, key, MigrationEntityType.PERFORMANCE_RELATED_OUTPUT,
+            HydratorMappingRule.cv(854), null);
         dto.setResearchAreasId(serviceResearchAreas(key, HydratorMappingRule.cv(860),
             interview.researchClassifications()));
 
