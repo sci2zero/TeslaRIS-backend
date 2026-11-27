@@ -38,18 +38,39 @@ package commonTypes {
     Set<MultiLingualContent> description
     String logoServerName
     String backgroundServerName
+    GeoLocation location
+    PostalAddress postalAddress;
+    String phoneNumber;
+    BrandingTheme chromeTheme;
+    BrandingTheme heroTheme;
+  }
+
+  enum BrandingTheme {
+    LIGHT
+    DARK
   }
   
-  /' !!!!! maybe to consider to join with Branding information into one class'/
   class CrisContextInformation {
+    License metadataLicense
+    Boolean toggleAssessmentModule
+    Boolean toggleDigitalLibrary
+    Boolean toggleDigitalRepository
+    Boolean toggleRegistration
+    Boolean toogleResearchEvaluationModule /' !!!!!! to be added '/
     String personNationalIdRegularExpression
     String projectNationalIdRegularExpression
     String organisationUnitNationalIdRegularExpression
     String documentNationalIdRegularExpression
-    License metadataLicense
-    Boolean digitalLibraryThesesIncluded
-    Boolean digitalRepositoryIncluded
-    Boolean researchOutputsEvaluationIncluded
+    String personNationalIdUrl
+    String organisationUnitNationalIdUrl
+    String projectNationalIdUrl
+    String documentNationalIdUrl
+    Set<MultiLingualContent> personNationalIdentifierName
+    Set<MultiLingualContent> organisationUnitNationalIdentifierName
+    Set<MultiLingualContent> projectNationalIdentifierName
+    Set<MultiLingualContent> documentNationalIdentifierName
+    Map<ApplicableEntityTypeMap<StringIdentifierConfiguration>> identifierConfiguration
+    List<Integer> thesisLibraryInstitutionIds
   }
 
   class ProfilePhotoOrLogo {
@@ -93,7 +114,7 @@ package commonTypes {
   ResearchArea "*" --> "0..1" ResearchArea : superResearchArea
   
   enum SDGoal { 
-    ' details can be found at https://sdgs.un.org/goals
+    /' details can be found at https://sdgs.un.org/goals '/
     NO_POVERTY
     ZERO_HUNGER
     GOOD_HEALTH_AND_WELL_BEING
@@ -122,12 +143,13 @@ package commonTypes {
     Set<MultiLingualContent> name
     String symbol /' for instance - $ '/
     String code  /' for instance USD - iso-4217-currency-enum from https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd '/
+    String processedName
   }
   
   abstract class BaseEntity {
     Integer id 
-    LocalDate createDate
-    LocalDate lastModificationDate
+    Date createDate
+    Date lastModification
     String createdBy
     String updatedBy
     String adminNote
@@ -151,6 +173,8 @@ package commonTypes {
       ORGANISATION_UNIT_SEARCH_ADVANCED
       COLLABORATION_PUBLICATIONS
       VISUALIZATION_PUBLICATIONS
+      PROCEEDINGS_PUBLICATIONS
+      EVENT_PUBLICATIONS
   }
   
   enum NotificationType {
@@ -191,6 +215,9 @@ package commonTypes {
       SKG_IF_HARVEST
       MAINTENANCE
       METADATA_ENRICHMENT
+      QUALITY_ASSESSMENT_BACKFILL
+      DATA_QUALITY_FIX
+      MIGRATION_SYNC
   }
   
   enum RecurrenceType {
@@ -204,7 +231,8 @@ package commonTypes {
   
   class ScheduledTaskMetadata {
     String taskId
-    LocalDateTime timeToRun
+    LocalDateTime legacyTimeToRun
+    Instant timeToRun
     Map<StringObject> metadata
     ScheduledTaskType type
     RecurrenceType recurrenceType
@@ -216,13 +244,23 @@ package commonTypes {
     NotificationType notificationType
     User user
     Boolean sentByEmail
+    LocalDateTime readAt
+    String details
+    NotificationSentiment sentiment
+  }
+
+  enum NotificationSentiment {
+      INFO
+      WARNING
+      ERROR
+      SUCCESS
   }
   
   class FlexibleDate {
     Integer year 
     Integer month 
     Integer day
-    Set<MultilingualContent> text /' !!!!! reason for specific - indefinite, notDefined, etc. '/
+    String text
   }
   
 }
@@ -243,6 +281,7 @@ package user {
   enum UserNotificationPeriod {
       DAILY
       WEEKLY
+      MONTHLY
       NEVER
   }
 
@@ -259,17 +298,19 @@ package user {
     String email
     String password
     String note
-    Stirng firstname
-    Stirng lastname
-    boolean locked
+    String firstname
+    String lastname
+    Boolean locked
     boolean canTakeRole
-    Language preferedUILanguage
-    Language preferredReferenceCataloguingLanguage
+    LanguageTag preferedUILanguage
+    LanguageTag preferredReferenceCataloguingLanguage
     Authority authority
     Person person
     OrganisationUnit OrganisationUnit
     Commission commission
     UserNotificationPeriod userNotificationPeriod
+    Boolean receiveOnlyNewNotifications
+    LocalDate tombstone
   }
 
   class UserAccountActivation {
@@ -304,7 +345,7 @@ package user {
     User user
     Instant issueAt 
     Instant expiredAt 
-    Boolean revoked
+    boolean revoked
   } 
   
 }
@@ -317,25 +358,26 @@ package person {
     Set<MultiLingualContent> biography
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String nationalId /' !!! rename from nationalScienceId to nationalId'/
+    String nationalId /' !!!!!! rename from nationalScienceId to nationalId'/
     String orcid
     String scopusAuthorId
     String openAlexId
     String webOfScienceResearcherId /' WoS author identifier '/
-    String scholarID /' Goolge scholar identifier '/
-    String authenticusId /' https://bioregistry.io/registry/authenticus '/
-    String lattesId /' https://bioregistry.io/registry/lattes '/
-    Set<String> internalIds
+    String scholarId /' Goolge scholar identifier '/
+    String authenticusId /' !!! probably might be removed to Entity_Identifiers - https://bioregistry.io/registry/authenticus '/
+    String lattesId /' !!! probably might be removed to Entity_Identifiers - https://bioregistry.io/registry/lattes '/
+    Set<String> internalIdentifiers
     Set<String> accountingIds
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds 
-    Set<String> urls
     ApproveStatus approveStatus
     PersonalInfo personalInfo
-    Set<SDGoal> sdgs /' !!! will be done by using indicators '/
+    Set<SDGoal> sdgs /' !!!!!! should be added '/
     ProfilePhotoOrLogo profilePhoto
     LocalDate dateOfLastIndicatorharvest
     Set<Integer> employmentInstitutionsIdHierarchy
+
+    Boolean publicationCandidate
   }
 
   Person "0..1" --> "0..1" User : user
@@ -345,8 +387,8 @@ package person {
     String firstname
     String otherName
     String lastname
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     PersonNameType personNameType
   }
   
@@ -358,13 +400,15 @@ package person {
   }
 
   class PersonalInfo {
-    FlexibleDate localBirthDate /' !!! rename to birthDate '/
+    FlexibleDate birthDate /' !!!!!! rename localBirthDate to birthDate and change type, someone can enter only year '/
     String placeOfBirth
+    Country countryOfBirth /' !!!!!! to be added '/
     Sex sex
     PostalAddress privatePostalAddress
     PostalAddress professionalPostalAddress
     Contact privateContact
     Contact professionalContact
+    Set<String> uris /' !!! consider to have structure - uris type and value '/
     Set<MultilingualContent> displayTitle
   }
 
@@ -439,9 +483,9 @@ package person {
     Set<MultiLingualContent> description
     Set<MultiLingualContent> keywords 
     Set<ResearchArea> researchAreas
-    FlexibleDate dateFrom 
-    FlexibleDate dateTo 
-    Set<SDGoal> sdgs /' !!!  skip for now, there is a sense in this only if involvementDescription is there '/
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
+    Set<SDGoal> sdgs /' !!!!!! to be added '/
     Set<DocumentFile> proofs
     Set<String> uris
   }
@@ -458,16 +502,15 @@ package person {
 
   Involvement "*" -- "1" Person : involvements / personInvolved
   Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
-  Involvement "*" --> "*" OrganisationUnit : otherInstitutions /' !!! or host institutions, skip for now '/
-  Involvement "0..1" --> "*" FundingPart : fundingParts /' !!! '/     
+  Involvement "*" --> "*" OrganisationUnit : otherInstitutions /' !!! rename to otherInstitutions (from hostInstitutions) '/
+  Involvement "0..1" --> "*" FundingPart : fundingParts /' !!!!!! to be added '/
 
   class Education extends Involvement {
     DegreeType degreeType 
-    Set<MultiLingualContent> degreeTitle /' !!! former title, skip for now '/
+    Set<MultiLingualContent> title
     Set<MultiLingualContent> courseCode
-    Set<MultiLingualContent> degreeMajor /' !!! former abbreviationTitle, skip for now '/
-    Set<MultiLingualContent> description
-    Set<MultiLingualContent> degreeClassification 
+    Set<MultiLingualContent> abbreviationTitle
+    Set<MultiLingualContent> degreeClassification
     EducationStatus educationStatus 
     Set<MultiLingualContent> displayThesisSupervisors
   }
@@ -489,7 +532,7 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPosition employmentPosition /' !!!!! hopefully we can remove this at some moment'/
+    EmploymentPosition employmentPosition /' !!!!!! hopefully we can remove this at some moment'/
     EmploymentPositionHierarchy employmentPositionHierarchy
     Set<MultiLingualContent> role
   }
@@ -511,10 +554,10 @@ package person {
 
   class Membership extends Involvement {
     MembershipType membershipType
-	' !!!!! Set<MultiLingualContent> contributionDescription should be removed, it is moved to Involvement - involvementDescription 
+	/' !!!!!! Set<MultiLingualContent> contributionDescription should be removed, it is moved to Involvement - involvementDescription '/
     Set<MultiLingualContent> role
     
-    ' !!!!! only available if COMMISSION_MEMBER is membershipType
+    /' !!!!!! to be added, only available if COMMISSION_MEMBER is membershipType '/
     Integer numberOfReviewsOrAssessment
   }
 
@@ -536,11 +579,11 @@ package person {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    FlexibleDate dateFrom /' !!! former date, skip for now '/ 
-    FlexibleDate dateTo /' !!! former endDate, skip for now '/
+    FlexibleDate dateFrom /' !!!!!! former date, rename and change type '/
+    FlexibleDate dateTo /' !!!!!! former endDate, rename and change type '/
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Boolean favourite
+    Boolean favorite
   }
 
   enum PrizeType {
@@ -554,6 +597,7 @@ package person {
   enum Sex {
     MALE
     FEMALE
+    /' consider to add OTHER '/
   }
   
 }
@@ -566,14 +610,14 @@ package institution {
     Set<MultilingualContent> description
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String numberOfEmployees /' !!! should stay String, add in the placeholder or tooltip that it is not mandatory exact number, can be 50-100 for instance '/
+    String numberOfEmployees
     GeoLocation location
     PostalAddress postalAddress
     ApproveStatus approveStatus
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds
     Set<String> accountingIds 
-    Set<String> internalIds
+    Set<String> internalIdentifiers
     String nationalId
     String scopusAfid
     String openAlexId
@@ -586,11 +630,11 @@ package institution {
     String wikidata /' !! regular expression - ^Q[1-9]\d*$, landing page - https://www.wikidata.org/wiki/Q1263535 '/
     String taxNumber
     Contact contact
-    Set<String> uris
+    Set<String> uris /' !!! consider to have structure - uris type and value '/
     Boolean startup
-    FlexibleDate dateEstablished
-    FlexibleDate dateDissolved
-    Boolean active /' !! if dateDissolved is defined and in the past, active can't be true, in other cases user can define whether it is true or false, 
+    FlexibleDate dateEstablished /' !!!!!! type change needed '/
+    FlexibleDate dateDissolved /' !!!!!! type change needed '/
+    Boolean active /' !!! if dateDissolved is defined and in the past, active can't be true, in other cases user can define whether it is true or false,
                     meaning it might be inactive without dateDissolved preserved in the system '/
     Set<String> allowedThesisTypes
     Boolean isClientInstitutionCris
@@ -613,10 +657,10 @@ package institution {
     INSTITUTION
     GOVERNMENT
     OTHER
+    RESEARCH_INSTITUTE /' !!!!!! to be added '/
+    SME /' !!!!!! to be added '/
+    PRIVATE_NON_PROFIT /' !!!!!! to be added '/
   }
-
-  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
-  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : targetOrganisationUnit
 
   class InstitutionDefaultSubmissionContent {
     Set<MultiLingualContent> placeOfKeep
@@ -625,28 +669,11 @@ package institution {
 
   InstitutionDefaultSubmissionContent "0..1" --> "1" OrganisationUnit : institution
 
-  class OrganisationUnitsRelation {
-    Set<MultiLingualContent> sourceAffiliationStatement
-    Set<MultiLingualContent> targetAffiliationStatement
-    OrganisationUnitRelationType relationType
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
-    ApproveStatus approveStatus
-    Set<DocumentFile> proofs
-  }
-
   class OrganisationUnitTrustConfiguration {
     Boolean trustNewPublications
     Boolean trustNewDocumentFiles
   }
   OrganisationUnitTrustConfiguration "0..1" --> "1" OrganisationUnit
-
-  enum OrganisationUnitsRelationType {
-    BELONGS_TO
-    MEMBER_OF
-    SPIN_OF
-    PREDECESSOR
-  }
 
   class OrganisationUnitOutputConfiguration {
     Boolean showOutputs
@@ -657,20 +684,42 @@ package institution {
 
   OrganizationUnitOutputConfiguration "0..1" --> "1" OrganisationUnit : organisationUnit
 
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : targetOrganisationUnit
+
+  class OrganisationUnitsRelation {
+    Set<MultiLingualContent> sourceAffiliationStatement
+    Set<MultiLingualContent> targetAffiliationStatement
+    OrganisationUnitRelationType relationType
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
+    ApproveStatus approveStatus
+    Set<DocumentFile> proofs
+  }
+
+  enum OrganisationUnitsRelationType {
+    BELONGS_TO
+    MEMBER_OF
+    SPIN_OF /' !!!!!! to be added '/
+    PREDECESSOR /' !!!!!! to be added '/
+  }
+
 }
 
 package document {
 
   enum DocumentContributionType {
     AUTHOR
-    PRESENTER 
+    PRESENTER
     TRANSLATOR 
     ASSISTANT_STAFF 
     EDITOR
-    ASSOCIATED_EDITOR 
-    INVITED_EDITOR /' !! to be replaced with EDITOR + isInvitedContributor? '/
+    ASSOCIATED_EDITOR
+    INVITED_EDITOR /' !!!!!! to be replaced with EDITOR + isInvitedContributor? '/
     REVIEWER
     ADVISOR
+    MENTOR /' !!!!!! to be added, all previously assigned Thesis ADVISOR roles should be swapped with MENTOR '/
+    CO-MENTOR /' !!!!!! to be added '/
     BOARD_MEMBER
     ARGUER 
     OWNER
@@ -692,23 +741,23 @@ package document {
     AffiliationStatement affiliationStatement
     Integer orderNumber
     ApproveStatus approveStatus
-    ' !!!!! the fields below are available in additional dialog in UI, it represents details contribution
-    ' !!!!! if some of those fields are filled it is indexed as activity linked with person
+    ' !!! the fields below are available in additional dialog in UI, it represents details contribution
+    ' !!! if some of those fields are filled it is indexed as activity linked with person
     Set<MultiLingualContent> keywords 
     Set<ResearchArea> researchAreas 
-    FlexibleDate dateFrom 
-    FlexibleDate dateTo 
-    Set<SDGoal> sdgs /' !!! skip for now, there is a sense in this only if contributionDescription is there '/
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo  /' !!!!!! type change needed '/
+    Set<SDGoal> sdgs /' !!!!!! to be added '/
     Set<DocumentFile> proofs 
     Set<String> uris 
     
-    boolean isMainContributor 
-    boolean isInvitedContributor 
+    Boolean isMainContributor
+    Boolean isInvitedContributor
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
   PersonContribution "*" -- "0..1" Person : contributions / person
-  PersonContribution "0..1" --> "*" FundingPart : fundingParts 
+  PersonContribution "0..1" --> "*" FundingPart : fundingParts /' !!!!!! to be added '/
   
   class AffiliationStatement {
     Set<MultiLingualContent> displayAffiliationStatement
@@ -720,12 +769,11 @@ package document {
   class PersonDocumentContribution extends PersonContribution {
     DocumentContributionType contributionType
     
-    boolean isCorrespondingContributor 
-    /' use isMainContributor + BOARD_MEMBER here? 
-    boolean isBoardPresident !! '/
+    Boolean isCorrespondingContributor
+    Boolean isBoardPresident
     EmploymentTitle employmentTitle
     PersonalTitle personalTitle
-    Set<MultilingualContent> displayDocument /' !!! in the case Document is not linked, it will be rarely used, only meaningful if it has been started from PersonActivity '/
+    Set<MultilingualContent> displayDocument /' !!! skip for now, in the case Document is not linked, it will be rarely used, only meaningful if it represent'/
   }
   
   enum EmploymentTitle {
@@ -749,7 +797,7 @@ package document {
     NONE
   }
   
-  PersonDocumentContribution "*" --> "0..1" Document : document
+  PersonDocumentContribution "*" --> "0..1" Document : contributors / document
    
   class OrganisationUnitContribution {
       Boolean favorite /' !! we might implemente later highlight section with most important output, project, event '/
@@ -761,9 +809,9 @@ package document {
       ApproveStatus approveStatus
       ' the fields below are available in additional dialog in UI, it represents details contribution
       ' if some of those fields are filled it is indexed as activity linked with person
-      FlexibleDate dateFrom 
-      FlexibleDate dateTo 
-      Set<SDGoal> sdgs /' !!! skip for now, there is a sense in this only if contributionDescription is there '/
+      FlexibleDate dateFrom /' !!!!!! type change needed '/
+      FlexibleDate dateTo /' !!!!!! type change needed '/
+      Set<SDGoal> sdgs /' !!!!!! to be added '/
       Set<DocumentFile> proofs 
       Set<String> uris /' contribution might be proved by url or attached file (uris or proofs) '/
       
@@ -772,14 +820,14 @@ package document {
   
   OrganisationUnitContribution "*" --> "0..1" person.Person : contactPerson 
   OrganisationUnitContribution "*" -- "0..1" institution.OrganisationUnit : contributions / organisationUnit 
-  OrganisationUnitContribution "0..1" --> "*" FundingPart : fundingParts 
+  OrganisationUnitContribution "0..1" --> "*" FundingPart : fundingParts /' !!!!!! to be added '/
   
-  /' !!! '/
+  /' !!!!!! to be added '/
   class OrganisationUnitDocumentContribution extends OrganisationUnitContribution {
       DocumentOrgUnitContributionType contributionType
   }
   
-  /' !!! '/
+  /' !!!!!! to be added '/
   enum DocumentOrgUnitContributionType {
       AUTHOR
       PUBLISHER 
@@ -787,7 +835,7 @@ package document {
       OTHER
   }
   
-  OrganisationUnitDocumentContribution "*" --> "0..1" Document : document /' !!! '/
+  OrganisationUnitDocumentContribution "*" --> "0..1" Document : document /' !!!!!! to be added '/
     
   class DocumentFile {
     String filename
@@ -800,10 +848,13 @@ package document {
     License license
     ApproveStatus approveStatus
     boolean canEdit
-    LocalDateTime timestamp
-    boolean latest
-    boolean isVerifiedData
+    DateTime timestamp
+    Boolean latest
+    Boolean isVerifiedData
     String legacyFilename
+    Boolean isArchived
+    Document document /' !!!!!! do we need this, in case of document file/proof/thesis supplement '/
+    Person person /' !!!!!! do we need this, in case of personal document e.g. prize, involvement '/
   }
   
   enum AccessRights {
@@ -832,48 +883,55 @@ package document {
     IMAGE
     STATEMENT
     ADVISOR_CONFLICT_OF_INTEREST
+    CONTRACT
+    REPORTING_TEMPLATE
+    PROGRAM_DESCRIPTION
+    CALL_TEXT
+    APPLICATION_TEMPLATE
+    OTHER
   }
   
   abstract class Document {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> subTitle
-    Set<MultiLingualContent> titleAbbreviation /' !!!!! '/     
+    Set<MultiLingualContent> titleAbbreviation /' !!!!!! to be added '/
     Set<MultiLingualContent> description
     Set<MultiLingualContent> remark
-    Set<MultiLingualContent> keywords
-    Set<ResearchArea> researchAreas /' !!!!! '/
-    Set<MultilingualContent> geoSpaceDescription 
-    Set<MultilingualContent> chronologicalSpaceDescription
+    Set<MultilingualContent> edition
     Set<String> uris
-    String documentDate
+    FlexibleDate documentDate
     Set<DocumentFile> fileItems
     Set<DocumentFile> proofs
+    Set<MultiLingualContent> keywords
     ApproveStatus approveStatus
-    PublicationStatus publicationStatus
     String doi
-    String handleId 
     String scopusId
     String openAlexId
     String wosId
-    String arXivId 
-    String pubmedId 
-    String ssrnId 
+    String handleId
+    String arXivId
+    String pubmedId
+    String ssrnId
     String nationalId
-    Set<String> internalIds /' !!! changed title, skip for now '/
     Set<String> oldIds /' !!! changed type, skip for now '/
-    Set<Integer> mergedIds 
-    Boolean peerReviewed 
-    Boolean openAccess 
-    Set<MultiLingualContent> city 
-    Country country 
-    Set<MultilingualContent> edition 
-    Set<SDGoal> sdgs /' !!! skip for now '/
+    Set<Integer> mergedIds
     Boolean isMetadataValid
     Boolean areFilesValid
     Boolean isArchived
+    Boolean publicationCandidate
+    Boolean peerReviewed
+    Boolean openAccess
+    PublicationStatus publicationStatus
+    Set<String> internalIdentifiers
     DocumentPublicationType documentType
-    Boolean authorReprint 
+    Set<MultilingualContent> geoSpaceDescription
+    Set<MultilingualContent> chronologicalSpaceDescription
+    Set<MultiLingualContent> city
+    Country country
+    Boolean authorReprint
     Set<MultilingualContent> displayPublisher
+    Set<ResearchArea> researchAreas
+    Set<SDGoal> sdgs /' !!!!!! to be added '/
   }
   
   enum DocumentPublicationType {
@@ -902,7 +960,29 @@ package document {
     ACCEPTED
     IN_PRINT
     PUBLISHED
-  } 
+  }
+
+  Document "*" --> "0..1" Publisher : publisher /' !!!!!! moved to be linked with Document, therefore it should be removed from subclasses (Monograph, etc.) '/
+
+    DocumentsRelation "*" --> "1" Document : source
+    DocumentsRelation "*" --> "1" Document : target
+
+    class DocumentsRelation {
+      DocumentsRelationType relationType
+      /' !!! to add for supporting linking with non-managed output/document '/
+      Set<MultiLingualContent> sourceDocumentDescription
+      Set<MultiLingualContent> targetDocumentDescription
+    }
+
+    enum DocumentsRelationType {
+      PART_OF
+      USED_BY
+      CITED_BY
+      REPLACED_BY
+      RESULT_OF /' also can link PREPRINT '/
+      TOPIC_OF /' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document '/
+      /' Moreover, it might be that a IntangibleProduct (software, dataset, online resource) is the main topic of some journal article, etc. '/
+    }
 
   class ProceedingsPublication extends Document {
     ProceedingsPublicationType proceedingsPublicationType
@@ -913,38 +993,41 @@ package document {
     Set<MultilingualContent> section 
   }
 
+  Document "*" --> "0..1" Event : event
+
   enum ProceedingsPublicationType {
     /' !!! to consider to add here RESEARCH_ARTICLE instead of four below terms + to introduce into 
     ProceedingsPublication (and in Journal Publication and in MonographPublication) isAbstract field, 
-    whether it is invited or not depends on PersonContribution (AUTHOR + isInvited)'/
+    whether it is invited or not depends on PersonContribution (AUTHOR + isInvited). NOTE: liquibase update for
+    migration existing data is needed, and this has consequences on research evaluation (M30 and M60) /
     REGULAR_FULL_ARTICLE
     INVITED_FULL_ARTICLE
     INVITED_ABSTRACT_ARTICLE
     REGULAR_ABSTRACT_ARTICLE
     PREFACE
     POSTFACE
-    COMMENTARY /' !!!!! '/
-    /' !!!!! removed, ENTRY should be used 
+    COMMENTARY /' !!! to be added '/
+    /' !!! removed, ENTRY should be used for
       LEXICOGRAPHIC_UNIT '/
-      /' !!!!! removed, COMMENTARY should be used
+      /' !!! removed, COMMENTARY should be used for
       POLEMICS
       SCIENTIFIC_CRITIC '/
     BOOK_REVIEW
-    ENTRY /' !!!!! '/
-    OTHER /' !!!!! '/
+    ENTRY /' !!! to be added '/
+    OTHER /' !!! to be added '/
   }
 
   class Proceedings extends Document {
-    /' !!!!! moved to Document as titleAbbreviation
-    Set<MultilingualContent> nameAbbreviation   '/
-    String printISBN
     String eISBN
+    String printISBN
     Integer numberOfPages
-    String volume
-        /' volume and number are defined only in the case publicationSeries is defined. '/
-    String number
     Set<LanguageTag> languages
-    String udc /' !!!!! '/
+    PublicationSeries publicationSeries
+    /' volume and number are defined only in the case publicationSeries is defined. '/
+    String publicationSeriesVolume
+    String publicationSeriesIssue
+    /' !!!!!! to move to Document as titleAbbreviation
+        Set<MultilingualContent> nameAbbreviation   '/
   }
 
   abstract class Event {
@@ -952,44 +1035,52 @@ package document {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> description
     Set<MultiLingualContent> keywords
-    Set<ResearchArea> researchAreas
     Boolean serialEvent
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     Country country
     Set<MultiLingualContent> place
     Set<MultilingualContent> displayOrganizer 
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds
     Set<String> uris
-    Set<SDGoal> sdgs /' !!! skip for now '/
+    Set<ResearchArea> researchAreas
+    Set<SDGoal> sdgs /' !!!!!! skip for now '/
+    /' !!!!!! to remove, replaced with subclassing
+    EventType eventType '/
   }
-     
-  enum OtherEventType {
-    WEBINAR
-    LECTURE 
-    PERFORMANCE
-    PLAY
-    CEREMONY
-    TRIAL
-    THESIS_DEFENCE
+
+  class PersonEventContribution extends PersonContribution {
+     EventContributionType contributionType
+     Set<MultilingualContent> displayEvent
+
+     /' !!!!!! only available if Event is a Course and contributionType is SPEAKER '/
+     String lectureHoursPerWeek
+     String tutorialHoursPerWeek
+     String labHoursPerWeek
+     String otherContactHoursPerWeek
+
+     /' !!!!!! only available if Event is a Conference and contributionType is REVIEWER '/
+     Integer numberOfReviewsOrAssessment
+
+     /' !!!!!! can remove those two fields below, it can be preserved in linked Event (name and place) '/
+     Set<MultilingualContent> caseName
+     Set<MultilingualContent> locationJurisdiction
+
+     /' !!!!!! instead of mainArguer here, I would use isMainContributor from the PersonContribution (moved from PersonDocumentContribution) '/
   }
-  
-  class OtherEvent extends Event{
-    OtherEventType type     
-  }
+
+  Event "1" --> "*" PersonEventContribution : event / contributors
 
   enum EventContributionType {
     ORGANIZER
-    /' might be replaced with ORGANIZATION_BOARD_MEMBER + isMainContributor  
-        ORGANIZATION_BOARD_CHAIR !!! '/
+    ORGANIZATION_BOARD_CHAIR
     ORGANIZATION_BOARD_MEMBER
     PROGRAMME_BOARD_MEMBER 
     REVIEWER
     SPEAKER
-    /' might be replaced with isInvited and isKeynote boolean fields in PersonEventContribution
-        INVITED_SPEAKER  
-        KEYNOTE_SPEAKER  !!! '/
+    INVITED_SPEAKER
+    KEYNOTE_SPEAKER
     PANELISTS
     CHAIR
     AUDIENCE
@@ -1003,45 +1094,21 @@ package document {
     ARGUER 
     OTHER 
   }
-
-  class PersonEventContribution extends PersonContribution {
-     EventContributionType contributionType
-     Set<MultilingualContent> displayEvent
-     
-     ' !! only available if Event is a Course and contributionType is SPEAKER
-     String lectureHoursPerWeek
-     String tutorialHoursPerWeek
-     String labHoursPerWeek
-     String otherContactHoursPerWeek
-     
-     ' !! only available if Event is a Conference and contributionType is REVIEWER
-     Integer numberOfReviewsOrAssessment
-     
-     ' !!! can remove those two fields below, it can be preserved in linked Event (name and place)
-     Set<MultilingualContent> caseName
-     Set<MultilingualContent> locationJurisdiction  
-     
-     boolean isKeynoteContributor /' !!!!! '/ 
-     
-     /' !!! instead of mainArguer here, I would use isMainContributor from the PersonContribution (moved from PersonDocumentContribution) '/
-  }
-
-  Event "1" --> "*" PersonEventContribution : contributors
   
-  /' !!! '/
+  /' !!!!!! to be added '/
   class OrganisationUnitEventContribution extends OrganisationUnitContribution {
      EventOrgUnitContributionType contributionType
   }
     
-  /' !!! '/
+  /' !!!!!! to be added '/
   enum EventOrgUnitContributionType {
      ORGANIZER
      HOST 
      OTHER
   }
     
-  OrganisationUnitDocumentContribution "*" --> "1" Event : event /' !!! '/
-  
+  OrganisationUnitDocumentContribution "*" --> "1" Event : organisations / event /' !!!!!! to be added '/
+
   EventsRelation "*" --> "0..1" Event : source
   EventsRelation "*" --> "0..1" Event : target
 
@@ -1081,11 +1148,27 @@ package document {
     String fee
   }
 
+  class OtherEvent extends Event{
+    OtherEventType type
+  }
+
+  enum OtherEventType {
+      WEBINAR
+      LECTURE
+      PERFORMANCE
+      PLAY
+      CEREMONY
+      TRIAL
+      THESIS_DEFENCE
+      PRESENTATION /' !!!!!! to be added '/
+      SESSION /' !!!!!! to be added '/
+      OTHER /' !!!!!! to be added '/
+  }
+
   ProceedingsPublication "1..*" --> "1" Proceedings : proceedings 
   /' !!! there is also DocumentsRelation PART_OF which can be used instead '/
   
-  Document "*" --> "0..1" Event
-  
+
   class JournalPublication extends Document {
     JournalPublicationType journalPublicationType
     String startPage
@@ -1119,30 +1202,31 @@ package document {
     }
 
   class PublicationSeries {
+    Set<MultiLingualContent> title
     String eISSN
     String printISSN
+    String openAlexId
     Set<LanguageTag> languages
-    Set<MultiLingualContent> title
-    Set<MultiLingualContent> subtitle
     Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> subtitle
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds
-    String openAlexId
     Set<String> uris
+    Boolean publicationCandidate
   }
   
-  /' !!! '/
+  /' !!! skip for now '/
   class PublicationSeriesPublisher {
     Set<MultilingualContent> displayPublisher
     TeslaRISDate dateFrom
     TeslaRISDate dateTo
   }
     
-  PublicationSerierPublisher "*" -- "1" PublicationSeries : publishers / publicationSeries /' !!! '/
-  PublicationSerierPublisher "*" -- "0..1" Publisher : publicationSeries / publisher /' !!! '/
+  PublicationSerierPublisher "*" -- "1" PublicationSeries : publishers / publicationSeries /' !!! skip for now '/
+  PublicationSerierPublisher "*" -- "0..1" Publisher : publicationSeries / publisher /' !!! skip for now '/
   
   class BookSeries extends PublicationSeries {
-   ' for instance https://www.springer.com/gp/computer-science/lncs
+   /' for instance https://www.springer.com/gp/computer-science/lncs '/
   }
 
   class Journal extends PublicationSeries {
@@ -1162,32 +1246,36 @@ package document {
     PublicationSeriesContributionType contributionType
     Set<MultilingualContent> displayPublicationSeries /' !!! in the case PublicationSeries is not linked, it will be rarely used '/         
     
-    /' !!!!! only available if contributionType is REGULAR_REVIEWER or ADHOC_REVIEWER '/
+    /' !!!!!! only available if contributionType is REGULAR_REVIEWER or ADHOC_REVIEWER '/
     Integer numberOfReviewsOrAssessment
   }
 
   enum PublicationSeriesContributionType {
+    EDITOR_IN_CHIEF /' !!! to be added '/
     EDITOR
-    ASSOCIATED_EDITOR
+    ASSOCIATE_EDITOR /' !!! rename '/
     /' !!! can be removed, instead we can use EDITOR + isInvitedContributor field (PersonContribution)
     INVITED_EDITOR '/
+    GUEST_EDITOR /' !!! to be added '/
     REVIEWER
-    ADHOC_REVIEWER
+    AD_HOC_REVIEWER /' !!! rename '/
     SCIENTIFIC_BOARD_MEMBER
   }
+
+  PublicationSeries "0..1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
  
-  /' !!! '/
+  /' !!! to be added '/
   class OrganisationUnitPublicationSeriesContribution extends OrganisationUnitContribution {
      PublicationSeriesOrgUnitContributionType contributionType
   }
     
-  /' !!! '/
+  /' !!! to be added '/
   enum PublicationSeriesOrgUnitContributionType {
      PUBLISHER 
      OTHER
   }
     
-  OrganisationUnitPublicationSeriesContribution "*" --> "1" PublicationSeries : publicationSeries /' !!! '/
+  OrganisationUnitPublicationSeriesContribution "*" --> "1" PublicationSeries : publicationSeries /' !!! to be added '/
 
   class MonographPublication extends Document {
     MonographPublicationType monographPublicationType
@@ -1201,10 +1289,10 @@ package document {
   enum MonographPublicationType {
     CHAPTER
     RESEARCH_ARTICLE
-    REVIEW_ARTICLE /' !!!!! '/
+    REVIEW_ARTICLE /' !!! to be added  '/
     PREFACE
     POSTFACE
-    COMMENTARY /' !!!!! '/
+    COMMENTARY /' !!! to be added '/
     /' !!!!! removed, ENTRY should be used 
           LEXICOGRAPHIC_UNIT '/
     /' !!!!! removed, COMMENTARY should be used
@@ -1212,10 +1300,9 @@ package document {
           SCIENTIFIC_CRITIC '/
     BOOK_REVIEW
     ENTRY
-    OTHER /' !!!!! '/
+    OTHER /' !!! to be added '/
   }
 
-  /' !!! to consider renaming to PublicationUnit '/
   class Monograph extends Document {
     MonographType monographType
     String printISBN
@@ -1244,9 +1331,9 @@ package document {
     PREPRINT 
     MANUAL 
     DATA_MANAGEMENT_PLAN 
-    /' !!!!! remove, it is the another subclass of Document (Proceedings)
+    /' !!!!!! remove, it is the another subclass of Document (Proceedings)
     PROCEEDINGS '/ 
-    OTHER /' !!!!! '/
+    OTHER /' !!!!!! to be added '/
   }
 
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
@@ -1261,7 +1348,7 @@ package document {
       Set<MultilingualContent> distributor
       Set<MultilingualContent> sourceTitle /' program, exhibition catalogue title, topic '/ 
       Set<MultilingualContent> otherActors /' interviewer, person-acted for, etc. '/
-      Boolean isCompetitive /' !!!!! '/
+      Boolean isCompetitive /' !!! to be added  '/
   }
   
   enum PerformanceRelatedOutputType {
@@ -1277,6 +1364,7 @@ package document {
     BROADCAST_INTERVIEW
     TEXT_INTERVIEW
     NON_RESEARCH_PRESENTATION
+    OTHER /' !!!!!! to be added '/
   }
 
   class IntellectualProperty extends Document {
@@ -1311,29 +1399,28 @@ package document {
   } 
 
   class Thesis extends Document {
-    Set<MultiLingualContent> externalOrganisationUnitName
     Set<MultilingualContent> alternateTitle
     Set<MultilingualContent> extendedAbstract
-    /'  String tid !!! might be added into internalIds '/
+    Set<MultiLingualContent> externalOrganisationUnitName
     ThesisType thesisType
-    FlexibleDate topicAcceptanceDate
-    FlexibleDate thesisDefenceDate
+    FlexibleDate topicAcceptanceDate /' !!!!!! type change needed '/
+    FlexibleDate thesisDefenceDate /' !!!!!! type change needed '/
     ThesisPhysicalDescription physicalDescription
     Language language
-    Set<MultilingualContent> scientificAreaFreeForm /' !!! skip for now, renamed from scientificArea '/
-    Set<MultilingualContent> scientificSubAreaFreeForm /' !!! skip for now, renamed from scientificSubArea '/
+    Set<MultilingualContent> scientificArea
+    Set<MultilingualContent> scientificSubArea
     LanguageTag writingLanguage
     boolean isOnPublicReview
     boolean isOnPublicReviewPause
-    Set<FlexibleDate> publicReviewStartDates
-    Set<FlexibleDate> publicReviewEndDates
+    Set<FlexibleDate> publicReviewStartDates /' !!!!!! type change needed '/
+    Set<FlexibleDate> publicReviewEndDates /' !!!!!! type change needed '/
     Set<DocumentFile> preliminaryFiles
     Set<DocumentFile> prpreliminarySupplementsoofs
     Set<DocumentFile> commissionReports
     Set<MultiLingualContent> placeOfKeeping
     String printISBN
     String eISBN
-    String udc 
+    String udc
     Set<MultiLingualContent> typeOfTitle
     Boolean publicReviewCompleted
     Boolean isShortenedReview
@@ -1375,13 +1462,13 @@ package document {
   /' !!! can we use DocumentsRelation RESULT_OF instead ? '/
   
   class IntangibleProduct extends Document {
-    IntangibleProductType type
-    Set<MultilingualContent> customers /' or audience, target !!! renamed from productUsers, skip for now '/
-    Set<MultilingualContent> environmentDescription /' !!!!! '/
-    ' !!!!! removed internalNumber, there is internalId in superclass
-    ' !!!!! removed researchAreas, publisher, authorReprint, exist in superclass
-    Set<MultilingualContent> producer /' !!!!! '/
-    Set<MultilingualContent> distributor /' !!!!! '/
+    IntangibleProductType intangibleProductType
+    Set<MultilingualContent> productUsers /' or audience, target '/
+    Set<MultilingualContent> environmentDescription /' !!!!!! to be added '/
+    ' !!!!!! removed internalNumber, there is internalIdentifiers in superclass
+    ' !!!!!! removed publisher, exists in superclass
+    Set<MultilingualContent> producer /' !!!!!! to be added  '/
+    Set<MultilingualContent> distributor /' !!!!!! to be added '/
   }
   
   enum IntangibleProductType {
@@ -1412,10 +1499,10 @@ package document {
   
   class MaterialProduct extends Document {
     MaterialProductType type
-    Set<MultilingualContent> customers /' or audience, target !!! renamed from productUsers, skip for now '/
-    Integer numberOfUnitsProduced /' !!! renamed from numberProduced '/
-    ' !!!!! removed internalNumber, there is internalIdentifiers field in superclass
-    ' !!!!! removed researchAreas, publisher, authorReprint, exist in superclass
+    Set<MultilingualContent> productUsers /' or audience, target '/
+    Long numberProduced
+    /' !!!!!! removed internalNumber, there is internalIdentifiers field in superclass '/
+    /' !!!!!! removed publisher, exists in superclass '/
   }
     
   enum MaterialProductType {
@@ -1429,8 +1516,8 @@ package document {
   
   class GeneticMaterial extends Document {
     GeneticMaterialType geneticMaterialType
-    /' !!!!! removed internalNumber, there is internalIdentifiers field in superclass '/
-    /' !!!!! removed publisher, authorReprint, exist in superclass '/
+    /' !!!!!! removed internalNumber, there is internalIdentifiers field in superclass '/
+    /' !!!!!! removed publisher, exists in superclass '/
   }
     
   enum GeneticMaterialType {
@@ -1441,37 +1528,14 @@ package document {
     OTHER
   }
 
-  PublicationSeries "0..1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
-  Document "*" --> "0..1" Publisher : publisher /' !!!!! moved to be linked with Document, therefore it should be removed from subclasses '/
-  
-  DocumentsRelation "*" --> "1" Document : source
-  DocumentsRelation "*" --> "1" Document : target
-
-  class DocumentsRelation {
-    DocumentsRelationType relationType
-    /' !!! to add for supporting linking with non-managed output/document '/
-    Set<MultiLingualContent> sourceDocumentDescription
-    Set<MultiLingualContent> targetDocumentDescription
-  }
-
-  enum DocumentsRelationType {
-    PART_OF
-    USED_BY
-    CITED_BY
-    REPLACED_BY
-    RESULT_OF /' also can link PREPRINT '/
-    TOPIC_OF /' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document '/
-    /' Moreover, it might be that a IntangibleProduct (software, dataset, online resource) is the main topic of some journal article, etc. '/
-  }
-
 }
 
 package project {
 
   class Project {
-    Set<String> internalIds
+    Set<String> internalIdentifiers
     Set<String> oldIds 
-    Set<Integer> mergedIds 
+    Set<Integer> mergedIds /' !!!!!! should be changed to Set<Integer> in the implementation, identifiers in teslaris are integers, not strings '/
     String doi 
     String raid
     String nationalId /' might be projectReferenceNumber for PT context'/
@@ -1481,14 +1545,15 @@ package project {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     Set<String> uris
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     ProjectStatus status
     ProjectCollaborationType collaborationType
     ProjectResearchType researchType
     Boolean notFunded 
     MonetaryAmount costs
-    Set<SDGoal> sdgs /' !!! skip for now '/
+    Set<SDGoal> sdgs /' !!!!!! to be added  '/
+    Boolean publicationCandidate
   }
   
   Project "0..1" -- "*" OrganisationUnitProjectContribution : project / organisations  
@@ -1519,6 +1584,9 @@ package project {
      OrganisationUnitProjectContributionType contributionType
      Set<MultilingualContent> displayProject /' in the case Project is not linked, it will be rarely used, no sense there is no link to OU and Project, only one might be missing '/ 
   }
+
+  /' !!!!!! to be removed, it is should be at OrganisationUnitContribution superclass
+    OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts '/
   
   enum OrganisationUnitProjectContributionType {
     COORDINATOR
@@ -1534,7 +1602,10 @@ package project {
     PersonProjectInvestigationRole investigationRole 
     Set<MultiLingualContent> otherRoleDescription 
     Set<MultilingualContent> displayProject /' in the case Project is not linked, it will be rarely used '/         
-  } 
+  }
+
+  /' !!!!!! to be removed, it is should be at PersonContribution superclass
+  PersonProjectContribution "0..1" --> "*" FundingPart : fundingParts '/
   
   enum PersonProjectContributionType {
     PRINCIPLE_INVESTIGATOR
@@ -1570,7 +1641,7 @@ package project {
     ProjectsRelationType relationType
     Set<MultiLingualContent> sourceProjectDescription 
     Set<MultiLingualContent> targetProjectDescription 
-    /' !!! should we remove dateFrom and dateTo from the relation? '/
+    /' !!!!!! remove dateFrom and dateTo from the projectsrelation '/
   }
     
   enum ProjectsRelationType {
@@ -1621,13 +1692,13 @@ package project {
     MonetaryAmount requestedAmount
     Set<MultiLingualContent> description
     Set<MultiLingualContent> responseSummary
-    FlexibleDate submissionDate
-    FlexibleDate reviewDateFrom
-    FlexibleDate reviewDateTo
-    FlexibleDate decisionDate
-    FlexibleDate revisedProposalOrNextRoundDeadlineDate
+    FlexibleDate submissionDate /' !!!!!! type change needed '/
+    FlexibleDate reviewDateFrom /' !!!!!! type change needed '/
+    FlexibleDate reviewDateTo /' !!!!!! type change needed '/
+    FlexibleDate decisionDate /' !!!!!! type change needed '/
+    FlexibleDate revisedProposalOrNextRoundDeadlineDate /' !!!!!! type change needed '/
     FundingApplicationResult result 
-    Set<SDGoal> sdgs /' !!! skip for now '/
+    Set<SDGoal> sdgs /' !!!!!! to be added '/
     Set<DocumentFile> documents /' proposal, review result, supplement '/
   }
 
@@ -1651,6 +1722,7 @@ package project {
     Set<Integer> mergedIds 
     String doi
     String grantAgreementId
+    Set<DocumentFile> agreements
     Set<MultiLingualContent> name 
     Set<MultiLingualContent> description 
     Set<MultiLingualContent> nameAbbreviation 
@@ -1664,21 +1736,21 @@ package project {
     MonetaryAmount amount
     Boolean competitive 
     Boolean renewable 
-    FlexibleDate dateSubmitted
-    FlexibleDate dateAwarded
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateSubmitted /' !!!!!! type change needed '/
+    FlexibleDate dateAwarded /' !!!!!! type change needed '/
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     Boolean OAMandated
     String OAMandateUrl
     Boolean internalInvestment
-    Set<DocumentFile> documents 
+    Boolean publicationCandidate
   }
   
-  Funding "*" -- "0..1" FundingCall : funding / call
+  Funding "*" -- "0..1" FundingCall : funding / fundingCall
   Funding "*" --> "0..1" institution.OrganisationUnit : funder
   Funding "1" -- "*" FundingPart : funding / fundingParts
-  Funding "*" -- "0..1" Project : fundings/project
-  Funding "*" -- "0..1" Involvement : fundings/involvement
+  Funding "*" -- "0..1" Project : fundings / project
+  Funding "*" -- "0..1" Involvement : fundings / involvement
   
   class FundingPart{
     Set<MultiLingualContent> description
@@ -1692,31 +1764,33 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
+    Set<DocumentFile> callDocuments
     Set<FundingType> types
     MonetaryAmount amount
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     Set<String> uris
     Boolean OAMandated
     String OAMandateUrl
-    Set<DocumentFile> callDocuments
   }
 
   FundingCall "0..1" -- "*" PersonFundingCallContribution : fundingCall / contributors
   FundingCall "*" --> "0..1" institution.OrganisationUnit : funder
   
   enum FundingType {
-    GRANT 
-    CALL 
+    GRANT
+    CALL
+    FUNDING_PROGRAMME
+    CONTRACT
+    GIFT
     OTHER
   }
 
   enum FundingCallContributionType {
     ORGANIZER
     COORDINATOR
-    /' !!! remove, vicepresident is not needed, and ASSESSMENT_BOARD_PRESIDENT is ASSESSMENT_BOARD_MEMBER + isMainContributor
-    ASSESSMENT_BOARD_PRESIDENT  
-    ASSESSMENT_BOARD_VICEPRESIDENT '/
+    ASSESSMENT_BOARD_PRESIDENT
+    ASSESSMENT_BOARD_VICEPRESIDENT
     ASSESSMENT_BOARD_MEMBER
     ASSESSMENT_EVALUATOR
     ASSESSMENT_SPECIALIST
@@ -1727,9 +1801,9 @@ package project {
 
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType 
-    Set<MultilingualContent> displayFundingCall /' !!! in the case FundingCall is not linked, it will be rarely used '/         
+    Set<MultilingualContent> displayFundingCall /' !!! to be added, in the case FundingCall is not linked, it will be rarely used '/
          
-    ' !!!!! only available if contributionType is ASSESSMENT_EVALUATOR
+    /' !!!!!! to be added, only available if contributionType is ASSESSMENT_EVALUATOR '/
     Integer numberOfReviewsOrAssessments
   }
   
@@ -1740,20 +1814,21 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
+    Set<DocumentFile> programDocuments
+    Set<FundingType> types
     MonetaryAmount totalAmount
-    FlexibleDate dateFrom
-    FlexibleDate dateTo
+    FlexibleDate dateFrom /' !!!!!! type change needed '/
+    FlexibleDate dateTo /' !!!!!! type change needed '/
     Set<String> uris
     Boolean OAMandated
     String OAMandateUrl
-    Set<DocumentFile> programDocuments
   }
   
   FundingProgram "0..1" -- "*" FundingCall : fundingProgram / fundingCalls
   FundingProgram "*" --> "0..1" institution.OrganisationUnit : funder
 }
 
-/'
+/' !!!!!! to be added, complete package
  TeslaRIS Research Infrastructure package -- initial draft (2026-11-05).
  Assumptions:
  - A single ResearchInfrastructure entity represents equipment, facilities and services.
@@ -1837,6 +1912,7 @@ package researchInfrastructure {
     Set<MultiLingualContent> measuredVariables
     FlexibleDate dateCommissioned
     FlexibleDate dateDecommissioned
+    Boolean publicationCandidate
   }
 
   /' Controlled vocabulary; a type belongs to exactly one primary kind.
@@ -2005,7 +2081,7 @@ package assessment {
   class AssessmentRulebook {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
-    FlexibleDate issueDate
+    FlexibleDate issueDate /' !!!!!! type change needed '/
     boolean isDefault
     DocumentFile pdf
   }
@@ -2051,7 +2127,7 @@ package assessment {
     PROCEEDINGS_PUBLICATION
     INTELLECTUAL_PROPERTY 
     INTANGIBLE_PRODUCT 
-    /' !!! DATASET moved to INTANGIBLE_PRODUCT, should be removed '/
+    /' !!!!!! DATASET moved to INTANGIBLE_PRODUCT, should be removed '/
     THESIS
     MATERIAL_PRODUCT
     GENETIC_MATERIAL
@@ -2061,14 +2137,15 @@ package assessment {
     EXHIBITION 
     COURSE
     OTHER_EVENT
+    RESEARCH_INFRASTRUCTURE /' !!!!!! to be added '/
   }
 
   class Commission {
     MultiLingualContent description
     ' it might be description of the commission goal, for instance comission for promotion to higher position, or Faculty of Sciences commission, or national/Serbian ministry of science commission
     Set<String> sources
-    FlexibleDate assessmentDateFrom
-    FlexibleDate assessmentDateTo
+    FlexibleDate assessmentDateFrom /' !!!!!! type change needed '/
+    FlexibleDate assessmentDateTo /' !!!!!! type change needed '/
     Set<Document> documentsForAssessment
     Set<Person> personsForAssessment
     Set<OrganisationUnit> organisationUnitsForAssessment
@@ -2096,7 +2173,7 @@ package assessment {
   CommissionReport "0..*" --> "1" Commission
 
   class EntityAssessmentClassification {
-    LocalDateTime timestamp
+    DateTime timestamp
     Boolean manual
     Integer classificationYear
     Set<MultilingualContent> classificationReason
@@ -2179,17 +2256,17 @@ package assessment {
     Double numericValue
     Boolean booleanValue
     String textualValue
-    LocalDateTime timestamp
+    DateTime timestamp
     EntityIndicatorSource source
-    FlexibleDate dateFrom /' !!! renamed '/
-    FlexibleDate dateTo /' !!! renamed '/
+    FlexibleDate dateFrom /' !!!!!! renamed and type changed '/
+    FlexibleDate dateTo /' !!!!!! renamed and type changed '/
     Set<DocumentFile> proofs
-    Set<String> urls /' !!! to add '/
+    Set<String> urls /' !!!!!! to be added '/
   }
 
   EntityIndicator "0..*" --> "1" Indicator
   EntityIndicator "0..*" --> "0" User
-  ' in some cases there won't be user, such as when performing automatic import of journal impact factors from external source
+  /' in some cases there won't be user, such as when performing automatic import of journal impact factors from external source '/
   
   enum EntityIndicatorSource {
     MANUAL
@@ -2230,8 +2307,8 @@ package assessment {
 
   OrganisationUnitIndicator "0..*" --> "1" OrganisationUnit : organisationUnit
 
-  ' !!! do we need indicators for Projects? The same questions is for AssessmentClassification? Probably we need both. 
-  ' !!! also, we might need Indicators for Prizes
+  /' !!!!!! do we need indicators for Projects and ResearchInfrastructure? The same questions is for AssessmentClassification? Probably we need both.
+   also, we might need Indicators for Prizes '/
 
 }
 
@@ -2284,11 +2361,12 @@ package identifier {
   
   ProjectIdentifier "0..*" --> "1" Project : project
 
+  /' !!!!!! to be added '/
   class ResearchInfrastructureIdentifier extends EntityIdentifier {
   }
 
+  /' !!!!!! to be added '/
   ResearchInfrastructureIdentifier "0..*" --> "1" ResearchInfrastructure : researchInfrastructure
-
 
 }
 
@@ -2318,7 +2396,6 @@ package versions {
   	Instant revisionTimestamp
   	String contentHash
   	byte[] compressedContent
-  	Boolean currentVersion /' !!! do we need this? '/
   }
   
   EntityRevision "1" --> "*" DegradedReference : restorationWarnings
@@ -2394,7 +2471,7 @@ package versions {
       Integer recordMinorVersion 
       Integer dataQualityPolicyId '/   
       
-      LocalDate assessmentDate  /' !!! although this exists in linked DataQualityAssessment, might be useful here '/      
+      Date assessmentDate  /' !!! although this exists in linked DataQualityAssessment, might be useful here '/
       Long executionTimeMs
       
       /' !!! if we decide to preserve only failed constraints, this field is not needed 
@@ -2445,8 +2522,8 @@ package versions {
   }
   
   ConstraintEvaluationResult --> DataQualityAssessment
-  ConstraintEvaluationResult --> IssueSeverity : severity /' !!! entitled severity at the moment  '/
-  ConstraintEvaluationResult --> QualityDimension : dimension /' !!! entitled dimension at the moment  '/
+  ConstraintEvaluationResult --> IssueSeverity : severity
+  ConstraintEvaluationResult --> QualityDimension : dimension
   DataQualityAssessment --> EntityRevision 
   DataQualityAssessment --> DataQualityProfile
 
