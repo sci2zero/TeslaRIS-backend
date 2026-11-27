@@ -39,6 +39,9 @@ public class EmploymentPositionHierarchy extends BaseEntity {
     @Column(name = "scheme_name")
     private String schemeName;
 
+    @Column(name = "code")
+    private String code;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "super_employment_position_id", referencedColumnName = "id")
     private EmploymentPositionHierarchy superEmploymentPosition;

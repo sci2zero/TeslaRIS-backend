@@ -62,6 +62,18 @@ public class MigrationRecordLogRepository {
             .filter(Objects::nonNull);
     }
 
+    // Whether the migration wrote the entity, under any source key of the type
+    public boolean isWrittenTarget(String source, MigrationEntityType entityType,
+                                   Integer targetId) {
+        var query = new Query()
+            .addCriteria(Criteria.where("source").is(source))
+            .addCriteria(Criteria.where("entity_type").is(entityType.name()))
+            .addCriteria(Criteria.where("target_entity_id").is(targetId))
+            .addCriteria(Criteria.where("status").in(writtenStatuses()));
+
+        return mongoTemplate.exists(query, MigrationRecordLog.class);
+    }
+
     public Page<MigrationRecordLog> findFailures(String runId, Pageable pageable) {
         var query = failureQuery(runId).with(pageable);
 

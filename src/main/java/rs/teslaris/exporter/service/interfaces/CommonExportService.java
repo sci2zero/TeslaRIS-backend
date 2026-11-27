@@ -19,6 +19,8 @@ public interface CommonExportService {
 
     void exportFundingsToCommonModel(boolean allTime);
 
+    void exportResearchAreasToCommonModel(boolean allTime);
+
     void deleteDocumentFromCommonModel(Integer documentId, ExportPublicationType exportType);
 
     void deleteHiddenRecordFromCommonModel(String entityType, Integer entityId);

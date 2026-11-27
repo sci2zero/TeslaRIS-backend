@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
@@ -39,6 +40,33 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query(value = "SELECT COUNT(*) > 0 FROM documents_research_areas " +
         "WHERE research_areas_id = :researchAreaId", nativeQuery = true)
     boolean isResearchedInDocument(Integer researchAreaId);
+
+    // Every other join table that holds research areas. Native, so the project module's
+    // tables (projects, fundings, funding calls and programs) need no entity import here.
+    @Query(value = """
+        SELECT EXISTS (SELECT 1 FROM events_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM organisation_units_research_areas
+                       WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM involvements_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM educations_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM person_contributions_research_areas
+                       WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM expertise_or_skills_research_areas
+                       WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM prizes_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM projects_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM fundings_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM funding_calls_research_areas WHERE research_areas_id = :id)
+            OR EXISTS (SELECT 1 FROM funding_programs_research_areas
+                       WHERE research_areas_id = :id)
+        """, nativeQuery = true)
+    boolean isUsedByOtherEntities(@Param("id") Integer researchAreaId);
+
+    // Native, so soft-deleted areas are included and removed from push targets.
+    @Query(value = "SELECT * FROM research_area ra WHERE " +
+        "(:allTime = TRUE OR ra.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
+        "ORDER BY ra.id", nativeQuery = true)
+    Page<ResearchArea> findAllModified(Pageable pageable, boolean allTime);
 
     @Query(value =
         "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE " +

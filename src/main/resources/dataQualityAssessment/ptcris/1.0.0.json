@@ -2282,7 +2282,7 @@
       "points": 3,
       "usedForFairCompliance": true,
       "constraints": {
-        "pattern": "^[\\p{L}\\p{M}\\p{N} .,'()&/\\-]+$"
+        "pattern": "^[\\p{L}\\p{M}\\p{N} .,;'()&/\\-]+$"
       }
     },
     "organisationUnitDescriptionMissing": {
@@ -2302,7 +2302,7 @@
       "severity": "WARNING",
       "dimension": "CONSISTENCY",
       "metric": "PTCRIS-F1-01DCONSIST-03",
-      "blocking": true,
+      "blocking": false,
       "points": 3,
       "usedForFairCompliance": true
     },

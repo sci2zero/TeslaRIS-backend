@@ -15,6 +15,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.funding.FundingType;
 import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
@@ -44,6 +45,8 @@ import rs.teslaris.exporter.util.push.SharedNode;
 public class VivoFundingMapper implements RdfMapper<ExportFunding> {
 
     private final VivoTeslarisLinks teslarisLinks;
+
+    private final MessageSource messageSource;
 
 
     /**
@@ -98,6 +101,13 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
             project.getFundingCount() == 1;
     }
 
+    // The key "" means no language tag.
+    private static void addRoleLabels(Model model, Resource role, Map<String, String> labels) {
+        labels.forEach((languageTag, label) -> role.addProperty(RDFS.label,
+            languageTag.isEmpty() ? model.createLiteral(label) :
+                model.createLiteral(label, languageTag)));
+    }
+
     @Override
     public String profile() {
         return VivoRdfSupport.PROFILE;
@@ -150,6 +160,8 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
         addPrincipalInvestigators(model, grant, uri, target, snapshot, references);
         addAdministrators(model, grant, uri, target, snapshot, sharedNodes, references);
         addSupportedOutputs(model, grant, target, snapshot, references);
+        VivoRdfSupport.addResearchAreas(model, grant, target, snapshot.getResearchAreaIds(), false,
+            references);
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {
@@ -240,6 +252,8 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
 
             var role = model.createResource(roleUri);
             role.addProperty(RDF.type, model.createResource(VIVO + "PrincipalInvestigatorRole"));
+            addRoleLabels(model, role,
+                VivoProjectMapper.roleLabels(messageSource, target, contribution));
             grant.addProperty(relates, role);
             role.addProperty(relatedBy, grant);
             role.addProperty(inheresIn, bearer);
@@ -269,6 +283,8 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
             var organisation = model.createResource(organisationUri);
             var role = model.createResource(uri + "-admin-" + (i + 1));
             role.addProperty(RDF.type, model.createResource(VIVO + "AdministratorRole"));
+            addRoleLabels(model, role, VivoProjectMapper.organisationRoleLabels(messageSource,
+                target, coordinators.get(i).getContributionType()));
             grant.addProperty(model.createProperty(VIVO + "relates"), role);
             role.addProperty(model.createProperty(VIVO + "relatedBy"), grant);
             role.addProperty(model.createProperty(OBO + "RO_0000052"), organisation);

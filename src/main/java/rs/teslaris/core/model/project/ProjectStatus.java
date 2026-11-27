@@ -5,5 +5,7 @@ public enum ProjectStatus {
     UNDER_EVALUATION,
     ONGOING,
     CANCELLED,
-    CONCLUDED
+    CONCLUDED,
+    CLOSED,
+    INACTIVE
 }

@@ -234,6 +234,7 @@ public class CordisProjectDataServiceImpl implements CordisProjectDataService {
         return switch (cordisStatus) {
             case "SIGNED" -> ProjectStatus.ONGOING;
             case "CLOSED" -> ProjectStatus.CONCLUDED;
+            case "SUSPENDED" -> ProjectStatus.CANCELLED;
             case "TERMINATED" ->
                 ProjectStatus.CANCELLED; // CORDIS website could be queried by this status but fetching a project with it results in request time out
             default -> {

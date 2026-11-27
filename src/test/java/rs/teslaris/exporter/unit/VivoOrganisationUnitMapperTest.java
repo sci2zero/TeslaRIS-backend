@@ -19,9 +19,11 @@ import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoOrganisationUnitMapper;
 import rs.teslaris.exporter.model.converter.push.vivo.VivoTeslarisLinks;
+import rs.teslaris.exporter.model.push.PushEntityType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.Auth;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.AuthType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
+import rs.teslaris.exporter.util.push.EntityReference;
 import rs.teslaris.exporter.util.push.NTriplesSerializer;
 
 public class VivoOrganisationUnitMapperTest {
@@ -191,7 +193,9 @@ public class VivoOrganisationUnitMapperTest {
         "COMPANY,0,Company",
         "HEALTH,1,Hospital",
         "INSTITUTION,0,Institute",
-        "GOVERNMENT,0,GovernmentAgency"
+        "GOVERNMENT,0,GovernmentAgency",
+        "RESEARCH_INSTITUTE,0,ResearchOrganization",
+        "SME,0,Company"
     })
     public void shouldAddSectorSubclass(OrganisationUnitSector sector, int depth,
                                         String expectedClass) {
@@ -218,7 +222,7 @@ public class VivoOrganisationUnitMapperTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = {"OTHER", "NULL"}, nullValues = "NULL")
+    @CsvSource(value = {"OTHER", "PRIVATE_NON_PROFIT", "NULL"}, nullValues = "NULL")
     public void shouldAddNoSubclassForOtherOrMissingSector(OrganisationUnitSector sector) {
         // Given
         var organisationUnit = organisationUnit(5);
@@ -241,5 +245,29 @@ public class VivoOrganisationUnitMapperTest {
 
         // When / Then
         assertThrows(IllegalStateException.class, () -> NTriplesSerializer.toLines(model));
+    }
+
+    @Test
+    public void shouldLinkResearchAreas() {
+        // Given
+        var organisationUnit = organisationUnit(5);
+        organisationUnit.setResearchAreaIds(new ArrayList<>(List.of(9, 4)));
+        // When
+        var mapping = mapper.map(organisationUnit, target());
+
+        // Then
+        var model = mapping.model();
+        var subject = model.createResource(NS + "teslaris-ou-5");
+        var area = model.createResource(NS + "teslaris-research-area-4");
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasResearchArea"), area));
+        assertTrue(model.contains(area,
+            model.createProperty("http://vivoweb.org/ontology/core#researchAreaOf"), subject));
+        assertTrue(model.contains(subject,
+            model.createProperty("http://vivoweb.org/ontology/core#hasResearchArea"),
+            model.createResource(NS + "teslaris-research-area-9")));
+        assertTrue(mapping.references().containsAll(List.of(
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
+            new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
     }
 }

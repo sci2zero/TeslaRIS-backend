@@ -3,9 +3,10 @@ package rs.teslaris.core.model.person;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,21 +42,20 @@ public class PersonName extends BaseEntity {
     @Column(name = "name_type")
     private PersonNameType nameType;
 
+    // A part that does not exist is not in the name, and it does not leave a space or "null".
+    private static String joinParts(String... parts) {
+        return Arrays.stream(parts).filter(StringUtil::valueExists).map(String::trim)
+            .collect(Collectors.joining(" "));
+    }
+
     @Override
     public String toString() {
-        if (Objects.isNull(otherName) || otherName.isEmpty()) {
-            return MessageFormat.format("{0} {1}", firstname, lastname);
-        }
-
-        return MessageFormat.format("{0} {1} {2}", firstname, otherName, lastname);
+        return joinParts(firstname, otherName, lastname);
     }
 
     public String toText() {
-        if (Objects.isNull(otherName) || otherName.isEmpty()) {
-            return MessageFormat.format("{0} {1}", firstname, lastname);
-        }
-
-        return MessageFormat.format("{0} ({1}) {2}", firstname, otherName, lastname);
+        return joinParts(firstname,
+            StringUtil.valueExists(otherName) ? "(" + otherName.trim() + ")" : null, lastname);
     }
 
     @Override

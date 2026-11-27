@@ -19,6 +19,9 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
+import rs.teslaris.core.model.project.PersonProjectContributionType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportProject;
 import rs.teslaris.exporter.model.common.ExportProjectOrganisationContribution;
 import rs.teslaris.exporter.model.common.ExportProjectPersonContribution;
@@ -31,10 +34,13 @@ import rs.teslaris.exporter.util.push.RdfMapping;
 import rs.teslaris.exporter.util.push.SharedNode;
 
 /**
- * Maps a project to vivo:Project. Each person with a TeslaRIS profile gets a vivo:ResearcherRole
- * realized in the project, which VIVO shows on the person page as "other research activities".
- * Organisations are linked with "has participant". The grant side (funder, principal
- * investigators, coordinators) is written by {@link VivoFundingMapper}.
+ * Maps a project to vivo:Project. Every contributor gets a role realized in the project, which
+ * VIVO shows on the person page as "other research activities". A principal investigator gets a
+ * vivo:PrincipalInvestigatorRole, every other contributor a vivo:ResearcherRole. A contributor
+ * without a TeslaRIS profile gets a vCard in the role instead of a person link. Organisations
+ * get a vivo:LeaderRole (coordinator) or a vivo:MemberRole, labelled with the contribution
+ * type. The grant side (funder, principal investigators, coordinators) is written by
+ * {@link VivoFundingMapper}.
  */
 @Component
 @RequiredArgsConstructor
@@ -85,6 +91,74 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
         return Objects.isNull(investigationRole) ? type : type + " (" + investigationRole + ")";
     }
 
+    /**
+     * VIVO shows a vivo:PrincipalInvestigatorRole on the person page as "principal investigator
+     * on". The stock list view of that faux property reads only grants and contracts, so the
+     * project needs the VIVO configuration.
+     */
+    private static String roleClass(ExportProjectPersonContribution contribution) {
+        return contribution.getContributionType() ==
+            PersonProjectContributionType.PRINCIPLE_INVESTIGATOR ? "PrincipalInvestigatorRole" :
+            "ResearcherRole";
+    }
+
+    /**
+     * "Team member (PhD student fellow)" per language. Without translations (for example when no
+     * supported language has a messages file), one label without a language tag, from the enum
+     * names. The key "" means no language tag.
+     */
+    static Map<String, String> roleLabels(MessageSource messageSource, PushTarget target,
+                                          ExportProjectPersonContribution contribution) {
+        var labels = new LinkedHashMap<String, String>();
+        var type = contribution.getContributionType();
+        var investigationRole = contribution.getInvestigationRole();
+        if (Objects.isNull(type) && Objects.isNull(investigationRole)) {
+            return labels;
+        }
+
+        var typeTexts = Objects.nonNull(type) ? VivoRdfSupport.translations(messageSource,
+            target, "personProjectContributionType." + type.name()) : Map.<String, String>of();
+        var roleTexts = Objects.nonNull(investigationRole) ?
+            VivoRdfSupport.translations(messageSource, target,
+                "personProjectInvestigationRole." + investigationRole.name()) :
+            Map.<String, String>of();
+
+        var languageTags = new ArrayList<String>(typeTexts.keySet());
+        roleTexts.keySet().stream().filter(tag -> !languageTags.contains(tag))
+            .forEach(languageTags::add);
+
+        if (languageTags.isEmpty()) {
+            labels.put("", join(Objects.nonNull(type) ? readable(type) : null,
+                Objects.nonNull(investigationRole) ? readable(investigationRole) : null));
+            return labels;
+        }
+
+        languageTags.forEach(tag -> labels.put(tag, join(
+            Objects.nonNull(type) ? typeTexts.getOrDefault(tag, readable(type)) : null,
+            Objects.nonNull(investigationRole) ?
+                roleTexts.getOrDefault(tag, readable(investigationRole)) : null)));
+        return labels;
+    }
+
+    private static String organisationRoleClass(OrganisationUnitProjectContributionType type) {
+        return type == OrganisationUnitProjectContributionType.COORDINATOR ? "LeaderRole" :
+            "MemberRole";
+    }
+
+    // The label of an organisation role, per language, or the readable enum name without a
+    // language tag when the type has no message.
+    static Map<String, String> organisationRoleLabels(MessageSource messageSource,
+                                                      PushTarget target,
+                                                      OrganisationUnitProjectContributionType type) {
+        if (Objects.isNull(type)) {
+            return Map.of();
+        }
+
+        var texts = VivoRdfSupport.translations(messageSource, target,
+            "organisationUnitProjectContributionType." + type.name());
+        return texts.isEmpty() ? Map.of("", readable(type)) : texts;
+    }
+
     @Override
     public String profile() {
         return VivoRdfSupport.PROFILE;
@@ -120,8 +194,10 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
             snapshot.getDateTo());
 
         addResearcherRoles(model, project, uri, target, snapshot, references);
-        addParticipants(model, project, target, snapshot, sharedNodes, references);
+        addParticipants(model, project, uri, target, snapshot, sharedNodes, references);
         addOutputs(model, project, target, snapshot, references);
+        VivoRdfSupport.addResearchAreas(model, project, target, snapshot.getResearchAreaIds(),
+            false, references);
 
         var links = VivoRdfSupport.withWebpages(links(snapshot), snapshot.getUris());
         if (!links.isEmpty()) {
@@ -134,8 +210,8 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
 
     /**
      * One role per contribution, "{project}-role-{n}", where n is the position in the list sorted
-     * by the order number. Contributions without a TeslaRIS person are not sent: the role would
-     * show only on the person's own page, and they have none.
+     * by the order number. A contributor without a TeslaRIS person gets a vCard with the display
+     * name, like the principal investigators of a grant, so the project page shows the name.
      */
     private void addResearcherRoles(Model model, Resource project, String uri, PushTarget target,
                                     ExportProject snapshot, List<EntityReference> references) {
@@ -144,17 +220,23 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
         for (int i = 0; i < persons.size(); i++) {
             var contribution = persons.get(i);
             var person = contribution.getPerson();
-            if (Objects.isNull(person) || Objects.isNull(person.getDatabaseId())) {
+            var roleUri = uri + "-role-" + (i + 1);
+
+            Resource personResource;
+            if (Objects.nonNull(person) && Objects.nonNull(person.getDatabaseId())) {
+                personResource =
+                    model.createResource(VivoRdfSupport.personUri(target, person.getDatabaseId()));
+                references.add(new EntityReference(PushEntityType.PERSONS, person.getDatabaseId()));
+            } else if (StringUtil.valueExists(contribution.getDisplayName())) {
+                personResource = VivoRdfSupport.addExternalPersonVcard(model, roleUri,
+                    contribution.getDisplayName());
+            } else {
                 continue;
             }
 
-            var roleUri = uri + "-role-" + (i + 1);
             var role = model.createResource(roleUri);
-            var personResource =
-                model.createResource(VivoRdfSupport.personUri(target, person.getDatabaseId()));
-
-            role.addProperty(RDF.type, model.createResource(VIVO + "ResearcherRole"));
-            roleLabels(target, contribution).forEach((languageTag, label) ->
+            role.addProperty(RDF.type, model.createResource(VIVO + roleClass(contribution)));
+            roleLabels(messageSource, target, contribution).forEach((languageTag, label) ->
                 role.addProperty(RDFS.label, languageTag.isEmpty() ? model.createLiteral(label) :
                     model.createLiteral(label, languageTag)));
 
@@ -165,64 +247,43 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
 
             VivoRdfSupport.addDateTimeInterval(model, role, roleUri, contribution.getDateFrom(),
                 contribution.getDateTo());
-            references.add(new EntityReference(PushEntityType.PERSONS, person.getDatabaseId()));
         }
     }
 
     /**
-     * "Team member (PhD student fellow)" per language. Without translations (for example when no
-     * supported language has a messages file), one label without a language tag, from the enum
-     * names. The key "" means no language tag.
+     * Each organisation of the project gets a role realized in the project, with the
+     * contribution type as its label. VIVO shows it on the project page as "participant" and on
+     * the organisation page as "lead organization of" (coordinator) or "member of" (every other
+     * type). External organisations are shared nodes.
      */
-    Map<String, String> roleLabels(PushTarget target,
-                                   ExportProjectPersonContribution contribution) {
-        var labels = new LinkedHashMap<String, String>();
-        var type = contribution.getContributionType();
-        var investigationRole = contribution.getInvestigationRole();
-        if (Objects.isNull(type) && Objects.isNull(investigationRole)) {
-            return labels;
-        }
-
-        var typeTexts = Objects.nonNull(type) ? VivoRdfSupport.translations(messageSource,
-            target, "personProjectContributionType." + type.name()) : Map.<String, String>of();
-        var roleTexts = Objects.nonNull(investigationRole) ?
-            VivoRdfSupport.translations(messageSource, target,
-                "personProjectInvestigationRole." + investigationRole.name()) :
-            Map.<String, String>of();
-
-        var languageTags = new ArrayList<String>(typeTexts.keySet());
-        roleTexts.keySet().stream().filter(tag -> !languageTags.contains(tag))
-            .forEach(languageTags::add);
-
-        if (languageTags.isEmpty()) {
-            labels.put("", join(Objects.nonNull(type) ? readable(type) : null,
-                Objects.nonNull(investigationRole) ? readable(investigationRole) : null));
-            return labels;
-        }
-
-        languageTags.forEach(tag -> labels.put(tag, join(
-            Objects.nonNull(type) ? typeTexts.getOrDefault(tag, readable(type)) : null,
-            Objects.nonNull(investigationRole) ?
-                roleTexts.getOrDefault(tag, readable(investigationRole)) : null)));
-        return labels;
-    }
-
-    // VIVO has no organisation role that shows on a project, so the plain "has participant" /
-    // "participates in" pair is used. External organisations are shared nodes.
-    private void addParticipants(Model model, Resource project, PushTarget target,
+    private void addParticipants(Model model, Resource project, String uri, PushTarget target,
                                  ExportProject snapshot, Map<String, SharedNode> sharedNodes,
                                  List<EntityReference> references) {
-        sortedOrganisations(snapshot).forEach(contribution -> {
+        var organisations = sortedOrganisations(snapshot);
+
+        for (int i = 0; i < organisations.size(); i++) {
+            var contribution = organisations.get(i);
             var organisationUri =
                 VivoFundingMapper.organisationUri(target, contribution, sharedNodes, references);
             if (Objects.isNull(organisationUri)) {
-                return;
+                continue;
             }
 
             var organisation = model.createResource(organisationUri);
-            project.addProperty(model.createProperty(OBO + "RO_0000057"), organisation);
-            organisation.addProperty(model.createProperty(OBO + "RO_0000056"), project);
-        });
+            var role = model.createResource(uri + "-org-role-" + (i + 1));
+
+            role.addProperty(RDF.type, model.createResource(
+                VIVO + organisationRoleClass(contribution.getContributionType())));
+            organisationRoleLabels(messageSource, target, contribution.getContributionType())
+                .forEach((languageTag, label) -> role.addProperty(RDFS.label,
+                    languageTag.isEmpty() ? model.createLiteral(label) :
+                        model.createLiteral(label, languageTag)));
+
+            role.addProperty(model.createProperty(OBO + "RO_0000052"), organisation);
+            organisation.addProperty(model.createProperty(OBO + "RO_0000053"), role);
+            role.addProperty(model.createProperty(OBO + "BFO_0000054"), project);
+            project.addProperty(model.createProperty(OBO + "BFO_0000055"), role);
+        }
     }
 
     /**

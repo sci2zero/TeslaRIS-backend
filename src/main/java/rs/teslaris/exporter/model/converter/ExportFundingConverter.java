@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.model.converter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -71,6 +72,9 @@ public class ExportFundingConverter extends ExportConverterBase {
         commonExportFunding.setOaMandated(funding.oaMandated());
         commonExportFunding.setOaMandateUrl(funding.oaMandateUrl());
         commonExportFunding.setInternalInvestment(funding.internalInvestment());
+        if (Objects.nonNull(funding.researchAreaIds())) {
+            commonExportFunding.setResearchAreaIds(new ArrayList<>(funding.researchAreaIds()));
+        }
 
         if (computeRelations) {
             commonExportFunding.getRelatedInstitutionIds().addAll(funding.institutionIds());

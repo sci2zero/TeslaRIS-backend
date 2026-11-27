@@ -191,6 +191,10 @@ public class PerformanceRelatedOutputServiceImpl extends DocumentPublicationServ
 
         checkForDocumentDate(performanceRelatedOutputDTO);
         var oldContributorIds = clearCommonFields(performanceRelatedOutputToUpdate);
+
+        // The request decides the event, so a missing event ID removes it.
+        performanceRelatedOutputToUpdate.setEvent(null);
+
         setCommonFields(performanceRelatedOutputToUpdate, performanceRelatedOutputDTO,
             oldContributorIds);
 

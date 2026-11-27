@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.export.ProjectExportSource;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.identifier.FundingIdentifier;
 import rs.teslaris.project.model.identifier.ProjectIdentifier;
@@ -66,6 +67,15 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
             contribution.getDisplayOrganisationUnit(), contribution.getOrderNumber(),
             contribution.getContributionType(), contribution.getDateFrom(),
             contribution.getDateTo());
+    }
+
+    private static List<Integer> researchAreaIds(Collection<ResearchArea> researchAreas) {
+        if (Objects.isNull(researchAreas)) {
+            return List.of();
+        }
+
+        return researchAreas.stream().filter(Objects::nonNull).map(ResearchArea::getId)
+            .filter(Objects::nonNull).distinct().sorted().toList();
     }
 
     private static IdentifierRecord toRecord(ProjectIdentifier identifier) {
@@ -177,6 +187,7 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
             .fundingCount(pageData.fundingCounts().getOrDefault(project.getId(), 0))
             .institutionIds(
                 new LinkedHashSet<>(projectScopeCalculator.organisationUnitIds(project)))
+            .researchAreaIds(researchAreaIds(project.getResearchAreas()))
             .build();
     }
 
@@ -244,7 +255,9 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
                 funding.getFunder().getId());
         }
 
-        return builder.institutionIds(institutionIds).build();
+        return builder.institutionIds(institutionIds)
+            .researchAreaIds(researchAreaIds(funding.getResearchAreas()))
+            .build();
     }
 
     private record LinkRow(Integer projectId, Integer documentId, String relationType,

@@ -35,4 +35,6 @@ public class PerformanceRelatedOutputDTO extends DocumentDTO {
     // Used only for responses
 
     private List<LanguageTagResponseDTO> languageTags = new ArrayList<>();
+
+    private List<MultilingualContentDTO> eventName = new ArrayList<>();
 }

@@ -16,9 +16,11 @@
       "requestTimeoutSeconds": 120,
       "supportedLanguages": [
         "EN",
-        "SR"
+        "SR",
+        "PT"
       ],
       "entityTypes": [
+        "research_areas",
         "org_units",
         "persons",
         "events",

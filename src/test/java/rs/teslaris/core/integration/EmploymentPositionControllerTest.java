@@ -33,6 +33,7 @@ public class EmploymentPositionControllerTest extends BaseTest {
             ),
             "TEST",
             "test",
+            "T01",
             2,
             null
         );

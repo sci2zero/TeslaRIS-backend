@@ -2,6 +2,7 @@ package rs.teslaris.migrator.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,12 +18,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.EventContributionType;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.migrator.converter.hydrator.HydratorConversionUtil;
+import rs.teslaris.migrator.converter.hydrator.HydratorInstitutionResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorJournalResolver;
 import rs.teslaris.migrator.converter.hydrator.HydratorOutputConverters;
 import rs.teslaris.migrator.converter.hydrator.HydratorPersonResolver;
@@ -56,6 +62,9 @@ public class HydratorOutputConvertersTest {
     private HydratorPersonResolver personResolver;
 
     @Mock
+    private HydratorInstitutionResolver institutionResolver;
+
+    @Mock
     private CountryService countryService;
 
     @Mock
@@ -68,7 +77,7 @@ public class HydratorOutputConvertersTest {
     void setUp() {
         converters = new HydratorOutputConverters(
             new HydratorConversionUtil(languageTagService, languageService, researchAreaService),
-            journalResolver, personResolver, countryService, migrationLog);
+            journalResolver, personResolver, institutionResolver, countryService, migrationLog);
     }
 
     private void withResearchAreaVocabulary() {
@@ -168,5 +177,63 @@ public class HydratorOutputConvertersTest {
         var dto = converters.toPresentation(record, firstOutput(record));
 
         assertTrue(dto.getResearchAreasId().isEmpty());
+    }
+
+    private void withOwner() {
+        var ownerName = new PersonNameDTO();
+        ownerName.setFirstname("John");
+        ownerName.setLastname("Doe");
+        when(personResolver.ownerName(any())).thenReturn(ownerName);
+        when(personResolver.resolveOwner(any())).thenReturn(7);
+    }
+
+    @Test
+    void shouldAddOwnerAsPresenterWhenSlidesHaveNoPresenters() throws Exception {
+        // given
+        withOwner();
+        var record = curriculum("""
+            [{"id": "9", "conferencePaper": {"paperTitle": "Test Paper",
+              "presentationDate": {"year": "2024"}}}]
+            """);
+
+        // when
+        var dto = converters.toPresentation(record, firstOutput(record));
+
+        // then
+        assertEquals(1, dto.getContributions().size());
+        assertEquals(DocumentContributionType.PRESENTER,
+            dto.getContributions().getFirst().getContributionType());
+        assertEquals(7, dto.getContributions().getFirst().getPersonId());
+        verify(migrationLog).valueDefaulted(anyString(), eq("CONFERENCE_PRESENTATION"),
+            anyString(), eq("CW-001-MAP-000091"), anyString());
+    }
+
+    @Test
+    void shouldAddOwnerAsPresenterAndSpeakerWhenPosterIsMapped() throws Exception {
+        // given
+        withOwner();
+        var record = curriculum("""
+            [{"id": "9", "conferencePoster": {"title": "Test Poster",
+              "conferenceName": "Test Conference",
+              "conferenceDate": {"year": "2024", "month": "6", "day": "3"},
+              "authors": {"total": 2, "author": [{"self": true, "name": "Doe, John"},
+                {"name": "Smith, Jane"}]}}}]
+            """);
+        var output = firstOutput(record);
+
+        // when
+        var dto = converters.toConferencePoster(record, output);
+        var speakers = converters.speakerContributions(dto,
+            output.conferencePoster().conferenceDate(), null);
+
+        // then
+        var presenter = dto.getContributions().getLast();
+        assertEquals(DocumentContributionType.PRESENTER, presenter.getContributionType());
+        assertEquals(7, presenter.getPersonId());
+        assertEquals(1, speakers.size());
+        assertEquals(EventContributionType.SPEAKER,
+            speakers.getFirst().getEventContributionType());
+        assertEquals(LocalDate.of(2024, 6, 3), speakers.getFirst().getDateFrom());
+        assertEquals(LocalDate.of(2024, 6, 3), speakers.getFirst().getDateTo());
     }
 }

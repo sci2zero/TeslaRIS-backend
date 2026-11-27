@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -38,7 +39,10 @@ import rs.teslaris.revisioner.model.qualityassessment.QualityDimension;
 @Slf4j
 public class DataQualityAssessmentConfigurationLoader {
 
-    private static final String CONFIG_DIRECTORY = "src/main/resources/dataQualityAssessment";
+    private static final String DEFAULT_CONFIG_DIRECTORY =
+        "src/main/resources/dataQualityAssessment";
+
+    private static String configurationDirectory = DEFAULT_CONFIG_DIRECTORY;
 
     private static LanguageTagService languageTagService;
 
@@ -47,24 +51,35 @@ public class DataQualityAssessmentConfigurationLoader {
 
 
     @Autowired
-    public DataQualityAssessmentConfigurationLoader(LanguageTagService languageTagService) {
+    public DataQualityAssessmentConfigurationLoader(LanguageTagService languageTagService,
+                                                    @Value("${revisioner.dataQuality.configuration:}")
+                                                    String configurationDirectory) {
         DataQualityAssessmentConfigurationLoader.languageTagService = languageTagService;
+        DataQualityAssessmentConfigurationLoader.configurationDirectory =
+            Objects.isNull(configurationDirectory) || configurationDirectory.isBlank()
+                ? DEFAULT_CONFIG_DIRECTORY
+                : configurationDirectory;
         reloadConfiguration();
     }
 
+    public static String getConfigurationDirectory() {
+        return configurationDirectory;
+    }
+
     @Scheduled(fixedRate = (1000 * 60 * 10))
-    protected static void reloadConfiguration() {
+    public static void reloadConfiguration() {
         try {
             Map<String, NavigableMap<String, DataQualityProfile>> loadedProfiles =
                 new HashMap<>();
 
-            try (var profileDirs = Files.list(Path.of(CONFIG_DIRECTORY))) {
+            try (var profileDirs = Files.list(Path.of(configurationDirectory))) {
                 profileDirs
                     .filter(Files::isDirectory)
                     .forEach(profileDir -> {
                         var profileName = profileDir.getFileName().toString().toLowerCase();
 
-                        NavigableMap<String, DataQualityProfile> versions = new TreeMap<>();
+                        NavigableMap<String, DataQualityProfile> versions =
+                            new TreeMap<>(ProfileVersionComparator.INSTANCE);
 
                         try (var versionFiles = Files.list(profileDir)) {
                             versionFiles
@@ -192,6 +207,14 @@ public class DataQualityAssessmentConfigurationLoader {
         return dataQualityProfiles.keySet();
     }
 
+    public static List<String> listProfileVersions(String profileName) {
+        var versions = dataQualityProfiles.get(profileName.toLowerCase());
+
+        return Objects.isNull(versions)
+            ? Collections.emptyList()
+            : List.copyOf(versions.keySet());
+    }
+
     public static Set<Pair<String, String>> listAvailableProfilesWithVersion() {
         return dataQualityProfiles.entrySet()
             .stream()
@@ -201,11 +224,13 @@ public class DataQualityAssessmentConfigurationLoader {
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+    @Nullable
     public static String getLatestProfileVersion(String profileName) {
-        return dataQualityProfiles
-            .get(profileName.toLowerCase())
-            .lastEntry()
-            .getKey();
+        var versions = dataQualityProfiles.get(profileName.toLowerCase());
+
+        return Objects.isNull(versions) || versions.isEmpty()
+            ? null
+            : versions.lastEntry().getKey();
     }
 
     public static Map<String, Double> getTargetWeights(String profileName, String version) {

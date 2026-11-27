@@ -2,9 +2,11 @@ package rs.teslaris.migrator.converter.hydrator;
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.migrator.model.MigrationRun;
 import rs.teslaris.migrator.pipeline.EntityCreator;
@@ -16,7 +18,8 @@ import rs.teslaris.migrator.util.MigrationEntityType;
 import rs.teslaris.migrator.util.MigrationLog;
 
 /**
- * Resolves the person and the institution's organisation unit, then adds the employment.
+ * Resolves the person, the institution's organisation unit and the position, then adds the
+ * employment.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,7 +34,12 @@ public class EmploymentEntityCreator
 
     private final HydratorInstitutionResolver institutionResolver;
 
+    private final EmploymentPositionService employmentPositionService;
+
     private final MigrationLog migrationLog;
+
+    @Value("${employment.position.scheme}")
+    private String employmentPositionScheme;
 
 
     @Override
@@ -42,6 +50,7 @@ public class EmploymentEntityCreator
             dto.personSourceKey());
 
         setOrganisationUnit(dto);
+        setEmploymentPosition(dto);
 
         var created = involvementService.addEmployment(personId, dto.employment());
 
@@ -53,6 +62,7 @@ public class EmploymentEntityCreator
         dto.throwIfRejected();
 
         setOrganisationUnit(dto);
+        setEmploymentPosition(dto);
 
         var merged = mergePolicy.merge(dto.employment(),
             involvementService.<Employment, EmploymentDTO>getInvolvement(targetId,
@@ -61,6 +71,21 @@ public class EmploymentEntityCreator
                 dto.sourceKey()));
 
         involvementService.updateEmployment(targetId, merged);
+    }
+
+    private void setEmploymentPosition(EmploymentMigrationDTO dto) {
+        if (Objects.isNull(dto.positionCode())) {
+            return;
+        }
+
+        employmentPositionService.findIdBySchemeNameAndCode(employmentPositionScheme,
+                dto.positionCode())
+            .ifPresentOrElse(
+                positionId -> dto.employment().setEmploymentPositionId(positionId),
+                () -> migrationLog.valueDropped(HydratorSource.NAME,
+                    MigrationEntityType.PERSON_EMPLOYMENT.name(), dto.sourceKey(),
+                    HydratorMappingRule.cv(39),
+                    "employment position not linked: " + dto.positionCode()));
     }
 
     private void setOrganisationUnit(EmploymentMigrationDTO dto) {

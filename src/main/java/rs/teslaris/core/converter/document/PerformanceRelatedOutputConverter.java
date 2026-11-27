@@ -33,6 +33,12 @@ public class PerformanceRelatedOutputConverter extends DocumentPublicationConver
             MultilingualContentConverter.getMultilingualContentDTO(
                 performanceRelatedOutput.getOtherActors()));
 
+        if (Objects.nonNull(performanceRelatedOutput.getEvent())) {
+            performanceRelatedOutputDTO.setEventName(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    performanceRelatedOutput.getEvent().getName()));
+        }
+
         if (Objects.nonNull(performanceRelatedOutput.getLanguages())) {
             performanceRelatedOutput.getLanguages().forEach(languageTag -> {
                 performanceRelatedOutputDTO.getLanguageTagIds().add(languageTag.getId());

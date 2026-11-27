@@ -40,4 +40,15 @@ public class ExportPerson extends BaseExportEntity {
 
     @Field("employments")
     private List<ExportEmployment> employments = new ArrayList<>();
+
+    // Employments that ended. Only the VIVO push reads them, so the OAI-PMH sets do not change.
+    @Field("past_employments")
+    private List<ExportEmployment> pastEmployments = new ArrayList<>();
+
+    @Field("educations")
+    private List<ExportEducation> educations = new ArrayList<>();
+
+    // IDs of the research areas, sorted. Pushed as links to the research area snapshots.
+    @Field("research_area_ids")
+    private List<Integer> researchAreaIds = new ArrayList<>();
 }

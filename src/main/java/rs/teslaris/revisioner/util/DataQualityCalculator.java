@@ -73,6 +73,7 @@ import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.FlexibleDate;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.EventContributionType;
+import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.PersonalInfo;
@@ -336,15 +337,19 @@ public class DataQualityCalculator {
         // value is reported as an issue of its own below.
         var publicationDate = FlexibleDate.toLocalDate(documentDate);
 
+        var containerOutput = isContainerOutput(dto);
+
         if (!CollectionOperations.containsValues(dto.getContributions())) {
-            reportIssue(assessment, "contributorsMissing");
+            if (!containerOutput) {
+                reportIssue(assessment, "contributorsMissing");
+            }
         } else {
             boolean hasManagedPerson =
                 dto.getContributions()
                     .stream()
                     .anyMatch(c -> Objects.nonNull(c.getPersonId()));
 
-            if (!hasManagedPerson) {
+            if (!hasManagedPerson && !containerOutput) {
                 reportIssue(assessment, "noManagedContributor");
             }
 
@@ -616,6 +621,13 @@ public class DataQualityCalculator {
                 }
             }
         }
+    }
+
+    // Only proceedings and edited books can contain other records.
+    private boolean isContainerOutput(DocumentDTO dto) {
+        return dto instanceof ProceedingsResponseDTO ||
+            (dto instanceof MonographDTO monograph &&
+                MonographType.EDITED_BOOK.equals(monograph.getMonographType()));
     }
 
     private void assessEntity(EventDTO dto, DataQualityAssessment assessment) {
@@ -1749,7 +1761,7 @@ public class DataQualityCalculator {
             }
 
             boolean trial = eventType.equals(EventType.OTHER_EVENT) &&
-                otherEventType.equals(OtherEventType.TRIAL);
+                OtherEventType.TRIAL.equals(otherEventType);
 
             if (CollectionOperations.containsValues(eventContribution.getCaseName()) && !trial) {
                 reportIssue(assessment, "caseOnlyForTrial", "", activityType, activityName);

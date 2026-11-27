@@ -47,6 +47,9 @@ public class CommonExportController {
             case "fundings":
                 commonExportService.exportFundingsToCommonModel(allTime);
                 break;
+            case "research_areas":
+                commonExportService.exportResearchAreasToCommonModel(allTime);
+                break;
         }
     }
 }

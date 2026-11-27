@@ -57,7 +57,9 @@ public interface ProjectExportSource {
         // Number of fundings of the project (not deleted). Used to credit outputs without
         // funding parts only when the project has exactly one funding.
         Integer fundingCount,
-        Set<Integer> institutionIds
+        Set<Integer> institutionIds,
+        // IDs of the project's research areas, sorted.
+        List<Integer> researchAreaIds
     ) {
     }
 
@@ -102,7 +104,9 @@ public interface ProjectExportSource {
         Boolean oaMandated,
         String oaMandateUrl,
         Boolean internalInvestment,
-        Set<Integer> institutionIds
+        Set<Integer> institutionIds,
+        // IDs of the funding's research areas, sorted.
+        List<Integer> researchAreaIds
     ) {
     }
 

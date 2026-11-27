@@ -26,10 +26,151 @@ public class HydratorCVModel {
         String language,
         String lastModifiedDate,
         IdentifyingInfo identifyingInfo,
+        Degrees degrees,
         Employments employments,
         Distinctions distinctions,
         Fundings fundings,
-        Outputs outputs
+        Outputs outputs,
+        Services services,
+        Groups groups
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Groups(
+        Integer total,
+        FundingOutputs fundingOutputs
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingOutputs(
+        List<FundingOutput> fundingOutput
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record FundingOutput(
+        GroupReference funding,
+        GroupReference output
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record GroupReference(
+        String id,
+        String title
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Services(
+        Integer total,
+        List<Service> service
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Service(
+        String id,
+        Supervision researchBasedDegreeSupervision,
+        Examination graduateExamination,
+        NonResearchPresentation nonResearchPresentation,
+        BroadcastInterview broadcastInterview,
+        TextInterview textInterview
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record NonResearchPresentation(
+        String title,
+        DateInfo presentationDate,
+        String conferenceEvent,
+        PublicationLocation conferenceEventLocation,
+        String organizationPresentedTo,
+        OutputAuthors authors,
+        OutputAuthors presenters,
+        Boolean invited,
+        Boolean keynote,
+        Boolean competitive
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BroadcastInterview(
+        String theme,
+        DateInfo firstBroadcastDate,
+        DateInfo endDate,
+        String program,
+        String interviewerName,
+        String producer,
+        String url,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TextInterview(
+        String topic,
+        DateInfo publicationDate,
+        String forum,
+        String interviewerName,
+        String url,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Examination(
+        DateInfo date,
+        String theme,
+        String studentName,
+        ExaminationRole examinationRole,
+        DegreeType examinationDegree,
+        String examinationSubject,
+        String courseCode,
+        String tid,
+        Institutions institutions,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ExaminationRole(
+        String code,
+        String role
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Supervision(
+        DateInfo startDate,
+        DateInfo endDate,
+        String thesisTitle,
+        StudentName studentName,
+        String degreeSubject,
+        DegreeType degreeType,
+        DegreeStatus degreeStatus,
+        SupervisoryType supervisoryType,
+        Institutions academicInstitutions,
+        String url,
+        String tid
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record StudentName(
+        String name
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record SupervisoryType(
+        String code,
+        String type
     ) {
     }
 
@@ -316,6 +457,46 @@ public class HydratorCVModel {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degrees(
+        Integer total,
+        List<Degree> degree
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Degree(
+        String id,
+        DegreeType degreeType,
+        String degreeName,
+        String degreeMajor,
+        String description,
+        String classification,
+        Institutions institutions,
+        DegreeStatus degreeStatus,
+        DateInfo startDate,
+        DateInfo endDate,
+        DegreeThesis thesis,
+        ResearchClassifications researchClassifications
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeStatus(
+        String code,
+        String status
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record DegreeThesis(
+        String tid,
+        String title,
+        Institution institution,
+        Supervisors supervisors
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Employments(
         Integer total,
         List<Employment> employment
@@ -326,10 +507,18 @@ public class HydratorCVModel {
     public record Employment(
         String id,
         List<Institution> institution,
+        EmploymentCategory employmentCategory,
         PositionType positionType,
         PositionTitle positionTitle,
         DateInfo startDate,
         DateInfo endDate
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record EmploymentCategory(
+        String code,
+        String value
     ) {
     }
 
@@ -406,6 +595,8 @@ public class HydratorCVModel {
         String programName,
         InvestigationRole investigationRole,
         String yearAwarded,
+        String competitive,
+        String fundingRenewable,
         TotalAmount totalAmount,
         FundingIdentifiers fundingIdentifiers,
         FundingInvestigators investigators,
@@ -485,6 +676,10 @@ public class HydratorCVModel {
         OutputType outputType,
         JournalArticle journalArticle,
         ConferencePaper conferencePaper,
+        ConferenceAbstract conferenceAbstract,
+        ConferencePoster conferencePoster,
+        BookChapter bookChapter,
+        Book book,
         Dissertation dissertation
     ) {
     }
@@ -536,6 +731,82 @@ public class HydratorCVModel {
         CodeValue authoringRole,
         CodeValue publicationStatus,
         PublicationLocation publicationLocation,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConferenceAbstract(
+        String articleTitle,
+        String conferenceName,
+        PublicationLocation conferenceLocation,
+        String volume,
+        String issue,
+        String pageFrom,
+        String pageTo,
+        DateInfo publicationDate,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        CodeValue publicationStatus,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConferencePoster(
+        String title,
+        String conferenceName,
+        DateInfo conferenceDate,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Book(
+        String title,
+        String volume,
+        String edition,
+        String numberOfPages,
+        String refereed,
+        CodeValue publicationStatus,
+        String publicationYear,
+        PublicationLocation publicationLocation,
+        String publisher,
+        String url,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        OutputAuthors editors,
+        ResearchClassifications researchClassifications,
+        Keywords keywords
+    ) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record BookChapter(
+        String chapterTitle,
+        String bookTitle,
+        String bookVolume,
+        String bookEdition,
+        String bookPublisher,
+        String pageFrom,
+        String pageTo,
+        String refereed,
+        CodeValue publicationStatus,
+        String publicationYear,
+        PublicationLocation publicationLocation,
+        String url,
+        OutputIdentifiers identifiers,
+        OutputAuthors authors,
+        CodeValue authoringRole,
+        OutputAuthors editors,
         ResearchClassifications researchClassifications,
         Keywords keywords
     ) {
