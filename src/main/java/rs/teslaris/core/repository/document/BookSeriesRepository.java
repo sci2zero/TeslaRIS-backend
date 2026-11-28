@@ -22,7 +22,7 @@ public interface BookSeriesRepository extends JpaRepository<BookSeries, Integer>
 
     @Query(value = "SELECT * FROM book_series bs WHERE " +
         "(:allTime = TRUE OR bs.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        "AND bs.publication_candidate IS NOT FALSE ORDER BY bs.id",
+        "ORDER BY bs.id",
         nativeQuery = true)
     Page<BookSeries> findAllModified(Pageable pageable, boolean allTime);
 

@@ -24,4 +24,6 @@ public interface CommonExportService {
     void deleteDocumentFromCommonModel(Integer documentId, ExportPublicationType exportType);
 
     void deleteHiddenRecordFromCommonModel(String entityType, Integer entityId);
+
+    void refreshPersonContributions(Integer personId, boolean publiclyVisible);
 }

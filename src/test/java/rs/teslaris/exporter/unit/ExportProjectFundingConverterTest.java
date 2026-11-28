@@ -13,6 +13,8 @@ import rs.teslaris.core.export.ProjectExportSource;
 import rs.teslaris.core.model.commontypes.Currency;
 import rs.teslaris.core.model.commontypes.MonetaryAmount;
 import rs.teslaris.core.model.funding.FundingType;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.project.PersonProjectContributionType;
 import rs.teslaris.exporter.model.converter.ExportFundingConverter;
 import rs.teslaris.exporter.model.converter.ExportProjectConverter;
@@ -153,5 +155,31 @@ public class ExportProjectFundingConverterTest {
         assertEquals(2, result.getDatabaseId());
         assertTrue(result.getDeleted());
         assertNull(result.getAmount());
+    }
+
+    @Test
+    public void shouldMarkEmbeddedPersonThatIsNoPublicationCandidate() {
+        // Given
+        var hidden = new Person();
+        hidden.setId(9);
+        var name = new PersonName();
+        name.setFirstname("Ivan");
+        name.setLastname("Mrsulja");
+        hidden.setName(name);
+        hidden.setPublicationCandidate(false);
+
+        var project = project()
+            .persons(List.of(new ProjectExportSource.PersonContributionRecord(hidden,
+                "Mrsulja, Ivan", 1, PersonProjectContributionType.PRINCIPLE_INVESTIGATOR, null,
+                List.of(), null, null)))
+            .build();
+
+        // When
+        var result = ExportProjectConverter.toCommonExportModel(project, false);
+
+        // Then
+        var contribution = result.getPersons().getFirst();
+        assertTrue(contribution.getPerson().getDeleted());
+        assertEquals("Mrsulja, Ivan", contribution.getDisplayName());
     }
 }

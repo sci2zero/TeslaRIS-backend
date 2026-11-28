@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.project.model.project.Project;
@@ -28,7 +29,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     @Query(value = "SELECT * FROM projects p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        "AND p.publication_candidate IS NOT FALSE ORDER BY p.id", nativeQuery = true)
+        "ORDER BY p.id", nativeQuery = true)
     Page<Project> findAllModified(Pageable pageable, boolean allTime);
 
     @Query("SELECT p.id FROM Project p WHERE lower(p.nationalId) = lower(:nationalId) " +
@@ -39,4 +40,11 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
         "internal_identifiers @> to_jsonb(array[cast(?1 as text)]) AND deleted = FALSE ORDER BY id",
         nativeQuery = true)
     List<Integer> findIdsByInternalIdentifier(String identifier);
+
+    // A bulk update skips @UpdateTimestamp, so the time is set here.
+    @Modifying
+    @Query("UPDATE Project p SET p.lastModification = CURRENT_TIMESTAMP WHERE p.id IN " +
+        "(SELECT ppc.project.id FROM PersonProjectContribution ppc " +
+        "WHERE ppc.person.id = :personId)")
+    int markContributionsOfPersonChanged(Integer personId);
 }

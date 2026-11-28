@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -38,6 +39,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
@@ -130,6 +132,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private ResearchAreaRepository researchAreaRepository;
+
+    @Mock
+    private DocumentRepository documentRepository;
 
     @Mock
     private ProjectExportSource projectExportSource;
@@ -357,8 +362,8 @@ public class CommonExportServiceTest {
         "PROJECT, PROJECT",
         "FUNDING, FUNDING"
     })
-    void shouldDeleteHiddenNonDocumentRecordFromCommonModel(String entityType,
-                                                            String exportKind) {
+    void shouldMarkHiddenNonDocumentRecordAsDeletedInCommonModel(String entityType,
+                                                                 String exportKind) {
         // Given
         var exportClass = switch (exportKind) {
             case "PERSON" -> ExportPerson.class;
@@ -372,27 +377,86 @@ public class CommonExportServiceTest {
         commonExportService.deleteHiddenRecordFromCommonModel(entityType, 5);
 
         // Then
-        verify(commonExportWorker).deleteExportEntity(5, exportClass, null);
+        verify(commonExportWorker).markExportEntityDeleted(5, exportClass, null);
     }
 
     @ParameterizedTest
     @EnumSource(ExportPublicationType.class)
-    void shouldDeleteHiddenDocumentRecordFromCommonModel(
+    void shouldMarkHiddenDocumentRecordAsDeletedInCommonModel(
         ExportPublicationType exportPublicationType) {
         // When
         commonExportService.deleteHiddenRecordFromCommonModel(exportPublicationType.name(), 5);
 
         // Then
-        verify(commonExportWorker).deleteExportEntity(5, ExportDocument.class,
+        verify(commonExportWorker).markExportEntityDeleted(5, ExportDocument.class,
             exportPublicationType);
     }
 
     @Test
-    void shouldIgnoreUnknownEntityTypeWhenDeletingHiddenRecord() {
+    void shouldIgnoreUnknownEntityTypeWhenHidingRecord() {
         // When
         commonExportService.deleteHiddenRecordFromCommonModel("PRIZE", 5);
 
         // Then
+        verify(commonExportWorker, never()).markExportEntityDeleted(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldRefreshContributionsWhenPersonVisibilityNoLongerMatchesExport(
+        boolean publiclyVisible) {
+        // Given
+        when(commonExportWorker.isExportEntityDeleted(5, ExportPerson.class)).thenReturn(
+            Optional.of(publiclyVisible));
+        when(documentRepository.markContributionsOfPersonChanged(5)).thenReturn(3);
+        when(projectExportSource.markProjectsOfPersonChanged(5)).thenReturn(1);
+
+        // When
+        commonExportService.refreshPersonContributions(5, publiclyVisible);
+
+        // Then
+        verify(documentRepository).markContributionsOfPersonChanged(5);
+        verify(projectExportSource).markProjectsOfPersonChanged(5);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldNotRefreshContributionsWhenExportAlreadyMatchesPersonVisibility(
+        boolean publiclyVisible) {
+        // Given
+        when(commonExportWorker.isExportEntityDeleted(5, ExportPerson.class)).thenReturn(
+            Optional.of(!publiclyVisible));
+
+        // When
+        commonExportService.refreshPersonContributions(5, publiclyVisible);
+
+        // Then
+        verify(documentRepository, never()).markContributionsOfPersonChanged(any());
+        verify(projectExportSource, never()).markProjectsOfPersonChanged(any());
+    }
+
+    @Test
+    void shouldNotRefreshContributionsWhenPersonWasNeverExported() {
+        // Given
+        when(commonExportWorker.isExportEntityDeleted(5, ExportPerson.class)).thenReturn(
+            Optional.empty());
+
+        // When
+        commonExportService.refreshPersonContributions(5, true);
+
+        // Then
+        verify(documentRepository, never()).markContributionsOfPersonChanged(any());
+        verify(projectExportSource, never()).markProjectsOfPersonChanged(any());
+    }
+
+    @Test
+    void shouldMarkUnarchivedThesisAsDeletedInCommonModel() {
+        // When
+        commonExportService.deleteDocumentFromCommonModel(7, ExportPublicationType.THESIS);
+
+        // Then
+        verify(commonExportWorker).markExportEntityDeleted(7, ExportDocument.class,
+            ExportPublicationType.THESIS);
         verify(commonExportWorker, never()).deleteExportEntity(any(), any(), any());
     }
 }

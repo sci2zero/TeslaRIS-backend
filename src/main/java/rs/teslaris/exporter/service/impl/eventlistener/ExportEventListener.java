@@ -8,6 +8,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.applicationevent.PublicVisibilityChangedEvent;
 import rs.teslaris.core.applicationevent.ThesisUnarchivedEvent;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
@@ -34,16 +35,26 @@ public class ExportEventListener {
     @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     protected void handlePublicVisibilityChanged(PublicVisibilityChangedEvent event) {
-        if (event.publiclyVisible()) {
+        if (!event.publiclyVisible()) {
+            try {
+                commonExportService.deleteHiddenRecordFromCommonModel(event.entityType(),
+                    event.entityId());
+            } catch (Exception e) {
+                log.error("Unable to delete export record for hidden {} with ID {}. Reason: {}",
+                    event.entityType(), event.entityId(), e.getMessage(), e);
+            }
+        }
+
+        if (!EntityType.PERSON.name().equals(event.entityType())) {
             return;
         }
 
         try {
-            commonExportService.deleteHiddenRecordFromCommonModel(event.entityType(),
-                event.entityId());
+            commonExportService.refreshPersonContributions(event.entityId(),
+                event.publiclyVisible());
         } catch (Exception e) {
-            log.error("Unable to delete export record for hidden {} with ID {}. Reason: {}",
-                event.entityType(), event.entityId(), e.getMessage(), e);
+            log.error("Unable to refresh export records of person with ID {}. Reason: {}",
+                event.entityId(), e.getMessage(), e);
         }
     }
 }

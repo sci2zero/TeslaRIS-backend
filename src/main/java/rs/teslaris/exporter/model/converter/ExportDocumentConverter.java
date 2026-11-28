@@ -567,6 +567,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             person.setOrcid(contribution.getPerson().getOrcid());
             person.setScopusAuthorId(contribution.getPerson().getScopusAuthorId());
             person.setOpenAlexId(contribution.getPerson().getOpenAlexId());
+            person.setDeleted(isTombstone(contribution.getPerson()));
             exportContribution.setPerson(person);
         }
 

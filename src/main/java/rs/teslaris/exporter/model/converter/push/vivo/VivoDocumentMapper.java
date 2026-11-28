@@ -506,7 +506,7 @@ public class VivoDocumentMapper implements RdfMapper<ExportDocument> {
 
             Resource agent;
             var person = contribution.getPerson();
-            if (Objects.nonNull(person) && Objects.nonNull(person.getDatabaseId())) {
+            if (VivoRdfSupport.isPushed(person)) {
                 agent = model.createResource(
                     VivoRdfSupport.personUri(target, person.getDatabaseId()));
                 references.add(

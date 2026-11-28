@@ -107,6 +107,12 @@ public class ProjectExportSourceImpl implements ProjectExportSource {
         return page.map(funding -> toRecord(funding, pageData));
     }
 
+    @Override
+    @Transactional
+    public int markProjectsOfPersonChanged(Integer personId) {
+        return projectRepository.markContributionsOfPersonChanged(personId);
+    }
+
     /**
      * The document links and funding counts of all projects of a page, in two queries, so the
      * export does not query once per project.

@@ -223,7 +223,7 @@ public class VivoProjectMapper implements RdfMapper<ExportProject> {
             var roleUri = uri + "-role-" + (i + 1);
 
             Resource personResource;
-            if (Objects.nonNull(person) && Objects.nonNull(person.getDatabaseId())) {
+            if (VivoRdfSupport.isPushed(person)) {
                 personResource =
                     model.createResource(VivoRdfSupport.personUri(target, person.getDatabaseId()));
                 references.add(new EntityReference(PushEntityType.PERSONS, person.getDatabaseId()));

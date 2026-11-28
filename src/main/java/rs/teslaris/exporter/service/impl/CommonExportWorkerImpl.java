@@ -1,8 +1,10 @@
 package rs.teslaris.exporter.service.impl;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -16,9 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 
 @Service
@@ -75,6 +79,70 @@ public class CommonExportWorkerImpl {
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
+        }
+    }
+
+    /**
+     * Marks the export record of a record that is no longer public as deleted, instead of
+     * removing it, so the push and OAI-PMH both learn that it is gone. The new timestamp makes
+     * the next push send the deletion.
+     */
+    public <E> long markExportEntityDeleted(Integer databaseId, Class<E> exportClass,
+                                            ExportPublicationType exportPublicationType) {
+        var query = new Query();
+        query.addCriteria(Criteria.where("database_id").is(databaseId));
+
+        if (Objects.nonNull(exportPublicationType)) {
+            query.addCriteria(Criteria.where("type").is(exportPublicationType.name()));
+        }
+
+        var unavailableUntil = mongoUnavailableUntil.get();
+        if (System.currentTimeMillis() < unavailableUntil) {
+            log.debug("Mongo is unreachable, skipping deletion of {} export record with ID {}.",
+                exportClass.getSimpleName(), databaseId);
+            return 0;
+        }
+
+        var update = new Update().set("deleted", true).set("last_updated", new Date());
+
+        try {
+            return mongoTemplate.updateMulti(query, update, exportClass).getModifiedCount();
+        } catch (DataAccessResourceFailureException e) {
+            var retryAt = System.currentTimeMillis() +
+                Duration.ofSeconds(mongoUnavailableRetryAfterSeconds).toMillis();
+
+            if (mongoUnavailableUntil.compareAndSet(unavailableUntil, retryAt)) {
+                log.warn(
+                    "Mongo is unreachable, export record deletions are skipped for the next {} " +
+                        "seconds. Reason: {}", mongoUnavailableRetryAfterSeconds, e.getMessage());
+            }
+
+            return 0;
+        }
+    }
+
+    /**
+     * Tells whether the export record is a tombstone. Empty when there is no export record, or
+     * when Mongo is unreachable.
+     */
+    public <E extends BaseExportEntity> Optional<Boolean> isExportEntityDeleted(
+        Integer databaseId, Class<E> exportClass) {
+        if (System.currentTimeMillis() < mongoUnavailableUntil.get()) {
+            log.debug("Mongo is unreachable, skipping lookup of {} export record with ID {}.",
+                exportClass.getSimpleName(), databaseId);
+            return Optional.empty();
+        }
+
+        var query = new Query();
+        query.addCriteria(Criteria.where("database_id").is(databaseId));
+
+        try {
+            return Optional.ofNullable(mongoTemplate.findOne(query, exportClass))
+                .map(exportEntity -> Boolean.TRUE.equals(exportEntity.getDeleted()));
+        } catch (DataAccessResourceFailureException e) {
+            log.warn("Unable to read {} export record with ID {}. Reason: {}",
+                exportClass.getSimpleName(), databaseId, e.getMessage());
+            return Optional.empty();
         }
     }
 

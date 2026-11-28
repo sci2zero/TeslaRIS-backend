@@ -31,6 +31,7 @@ public class PersonProjectContributionConverter {
         contribution.getInstitutions().forEach(institution ->
             dto.getInstitutionIds().add(institution.getId()));
 
+        dto.setDisplayAffiliationStatement(new ArrayList<>());
         var affiliation = contribution.getAffiliationStatement();
         if (Objects.nonNull(affiliation)) {
             dto.setDisplayAffiliationStatement(

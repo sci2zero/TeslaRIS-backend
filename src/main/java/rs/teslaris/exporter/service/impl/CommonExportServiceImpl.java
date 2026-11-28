@@ -42,6 +42,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.CourseRepository;
+import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
@@ -87,6 +88,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final OrganisationUnitRepository organisationUnitRepository;
 
     private final PersonRepository personRepository;
+
+    private final DocumentRepository documentRepository;
 
     private final ConferenceRepository conferenceRepository;
 
@@ -351,12 +354,12 @@ public class CommonExportServiceImpl implements CommonExportService {
     @Override
     public void deleteDocumentFromCommonModel(Integer documentId,
                                               ExportPublicationType exportType) {
-        var deletedCount = commonExportWorker.deleteExportEntity(
+        var deletedCount = commonExportWorker.markExportEntityDeleted(
             documentId, ExportDocument.class, exportType
         );
 
         if (deletedCount > 0) {
-            log.info("Deleted {} export record(s) of type {} for document with ID {}.",
+            log.info("Marked {} export record(s) of type {} for document with ID {} as deleted.",
                 deletedCount, exportType, documentId);
         }
     }
@@ -364,28 +367,53 @@ public class CommonExportServiceImpl implements CommonExportService {
     @Override
     public void deleteHiddenRecordFromCommonModel(String entityType, Integer entityId) {
         var deletedCount = switch (entityType) {
-            case "PERSON" -> commonExportWorker.deleteExportEntity(entityId, ExportPerson.class,
-                null);
+            case "PERSON" ->
+                commonExportWorker.markExportEntityDeleted(entityId, ExportPerson.class, null);
             case "ORGANISATION_UNIT" ->
-                commonExportWorker.deleteExportEntity(entityId, ExportOrganisationUnit.class,
+                commonExportWorker.markExportEntityDeleted(entityId, ExportOrganisationUnit.class,
                     null);
             case "CONFERENCE", "EXHIBITION", "COURSE", "OTHER_EVENT" ->
-                commonExportWorker.deleteExportEntity(entityId, ExportEvent.class, null);
-            case "PROJECT" -> commonExportWorker.deleteExportEntity(entityId, ExportProject.class,
-                null);
-            case "FUNDING" -> commonExportWorker.deleteExportEntity(entityId, ExportFunding.class,
-                null);
+                commonExportWorker.markExportEntityDeleted(entityId, ExportEvent.class, null);
+            case "PROJECT" ->
+                commonExportWorker.markExportEntityDeleted(entityId, ExportProject.class, null);
+            case "FUNDING" ->
+                commonExportWorker.markExportEntityDeleted(entityId, ExportFunding.class, null);
             default -> Arrays.stream(ExportPublicationType.values())
                 .filter(type -> type.name().equals(entityType))
                 .findFirst()
-                .map(type -> commonExportWorker.deleteExportEntity(entityId,
+                .map(type -> commonExportWorker.markExportEntityDeleted(entityId,
                     ExportDocument.class, type))
                 .orElse(0L);
         };
 
         if (deletedCount > 0) {
-            log.info("Deleted {} export record(s) of hidden {} with ID {}.", deletedCount,
-                entityType, entityId);
+            log.info("Marked {} export record(s) of hidden {} with ID {} as deleted.",
+                deletedCount, entityType, entityId);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void refreshPersonContributions(Integer personId, boolean publiclyVisible) {
+        var personIsTombstone =
+            commonExportWorker.isExportEntityDeleted(personId, ExportPerson.class);
+
+        if (personIsTombstone.isEmpty()) {
+            return;
+        }
+
+        var exportIsCurrent = personIsTombstone.get() != publiclyVisible;
+        if (exportIsCurrent) {
+            return;
+        }
+
+        var documentCount = documentRepository.markContributionsOfPersonChanged(personId);
+        var projectCount = projectExportSource.markProjectsOfPersonChanged(personId);
+
+        if (documentCount > 0 || projectCount > 0) {
+            log.info("Marked {} document(s) and {} project(s) of {} person with ID {} as " +
+                    "changed.", documentCount, projectCount,
+                publiclyVisible ? "public" : "hidden", personId);
         }
     }
 

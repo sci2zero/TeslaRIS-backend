@@ -31,6 +31,7 @@ import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEntityIdentifier;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
+import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.push.PushEntityType;
 import rs.teslaris.exporter.util.PushTargetsConfigurationLoader.PushTarget;
 import rs.teslaris.exporter.util.push.EntityReference;
@@ -473,6 +474,15 @@ public final class VivoRdfSupport {
 
     public static String fundingUri(PushTarget target, Integer databaseId) {
         return target.namespace() + "teslaris-funding-" + databaseId;
+    }
+
+    /**
+     * True when a contributor is a person that the target has: a hidden person has no individual
+     * in VIVO, so the entity sends a vCard with the display name instead of a link.
+     */
+    public static boolean isPushed(ExportPerson person) {
+        return Objects.nonNull(person) && Objects.nonNull(person.getDatabaseId()) &&
+            !Boolean.TRUE.equals(person.getDeleted());
     }
 
     public static String academicDegreeUri(PushTarget target, DegreeType degreeType) {

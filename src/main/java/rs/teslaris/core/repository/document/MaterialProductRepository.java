@@ -12,7 +12,7 @@ public interface MaterialProductRepository extends JpaRepository<MaterialProduct
 
     @Query(value = "SELECT * FROM material_products s WHERE " +
         "(:allTime = TRUE OR s.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
-        "s.approve_status = 1 AND s.publication_candidate IS NOT FALSE " +
+        "s.approve_status = 1 " +
         "ORDER BY s.id", nativeQuery = true)
     Page<MaterialProduct> findAllModified(Pageable pageable, boolean allTime);
 }

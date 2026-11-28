@@ -204,4 +204,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Modifying
     @Query("UPDATE Document d SET d.openAccess = TRUE WHERE d.doi = :doi")
     void setIsOpenAccess(String doi);
+
+    // A bulk update skips @UpdateTimestamp, so the time is set here.
+    @Modifying
+    @Query("UPDATE Document d SET d.lastModification = CURRENT_TIMESTAMP WHERE d.id IN " +
+        "(SELECT pdc.document.id FROM PersonDocumentContribution pdc " +
+        "WHERE pdc.person.id = :personId)")
+    int markContributionsOfPersonChanged(Integer personId);
 }

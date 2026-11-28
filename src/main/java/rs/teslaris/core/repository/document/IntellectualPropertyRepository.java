@@ -14,7 +14,7 @@ public interface IntellectualPropertyRepository
 
     @Query(value = "SELECT * FROM intellectual_property p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
-        "p.approve_status = 1 AND p.publication_candidate IS NOT FALSE " +
+        "p.approve_status = 1 " +
         "ORDER BY p.id", nativeQuery = true)
     Page<IntellectualProperty> findAllModified(Pageable pageable, boolean allTime);
 

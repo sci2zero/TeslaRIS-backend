@@ -214,6 +214,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/research-area").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/research-area/children/{parentId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/research-area/{researchAreaId:\\d+}")
+                .permitAll()
 
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()

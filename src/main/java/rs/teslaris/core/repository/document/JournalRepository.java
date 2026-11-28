@@ -27,7 +27,7 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
 
     @Query(value = "SELECT * FROM journals j WHERE " +
         "(:allTime = TRUE OR j.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') " +
-        "AND j.publication_candidate IS NOT FALSE ORDER BY j.id",
+        "ORDER BY j.id",
         nativeQuery = true)
     Page<Journal> findAllModified(Pageable pageable, boolean allTime);
 

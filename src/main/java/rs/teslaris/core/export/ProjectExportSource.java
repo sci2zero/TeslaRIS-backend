@@ -28,6 +28,14 @@ public interface ProjectExportSource {
 
     Page<FundingRecord> findAllModifiedFundings(Pageable pageable, boolean allTime);
 
+    /**
+     * Marks the projects of a person as changed, so the next export takes them and their
+     * fundings again.
+     *
+     * @return the number of projects marked
+     */
+    int markProjectsOfPersonChanged(Integer personId);
+
     @Builder
     record ProjectRecord(
         Integer id,

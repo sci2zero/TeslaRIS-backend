@@ -12,7 +12,7 @@ public interface PerformanceRelatedOutputRepository
 
     @Query(value = "SELECT * FROM performance_related_outputs p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
-        "p.approve_status = 1 AND p.publication_candidate IS NOT FALSE " +
+        "p.approve_status = 1 " +
         "ORDER BY p.id", nativeQuery = true)
     Page<PerformanceRelatedOutput> findAllModified(Pageable pageable, boolean allTime);
 

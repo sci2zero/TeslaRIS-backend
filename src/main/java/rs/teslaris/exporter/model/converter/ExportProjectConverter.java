@@ -140,6 +140,7 @@ public class ExportProjectConverter extends ExportConverterBase {
         exportPerson.setOrcid(person.getOrcid());
         exportPerson.setScopusAuthorId(person.getScopusAuthorId());
         exportPerson.setOpenAlexId(person.getOpenAlexId());
+        exportPerson.setDeleted(isTombstone(person));
 
         return exportPerson;
     }

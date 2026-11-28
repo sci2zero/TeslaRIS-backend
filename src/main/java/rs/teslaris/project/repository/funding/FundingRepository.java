@@ -18,8 +18,7 @@ public interface FundingRepository extends JpaRepository<Funding, Integer> {
             "OR EXISTS (SELECT 1 FROM projects p WHERE p.id = f.project_id " +
             "AND p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY')) " +
             "AND (f.date_awarded IS NOT NULL OR f.funding_types IS NULL " +
-            "OR NOT f.funding_types @> '[\"CALL\"]') " +
-            "AND f.publication_candidate IS NOT FALSE ";
+            "OR NOT f.funding_types @> '[\"CALL\"]') ";
 
     @Query("SELECT CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Funding f WHERE f.doi = :doi AND (:id IS NULL OR f.id <> :id)")

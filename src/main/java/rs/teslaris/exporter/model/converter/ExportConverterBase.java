@@ -18,6 +18,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.PublicationCandidacyHolder;
 import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -112,7 +113,19 @@ public class ExportConverterBase {
     protected static void setBaseFields(BaseExportEntity baseExportEntity, BaseEntity baseEntity) {
         baseExportEntity.setDatabaseId(baseEntity.getId());
         baseExportEntity.setLastUpdated(baseEntity.getLastModification());
-        baseExportEntity.setDeleted(baseEntity.getDeleted());
+        baseExportEntity.setDeleted(isTombstone(baseEntity));
+    }
+
+    /**
+     * A record that is deleted or is not a publication candidate is exported without metadata, so
+     * every target removes it. A null candidacy means the quality assessment did not run yet.
+     * Also set on a person that another snapshot embeds, so a target links a contributor only
+     * when the person is published.
+     */
+    public static boolean isTombstone(BaseEntity baseEntity) {
+        return baseEntity.getDeleted() ||
+            (baseEntity instanceof PublicationCandidacyHolder holder &&
+                Boolean.FALSE.equals(holder.getPublicationCandidate()));
     }
 
     protected static void setDocumentDate(String documentDate, Consumer<Date> setter) {

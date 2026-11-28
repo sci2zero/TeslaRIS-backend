@@ -505,4 +505,30 @@ public class VivoDocumentMapperTest {
             new EntityReference(PushEntityType.RESEARCH_AREAS, 4),
             new EntityReference(PushEntityType.RESEARCH_AREAS, 9))));
     }
+
+    @Test
+    public void shouldSendHiddenAuthorAsVcard() {
+        // Given
+        var article = article();
+        var hiddenPerson = new ExportPerson();
+        hiddenPerson.setDatabaseId(9);
+        hiddenPerson.setDeleted(true);
+        var hidden = contribution(null, "Mrsulja, Ivan", 4);
+        hidden.setPerson(hiddenPerson);
+        article.getAuthors().add(hidden);
+
+        // When
+        var mapping = mapper.map(article, target());
+
+        // Then
+        var model = mapping.model();
+        var authorship = ARTICLE + "-authorship-4";
+        var vcard = authorship + "-vcard";
+        assertTrue(has(model, authorship, VIVO + "relates", vcard));
+        assertFalse(has(model, authorship, VIVO + "relates", NS + "teslaris-person-9"));
+        assertTrue(model.contains(model.createResource(vcard), RDFS.label, "Mrsulja, Ivan"));
+
+        // A hidden person is not a link to count as missing.
+        assertFalse(mapping.references().contains(new EntityReference(PushEntityType.PERSONS, 9)));
+    }
 }

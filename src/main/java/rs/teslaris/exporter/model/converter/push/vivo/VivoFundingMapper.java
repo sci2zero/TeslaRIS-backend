@@ -236,7 +236,7 @@ public class VivoFundingMapper implements RdfMapper<ExportFunding> {
 
             Resource bearer;
             var person = contribution.getPerson();
-            if (Objects.nonNull(person) && Objects.nonNull(person.getDatabaseId())) {
+            if (VivoRdfSupport.isPushed(person)) {
                 bearer = model.createResource(
                     VivoRdfSupport.personUri(target, person.getDatabaseId()));
                 grant.addProperty(relates, bearer);

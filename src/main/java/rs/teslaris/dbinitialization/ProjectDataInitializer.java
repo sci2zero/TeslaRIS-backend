@@ -16,6 +16,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.project.OrganisationUnitProjectContributionType;
 import rs.teslaris.core.model.project.PersonProjectContributionType;
 import rs.teslaris.core.model.project.PersonProjectInvestigationRole;
@@ -139,6 +140,11 @@ public class ProjectDataInitializer {
         investigator.setOrderNumber(1);
         investigator.setApproveStatus(ApproveStatus.APPROVED);
         investigator.setProject(project1);
+        var investigatorStatement = new AffiliationStatement();
+        investigatorStatement.setDisplayPersonName(new PersonName(
+            person1.getName().getFirstname(), person1.getName().getOtherName(),
+            person1.getName().getLastname(), null, null, PersonNameType.CITATION_NAME));
+        investigator.setAffiliationStatement(investigatorStatement);
 
         var externalName = new PersonName();
         externalName.setLastname("Martins, Luis F. G.");
